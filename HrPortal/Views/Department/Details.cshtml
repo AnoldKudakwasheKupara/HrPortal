@@ -1,0 +1,182 @@
+﻿@model HrPortal.Entities.Department
+
+@{
+    ViewData["Title"] = "Department Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Name</h2>
+
+            <p class="text-muted">
+                Department Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <strong>Department Name</strong>
+
+                    <p>
+                        @Model.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Status</strong>
+
+                    <p>
+
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        }
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                Employees in this Department
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Employees.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+                            <tr>
+                                <th>Employee Number</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var employee in Model.Employees)
+                        {
+                            <tr>
+
+                                <td>
+                                    @employee.EmployeeNumber
+                                </td>
+
+                                <td>
+                                    @employee.FirstName
+                                    @employee.LastName
+                                </td>
+
+                                <td>
+                                    @employee.Email
+                                </td>
+
+                                <td>
+
+                                    @if (employee.IsActive)
+                                    {
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Inactive
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No employees are currently assigned to this department.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>

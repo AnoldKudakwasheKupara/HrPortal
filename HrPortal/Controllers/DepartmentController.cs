@@ -3,6 +3,7 @@ using HrPortal.Entities;
 using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
