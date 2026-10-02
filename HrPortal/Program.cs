@@ -1,6 +1,7 @@
 using HrPortal.Data;
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,8 +43,29 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
+
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AllowAnonymousToAreaFolder(
+        "Identity",
+        "/Account");
+
+    options.Conventions.AllowAnonymousToAreaPage(
+        "Identity",
+        "/Error");
+
+    options.Conventions.AuthorizeAreaFolder(
+        "Identity",
+        "/Account/Manage");
+});
 
 
 var app = builder.Build();
