@@ -25,7 +25,7 @@ namespace HrPortal.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("HrPortal.Entities.ApplicationUser", b =>
+            modelBuilder.Entity("HrPortal.Data.ApplicationUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -859,7 +859,7 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("HrPortal.Entities.ApplicationUser", "User")
+                    b.HasOne("HrPortal.Data.ApplicationUser", "User")
                         .WithOne("Employee")
                         .HasForeignKey("HrPortal.Entities.Employee", "UserId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -1035,7 +1035,7 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
-                    b.HasOne("HrPortal.Entities.ApplicationUser", null)
+                    b.HasOne("HrPortal.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1044,7 +1044,7 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.HasOne("HrPortal.Entities.ApplicationUser", null)
+                    b.HasOne("HrPortal.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1059,7 +1059,7 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HrPortal.Entities.ApplicationUser", null)
+                    b.HasOne("HrPortal.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1068,14 +1068,14 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.HasOne("HrPortal.Entities.ApplicationUser", null)
+                    b.HasOne("HrPortal.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("HrPortal.Entities.ApplicationUser", b =>
+            modelBuilder.Entity("HrPortal.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Employee");
                 });

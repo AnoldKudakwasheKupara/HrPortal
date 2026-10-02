@@ -1,4 +1,6 @@
-﻿namespace HrPortal.Entities
+﻿using HrPortal.Data;
+
+namespace HrPortal.Entities
 {
     public class Employee
     {

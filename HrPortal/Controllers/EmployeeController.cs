@@ -1,4 +1,5 @@
 ﻿using HrPortal.DbContexts;
+using HrPortal.Data;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;

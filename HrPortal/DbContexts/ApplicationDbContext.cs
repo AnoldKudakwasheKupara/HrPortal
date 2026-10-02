@@ -1,4 +1,5 @@
 ﻿using HrPortal.Entities;
+using HrPortal.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
