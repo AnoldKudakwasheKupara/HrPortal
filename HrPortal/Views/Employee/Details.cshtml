@@ -1,0 +1,127 @@
+﻿@model HrPortal.Entities.Employee
+
+@{
+    ViewData["Title"] = "Employee Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>
+                @Model.FirstName @Model.LastName
+            </h2>
+
+            <p class="text-muted">
+                @Model.EmployeeNumber
+            </p>
+        </div>
+
+        <div>
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+                Edit
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+                Back
+            </a>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <strong>Employee Number</strong>
+                    <div>@Model.EmployeeNumber</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Department</strong>
+                    <div>@Model.Department?.Name</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>First Name</strong>
+                    <div>@Model.FirstName</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Last Name</strong>
+                    <div>@Model.LastName</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Email</strong>
+                    <div>@Model.Email</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Phone Number</strong>
+                    <div>@Model.PhoneNumber</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>National ID</strong>
+                    <div>@Model.NationalId</div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Date Joined</strong>
+                    <div>
+                        @Model.DateJoined.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Status</strong>
+                    <div>
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                Inactive
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong>Login Account</strong>
+                    <div>
+                        @if (Model.User != null)
+                        {
+                            <span class="badge bg-success">
+                                Created
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Not Created
+                            </span>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

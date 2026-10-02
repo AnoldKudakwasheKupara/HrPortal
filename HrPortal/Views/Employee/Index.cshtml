@@ -1,0 +1,176 @@
+﻿@model IEnumerable<HrPortal.Entities.Employee>
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Employees</h2>
+            <p class="text-muted">
+                Manage employees and their accounts.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-person-plus"></i>
+            Add Employee
+        </a>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Employee No.</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Login</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var employee in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                @employee.EmployeeNumber
+                            </td>
+
+                            <td>
+                                <strong>
+                                    @employee.FirstName
+                                    @employee.LastName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @employee.Email
+                            </td>
+
+                            <td>
+                                @employee.Department?.Name
+                            </td>
+
+                            <td>
+                                @if (employee.User != null)
+                                {
+                                    <span class="badge bg-success">
+                                        Account Created
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        No Account
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (employee.IsActive)
+                                {
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Inactive
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="dropdown">
+
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Details"
+                                               asp-route-id="@employee.Id">
+                                                View
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Edit"
+                                               asp-route-id="@employee.Id">
+                                                Edit
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <form asp-action="ToggleStatus"
+                                                  asp-route-id="@employee.Id"
+                                                  method="post">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="dropdown-item">
+
+                                                    @(employee.IsActive
+                                                        ? "Deactivate"
+                                                        : "Activate")
+
+                                                </button>
+
+                                            </form>
+                                        </li>
+
+                                    </ul>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
