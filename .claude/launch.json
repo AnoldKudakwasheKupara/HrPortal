@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hrportal",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "HrPortal/HrPortal.csproj", "--launch-profile", "http"],
+      "port": 5163
+    }
+  ]
+}
