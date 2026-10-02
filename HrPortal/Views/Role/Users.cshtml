@@ -1,0 +1,177 @@
+﻿@model HrPortal.ViewModels.RoleUsersViewModel
+
+@{
+    ViewData["Title"] = "Manage Role Users";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Manage Role Users</h2>
+
+            <p class="text-muted mb-0">
+                Role:
+                <strong>@Model.RoleName</strong>
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            Back to Roles
+        </a>
+
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div asp-validation-summary="ModelOnly"
+         class="alert alert-danger">
+    </div>
+
+    <form asp-action="Users"
+          asp-route-id="@Model.RoleId"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div class="card shadow-sm">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <div>
+                    <h5 class="mb-0">
+                        Users
+                    </h5>
+
+                    <small class="text-muted">
+                        Select the users who should belong to this role.
+                    </small>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th style="width: 80px;">
+                                    Assigned
+                                </th>
+
+                                <th>
+                                    Employee/User
+                                </th>
+
+                                <th>
+                                    Email
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (!Model.Users.Any())
+                            {
+                                <tr>
+
+                                    <td colspan="3"
+                                        class="text-center text-muted py-4">
+
+                                        No users are available.
+
+                                    </td>
+
+                                </tr>
+                            }
+                            else
+                            {
+                                for (int i = 0;
+                                     i < Model.Users.Count;
+                                     i++)
+                                {
+                                    <tr>
+
+                                        <td>
+
+                                            <input type="hidden"
+                                                   asp-for="Users[i].UserId" />
+
+                                            <input type="hidden"
+                                                   asp-for="Users[i].FullName" />
+
+                                            <input type="hidden"
+                                                   asp-for="Users[i].Email" />
+
+                                            <div class="form-check">
+
+                                                <input asp-for="Users[i].IsInRole"
+                                                       class="form-check-input"
+                                                       style="width:20px;height:20px;" />
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+
+                                            <strong>
+                                                @Model.Users[i].FullName
+                                            </strong>
+
+                                        </td>
+
+                                        <td>
+                                            @Model.Users[i].Email
+                                        </td>
+
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="card-footer text-end">
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
