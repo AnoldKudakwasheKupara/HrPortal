@@ -1,0 +1,260 @@
+﻿@model IEnumerable<HrPortal.Entities.EmployeeDocument>
+
+@{
+    ViewData["Title"] = "Employee Documents";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Employee Documents</h2>
+
+            <p class="text-muted">
+                Contracts, certificates and other files held on file
+                for each employee.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Upload Document
+        </a>
+
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get"
+                  class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label for="employeeId"
+                           class="form-label">
+                        Employee
+                    </label>
+
+                    <select id="employeeId"
+                            name="employeeId"
+                            asp-items="ViewBag.Employees"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Employees --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="categoryId"
+                           class="form-label">
+                        Category
+                    </label>
+
+                    <select id="categoryId"
+                            name="categoryId"
+                            asp-items="ViewBag.Categories"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Categories --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-auto">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary">
+                        Filter
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Employee</th>
+                            <th>Category</th>
+                            <th>Uploaded</th>
+                            <th>Expires</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var document in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @document.OriginalFileName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @document.Employee.FirstName
+                                @document.Employee.LastName
+                            </td>
+
+                            <td>
+                                @document.DocumentCategory.Name
+                            </td>
+
+                            <td>
+                                @document.UploadedAt.ToString("dd MMM yyyy")
+                            </td>
+
+                            <td>
+                                @if (document.ExpiryDate.HasValue)
+                                {
+                                    if (document.ExpiryDate.Value.Date
+                                        < DateTime.Today)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Expired
+                                            @document.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @document.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        No expiry
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+
+                                <div class="dropdown">
+
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+
+                                        Actions
+
+                                    </button>
+
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Details"
+                                               asp-route-id="@document.Id">
+
+                                                View
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Download"
+                                               asp-route-id="@document.Id">
+
+                                                Download
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Edit"
+                                               asp-route-id="@document.Id">
+
+                                                Edit
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               asp-action="Delete"
+                                               asp-route-id="@document.Id">
+
+                                                Delete
+
+                                            </a>
+                                        </li>
+
+                                    </ul>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">
+                        No documents match this filter.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

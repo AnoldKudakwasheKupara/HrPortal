@@ -1,0 +1,119 @@
+﻿@model HrPortal.Entities.EmployeeDocument
+
+@{
+    ViewData["Title"] = "Delete Document";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Delete Document</h2>
+
+        <p class="text-muted">
+            This document will be removed permanently.
+        </p>
+
+    </div>
+
+
+    <div class="alert alert-warning">
+
+        Are you sure you want to delete this document?
+        The uploaded file will be removed from the server too.
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>File Name</strong>
+
+                    <p>
+                        @Model.OriginalFileName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Category</strong>
+
+                    <p>
+                        @Model.DocumentCategory.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Uploaded By</strong>
+
+                    <p>
+                        @Model.UploadedByEmployee.FirstName
+                        @Model.UploadedByEmployee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Uploaded</strong>
+
+                    <p>
+                        @Model.UploadedAt.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form asp-action="Delete" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    Delete Document
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

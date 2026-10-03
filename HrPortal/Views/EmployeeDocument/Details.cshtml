@@ -1,0 +1,169 @@
+﻿@model HrPortal.Entities.EmployeeDocument
+
+@{
+    ViewData["Title"] = "Document Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.OriginalFileName</h2>
+
+            <p class="text-muted">
+                Document Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Download"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">
+
+                Download
+
+            </a>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>File Name</strong>
+
+                    <p>
+                        @Model.OriginalFileName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @Model.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Category</strong>
+
+                    <p>
+                        @Model.DocumentCategory.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Uploaded By</strong>
+
+                    <p>
+                        @Model.UploadedByEmployee.FirstName
+                        @Model.UploadedByEmployee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Uploaded</strong>
+
+                    <p>
+                        @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Expires</strong>
+
+                    <p>
+                        @if (Model.ExpiryDate.HasValue)
+                        {
+                            if (Model.ExpiryDate.Value.Date < DateTime.Today)
+                            {
+                                <span class="badge bg-danger">
+                                    Expired
+                                    @Model.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                @Model.ExpiryDate.Value.ToString("dd MMM yyyy")
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                No expiry
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
