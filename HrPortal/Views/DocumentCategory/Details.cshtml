@@ -1,0 +1,179 @@
+﻿@model HrPortal.Entities.DocumentCategory
+
+@{
+    ViewData["Title"] = "Document Category Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Name</h2>
+
+            <p class="text-muted">
+                Document Category Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <strong>Category Name</strong>
+
+                    <p>
+                        @Model.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Status</strong>
+
+                    <p>
+
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        }
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                Documents in this Category
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Documents.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Employee</th>
+                                <th>Uploaded</th>
+                                <th>Expires</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var document in Model.Documents
+                            .OrderByDescending(d => d.UploadedAt))
+                        {
+                            <tr>
+
+                                <td>
+                                    @document.OriginalFileName
+                                </td>
+
+                                <td>
+                                    @document.Employee.FirstName
+                                    @document.Employee.LastName
+                                </td>
+
+                                <td>
+                                    @document.UploadedAt.ToString("dd MMM yyyy")
+                                </td>
+
+                                <td>
+                                    @if (document.ExpiryDate.HasValue)
+                                    {
+                                        @document.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            No expiry
+                                        </span>
+                                    }
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No documents are currently filed under this category.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>
