@@ -1,0 +1,235 @@
+﻿@model IEnumerable<HrPortal.Entities.LeaveBalance>
+
+@{
+    ViewData["Title"] = "Leave Balances";
+
+    var years = ViewBag.Years as List<int> ?? new List<int>();
+    var selectedYear = (int)ViewBag.SelectedYear;
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Leave Balances</h2>
+
+            <p class="text-muted">
+                Track each employee's leave entitlement per year.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Add Balance
+        </a>
+
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get"
+                  class="row g-2 align-items-end">
+
+                <div class="col-auto">
+
+                    <label for="year"
+                           class="form-label">
+                        Year
+                    </label>
+
+                    <select id="year"
+                            name="year"
+                            class="form-select">
+
+                    @foreach (var year in years)
+                    {
+                        if (year == selectedYear)
+                        {
+                            <option value="@year" selected>@year</option>
+                        }
+                        else
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    }
+
+                    </select>
+
+                </div>
+
+                <div class="col-auto">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary">
+                        Show
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Allocated</th>
+                            <th>Used</th>
+                            <th>Pending</th>
+                            <th>Remaining</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var balance in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @balance.Employee.FirstName
+                                    @balance.Employee.LastName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @balance.LeaveType.Name
+                            </td>
+
+                            <td>
+                                @balance.AllocatedDays.ToString("0.##")
+                            </td>
+
+                            <td>
+                                @balance.UsedDays.ToString("0.##")
+                            </td>
+
+                            <td>
+                                @balance.PendingDays.ToString("0.##")
+                            </td>
+
+                            <td>
+                                @if (balance.RemainingDays < 0)
+                                {
+                                    <span class="badge bg-danger">
+                                        @balance.RemainingDays.ToString("0.##")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">
+                                        @balance.RemainingDays.ToString("0.##")
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+
+                                <div class="dropdown">
+
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+
+                                        Actions
+
+                                    </button>
+
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Details"
+                                               asp-route-id="@balance.Id">
+
+                                                View
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Edit"
+                                               asp-route-id="@balance.Id">
+
+                                                Edit
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               asp-action="Delete"
+                                               asp-route-id="@balance.Id">
+
+                                                Delete
+
+                                            </a>
+                                        </li>
+
+                                    </ul>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">
+                        No leave balances have been recorded for @selectedYear.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

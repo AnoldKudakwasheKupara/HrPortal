@@ -1,0 +1,130 @@
+﻿@model HrPortal.Entities.LeaveBalance
+
+@{
+    ViewData["Title"] = "Delete Leave Balance";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Delete Leave Balance</h2>
+
+        <p class="text-muted">
+            This balance will be removed permanently.
+        </p>
+
+    </div>
+
+
+    <div class="alert alert-warning">
+
+        Are you sure you want to delete this leave balance?
+        This cannot be undone.
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Leave Type</strong>
+
+                    <p>
+                        @Model.LeaveType.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Year</strong>
+
+                    <p>
+                        @Model.Year
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Allocated Days</strong>
+
+                    <p>
+                        @Model.AllocatedDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Used Days</strong>
+
+                    <p>
+                        @Model.UsedDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Remaining Days</strong>
+
+                    <p>
+                        @Model.RemainingDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form asp-action="Delete" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    Delete Balance
+
+                </button>
+
+                <a asp-action="Index"
+                   asp-route-year="@Model.Year"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,156 @@
+﻿@model HrPortal.Entities.LeaveBalance
+
+@{
+    ViewData["Title"] = "Leave Balance Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>
+                @Model.Employee.FirstName
+                @Model.Employee.LastName
+            </h2>
+
+            <p class="text-muted">
+                @Model.LeaveType.Name &mdash; @Model.Year
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               asp-route-year="@Model.Year"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @Model.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Leave Type</strong>
+
+                    <p>
+                        @Model.LeaveType.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <strong>Year</strong>
+
+                    <p>
+                        @Model.Year
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <strong>Allocated Days</strong>
+
+                    <p>
+                        @Model.AllocatedDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <strong>Used Days</strong>
+
+                    <p>
+                        @Model.UsedDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <strong>Pending Days</strong>
+
+                    <p>
+                        @Model.PendingDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Remaining Days</strong>
+
+                    <p>
+                        @if (Model.RemainingDays < 0)
+                        {
+                            <span class="badge bg-danger">
+                                @Model.RemainingDays.ToString("0.##")
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">
+                                @Model.RemainingDays.ToString("0.##")
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
