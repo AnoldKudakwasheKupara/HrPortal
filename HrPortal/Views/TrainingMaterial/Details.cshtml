@@ -1,0 +1,116 @@
+﻿@model HrPortal.Entities.TrainingMaterial
+
+@{
+    ViewData["Title"] = "Training Material Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.OriginalFileName</h2>
+
+            <p class="text-muted">
+                Training Material Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Download"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">
+
+                Download
+
+            </a>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <strong>File Name</strong>
+
+                    <p>
+                        @Model.OriginalFileName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Course</strong>
+
+                    <p>
+                        @Model.TrainingCourse.Title
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Uploaded By</strong>
+
+                    <p>
+                        @Model.UploadedByEmployee.FirstName
+                        @Model.UploadedByEmployee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Uploaded</strong>
+
+                    <p>
+                        @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

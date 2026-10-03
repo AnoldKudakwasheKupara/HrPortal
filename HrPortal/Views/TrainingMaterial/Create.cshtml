@@ -1,0 +1,148 @@
+﻿@model HrPortal.ViewModels.TrainingMaterialCreateViewModel
+
+@{
+    ViewData["Title"] = "Upload Training Material";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Upload Training Material</h2>
+
+        <p class="text-muted">
+            Attach a document or handout to a training course.
+            Files must be 10 MB or smaller.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TrainingCourseId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="TrainingCourseId"
+                                asp-items="ViewBag.Courses"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Course --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="TrainingCourseId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="UploadedByEmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="UploadedByEmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Employee --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="UploadedByEmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-12 mb-3">
+
+                        <label asp-for="File"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="File"
+                               class="form-control"
+                               type="file" />
+
+                        <span asp-validation-for="File"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="Description"
+                           class="form-label">
+                    </label>
+
+                    <textarea asp-for="Description"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Optional description">
+                    </textarea>
+
+                    <span asp-validation-for="Description"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Upload Material
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

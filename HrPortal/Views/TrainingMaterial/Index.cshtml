@@ -1,0 +1,229 @@
+﻿@model IEnumerable<HrPortal.Entities.TrainingMaterial>
+
+@{
+    ViewData["Title"] = "Training Materials";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Training Materials</h2>
+
+            <p class="text-muted">
+                Documents and handouts attached to training courses.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Upload Material
+        </a>
+
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get"
+                  class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label for="courseId"
+                           class="form-label">
+                        Training Course
+                    </label>
+
+                    <select id="courseId"
+                            name="courseId"
+                            asp-items="ViewBag.Courses"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Courses --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-auto">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary">
+                        Filter
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Course</th>
+                            <th>Description</th>
+                            <th>Uploaded By</th>
+                            <th>Uploaded</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var material in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @material.OriginalFileName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @material.TrainingCourse.Title
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    material.Description))
+                                {
+                                    @material.Description
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        No description
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @material.UploadedByEmployee.FirstName
+                                @material.UploadedByEmployee.LastName
+                            </td>
+
+                            <td>
+                                @material.UploadedAt.ToString("dd MMM yyyy")
+                            </td>
+
+                            <td>
+
+                                <div class="dropdown">
+
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+
+                                        Actions
+
+                                    </button>
+
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Details"
+                                               asp-route-id="@material.Id">
+
+                                                View
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Download"
+                                               asp-route-id="@material.Id">
+
+                                                Download
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Edit"
+                                               asp-route-id="@material.Id">
+
+                                                Edit
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               asp-action="Delete"
+                                               asp-route-id="@material.Id">
+
+                                                Delete
+
+                                            </a>
+                                        </li>
+
+                                    </ul>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">
+                        No training materials match this filter.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

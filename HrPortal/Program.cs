@@ -1,6 +1,7 @@
 ﻿using HrPortal.Data;
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,8 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+builder.Services.AddScoped<FileStorageService>();
 
 builder.Services.AddControllersWithViews();
 
