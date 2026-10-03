@@ -1,4 +1,4 @@
-using HrPortal.Data;
+﻿using HrPortal.Data;
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -73,6 +73,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+
+    var db =
+        services.GetRequiredService<ApplicationDbContext>();
+
+    await db.Database.MigrateAsync();
 
     var userManager =
         services.GetRequiredService<UserManager<ApplicationUser>>();
