@@ -1,0 +1,124 @@
+﻿@model HrPortal.Entities.TrainingAssignment
+
+@{
+    ViewData["Title"] = "Delete Training Assignment";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Delete Training Assignment</h2>
+
+        <p class="text-muted">
+            This assignment will be removed permanently.
+        </p>
+
+    </div>
+
+
+    <div class="alert alert-warning">
+
+        Are you sure you want to delete this assignment?
+
+        @if (Model.Feedback != null)
+        {
+            <strong>
+                The feedback attached to it will be deleted too.
+            </strong>
+        }
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Course</strong>
+
+                    <p>
+                        @Model.TrainingCourse.Title
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Assigned</strong>
+
+                    <p>
+                        @Model.AssignedAt.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Status</strong>
+
+                    <p>
+                        @if (Model.IsCompleted)
+                        {
+                            <span class="badge bg-success">
+                                Completed
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Outstanding
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form asp-action="Delete" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    Delete Assignment
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

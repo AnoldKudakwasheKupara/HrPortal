@@ -1,0 +1,205 @@
+﻿@model HrPortal.Entities.TrainingAssignment
+
+@{
+    ViewData["Title"] = "Training Assignment Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.TrainingCourse.Title</h2>
+
+            <p class="text-muted">
+                Assignment for
+                @Model.Employee.FirstName
+                @Model.Employee.LastName
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Course</strong>
+
+                    <p>
+                        @Model.TrainingCourse.Title
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @Model.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Assigned</strong>
+
+                    <p>
+                        @Model.AssignedAt.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Status</strong>
+
+                    <p>
+                        @if (Model.IsCompleted)
+                        {
+                            <span class="badge bg-success">
+                                Completed
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Outstanding
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Completed On</strong>
+
+                    <p>
+                        @if (Model.CompletedAt.HasValue)
+                        {
+                            @Model.CompletedAt.Value.ToString("dd MMM yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Not completed
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                Feedback
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Feedback != null)
+            {
+                <div class="row">
+
+                    <div class="col-md-4">
+
+                        <strong>Rating</strong>
+
+                        <p>
+                            <span class="badge bg-info text-dark">
+                                @Model.Feedback.Rating / 5
+                            </span>
+                        </p>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <strong>Submitted</strong>
+
+                        <p>
+                            @Model.Feedback.SubmittedAt.ToString("dd MMM yyyy")
+                        </p>
+
+                    </div>
+
+
+                    <div class="col-12">
+
+                        <strong>Comments</strong>
+
+                        <p>
+                            @(Model.Feedback.Comments ?? "No comments given.")
+                        </p>
+
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No feedback has been submitted for this assignment.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>

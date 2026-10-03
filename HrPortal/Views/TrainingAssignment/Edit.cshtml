@@ -1,0 +1,141 @@
+﻿@model HrPortal.ViewModels.TrainingAssignmentEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Training Assignment";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Edit Training Assignment</h2>
+
+        <p class="text-muted">
+            Update this course booking.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Edit" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TrainingCourseId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="TrainingCourseId"
+                                asp-items="ViewBag.Courses"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Course --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="TrainingCourseId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="EmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="EmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Employee --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="EmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="CompletedAt"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="CompletedAt"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="CompletedAt"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-check mb-4">
+
+                    <input asp-for="IsCompleted"
+                           class="form-check-input" />
+
+                    <label asp-for="IsCompleted"
+                           class="form-check-label">
+                        Training has been completed
+                    </label>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Save Changes
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

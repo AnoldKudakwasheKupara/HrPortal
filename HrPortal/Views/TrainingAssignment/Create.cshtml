@@ -1,0 +1,130 @@
+﻿@model HrPortal.ViewModels.TrainingAssignmentCreateViewModel
+
+@{
+    ViewData["Title"] = "Assign Employees";
+
+    var employees = ViewBag.Employees
+        as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Assign Employees</h2>
+
+        <p class="text-muted">
+            Book one or more employees onto a training course.
+            Anyone already assigned is skipped.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label asp-for="TrainingCourseId"
+                           class="form-label">
+                    </label>
+
+                    <select asp-for="TrainingCourseId"
+                            asp-items="ViewBag.Courses"
+                            class="form-select">
+
+                        <option value="">
+                            -- Select Course --
+                        </option>
+
+                    </select>
+
+                    <span asp-validation-for="TrainingCourseId"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label class="form-label">
+                        Employees
+                    </label>
+
+                    <span asp-validation-for="EmployeeIds"
+                          class="text-danger d-block">
+                    </span>
+
+                    <div class="border rounded p-3">
+
+                    @if (employees != null && employees.Any())
+                    {
+                        foreach (var employee in employees)
+                        {
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="EmployeeIds"
+                                       value="@employee.Value"
+                                       id="employee_@employee.Value" />
+
+                                <label class="form-check-label"
+                                       for="employee_@employee.Value">
+                                    @employee.Text
+                                </label>
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">
+                            There are no active employees to assign.
+                        </p>
+                    }
+
+                    </div>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Assign
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}
