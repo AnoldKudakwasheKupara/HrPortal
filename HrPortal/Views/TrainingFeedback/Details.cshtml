@@ -1,0 +1,123 @@
+﻿@model HrPortal.Entities.TrainingFeedback
+
+@{
+    ViewData["Title"] = "Training Feedback Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.TrainingAssignment.TrainingCourse.Title</h2>
+
+            <p class="text-muted">
+                Feedback from
+                @Model.TrainingAssignment.Employee.FirstName
+                @Model.TrainingAssignment.Employee.LastName
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Course</strong>
+
+                    <p>
+                        @Model.TrainingAssignment.TrainingCourse.Title
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.TrainingAssignment.Employee.FirstName
+                        @Model.TrainingAssignment.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @Model.TrainingAssignment.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Rating</strong>
+
+                    <p>
+                        <span class="badge bg-info text-dark">
+                            @Model.Rating / 5
+                        </span>
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Submitted</strong>
+
+                    <p>
+                        @Model.SubmittedAt.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Comments</strong>
+
+                    <p>
+                        @(Model.Comments ?? "No comments given.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

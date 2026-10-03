@@ -1,0 +1,109 @@
+﻿@model HrPortal.Entities.TrainingFeedback
+
+@{
+    ViewData["Title"] = "Delete Training Feedback";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Delete Training Feedback</h2>
+
+        <p class="text-muted">
+            This feedback will be removed permanently.
+        </p>
+
+    </div>
+
+
+    <div class="alert alert-warning">
+
+        Are you sure you want to delete this feedback?
+        This cannot be undone.
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Course</strong>
+
+                    <p>
+                        @Model.TrainingAssignment.TrainingCourse.Title
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.TrainingAssignment.Employee.FirstName
+                        @Model.TrainingAssignment.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Rating</strong>
+
+                    <p>
+                        <span class="badge bg-info text-dark">
+                            @Model.Rating / 5
+                        </span>
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Comments</strong>
+
+                    <p>
+                        @(Model.Comments ?? "No comments given.")
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form asp-action="Delete" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    Delete Feedback
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
