@@ -1,0 +1,201 @@
+﻿@model HrPortal.Entities.LeaveType
+
+@{
+    ViewData["Title"] = "Leave Type Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Name</h2>
+
+            <p class="text-muted">
+                Leave Type Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Leave Type Name</strong>
+
+                    <p>
+                        @Model.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Default Days Per Year</strong>
+
+                    <p>
+                        @Model.DefaultDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Status</strong>
+
+                    <p>
+
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        }
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Requires Approval</strong>
+
+                    <p>
+                        @(Model.RequiresApproval ? "Yes" : "No")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                Leave Requests of this Type
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.LeaveRequests.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+                            <tr>
+                                <th>Request Number</th>
+                                <th>Employee</th>
+                                <th>Dates</th>
+                                <th>Days</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var request in Model.LeaveRequests
+                            .OrderByDescending(r => r.SubmittedAt))
+                        {
+                            <tr>
+
+                                <td>
+                                    @request.RequestNumber
+                                </td>
+
+                                <td>
+                                    @request.Employee.FirstName
+                                    @request.Employee.LastName
+                                </td>
+
+                                <td>
+                                    @request.StartDate.ToString("dd MMM yyyy")
+                                    &ndash;
+                                    @request.EndDate.ToString("dd MMM yyyy")
+                                </td>
+
+                                <td>
+                                    @request.NumberOfDays.ToString("0.##")
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        @request.Status
+                                    </span>
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No leave requests have been made using this leave type.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>
