@@ -1,0 +1,264 @@
+﻿@model HrPortal.Entities.TrainingCourse
+
+@{
+    ViewData["Title"] = "Training Course Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Title</h2>
+
+            <p class="text-muted">
+                Training Course Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Trainer</strong>
+
+                    <p>
+                        @(Model.Trainer ?? "Not set")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Training Date</strong>
+
+                    <p>
+                        @if (Model.TrainingDate.HasValue)
+                        {
+                            @Model.TrainingDate.Value.ToString("dd MMM yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Not scheduled
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Status</strong>
+
+                    <p>
+
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">
+                                Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        }
+
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Created By</strong>
+
+                    <p>
+                        @Model.CreatedByEmployee.FirstName
+                        @Model.CreatedByEmployee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Created</strong>
+
+                    <p>
+                        @Model.CreatedAt.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+
+            <strong>
+                Assigned Employees
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Assignments.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Assigned</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var assignment in Model.Assignments
+                            .OrderBy(a => a.Employee.FirstName))
+                        {
+                            <tr>
+
+                                <td>
+                                    @assignment.Employee.FirstName
+                                    @assignment.Employee.LastName
+                                </td>
+
+                                <td>
+                                    @assignment.AssignedAt.ToString("dd MMM yyyy")
+                                </td>
+
+                                <td>
+                                    @if (assignment.IsCompleted)
+                                    {
+                                        <span class="badge bg-success">
+                                            Completed
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Outstanding
+                                        </span>
+                                    }
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No employees have been assigned to this course.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                Course Materials
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Materials.Any())
+            {
+                <ul class="list-group list-group-flush">
+
+                @foreach (var material in Model.Materials
+                    .OrderByDescending(m => m.UploadedAt))
+                {
+                    <li class="list-group-item px-0">
+
+                        @material.OriginalFileName
+
+                        <span class="text-muted">
+                            &mdash;
+                            @material.UploadedAt.ToString("dd MMM yyyy")
+                        </span>
+
+                    </li>
+                }
+
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No materials have been uploaded for this course.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>

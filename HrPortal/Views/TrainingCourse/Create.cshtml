@@ -1,0 +1,156 @@
+﻿@model HrPortal.ViewModels.TrainingCourseCreateViewModel
+
+@{
+    ViewData["Title"] = "Add Training Course";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Add Training Course</h2>
+
+        <p class="text-muted">
+            Create a new training course.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="Title"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Title"
+                               class="form-control"
+                               placeholder="e.g. Workplace Safety Induction" />
+
+                        <span asp-validation-for="Title"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="Trainer"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Trainer"
+                               class="form-control"
+                               placeholder="e.g. External provider or staff name" />
+
+                        <span asp-validation-for="Trainer"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TrainingDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="TrainingDate"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="TrainingDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="CreatedByEmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="CreatedByEmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Employee --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="CreatedByEmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="Description"
+                           class="form-label">
+                    </label>
+
+                    <textarea asp-for="Description"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Optional course description">
+                    </textarea>
+
+                    <span asp-validation-for="Description"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Save Course
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}
