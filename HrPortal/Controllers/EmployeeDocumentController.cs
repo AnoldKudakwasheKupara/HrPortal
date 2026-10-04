@@ -22,17 +22,20 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly AuditService _audit;
+        private readonly RecordScope _scope;
 
         public EmployeeDocumentController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             UserManager<ApplicationUser> userManager,
-            AuditService audit)
+            AuditService audit,
+            RecordScope scope)
         {
             _context = context;
             _fileStorage = fileStorage;
             _userManager = userManager;
             _audit = audit;
+            _scope = scope;
         }
 
 
@@ -44,11 +47,12 @@ namespace HrPortal.Controllers
             int? employeeId,
             int? categoryId)
         {
-            var query = _context.EmployeeDocuments
-                .Include(d => d.Employee)
-                .Include(d => d.DocumentCategory)
-                .Include(d => d.UploadedByEmployee)
-                .AsQueryable();
+            var query = await _scope.VisibleToAsync(
+                _context.EmployeeDocuments
+                    .Include(d => d.Employee)
+                    .Include(d => d.DocumentCategory)
+                    .Include(d => d.UploadedByEmployee),
+                User);
 
             if (employeeId.HasValue)
             {

@@ -2,7 +2,9 @@
 using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -24,17 +26,20 @@ namespace HrPortal.Controllers
         private readonly LeaveWorkflowService _workflow;
         private readonly LeaveBalanceService _balances;
         private readonly CurrentUserService _currentUser;
+        private readonly IAuthorizationService _authorization;
 
         public MyLeaveController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
             LeaveBalanceService balances,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            IAuthorizationService authorization)
         {
             _context = context;
             _workflow = workflow;
             _balances = balances;
             _currentUser = currentUser;
+            _authorization = authorization;
         }
 
 
@@ -49,6 +54,10 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
+            // Deliberately always the caller's own records, even
+            // for HR and the MD: this page is "my leave". Their
+            // view of everyone else's lives in LeaveRequest and
+            // LeaveApproval.
             var model = new MyLeaveIndexViewModel
             {
                 Requests = await _context.LeaveRequests
@@ -79,7 +88,9 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var request = await LoadOwnRequest(id.Value);
+            var request = await LoadAuthorizedRequest(
+                id.Value,
+                Operations.View);
 
             if (request == null)
                 return NotFound();
@@ -175,7 +186,9 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var request = await LoadOwnRequest(id.Value);
+            var request = await LoadAuthorizedRequest(
+                id.Value,
+                Operations.Manage);
 
             if (request == null)
                 return NotFound();
@@ -223,10 +236,9 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var request = await _context.LeaveRequests
-                .FirstOrDefaultAsync(r =>
-                    r.Id == id &&
-                    r.EmployeeId == employeeId.Value);
+            var request = await LoadAuthorizedRequest(
+                id,
+                Operations.Manage);
 
             if (request == null)
                 return NotFound();
@@ -284,10 +296,9 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var request = await _context.LeaveRequests
-                .FirstOrDefaultAsync(r =>
-                    r.Id == id &&
-                    r.EmployeeId == employeeId.Value);
+            var request = await LoadAuthorizedRequest(
+                id,
+                Operations.Manage);
 
             if (request == null)
                 return NotFound();
@@ -389,21 +400,33 @@ namespace HrPortal.Controllers
             return numberOfDays;
         }
 
-        private async Task<LeaveRequest?> LoadOwnRequest(int id)
+        /// <summary>
+        /// Loads a request and asks the authorization handler
+        /// whether the caller may do this with it. Returns null
+        /// when they may not, which the actions turn into a 404
+        /// so the page cannot be used to discover which ids
+        /// exist.
+        /// </summary>
+        private async Task<LeaveRequest?> LoadAuthorizedRequest(
+            int id,
+            OperationAuthorizationRequirement operation)
         {
-            var employeeId = await _currentUser.GetEmployeeIdAsync();
-
-            if (employeeId == null)
-                return null;
-
-            return await _context.LeaveRequests
+            var request = await _context.LeaveRequests
                 .Include(r => r.LeaveType)
                 .Include(r => r.Employee)
                 .Include(r => r.History)
                     .ThenInclude(h => h.ActionedByEmployee)
-                .FirstOrDefaultAsync(r =>
-                    r.Id == id &&
-                    r.EmployeeId == employeeId.Value);
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+                return null;
+
+            var result = await _authorization.AuthorizeAsync(
+                User,
+                request,
+                operation);
+
+            return result.Succeeded ? request : null;
         }
 
         private async Task LoadLeaveTypes()

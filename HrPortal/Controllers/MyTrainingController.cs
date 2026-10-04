@@ -2,7 +2,9 @@
 using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
@@ -25,17 +27,20 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
         private readonly CurrentUserService _currentUser;
         private readonly AuditService _audit;
+        private readonly IAuthorizationService _authorization;
 
         public MyTrainingController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             CurrentUserService currentUser,
-            AuditService audit)
+            AuditService audit,
+            IAuthorizationService authorization)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
             _audit = audit;
+            _authorization = authorization;
         }
 
 
@@ -71,7 +76,9 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var assignment = await LoadOwnAssignment(id.Value);
+            var assignment = await LoadAuthorizedAssignment(
+                id.Value,
+                Operations.View);
 
             if (assignment == null)
                 return NotFound();
@@ -143,7 +150,9 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Complete(int id)
         {
-            var assignment = await LoadOwnAssignment(id);
+            var assignment = await LoadAuthorizedAssignment(
+                id,
+                Operations.Manage);
 
             if (assignment == null)
                 return NotFound();
@@ -184,7 +193,9 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var assignment = await LoadOwnAssignment(id.Value);
+            var assignment = await LoadAuthorizedAssignment(
+                id.Value,
+                Operations.Manage);
 
             if (assignment == null)
                 return NotFound();
@@ -222,8 +233,9 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Feedback(
             MyTrainingFeedbackViewModel model)
         {
-            var assignment = await LoadOwnAssignment(
-                model.TrainingAssignmentId);
+            var assignment = await LoadAuthorizedAssignment(
+                model.TrainingAssignmentId,
+                Operations.Manage);
 
             if (assignment == null)
                 return NotFound();
@@ -274,21 +286,30 @@ namespace HrPortal.Controllers
         // HELPERS
         // ============================================================
 
-        private async Task<TrainingAssignment?> LoadOwnAssignment(
-            int id)
+        /// <summary>
+        /// Loads an assignment and asks the authorization handler
+        /// whether the caller may do this with it. Null when they
+        /// may not, which the actions turn into a 404.
+        /// </summary>
+        private async Task<TrainingAssignment?> LoadAuthorizedAssignment(
+            int id,
+            OperationAuthorizationRequirement operation)
         {
-            var employeeId = await _currentUser.GetEmployeeIdAsync();
-
-            if (employeeId == null)
-                return null;
-
-            return await _context.TrainingAssignments
+            var assignment = await _context.TrainingAssignments
                 .Include(a => a.TrainingCourse)
                     .ThenInclude(c => c.Materials)
                 .Include(a => a.Feedback)
-                .FirstOrDefaultAsync(a =>
-                    a.Id == id &&
-                    a.EmployeeId == employeeId.Value);
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (assignment == null)
+                return null;
+
+            var result = await _authorization.AuthorizeAsync(
+                User,
+                assignment,
+                operation);
+
+            return result.Succeeded ? assignment : null;
         }
     }
 }

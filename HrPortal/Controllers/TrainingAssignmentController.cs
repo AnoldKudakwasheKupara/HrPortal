@@ -16,15 +16,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
+        private readonly RecordScope _scope;
 
         public TrainingAssignmentController(
             ApplicationDbContext context,
             NotificationService notifications,
-            AuditService audit)
+            AuditService audit,
+            RecordScope scope)
         {
             _context = context;
             _notifications = notifications;
             _audit = audit;
+            _scope = scope;
         }
 
 
@@ -34,11 +37,12 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index(int? courseId)
         {
-            var query = _context.TrainingAssignments
-                .Include(a => a.TrainingCourse)
-                .Include(a => a.Employee)
-                .Include(a => a.Feedback)
-                .AsQueryable();
+            var query = await _scope.VisibleToAsync(
+                _context.TrainingAssignments
+                    .Include(a => a.TrainingCourse)
+                    .Include(a => a.Employee)
+                    .Include(a => a.Feedback),
+                User);
 
             if (courseId.HasValue)
             {

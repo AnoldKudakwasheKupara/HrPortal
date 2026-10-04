@@ -1,6 +1,8 @@
-﻿namespace HrPortal.Entities
+﻿using HrPortal.Security;
+
+namespace HrPortal.Entities
 {
-    public class LeaveRequest
+    public class LeaveRequest : IEmployeeOwned
     {
         public int Id { get; set; }
 

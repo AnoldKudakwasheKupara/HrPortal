@@ -13,10 +13,14 @@ namespace HrPortal.Controllers
     public class LeaveBalanceController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordScope _scope;
 
-        public LeaveBalanceController(ApplicationDbContext context)
+        public LeaveBalanceController(
+            ApplicationDbContext context,
+            RecordScope scope)
         {
             _context = context;
+            _scope = scope;
         }
 
 
@@ -28,9 +32,13 @@ namespace HrPortal.Controllers
         {
             var selectedYear = year ?? DateTime.Today.Year;
 
-            var balances = await _context.LeaveBalances
-                .Include(b => b.Employee)
-                .Include(b => b.LeaveType)
+            var visible = await _scope.VisibleToAsync(
+                _context.LeaveBalances
+                    .Include(b => b.Employee)
+                    .Include(b => b.LeaveType),
+                User);
+
+            var balances = await visible
                 .Where(b => b.Year == selectedYear)
                 .OrderBy(b => b.Employee.FirstName)
                 .ThenBy(b => b.Employee.LastName)

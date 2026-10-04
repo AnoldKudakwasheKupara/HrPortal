@@ -25,10 +25,14 @@ namespace HrPortal.Controllers
         private const int PageSize = 50;
 
         private readonly ApplicationDbContext _context;
+        private readonly RecordScope _scope;
 
-        public LeaveRequestController(ApplicationDbContext context)
+        public LeaveRequestController(
+            ApplicationDbContext context,
+            RecordScope scope)
         {
             _context = context;
+            _scope = scope;
         }
 
 
@@ -41,10 +45,14 @@ namespace HrPortal.Controllers
             int? employeeId,
             int page = 1)
         {
-            var query = _context.LeaveRequests
-                .Include(r => r.Employee)
-                .Include(r => r.LeaveType)
-                .AsQueryable();
+            // Scoped rather than trusting the role attribute
+            // alone: if this page is ever opened to more roles,
+            // it narrows to their own records by itself.
+            var query = await _scope.VisibleToAsync(
+                _context.LeaveRequests
+                    .Include(r => r.Employee)
+                    .Include(r => r.LeaveType),
+                User);
 
             if (status.HasValue)
                 query = query.Where(r => r.Status == status.Value);

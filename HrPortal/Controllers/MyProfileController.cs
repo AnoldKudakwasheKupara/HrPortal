@@ -1,6 +1,7 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Services;
 using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -21,15 +22,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
         private readonly CurrentUserService _currentUser;
+        private readonly IAuthorizationService _authorization;
 
         public MyProfileController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            IAuthorizationService authorization)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
+            _authorization = authorization;
         }
 
 
@@ -74,19 +78,21 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employeeId = await _currentUser.GetEmployeeIdAsync();
-
-            if (employeeId == null)
-                return View("NoEmployeeRecord");
-
-            // Scoped to the employee, so changing the id in the
-            // address bar cannot reach someone else's file.
             var document = await _context.EmployeeDocuments
-                .FirstOrDefaultAsync(d =>
-                    d.Id == id &&
-                    d.EmployeeId == employeeId.Value);
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (document == null)
+                return NotFound();
+
+            // The handler decides whether this file is yours, so
+            // changing the id in the address bar reaches nothing
+            // you are not entitled to.
+            var allowed = await _authorization.AuthorizeAsync(
+                User,
+                document,
+                Operations.View);
+
+            if (!allowed.Succeeded)
                 return NotFound();
 
             var fullPath =
@@ -120,17 +126,18 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkRead(int id)
         {
-            var employeeId = await _currentUser.GetEmployeeIdAsync();
-
-            if (employeeId == null)
-                return View("NoEmployeeRecord");
-
             var notification = await _context.Notifications
-                .FirstOrDefaultAsync(n =>
-                    n.Id == id &&
-                    n.EmployeeId == employeeId.Value);
+                .FirstOrDefaultAsync(n => n.Id == id);
 
             if (notification == null)
+                return NotFound();
+
+            var allowed = await _authorization.AuthorizeAsync(
+                User,
+                notification,
+                Operations.Manage);
+
+            if (!allowed.Succeeded)
                 return NotFound();
 
             notification.IsRead = true;

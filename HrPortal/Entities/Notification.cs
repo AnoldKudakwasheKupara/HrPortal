@@ -1,6 +1,8 @@
-﻿namespace HrPortal.Entities
+﻿using HrPortal.Security;
+
+namespace HrPortal.Entities
 {
-    public class Notification
+    public class Notification : IEmployeeOwned
     {
         public int Id { get; set; }
 

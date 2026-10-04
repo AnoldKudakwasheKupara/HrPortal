@@ -1,6 +1,8 @@
-﻿namespace HrPortal.Entities
+﻿using HrPortal.Security;
+
+namespace HrPortal.Entities
 {
-    public class EmployeeDocument
+    public class EmployeeDocument : IEmployeeOwned
     {
         public int Id { get; set; }
 

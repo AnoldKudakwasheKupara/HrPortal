@@ -70,6 +70,13 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<LeaveBalanceService>();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
+builder.Services.AddScoped<RecordScope>();
+
+// Scoped, not singleton: the handler resolves the caller's
+// employee record, which needs the request's DbContext.
+builder.Services.AddScoped<
+    IAuthorizationHandler,
+    EmployeeOwnedHandler>();
 
 builder.Services.AddControllersWithViews();
 
