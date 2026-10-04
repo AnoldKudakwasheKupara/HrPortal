@@ -1,0 +1,264 @@
+﻿@using HrPortal.Entities
+@model IEnumerable<HrPortal.Entities.LeaveRequest>
+
+@{
+    ViewData["Title"] = "Leave Requests";
+
+    var selectedStatus = ViewBag.SelectedStatus as LeaveRequestStatus?;
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Leave Requests</h2>
+
+            <p class="text-muted">
+                Every leave request and where it has got to.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            New Request
+        </a>
+
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get"
+                  class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+
+                    <label for="status"
+                           class="form-label">
+                        Status
+                    </label>
+
+                    <select id="status"
+                            name="status"
+                            asp-items="Html.GetEnumSelectList<LeaveRequestStatus>()"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Statuses --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-auto">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary">
+                        Filter
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var request in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @request.RequestNumber
+                                </strong>
+                            </td>
+
+                            <td>
+                                @request.Employee.FirstName
+                                @request.Employee.LastName
+                            </td>
+
+                            <td>
+                                @request.LeaveType.Name
+                            </td>
+
+                            <td>
+                                @request.StartDate.ToString("dd MMM yyyy")
+                                &ndash;
+                                @request.EndDate.ToString("dd MMM yyyy")
+                            </td>
+
+                            <td>
+                                @request.NumberOfDays.ToString("0.##")
+                            </td>
+
+                            <td>
+                                @switch (request.Status)
+                                {
+                                    case LeaveRequestStatus.Approved:
+                                        <span class="badge bg-success">
+                                            @request.Status
+                                        </span>
+                                        break;
+
+                                    case LeaveRequestStatus.Rejected:
+                                    case LeaveRequestStatus.HRRejected:
+                                        <span class="badge bg-danger">
+                                            @request.Status
+                                        </span>
+                                        break;
+
+                                    case LeaveRequestStatus.Cancelled:
+                                        <span class="badge bg-secondary">
+                                            @request.Status
+                                        </span>
+                                        break;
+
+                                    default:
+                                        <span class="badge bg-warning text-dark">
+                                            @request.Status
+                                        </span>
+                                        break;
+                                }
+                            </td>
+
+                            <td>
+
+                                <div class="dropdown">
+
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            type="button"
+                                            data-bs-toggle="dropdown">
+
+                                        Actions
+
+                                    </button>
+
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Details"
+                                               asp-route-id="@request.Id">
+
+                                                View
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-action="Edit"
+                                               asp-route-id="@request.Id">
+
+                                                Edit
+
+                                            </a>
+                                        </li>
+
+                                        <li>
+
+                                            <form asp-action="Cancel"
+                                                  asp-route-id="@request.Id"
+                                                  method="post">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="dropdown-item">
+
+                                                    Cancel Request
+
+                                                </button>
+
+                                            </form>
+
+                                        </li>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item text-danger"
+                                               asp-action="Delete"
+                                               asp-route-id="@request.Id">
+
+                                                Delete
+
+                                            </a>
+                                        </li>
+
+                                    </ul>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">
+                        No leave requests match this filter.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
