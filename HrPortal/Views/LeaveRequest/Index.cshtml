@@ -2,28 +2,26 @@
 @model IEnumerable<HrPortal.Entities.LeaveRequest>
 
 @{
-    ViewData["Title"] = "Leave Requests";
+    ViewData["Title"] = "All Leave Requests";
 
-    var selectedStatus = ViewBag.SelectedStatus as LeaveRequestStatus?;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var totalCount = (int)ViewBag.TotalCount;
+    var status = ViewBag.SelectedStatus as LeaveRequestStatus?;
+    var employeeId = ViewBag.SelectedEmployeeId as int?;
 }
 
 <div class="container-fluid">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="mb-4">
 
-        <div>
-            <h2>Leave Requests</h2>
+        <h2>All Leave Requests</h2>
 
-            <p class="text-muted">
-                Every leave request and where it has got to.
-            </p>
-        </div>
-
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            New Request
-        </a>
+        <p class="text-muted">
+            Every request across the organisation, for oversight
+            and reporting. Requests are raised by employees and
+            decided by the approvers, so nothing is changed here.
+        </p>
 
     </div>
 
@@ -32,13 +30,6 @@
     {
         <div class="alert alert-success">
             @TempData["Success"]
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">
-            @TempData["Error"]
         </div>
     }
 
@@ -51,10 +42,9 @@
                   method="get"
                   class="row g-2 align-items-end">
 
-                <div class="col-md-4">
+                <div class="col-md-3">
 
-                    <label for="status"
-                           class="form-label">
+                    <label for="status" class="form-label">
                         Status
                     </label>
 
@@ -63,9 +53,24 @@
                             asp-items="Html.GetEnumSelectList<LeaveRequestStatus>()"
                             class="form-select">
 
-                        <option value="">
-                            -- All Statuses --
-                        </option>
+                        <option value="">-- All Statuses --</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label for="employeeId" class="form-label">
+                        Employee
+                    </label>
+
+                    <select id="employeeId"
+                            name="employeeId"
+                            asp-items="ViewBag.Employees"
+                            class="form-select">
+
+                        <option value="">-- All Employees --</option>
 
                     </select>
 
@@ -114,9 +119,7 @@
                         <tr>
 
                             <td>
-                                <strong>
-                                    @request.RequestNumber
-                                </strong>
+                                <strong>@request.RequestNumber</strong>
                             </td>
 
                             <td>
@@ -169,76 +172,11 @@
                             </td>
 
                             <td>
-
-                                <div class="dropdown">
-
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
-
-                                        Actions
-
-                                    </button>
-
-                                    <ul class="dropdown-menu">
-
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@request.Id">
-
-                                                View
-
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@request.Id">
-
-                                                Edit
-
-                                            </a>
-                                        </li>
-
-                                        <li>
-
-                                            <form asp-action="Cancel"
-                                                  asp-route-id="@request.Id"
-                                                  method="post">
-
-                                                @Html.AntiForgeryToken()
-
-                                                <button type="submit"
-                                                        class="dropdown-item">
-
-                                                    Cancel Request
-
-                                                </button>
-
-                                            </form>
-
-                                        </li>
-
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item text-danger"
-                                               asp-action="Delete"
-                                               asp-route-id="@request.Id">
-
-                                                Delete
-
-                                            </a>
-                                        </li>
-
-                                    </ul>
-
-                                </div>
-
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-action="Details"
+                                   asp-route-id="@request.Id">
+                                    View
+                                </a>
                             </td>
 
                         </tr>
@@ -258,6 +196,44 @@
             </div>
 
         </div>
+
+
+        @if (totalPages > 1)
+        {
+            <div class="card-footer d-flex justify-content-between align-items-center">
+
+                <span class="text-muted">
+                    Page @(page) of @totalPages (@totalCount requests)
+                </span>
+
+                <div>
+
+                    @if (page > 1)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-action="Index"
+                           asp-route-page="@(page - 1)"
+                           asp-route-status="@status"
+                           asp-route-employeeId="@employeeId">
+                            Previous
+                        </a>
+                    }
+
+                    @if (page < totalPages)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-action="Index"
+                           asp-route-page="@(page + 1)"
+                           asp-route-status="@status"
+                           asp-route-employeeId="@employeeId">
+                            Next
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+        }
 
     </div>
 
