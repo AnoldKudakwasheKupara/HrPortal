@@ -3,8 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HrPortal</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - HR Portal</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <script>
         // Applied before first paint so the page never flashes
@@ -24,259 +23,87 @@
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom mb-4">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+
+    <div class="app-shell">
+
+        @*  offcanvas-lg: a drawer below the large breakpoint,
+            an ordinary column at and above it.                *@
+        <aside class="sidebar offcanvas-lg offcanvas-start"
+               tabindex="-1"
+               id="appSidebar"
+               aria-label="Main navigation">
+
+            <div class="sidebar-brand">
+
+                <a class="brand-link"
+                   asp-controller="Home"
+                   asp-action="Index">
                     <span class="brand-mark">HR</span>
-                    HR Portal
+                    <span class="brand-name">HR Portal</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
-                        </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="MyProfile"
-                               asp-action="Index">
-                                My Profile
-                            </a>
-                        </li>
+                <button type="button"
+                        class="btn-close d-lg-none"
+                        data-bs-dismiss="offcanvas"
+                        data-bs-target="#appSidebar"
+                        aria-label="Close navigation"></button>
 
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="MyLeave"
-                               asp-action="Index">
-                                My Leave
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="MyTraining"
-                               asp-action="Index">
-                                My Training
-                            </a>
-                        </li>
-
-                        @if (User.IsInRole("HR Officer") ||
-                             User.IsInRole("Administrator"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="LeaveApproval"
-                                   asp-action="Index">
-                                    Leave Review
-                                </a>
-                            </li>
-                        }
-
-                        @if (User.IsInRole("MD") ||
-                             User.IsInRole("Administrator"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="LeaveApproval"
-                                   asp-action="FinalApproval">
-                                    Final Approval
-                                </a>
-                            </li>
-                        }
-
-                        @if (User.IsInRole("Administrator") ||
-                             User.IsInRole("HR Officer"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-controller="Employee"
-                                   asp-action="Index">
-                                    Employees
-                                </a>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    Leave
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="LeaveRequest"
-                                           asp-action="Index">
-                                            All Requests
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="LeaveBalance"
-                                           asp-action="Index">
-                                            Leave Balances
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="LeaveType"
-                                           asp-action="Index">
-                                            Leave Types
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    Training
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="TrainingCourse"
-                                           asp-action="Index">
-                                            Courses
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="TrainingAssignment"
-                                           asp-action="Index">
-                                            Assignments
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="TrainingMaterial"
-                                           asp-action="Index">
-                                            Materials
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="TrainingFeedback"
-                                           asp-action="Index">
-                                            Feedback
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    Documents
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="EmployeeDocument"
-                                           asp-action="Index">
-                                            Employee Documents
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="DocumentCategory"
-                                           asp-action="Index">
-                                            Categories
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-
-                        @if (User.IsInRole("Administrator"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   role="button"
-                                   data-bs-toggle="dropdown">
-                                    System
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="Department"
-                                           asp-action="Index">
-                                            Departments
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="Role"
-                                           asp-action="Index">
-                                            Roles
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="ApprovalConfiguration"
-                                           asp-action="Index">
-                                            Approval Configuration
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="Notification"
-                                           asp-action="Index">
-                                            Notifications
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="AuditLog"
-                                           asp-action="Index">
-                                            Audit Log
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                    </ul>
-                    <div class="d-flex align-items-center gap-2">
-
-                        <button type="button"
-                                class="theme-toggle"
-                                id="themeToggle"
-                                title="Switch between light and dark"
-                                aria-label="Switch between light and dark">
-                            <span id="themeToggleIcon">&#9789;</span>
-                        </button>
-
-                        <partial name="_LoginPartial" />
-
-                    </div>
-                </div>
             </div>
-        </nav>
-    </header>
-    <div class="container-xxl">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <div class="sidebar-scroll">
+                <partial name="_Sidebar" />
+            </div>
+
+        </aside>
+
+
+        <div class="app-main">
+
+            <header class="topbar">
+
+                <button type="button"
+                        class="topbar-burger d-lg-none"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#appSidebar"
+                        aria-controls="appSidebar"
+                        aria-label="Open navigation">
+                    <span aria-hidden="true">&#9776;</span>
+                </button>
+
+                <div class="topbar-title">
+                    @ViewData["Title"]
+                </div>
+
+                <div class="topbar-actions">
+
+                    <button type="button"
+                            class="theme-toggle"
+                            id="themeToggle"
+                            title="Switch between light and dark"
+                            aria-label="Switch between light and dark">
+                        <span id="themeToggleIcon">&#9789;</span>
+                    </button>
+
+                    <partial name="_LoginPartial" />
+
+                </div>
+
+            </header>
+
+            <main role="main" class="app-content">
+                @RenderBody()
+            </main>
+
+            <footer class="app-footer">
+                &copy; 2026 HR Portal
+                &middot;
+                <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </footer>
+
+        </div>
+
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - HrPortal - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

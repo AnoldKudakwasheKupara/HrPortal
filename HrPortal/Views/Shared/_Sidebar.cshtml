@@ -1,0 +1,206 @@
+﻿@*  The left navigation.
+
+    A sidebar has room to show the whole structure at once, so
+    the sections are flat lists under headings rather than
+    dropdowns: nothing is hidden behind a click, and the current
+    page is visible in context.                                *@
+
+@functions {
+    /// <summary>
+    /// Marks the link for the page being viewed. Matching on the
+    /// controller alone is right for most entries, since a
+    /// section's list, details and edit pages all belong to the
+    /// same nav item; an action is given only where one
+    /// controller serves two separate entries.
+    /// </summary>
+    string Active(string controller, string? action = null)
+    {
+        var route = ViewContext.RouteData.Values;
+
+        var onController = string.Equals(
+            route["controller"] as string,
+            controller,
+            StringComparison.OrdinalIgnoreCase);
+
+        if (!onController)
+            return string.Empty;
+
+        if (action == null)
+            return "active";
+
+        return string.Equals(
+            route["action"] as string,
+            action,
+            StringComparison.OrdinalIgnoreCase)
+                ? "active"
+                : string.Empty;
+    }
+}
+
+<nav class="sidebar-nav">
+
+    <a class="sidebar-link @Active("Home")"
+       asp-controller="Home"
+       asp-action="Index">
+        Dashboard
+    </a>
+
+
+    <div class="sidebar-section">Mine</div>
+
+    <a class="sidebar-link @Active("MyProfile")"
+       asp-controller="MyProfile"
+       asp-action="Index">
+        My Profile
+    </a>
+
+    <a class="sidebar-link @Active("MyLeave")"
+       asp-controller="MyLeave"
+       asp-action="Index">
+        My Leave
+    </a>
+
+    <a class="sidebar-link @Active("MyTraining")"
+       asp-controller="MyTraining"
+       asp-action="Index">
+        My Training
+    </a>
+
+
+    @if (User.IsInRole("HR Officer") ||
+         User.IsInRole("MD") ||
+         User.IsInRole("Administrator"))
+    {
+        <div class="sidebar-section">Approvals</div>
+
+        @if (User.IsInRole("HR Officer") ||
+             User.IsInRole("Administrator"))
+        {
+            <a class="sidebar-link @Active("LeaveApproval", "Index")"
+               asp-controller="LeaveApproval"
+               asp-action="Index">
+                Leave Review
+            </a>
+        }
+
+        @if (User.IsInRole("MD") ||
+             User.IsInRole("Administrator"))
+        {
+            <a class="sidebar-link @Active("LeaveApproval", "FinalApproval")"
+               asp-controller="LeaveApproval"
+               asp-action="FinalApproval">
+                Final Approval
+            </a>
+        }
+    }
+
+
+    @if (User.IsInRole("Administrator") ||
+         User.IsInRole("HR Officer"))
+    {
+        <div class="sidebar-section">People</div>
+
+        <a class="sidebar-link @Active("Employee")"
+           asp-controller="Employee"
+           asp-action="Index">
+            Employees
+        </a>
+
+        <a class="sidebar-link @Active("EmployeeDocument")"
+           asp-controller="EmployeeDocument"
+           asp-action="Index">
+            Employee Documents
+        </a>
+
+
+        <div class="sidebar-section">Leave</div>
+
+        <a class="sidebar-link @Active("LeaveRequest")"
+           asp-controller="LeaveRequest"
+           asp-action="Index">
+            All Requests
+        </a>
+
+        <a class="sidebar-link @Active("LeaveBalance")"
+           asp-controller="LeaveBalance"
+           asp-action="Index">
+            Leave Balances
+        </a>
+
+        <a class="sidebar-link @Active("LeaveType")"
+           asp-controller="LeaveType"
+           asp-action="Index">
+            Leave Types
+        </a>
+
+
+        <div class="sidebar-section">Training</div>
+
+        <a class="sidebar-link @Active("TrainingCourse")"
+           asp-controller="TrainingCourse"
+           asp-action="Index">
+            Courses
+        </a>
+
+        <a class="sidebar-link @Active("TrainingAssignment")"
+           asp-controller="TrainingAssignment"
+           asp-action="Index">
+            Assignments
+        </a>
+
+        <a class="sidebar-link @Active("TrainingMaterial")"
+           asp-controller="TrainingMaterial"
+           asp-action="Index">
+            Materials
+        </a>
+
+        <a class="sidebar-link @Active("TrainingFeedback")"
+           asp-controller="TrainingFeedback"
+           asp-action="Index">
+            Feedback
+        </a>
+    }
+
+
+    @if (User.IsInRole("Administrator"))
+    {
+        <div class="sidebar-section">System</div>
+
+        <a class="sidebar-link @Active("Department")"
+           asp-controller="Department"
+           asp-action="Index">
+            Departments
+        </a>
+
+        <a class="sidebar-link @Active("DocumentCategory")"
+           asp-controller="DocumentCategory"
+           asp-action="Index">
+            Document Categories
+        </a>
+
+        <a class="sidebar-link @Active("Role")"
+           asp-controller="Role"
+           asp-action="Index">
+            Roles
+        </a>
+
+        <a class="sidebar-link @Active("ApprovalConfiguration")"
+           asp-controller="ApprovalConfiguration"
+           asp-action="Index">
+            Approval Configuration
+        </a>
+
+        <a class="sidebar-link @Active("Notification")"
+           asp-controller="Notification"
+           asp-action="Index">
+            Notifications
+        </a>
+
+        <a class="sidebar-link @Active("AuditLog")"
+           asp-controller="AuditLog"
+           asp-action="Index">
+            Audit Log
+        </a>
+    }
+
+</nav>

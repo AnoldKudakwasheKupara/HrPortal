@@ -12,7 +12,9 @@
     {
         var currentUser = await UserManager.GetUserAsync(User);
 
-        <li class="nav-item">
+        @*  Hidden on narrow screens so the page title is not
+            squeezed out; Sign out stays reachable.            *@
+        <li class="nav-item d-none d-md-block">
             <a class="nav-link"
                asp-area="Identity"
                asp-page="/Account/Manage/Index"
