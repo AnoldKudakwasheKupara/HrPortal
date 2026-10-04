@@ -97,6 +97,7 @@
                             <th>Course</th>
                             <th>Employee</th>
                             <th>Assigned</th>
+                            <th>Due</th>
                             <th>Completed</th>
                             <th>Feedback</th>
                             <th></th>
@@ -122,6 +123,30 @@
 
                             <td>
                                 @assignment.AssignedAt.ToString("dd MMM yyyy")
+                            </td>
+
+                            <td>
+                                @if (assignment.DueDate.HasValue)
+                                {
+                                    if (!assignment.IsCompleted &&
+                                        assignment.DueDate.Value.Date < DateTime.Today)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Overdue
+                                            @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        No due date
+                                    </span>
+                                }
                             </td>
 
                             <td>

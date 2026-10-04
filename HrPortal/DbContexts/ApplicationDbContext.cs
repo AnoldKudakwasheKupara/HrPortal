@@ -145,6 +145,14 @@ namespace HrPortal.DbContexts
                     .HasConversion<string>()
                     .HasMaxLength(50);
 
+                entity.Property(h => h.PreviousStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.Property(h => h.NewStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
                 entity.Property(h => h.Comment)
                     .HasMaxLength(2000);
 

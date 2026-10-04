@@ -93,6 +93,37 @@
 
                 <div class="col-md-4">
 
+                    <strong>Due Date</strong>
+
+                    <p>
+                        @if (Model.DueDate.HasValue)
+                        {
+                            if (!Model.IsCompleted &&
+                                Model.DueDate.Value.Date < DateTime.Today)
+                            {
+                                <span class="badge bg-danger">
+                                    Overdue
+                                    @Model.DueDate.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                @Model.DueDate.Value.ToString("dd MMM yyyy")
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                No due date
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
                     <strong>Status</strong>
 
                     <p>

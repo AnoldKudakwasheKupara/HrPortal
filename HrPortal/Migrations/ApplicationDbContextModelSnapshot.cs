@@ -466,6 +466,16 @@ namespace HrPortal.Migrations
                     b.Property<int>("LeaveRequestId")
                         .HasColumnType("int");
 
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ActionedByEmployeeId");
@@ -559,6 +569,9 @@ namespace HrPortal.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("EmployeeId")

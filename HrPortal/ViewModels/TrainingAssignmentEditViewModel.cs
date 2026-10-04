@@ -14,6 +14,10 @@ namespace HrPortal.ViewModels
         [Display(Name = "Employee")]
         public int EmployeeId { get; set; }
 
+        [Display(Name = "Due Date")]
+        [DataType(DataType.Date)]
+        public DateTime? DueDate { get; set; }
+
         [Display(Name = "Completed")]
         public bool IsCompleted { get; set; }
 

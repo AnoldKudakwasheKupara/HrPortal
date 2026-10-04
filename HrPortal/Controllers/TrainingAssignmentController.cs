@@ -147,6 +147,7 @@ namespace HrPortal.Controllers
                     {
                         TrainingCourseId = model.TrainingCourseId,
                         EmployeeId = employeeId,
+                        DueDate = model.DueDate,
                         IsCompleted = false,
                         AssignedAt = DateTime.UtcNow
                     });
@@ -189,6 +190,7 @@ namespace HrPortal.Controllers
                 Id = assignment.Id,
                 TrainingCourseId = assignment.TrainingCourseId,
                 EmployeeId = assignment.EmployeeId,
+                DueDate = assignment.DueDate,
                 IsCompleted = assignment.IsCompleted,
                 CompletedAt = assignment.CompletedAt
             };
@@ -245,6 +247,7 @@ namespace HrPortal.Controllers
 
             assignment.TrainingCourseId = model.TrainingCourseId;
             assignment.EmployeeId = model.EmployeeId;
+            assignment.DueDate = model.DueDate;
             assignment.IsCompleted = model.IsCompleted;
 
             // Keep the completion date consistent with the flag.

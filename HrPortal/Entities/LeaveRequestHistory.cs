@@ -10,6 +10,15 @@
 
         public LeaveRequestAction Action { get; set; }
 
+        /// <summary>
+        /// The status the request moved from and to. Kept on the
+        /// entry itself so the trail still reads correctly after
+        /// the request has moved on.
+        /// </summary>
+        public LeaveRequestStatus PreviousStatus { get; set; }
+
+        public LeaveRequestStatus NewStatus { get; set; }
+
         public string? Comment { get; set; }
 
         public DateTime ActionDate { get; set; }

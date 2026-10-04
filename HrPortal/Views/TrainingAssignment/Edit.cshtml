@@ -82,6 +82,23 @@
 
                     <div class="col-md-6 mb-3">
 
+                        <label asp-for="DueDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="DueDate"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="DueDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
                         <label asp-for="CompletedAt"
                                class="form-label">
                         </label>
