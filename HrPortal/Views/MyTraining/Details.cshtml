@@ -1,0 +1,210 @@
+﻿@model HrPortal.Entities.TrainingAssignment
+
+@{
+    ViewData["Title"] = "Training Course";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.TrainingCourse.Title</h2>
+
+            <p class="text-muted">
+                Assigned
+                @Model.AssignedAt.ToString("dd MMM yyyy")
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Back
+        </a>
+
+    </div>
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Trainer</strong>
+
+                    <p>@(Model.TrainingCourse.Trainer ?? "Not set")</p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Training Date</strong>
+
+                    <p>
+                        @if (Model.TrainingCourse.TrainingDate.HasValue)
+                        {
+                            @Model.TrainingCourse.TrainingDate.Value.ToString("dd MMM yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not scheduled</span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Due</strong>
+
+                    <p>
+                        @if (Model.DueDate.HasValue)
+                        {
+                            @Model.DueDate.Value.ToString("dd MMM yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">No due date</span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.TrainingCourse.Description
+                          ?? "No description provided.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+
+            <strong>Course Materials</strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.TrainingCourse.Materials.Any())
+            {
+                <ul class="list-group list-group-flush">
+
+                @foreach (var material in Model.TrainingCourse.Materials
+                    .OrderByDescending(m => m.UploadedAt))
+                {
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+
+                        <span>
+                            @material.OriginalFileName
+
+                            @if (!string.IsNullOrWhiteSpace(material.Description))
+                            {
+                                <span class="text-muted">
+                                    &mdash; @material.Description
+                                </span>
+                            }
+                        </span>
+
+                        <a class="btn btn-sm btn-outline-primary"
+                           asp-action="Material"
+                           asp-route-id="@material.Id">
+                            Download
+                        </a>
+
+                    </li>
+                }
+
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No materials have been uploaded for this course.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            @if (Model.IsCompleted)
+            {
+                <p>
+                    <span class="badge bg-success">Completed</span>
+                    on @Model.CompletedAt?.ToString("dd MMM yyyy")
+                </p>
+
+                @if (Model.Feedback == null)
+                {
+                    <a asp-action="Feedback"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-primary">
+                        Give feedback
+                    </a>
+                }
+                else
+                {
+                    <p class="mb-0 text-muted">
+                        You rated this course
+                        @Model.Feedback.Rating out of 5.
+                    </p>
+                }
+            }
+            else
+            {
+                <p>
+                    When you have worked through the materials, mark
+                    this training as complete.
+                </p>
+
+                <form asp-action="Complete"
+                      asp-route-id="@Model.Id"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-success">
+                        Mark as completed
+                    </button>
+
+                </form>
+            }
+
+        </div>
+
+    </div>
+
+</div>

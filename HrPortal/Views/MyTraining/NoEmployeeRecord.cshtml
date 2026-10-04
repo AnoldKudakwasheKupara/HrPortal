@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "No Employee Record";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>No Employee Record</h2>
+
+    </div>
+
+    <div class="alert alert-info">
+
+        <p>
+            Your sign-in account is not linked to an employee
+            record, so there is no personal leave to show.
+        </p>
+
+        <p class="mb-0">
+            An administrator can link it by editing your employee
+            record, or by creating one for you.
+        </p>
+
+    </div>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-secondary">
+
+        Back to Home
+
+    </a>
+
+</div>

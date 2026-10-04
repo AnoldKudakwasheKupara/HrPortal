@@ -1,0 +1,253 @@
+﻿@model HrPortal.ViewModels.MyProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>
+            @Model.Employee.FirstName
+            @Model.Employee.LastName
+        </h2>
+
+        <p class="text-muted">
+            Your employment information, documents and notifications.
+        </p>
+
+    </div>
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <strong>Employment Information</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <strong>Employee Number</strong>
+                    <p>@Model.Employee.EmployeeNumber</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Department</strong>
+                    <p>@Model.Employee.Department.Name</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Date Joined</strong>
+                    <p>@Model.Employee.DateJoined.ToString("dd MMM yyyy")</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Email</strong>
+                    <p>@Model.Employee.Email</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Phone Number</strong>
+                    <p>@(Model.Employee.PhoneNumber ?? "Not recorded")</p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>National ID</strong>
+                    <p>@(Model.Employee.NationalId ?? "Not recorded")</p>
+                </div>
+
+            </div>
+
+            <p class="text-muted mb-0">
+                To correct any of this, speak to HR.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            <strong>My Documents</strong>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Documents.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Category</th>
+                                <th>Uploaded</th>
+                                <th>Expires</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var document in Model.Documents)
+                        {
+                            <tr>
+
+                                <td>@document.OriginalFileName</td>
+
+                                <td>@document.DocumentCategory.Name</td>
+
+                                <td>
+                                    @document.UploadedAt.ToString("dd MMM yyyy")
+                                </td>
+
+                                <td>
+                                    @if (document.ExpiryDate.HasValue)
+                                    {
+                                        if (document.ExpiryDate.Value.Date < DateTime.Today)
+                                        {
+                                            <span class="badge bg-danger">
+                                                Expired
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            @document.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">None</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Document"
+                                       asp-route-id="@document.Id">
+                                        Download
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    There are no documents on your file.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <strong>Notifications</strong>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Notifications.Any())
+            {
+                <ul class="list-group list-group-flush">
+
+                @foreach (var notification in Model.Notifications)
+                {
+                    <li class="list-group-item px-0">
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <div>
+                                <strong>
+                                    @notification.Title
+
+                                    @if (!notification.IsRead)
+                                    {
+                                        <span class="badge bg-primary">
+                                            New
+                                        </span>
+                                    }
+                                </strong>
+
+                                <div>@notification.Message</div>
+
+                                <small class="text-muted">
+                                    @notification.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                </small>
+                            </div>
+
+                            <div class="text-nowrap">
+
+                                @if (!string.IsNullOrWhiteSpace(notification.Link))
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       href="@notification.Link">
+                                        Open
+                                    </a>
+                                }
+
+                                @if (!notification.IsRead)
+                                {
+                                    <form asp-action="MarkRead"
+                                          asp-route-id="@notification.Id"
+                                          method="post"
+                                          class="d-inline">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
+                                            Mark read
+                                        </button>
+
+                                    </form>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </li>
+                }
+
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    You have no notifications.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>
