@@ -62,7 +62,12 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<FileStorageService>();
+builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<LeaveBalanceService>();
 
 builder.Services.AddControllersWithViews();
 
