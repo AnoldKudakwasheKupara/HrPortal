@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>
             @Model.Employee.FirstName
@@ -39,33 +39,33 @@
             <div class="row">
 
                 <div class="col-md-4">
-                    <strong>Employee Number</strong>
-                    <p>@Model.Employee.EmployeeNumber</p>
+                    <span class="field-label">Employee Number</span>
+                    <p class="field-value">@Model.Employee.EmployeeNumber</p>
                 </div>
 
                 <div class="col-md-4">
-                    <strong>Department</strong>
-                    <p>@Model.Employee.Department.Name</p>
+                    <span class="field-label">Department</span>
+                    <p class="field-value">@Model.Employee.Department.Name</p>
                 </div>
 
                 <div class="col-md-4">
-                    <strong>Date Joined</strong>
-                    <p>@Model.Employee.DateJoined.ToString("dd MMM yyyy")</p>
+                    <span class="field-label">Date Joined</span>
+                    <p class="field-value">@Model.Employee.DateJoined.ToString("dd MMM yyyy")</p>
                 </div>
 
                 <div class="col-md-4">
-                    <strong>Email</strong>
-                    <p>@Model.Employee.Email</p>
+                    <span class="field-label">Email</span>
+                    <p class="field-value">@Model.Employee.Email</p>
                 </div>
 
                 <div class="col-md-4">
-                    <strong>Phone Number</strong>
-                    <p>@(Model.Employee.PhoneNumber ?? "Not recorded")</p>
+                    <span class="field-label">Phone Number</span>
+                    <p class="field-value">@(Model.Employee.PhoneNumber ?? "Not recorded")</p>
                 </div>
 
                 <div class="col-md-4">
-                    <strong>National ID</strong>
-                    <p>@(Model.Employee.NationalId ?? "Not recorded")</p>
+                    <span class="field-label">National ID</span>
+                    <p class="field-value">@(Model.Employee.NationalId ?? "Not recorded")</p>
                 </div>
 
             </div>

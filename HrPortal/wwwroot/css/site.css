@@ -34,12 +34,18 @@
     --critical-ink:   #a32020;
     --critical-wash:  #fbeaea;
 
-    --radius:     10px;
-    --radius-lg:  14px;
+    --radius-sm:  5px;
+    --radius:     7px;
+    --radius-lg:  9px;
 
-    --shadow-sm: 0 1px 2px rgba(11, 11, 11, .05);
-    --shadow:    0 1px 3px rgba(11, 11, 11, .07),
-                 0 6px 18px rgba(11, 11, 11, .05);
+    --shadow-sm: 0 1px 1px rgba(11, 11, 11, .04);
+    --shadow:    0 1px 2px rgba(11, 11, 11, .06),
+                 0 4px 12px rgba(11, 11, 11, .05);
+
+    /* Widths that keep a line of text readable instead of
+       letting a form stretch the full screen. */
+    --measure-form:  720px;
+    --measure-page: 1320px;
 }
 
 [data-bs-theme="dark"] {
@@ -82,12 +88,6 @@
 
 html {
     font-size: 15px;
-}
-
-@media (min-width: 768px) {
-    html {
-        font-size: 16px;
-    }
 }
 
 body {
@@ -154,15 +154,22 @@ a:hover {
 }
 
 .card-header {
-    background-color: transparent;
+    background-color: var(--surface-sunken);
     border-bottom: 1px solid var(--hairline);
-    padding: .85rem 1.1rem;
+    padding: .6rem .9rem;
     font-weight: 600;
+    font-size: .88rem;
     color: var(--ink);
 }
 
 .card-body {
-    padding: 1.1rem;
+    padding: .9rem;
+}
+
+/* A card whose only content is a table needs no inner padding:
+   the table supplies its own. */
+.card-body.is-table {
+    padding: 0;
 }
 
 .card-footer {
@@ -182,20 +189,23 @@ a:hover {
 }
 
 .table > thead th {
-    font-size: .72rem;
-    font-weight: 600;
+    font-size: .7rem;
+    font-weight: 650;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .05em;
     color: var(--ink-secondary);
+    background-color: var(--surface-sunken);
     border-bottom: 1px solid var(--hairline);
-    padding: .6rem .75rem;
+    padding: .5rem .85rem;
+    white-space: nowrap;
 }
 
 .table > tbody td {
     border-bottom: 1px solid var(--hairline);
-    padding: .7rem .75rem;
+    padding: .5rem .85rem;
     vertical-align: middle;
     color: var(--ink-secondary);
+    font-size: .9rem;
 }
 
 .table > tbody tr:last-child td {
@@ -224,15 +234,19 @@ a:hover {
    ========================================================== */
 
 .btn {
-    border-radius: 9px;
+    border-radius: var(--radius);
     font-weight: 550;
-    padding: .45rem .9rem;
+    font-size: .9rem;
+    padding: .38rem .75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
 }
 
 .btn-sm {
-    border-radius: 7px;
-    padding: .28rem .6rem;
-    font-size: .83rem;
+    border-radius: var(--radius-sm);
+    padding: .22rem .5rem;
+    font-size: .82rem;
 }
 
 .btn-primary {
@@ -346,17 +360,18 @@ a:hover {
 
 .form-label {
     font-weight: 550;
-    font-size: .87rem;
+    font-size: .83rem;
     color: var(--ink-secondary);
-    margin-bottom: .3rem;
+    margin-bottom: .2rem;
 }
 
 .form-control,
 .form-select {
     background-color: var(--surface);
     border: 1px solid var(--hairline);
-    border-radius: 9px;
-    padding: .5rem .7rem;
+    border-radius: var(--radius);
+    padding: .38rem .6rem;
+    font-size: .92rem;
     color: var(--ink);
 }
 
@@ -680,8 +695,9 @@ a.stat-tile:hover {
 }
 
 .sidebar-link {
-    display: block;
-    padding: .45rem .65rem;
+    display: flex;
+    align-items: center;
+    padding: .38rem .6rem;
     border-radius: 8px;
     color: var(--ink-secondary);
     font-size: .92rem;
@@ -714,108 +730,291 @@ a.stat-tile:hover {
 
 
 /* ==========================================================
-   Top bar
-
-   A slim strip for the page title, the drawer button on small
-   screens, and the account controls.
+   Icons
    ========================================================== */
 
-.topbar {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    padding: .6rem 1.5rem;
-    background-color: var(--surface);
-    border-bottom: 1px solid var(--hairline);
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-    min-height: 56px;
+.icon {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    /* Sits on the text baseline rather than the line box. */
+    vertical-align: -0.135em;
 }
 
-.topbar-title {
-    font-weight: 650;
-    font-size: 1rem;
+.icon-button {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--ink-secondary);
+    padding: .3rem;
+    line-height: 1;
+    font-size: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button:hover {
+    background-color: var(--surface-sunken);
+    border-color: var(--hairline);
     color: var(--ink);
-    letter-spacing: -0.01em;
-    /* Pushes the account controls to the far edge. */
-    margin-right: auto;
+}
+
+
+/* ==========================================================
+   Sidebar foot
+
+   The account lives here so the content area needs no second
+   header bar repeating the page title.
+   ========================================================== */
+
+.sidebar-foot {
+    flex-shrink: 0;
+    border-top: 1px solid var(--hairline);
+    padding: .5rem .6rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.account-link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: .3rem .4rem;
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.account-link:hover {
+    background-color: var(--surface-sunken);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.account-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background-color: var(--accent-wash);
+    color: var(--accent-strong);
+    font-size: .76rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.account-name {
+    font-size: .85rem;
+    font-weight: 550;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.topbar-actions {
+.sidebar-foot-actions {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: .15rem;
     flex-shrink: 0;
 }
 
-.topbar-burger {
-    background: transparent;
-    border: 1px solid var(--hairline);
-    border-radius: 8px;
-    color: var(--ink-secondary);
-    padding: .25rem .6rem;
-    font-size: 1.1rem;
-    line-height: 1.2;
+.sidebar-foot-actions form {
+    display: inline-flex;
 }
 
-.topbar-burger:hover {
-    background-color: var(--surface-sunken);
-    color: var(--ink);
+.sidebar-link .icon {
+    margin-right: .55rem;
+    opacity: .75;
+    font-size: 1.05rem;
 }
 
-/* The account links live in the top bar now, so they are
-   plain links rather than navbar items. */
-.topbar-actions .navbar-nav {
-    flex-direction: row;
+.sidebar-link.active .icon {
+    opacity: 1;
+}
+
+
+/* ==========================================================
+   Mobile bar
+   ========================================================== */
+
+.mobile-bar {
+    display: flex;
     align-items: center;
-    gap: .25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    gap: .6rem;
+    padding: .5rem .9rem;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--hairline);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
 }
 
-.topbar-actions .nav-link {
-    color: var(--ink-secondary);
-    font-size: .9rem;
-    font-weight: 500;
-    padding: .3rem .55rem;
-    border-radius: 8px;
-    text-decoration: none;
-    background: transparent;
-    border: 0;
-}
-
-.topbar-actions .nav-link:hover {
-    background-color: var(--surface-sunken);
+.mobile-bar-title {
+    font-weight: 650;
+    font-size: .95rem;
     color: var(--ink);
-    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 
-/* Pages set their own container, so inside the shell the
-   Bootstrap containers should not add a second gutter. */
+/* ==========================================================
+   Content measure
+
+   Nothing runs the full width of a wide monitor. A form is
+   capped near the readable measure so a label never sits a
+   hand's width from its field; list pages get a wider cap.
+   ========================================================== */
+
+.app-content {
+    flex: 1 0 auto;
+    padding: 1.4rem 1.5rem 2rem;
+}
+
 .app-content > .container,
 .app-content > .container-fluid,
 .app-content > .container-xxl {
     padding-left: 0;
     padding-right: 0;
-    max-width: none;
+    max-width: var(--measure-page);
+    margin-left: 0;
 }
 
-@media (max-width: 991.98px) {
-    .app-content {
-        padding: 1rem;
-    }
+/* Forms and single-record pages read badly when stretched. */
+.app-content > .container {
+    max-width: var(--measure-form);
+}
 
-    .app-footer {
-        padding: .9rem 1rem;
-    }
 
-    .topbar {
-        padding: .6rem 1rem;
-    }
+/* ==========================================================
+   Page header
+
+   One title per page. The sidebar carries the section, the
+   page header carries the record and its actions.
+   ========================================================== */
+
+.page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding-bottom: .85rem;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.page-head-simple {
+    margin-bottom: 1rem;
+    padding-bottom: .85rem;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.page-head h1,
+.page-head h2,
+.page-head-simple h1,
+.page-head-simple h2 {
+    font-size: 1.35rem;
+    margin-bottom: .1rem;
+}
+
+.page-head p,
+.page-head-simple p {
+    color: var(--ink-secondary);
+    margin-bottom: 0;
+    font-size: .88rem;
+}
+
+.page-head-actions {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-shrink: 0;
+}
+
+
+/* ==========================================================
+   Record detail
+
+   Label over value, in a grid. Replaces stacked
+   <strong>/<p> pairs, which gave the label and the value
+   nearly the same weight and left an empty field showing as
+   blank space.
+   ========================================================== */
+
+.record-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: .9rem 1.4rem;
+}
+
+.record-grid.is-wide {
+    grid-template-columns: 1fr;
+}
+
+.field-label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-secondary);
+    margin-bottom: .15rem;
+}
+
+.field-value {
+    font-size: .94rem;
+    color: var(--ink);
+    margin: 0;
+}
+
+/* An absent value says so rather than leaving a hole. */
+.field-value.is-empty {
+    color: var(--ink-muted);
+    font-style: italic;
+}
+
+
+/* ==========================================================
+   Forms
+   ========================================================== */
+
+.form-section {
+    border-top: 1px solid var(--hairline);
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+}
+
+.form-section-title {
+    font-size: .78rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-secondary);
+    margin-bottom: .7rem;
+}
+
+/* Actions always sit together at the foot of the form, on the
+   left, so the primary action is where the eye already is
+   after the last field. */
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    border-top: 1px solid var(--hairline);
+    margin-top: 1.1rem;
+    padding-top: .9rem;
+}
+
+.form-hint {
+    font-size: .8rem;
+    color: var(--ink-secondary);
+    margin-top: .2rem;
 }

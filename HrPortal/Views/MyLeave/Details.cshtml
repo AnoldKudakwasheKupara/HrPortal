@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-head">
 
         <div>
             <h2>@Model.RequestNumber</h2>
@@ -42,18 +42,18 @@
 
                 <div class="col-md-4">
 
-                    <strong>Leave Type</strong>
+                    <span class="field-label">Leave Type</span>
 
-                    <p>@Model.LeaveType.Name</p>
+                    <p class="field-value">@Model.LeaveType.Name</p>
 
                 </div>
 
 
                 <div class="col-md-4">
 
-                    <strong>Dates</strong>
+                    <span class="field-label">Dates</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.StartDate.ToString("dd MMM yyyy")
                         &ndash;
                         @Model.EndDate.ToString("dd MMM yyyy")
@@ -64,18 +64,18 @@
 
                 <div class="col-md-4">
 
-                    <strong>Working Days</strong>
+                    <span class="field-label">Working Days</span>
 
-                    <p>@Model.NumberOfDays.ToString("0.##")</p>
+                    <p class="field-value">@Model.NumberOfDays.ToString("0.##")</p>
 
                 </div>
 
 
                 <div class="col-md-4">
 
-                    <strong>Status</strong>
+                    <span class="field-label">Status</span>
 
-                    <p>
+                    <p class="field-value">
                         <span class="badge bg-secondary">
                             @Model.Status
                         </span>
@@ -86,9 +86,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Submitted</strong>
+                    <span class="field-label">Submitted</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")
                     </p>
 
@@ -97,9 +97,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Completed</strong>
+                    <span class="field-label">Completed</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.CompletedAt.HasValue)
                         {
                             @Model.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
@@ -117,9 +117,9 @@
 
                 <div class="col-12">
 
-                    <strong>Reason</strong>
+                    <span class="field-label">Reason</span>
 
-                    <p>@(Model.Reason ?? "No reason given.")</p>
+                    <p class="field-value">@(Model.Reason ?? "No reason given.")</p>
 
                 </div>
 

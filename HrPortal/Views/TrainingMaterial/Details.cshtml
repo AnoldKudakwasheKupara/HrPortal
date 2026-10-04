@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-head">
 
         <div>
             <h2>@Model.OriginalFileName</h2>
@@ -54,9 +54,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>File Name</strong>
+                    <span class="field-label">File Name</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.OriginalFileName
                     </p>
 
@@ -65,9 +65,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>Course</strong>
+                    <span class="field-label">Course</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.TrainingCourse.Title
                     </p>
 
@@ -76,9 +76,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>Uploaded By</strong>
+                    <span class="field-label">Uploaded By</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedByEmployee.FirstName
                         @Model.UploadedByEmployee.LastName
                     </p>
@@ -88,9 +88,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>Uploaded</strong>
+                    <span class="field-label">Uploaded</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
                     </p>
 
@@ -99,9 +99,9 @@
 
                 <div class="col-12">
 
-                    <strong>Description</strong>
+                    <span class="field-label">Description</span>
 
-                    <p>
+                    <p class="field-value">
                         @(Model.Description ?? "No description provided.")
                     </p>
 

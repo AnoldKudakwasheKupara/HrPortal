@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using HrPortal.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
@@ -23,6 +28,8 @@
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
 </head>
 <body>
+
+    <partial name="_Icons" />
 
     <div class="app-shell">
 
@@ -54,39 +61,91 @@
                 <partial name="_Sidebar" />
             </div>
 
+            @*  The account sits at the foot of the rail, which
+                frees the content area of a second header bar
+                repeating the page title.                      *@
+            <div class="sidebar-foot">
+
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    var currentUser = await UserManager.GetUserAsync(User);
+
+                    <a class="account-link"
+                       asp-area="Identity"
+                       asp-page="/Account/Manage/Index"
+                       title="Manage your account">
+
+                        <span class="account-avatar" aria-hidden="true">
+                            @(string.IsNullOrWhiteSpace(currentUser?.FullName)
+                                ? "?"
+                                : currentUser!.FullName.Trim()[0].ToString().ToUpper())
+                        </span>
+
+                        <span class="account-name">
+                            @(currentUser?.FullName ?? User.Identity?.Name)
+                        </span>
+
+                    </a>
+                }
+
+                <div class="sidebar-foot-actions">
+
+                    <button type="button"
+                            class="icon-button"
+                            id="themeToggle"
+                            title="Switch between light and dark"
+                            aria-label="Switch between light and dark">
+                        <svg class="icon" aria-hidden="true">
+                            <use id="themeToggleIcon" href="#i-moon" />
+                        </svg>
+                    </button>
+
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <form asp-area="Identity"
+                              asp-page="/Account/Logout"
+                              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
+                              method="post">
+
+                            <button type="submit"
+                                    class="icon-button"
+                                    title="Sign out"
+                                    aria-label="Sign out">
+                                <svg class="icon" aria-hidden="true">
+                                    <use href="#i-logout" />
+                                </svg>
+                            </button>
+
+                        </form>
+                    }
+
+                </div>
+
+            </div>
+
         </aside>
 
 
         <div class="app-main">
 
-            <header class="topbar">
+            @*  Only on small screens, where the rail is hidden
+                behind a button. *@
+            <header class="mobile-bar d-lg-none">
 
                 <button type="button"
-                        class="topbar-burger d-lg-none"
+                        class="icon-button"
                         data-bs-toggle="offcanvas"
                         data-bs-target="#appSidebar"
                         aria-controls="appSidebar"
                         aria-label="Open navigation">
-                    <span aria-hidden="true">&#9776;</span>
+                    <svg class="icon" aria-hidden="true">
+                        <use href="#i-menu" />
+                    </svg>
                 </button>
 
-                <div class="topbar-title">
+                <span class="mobile-bar-title">
                     @ViewData["Title"]
-                </div>
-
-                <div class="topbar-actions">
-
-                    <button type="button"
-                            class="theme-toggle"
-                            id="themeToggle"
-                            title="Switch between light and dark"
-                            aria-label="Switch between light and dark">
-                        <span id="themeToggleIcon">&#9789;</span>
-                    </button>
-
-                    <partial name="_LoginPartial" />
-
-                </div>
+                </span>
 
             </header>
 

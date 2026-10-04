@@ -26,9 +26,9 @@
 
     function paintIcon() {
         // Shows the thing you would switch to.
-        icon.innerHTML = currentTheme() === "dark"
-            ? "&#9788;"
-            : "&#9789;";
+        icon.setAttribute(
+            "href",
+            currentTheme() === "dark" ? "#i-sun" : "#i-moon");
     }
 
     button.addEventListener("click", function () {

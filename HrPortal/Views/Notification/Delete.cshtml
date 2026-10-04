@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>Delete Notification</h2>
 
@@ -33,9 +33,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Title</strong>
+                    <span class="field-label">Title</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Title
                     </p>
 
@@ -44,9 +44,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -56,9 +56,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Created</strong>
+                    <span class="field-label">Created</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.CreatedAt.ToString("dd MMM yyyy")
                     </p>
 
@@ -67,9 +67,9 @@
 
                 <div class="col-12">
 
-                    <strong>Message</strong>
+                    <span class="field-label">Message</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Message
                     </p>
 

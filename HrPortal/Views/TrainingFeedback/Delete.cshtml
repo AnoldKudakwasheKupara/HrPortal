@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>Delete Training Feedback</h2>
 
@@ -33,9 +33,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Course</strong>
+                    <span class="field-label">Course</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.TrainingAssignment.TrainingCourse.Title
                     </p>
 
@@ -44,9 +44,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.TrainingAssignment.Employee.FirstName
                         @Model.TrainingAssignment.Employee.LastName
                     </p>
@@ -56,9 +56,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Rating</strong>
+                    <span class="field-label">Rating</span>
 
-                    <p>
+                    <p class="field-value">
                         <span class="badge bg-info text-dark">
                             @Model.Rating / 5
                         </span>
@@ -69,9 +69,9 @@
 
                 <div class="col-12">
 
-                    <strong>Comments</strong>
+                    <span class="field-label">Comments</span>
 
-                    <p>
+                    <p class="field-value">
                         @(Model.Comments ?? "No comments given.")
                     </p>
 

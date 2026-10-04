@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-head">
 
         <div>
             <h2>@Model.OriginalFileName</h2>
@@ -54,9 +54,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>File Name</strong>
+                    <span class="field-label">File Name</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.OriginalFileName
                     </p>
 
@@ -65,9 +65,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -77,9 +77,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Department</strong>
+                    <span class="field-label">Department</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.Department.Name
                     </p>
 
@@ -88,9 +88,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Category</strong>
+                    <span class="field-label">Category</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.DocumentCategory.Name
                     </p>
 
@@ -99,9 +99,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Uploaded By</strong>
+                    <span class="field-label">Uploaded By</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedByEmployee.FirstName
                         @Model.UploadedByEmployee.LastName
                     </p>
@@ -111,9 +111,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Uploaded</strong>
+                    <span class="field-label">Uploaded</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
                     </p>
 
@@ -122,9 +122,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Expires</strong>
+                    <span class="field-label">Expires</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.ExpiryDate.HasValue)
                         {
                             if (Model.ExpiryDate.Value.Date < DateTime.Today)
@@ -152,9 +152,9 @@
 
                 <div class="col-12">
 
-                    <strong>Description</strong>
+                    <span class="field-label">Description</span>
 
-                    <p>
+                    <p class="field-value">
                         @(Model.Description ?? "No description provided.")
                     </p>
 

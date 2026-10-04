@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-head">
 
         <div>
             <h2>@Model.TrainingCourse.Title</h2>
@@ -41,18 +41,18 @@
 
                 <div class="col-md-4">
 
-                    <strong>Trainer</strong>
+                    <span class="field-label">Trainer</span>
 
-                    <p>@(Model.TrainingCourse.Trainer ?? "Not set")</p>
+                    <p class="field-value">@(Model.TrainingCourse.Trainer ?? "Not set")</p>
 
                 </div>
 
 
                 <div class="col-md-4">
 
-                    <strong>Training Date</strong>
+                    <span class="field-label">Training Date</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.TrainingCourse.TrainingDate.HasValue)
                         {
                             @Model.TrainingCourse.TrainingDate.Value.ToString("dd MMM yyyy")
@@ -68,9 +68,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Due</strong>
+                    <span class="field-label">Due</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.DueDate.HasValue)
                         {
                             @Model.DueDate.Value.ToString("dd MMM yyyy")
@@ -86,9 +86,9 @@
 
                 <div class="col-12">
 
-                    <strong>Description</strong>
+                    <span class="field-label">Description</span>
 
-                    <p>
+                    <p class="field-value">
                         @(Model.TrainingCourse.Description
                           ?? "No description provided.")
                     </p>

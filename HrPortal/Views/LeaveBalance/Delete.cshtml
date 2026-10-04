@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>Delete Leave Balance</h2>
 
@@ -33,9 +33,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -45,9 +45,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Leave Type</strong>
+                    <span class="field-label">Leave Type</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.LeaveType.Name
                     </p>
 
@@ -56,9 +56,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Year</strong>
+                    <span class="field-label">Year</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Year
                     </p>
 
@@ -67,9 +67,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Allocated Days</strong>
+                    <span class="field-label">Allocated Days</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.AllocatedDays.ToString("0.##")
                     </p>
 
@@ -78,9 +78,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Used Days</strong>
+                    <span class="field-label">Used Days</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UsedDays.ToString("0.##")
                     </p>
 
@@ -89,9 +89,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Remaining Days</strong>
+                    <span class="field-label">Remaining Days</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.RemainingDays.ToString("0.##")
                     </p>
 

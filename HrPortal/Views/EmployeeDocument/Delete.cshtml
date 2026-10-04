@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>Delete Document</h2>
 
@@ -33,9 +33,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>File Name</strong>
+                    <span class="field-label">File Name</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.OriginalFileName
                     </p>
 
@@ -44,9 +44,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -56,9 +56,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Category</strong>
+                    <span class="field-label">Category</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.DocumentCategory.Name
                     </p>
 
@@ -67,9 +67,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>Uploaded By</strong>
+                    <span class="field-label">Uploaded By</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedByEmployee.FirstName
                         @Model.UploadedByEmployee.LastName
                     </p>
@@ -79,9 +79,9 @@
 
                 <div class="col-md-6">
 
-                    <strong>Uploaded</strong>
+                    <span class="field-label">Uploaded</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy")
                     </p>
 

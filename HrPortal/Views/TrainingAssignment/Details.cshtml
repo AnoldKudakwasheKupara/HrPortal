@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-head">
 
         <div>
             <h2>@Model.TrainingCourse.Title</h2>
@@ -48,9 +48,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Course</strong>
+                    <span class="field-label">Course</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.TrainingCourse.Title
                     </p>
 
@@ -59,9 +59,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -71,9 +71,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Department</strong>
+                    <span class="field-label">Department</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.Department.Name
                     </p>
 
@@ -82,9 +82,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Assigned</strong>
+                    <span class="field-label">Assigned</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.AssignedAt.ToString("dd MMM yyyy")
                     </p>
 
@@ -93,9 +93,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Due Date</strong>
+                    <span class="field-label">Due Date</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.DueDate.HasValue)
                         {
                             if (!Model.IsCompleted &&
@@ -124,9 +124,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Status</strong>
+                    <span class="field-label">Status</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.IsCompleted)
                         {
                             <span class="badge bg-success">
@@ -146,9 +146,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Completed On</strong>
+                    <span class="field-label">Completed On</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.CompletedAt.HasValue)
                         {
                             @Model.CompletedAt.Value.ToString("dd MMM yyyy")
@@ -188,9 +188,9 @@
 
                     <div class="col-md-4">
 
-                        <strong>Rating</strong>
+                        <span class="field-label">Rating</span>
 
-                        <p>
+                        <p class="field-value">
                             <span class="badge bg-info text-dark">
                                 @Model.Feedback.Rating / 5
                             </span>
@@ -201,9 +201,9 @@
 
                     <div class="col-md-4">
 
-                        <strong>Submitted</strong>
+                        <span class="field-label">Submitted</span>
 
-                        <p>
+                        <p class="field-value">
                             @Model.Feedback.SubmittedAt.ToString("dd MMM yyyy")
                         </p>
 
@@ -212,9 +212,9 @@
 
                     <div class="col-12">
 
-                        <strong>Comments</strong>
+                        <span class="field-label">Comments</span>
 
-                        <p>
+                        <p class="field-value">
                             @(Model.Feedback.Comments ?? "No comments given.")
                         </p>
 

@@ -6,7 +6,7 @@
 
 <div class="container">
 
-    <div class="mb-4">
+    <div class="page-head-simple">
 
         <h2>Delete Training Assignment</h2>
 
@@ -39,9 +39,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Course</strong>
+                    <span class="field-label">Course</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.TrainingCourse.Title
                     </p>
 
@@ -50,9 +50,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Employee</strong>
+                    <span class="field-label">Employee</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
                     </p>
@@ -62,9 +62,9 @@
 
                 <div class="col-md-4">
 
-                    <strong>Assigned</strong>
+                    <span class="field-label">Assigned</span>
 
-                    <p>
+                    <p class="field-value">
                         @Model.AssignedAt.ToString("dd MMM yyyy")
                     </p>
 
@@ -73,9 +73,9 @@
 
                 <div class="col-12">
 
-                    <strong>Status</strong>
+                    <span class="field-label">Status</span>
 
-                    <p>
+                    <p class="field-value">
                         @if (Model.IsCompleted)
                         {
                             <span class="badge bg-success">
