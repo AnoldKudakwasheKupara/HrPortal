@@ -68,6 +68,8 @@ builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<LeaveBalanceService>();
+builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<LeaveWorkflowService>();
 
 builder.Services.AddControllersWithViews();
 

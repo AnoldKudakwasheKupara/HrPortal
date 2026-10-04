@@ -1,0 +1,367 @@
+﻿@model HrPortal.ViewModels.LeaveApprovalViewModel
+
+@{
+    ViewData["Title"] = "Review Leave Request";
+
+    var request = Model.Request;
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@request.RequestNumber</h2>
+
+            <p class="text-muted">
+                Review Leave Request
+            </p>
+        </div>
+
+        <a asp-action="@(Model.CanActAsMd ? "FinalApproval" : "Index")"
+           class="btn btn-secondary">
+
+            Back to Queue
+
+        </a>
+
+    </div>
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @request.Employee.FirstName
+                        @request.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @request.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Leave Type</strong>
+
+                    <p>
+                        @request.LeaveType.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Dates</strong>
+
+                    <p>
+                        @request.StartDate.ToString("dd MMM yyyy")
+                        &ndash;
+                        @request.EndDate.ToString("dd MMM yyyy")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Working Days</strong>
+
+                    <p>
+                        @request.NumberOfDays.ToString("0.##")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Status</strong>
+
+                    <p>
+                        <span class="badge bg-warning text-dark">
+                            @request.Status
+                        </span>
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Reason</strong>
+
+                    <p>
+                        @(request.Reason ?? "No reason given.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @if (Model.Balance != null)
+    {
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+
+                <strong>
+                    @Model.Balance.LeaveType.Name balance for
+                    @Model.Balance.Year
+                </strong>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row text-center">
+
+                    <div class="col">
+                        <strong>Allocated</strong>
+                        <p>@Model.Balance.AllocatedDays.ToString("0.##")</p>
+                    </div>
+
+                    <div class="col">
+                        <strong>Used</strong>
+                        <p>@Model.Balance.UsedDays.ToString("0.##")</p>
+                    </div>
+
+                    <div class="col">
+                        <strong>Pending</strong>
+                        <p>@Model.Balance.PendingDays.ToString("0.##")</p>
+                    </div>
+
+                    <div class="col">
+                        <strong>Remaining</strong>
+                        <p>
+                            @if (Model.Balance.RemainingDays < 0)
+                            {
+                                <span class="badge bg-danger">
+                                    @Model.Balance.RemainingDays.ToString("0.##")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">
+                                    @Model.Balance.RemainingDays.ToString("0.##")
+                                </span>
+                            }
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.CanActAsHr || Model.CanActAsMd)
+    {
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+
+                <strong>
+                    @(Model.CanActAsMd ? "Final Decision" : "HR Decision")
+                </strong>
+
+            </div>
+
+            <div class="card-body">
+
+                <form method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="id" value="@request.Id" />
+
+                    <div class="mb-3">
+
+                        <label for="comment"
+                               class="form-label">
+                            Comment
+                        </label>
+
+                        <textarea id="comment"
+                                  name="comment"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Required when rejecting or returning"></textarea>
+
+                    </div>
+
+                    @if (Model.CanActAsHr)
+                    {
+                        <button type="submit"
+                                class="btn btn-success"
+                                asp-action="HrApprove">
+                            Approve and send to MD
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-warning"
+                                asp-action="HrReturn">
+                            Return to employee
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-danger"
+                                asp-action="HrReject">
+                            Reject
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit"
+                                class="btn btn-success"
+                                asp-action="MdApprove">
+                            Approve
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-danger"
+                                asp-action="MdReject">
+                            Reject
+                        </button>
+                    }
+
+                </form>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+
+            This request is not waiting on you. It is currently
+            <strong>@request.Status</strong>.
+
+        </div>
+    }
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <strong>
+                History
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (request.History.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table">
+
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>By</th>
+                                <th>Date</th>
+                                <th>Status Change</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        @foreach (var entry in request.History
+                            .OrderBy(h => h.ActionDate))
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>@entry.Action</strong>
+                                </td>
+
+                                <td>
+                                    @entry.ActionedByEmployee.FirstName
+                                    @entry.ActionedByEmployee.LastName
+                                </td>
+
+                                <td>
+                                    @entry.ActionDate.ToString("dd MMM yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    <span class="text-muted">
+                                        @entry.PreviousStatus
+                                    </span>
+                                    &rarr;
+                                    @entry.NewStatus
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(entry.Comment))
+                                    {
+                                        @entry.Comment
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            No comment
+                                        </span>
+                                    }
+                                </td>
+
+                            </tr>
+                        }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    No history has been recorded for this request.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>

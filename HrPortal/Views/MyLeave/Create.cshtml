@@ -1,0 +1,141 @@
+﻿@model HrPortal.ViewModels.MyLeaveRequestViewModel
+
+@{
+    ViewData["Title"] = "Request Leave";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Request Leave</h2>
+
+        <p class="text-muted">
+            The number of days is counted from your dates, skipping
+            weekends. Your request goes to HR first, then to the
+            Managing Director.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="LeaveTypeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="LeaveTypeId"
+                                asp-items="ViewBag.LeaveTypes"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Leave Type --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="LeaveTypeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-3 mb-3">
+
+                        <label asp-for="StartDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="StartDate"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="StartDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-3 mb-3">
+
+                        <label asp-for="EndDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="EndDate"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="EndDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="Reason"
+                           class="form-label">
+                    </label>
+
+                    <textarea asp-for="Reason"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Why are you requesting this leave?">
+                    </textarea>
+
+                    <span asp-validation-for="Reason"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Submit Request
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}
