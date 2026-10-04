@@ -1,0 +1,145 @@
+﻿@model HrPortal.Entities.AuditLog
+
+@{
+    ViewData["Title"] = "Audit Entry Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Action</h2>
+
+            <p class="text-muted">
+                Audit Entry Details
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Action</strong>
+
+                    <p>
+                        @Model.Action
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Entity</strong>
+
+                    <p>
+                        @Model.EntityName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Record</strong>
+
+                    <p>
+                        @if (!string.IsNullOrWhiteSpace(Model.EntityId))
+                        {
+                            @Model.EntityId
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Not recorded
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Performed By</strong>
+
+                    <p>
+                        @if (Model.Employee != null)
+                        {
+                            @Model.Employee.FirstName
+                            @Model.Employee.LastName
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                System
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>When</strong>
+
+                    <p>
+                        @Model.Timestamp.ToString("dd MMM yyyy HH:mm:ss")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>IP Address</strong>
+
+                    <p>
+                        @if (!string.IsNullOrWhiteSpace(Model.IpAddress))
+                        {
+                            @Model.IpAddress
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Not recorded
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Description</strong>
+
+                    <p>
+                        @(Model.Description ?? "No description recorded.")
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

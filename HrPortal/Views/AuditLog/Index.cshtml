@@ -1,0 +1,283 @@
+﻿@model IEnumerable<HrPortal.Entities.AuditLog>
+
+@{
+    ViewData["Title"] = "Audit Log";
+
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var totalCount = (int)ViewBag.TotalCount;
+
+    var employeeId = ViewBag.SelectedEmployeeId as int?;
+    var entityName = ViewBag.SelectedEntityName as string;
+    var fromDate = ViewBag.FromDate as DateTime?;
+    var toDate = ViewBag.ToDate as DateTime?;
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+
+        <h2>Audit Log</h2>
+
+        <p class="text-muted">
+            A record of what was done in the system, and by whom.
+            Entries cannot be added or changed here.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get"
+                  class="row g-2 align-items-end">
+
+                <div class="col-md-3">
+
+                    <label for="employeeId"
+                           class="form-label">
+                        Employee
+                    </label>
+
+                    <select id="employeeId"
+                            name="employeeId"
+                            asp-items="ViewBag.Employees"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Employees --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label for="entityName"
+                           class="form-label">
+                        Entity
+                    </label>
+
+                    <select id="entityName"
+                            name="entityName"
+                            asp-items="ViewBag.EntityNames"
+                            class="form-select">
+
+                        <option value="">
+                            -- All Entities --
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <label for="fromDate"
+                           class="form-label">
+                        From
+                    </label>
+
+                    <input id="fromDate"
+                           name="fromDate"
+                           type="date"
+                           value="@(fromDate?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <label for="toDate"
+                           class="form-label">
+                        To
+                    </label>
+
+                    <input id="toDate"
+                           name="toDate"
+                           type="date"
+                           value="@(toDate?.ToString("yyyy-MM-dd"))"
+                           class="form-control" />
+
+                </div>
+
+                <div class="col-auto">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary">
+                        Filter
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Record</th>
+                            <th>By</th>
+                            <th>IP Address</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                @log.Timestamp.ToString("dd MMM yyyy HH:mm")
+                            </td>
+
+                            <td>
+                                <strong>
+                                    @log.Action
+                                </strong>
+                            </td>
+
+                            <td>
+                                @log.EntityName
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    log.EntityId))
+                                {
+                                    @log.EntityId
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        &ndash;
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (log.Employee != null)
+                                {
+                                    @log.Employee.FirstName
+                                    @log.Employee.LastName
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        System
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    log.IpAddress))
+                                {
+                                    @log.IpAddress
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        &ndash;
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-action="Details"
+                                   asp-route-id="@log.Id">
+
+                                    View
+
+                                </a>
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">
+                        No audit entries match this filter.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+
+
+        @if (totalPages > 1)
+        {
+            <div class="card-footer d-flex justify-content-between align-items-center">
+
+                <span class="text-muted">
+                    Page @(page) of @totalPages
+                    (@totalCount entries)
+                </span>
+
+                <div>
+
+                    @if (page > 1)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-action="Index"
+                           asp-route-page="@(page - 1)"
+                           asp-route-employeeId="@employeeId"
+                           asp-route-entityName="@entityName"
+                           asp-route-fromDate="@(fromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(toDate?.ToString("yyyy-MM-dd"))">
+
+                            Previous
+
+                        </a>
+                    }
+
+                    @if (page < totalPages)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-action="Index"
+                           asp-route-page="@(page + 1)"
+                           asp-route-employeeId="@employeeId"
+                           asp-route-entityName="@entityName"
+                           asp-route-fromDate="@(fromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-toDate="@(toDate?.ToString("yyyy-MM-dd"))">
+
+                            Next
+
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
