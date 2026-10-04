@@ -1,11 +1,14 @@
 ﻿using HrPortal.Data;
+using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.AdminOnly)]
     public class RoleController : Controller
     {
         private readonly RoleManager<IdentityRole<int>> _roleManager;

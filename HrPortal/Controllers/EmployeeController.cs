@@ -2,6 +2,7 @@
 using HrPortal.Data;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.AdminOrHr)]
     public class EmployeeController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -335,23 +336,18 @@ namespace HrPortal.Controllers
 
             employee.IsActive = !employee.IsActive;
 
-            // Disable/enable login account
+            await _context.SaveChangesAsync();
+
+            // EmployeeSignInManager refuses sign-in while the
+            // employee is inactive. Changing the security stamp
+            // additionally invalidates any cookie already issued,
+            // so a user deactivated mid-session is signed out
+            // rather than keeping access until it expires.
             if (employee.User != null)
             {
-                employee.User.LockoutEnabled = !employee.IsActive;
-
-                if (!employee.IsActive)
-                {
-                    employee.User.LockoutEnd =
-                        DateTimeOffset.UtcNow.AddYears(100);
-                }
-                else
-                {
-                    employee.User.LockoutEnd = null;
-                }
+                await _userManager.UpdateSecurityStampAsync(
+                    employee.User);
             }
-
-            await _context.SaveChangesAsync();
 
             TempData["Success"] =
                 employee.IsActive

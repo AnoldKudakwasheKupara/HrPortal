@@ -1,4 +1,5 @@
 ﻿using HrPortal.DbContexts;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,7 +14,7 @@ namespace HrPortal.Controllers
     /// delete actions. Entries are written by the code that
     /// performs the audited action.
     /// </summary>
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.AdminOnly)]
     public class AuditLogController : Controller
     {
         private const int PageSize = 50;

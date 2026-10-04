@@ -1,13 +1,14 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.AdminOrHr)]
     public class LeaveTypeController : Controller
     {
         private readonly ApplicationDbContext _context;

@@ -2,6 +2,7 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
+using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,17 @@ builder.Services
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    // Must come after AddDefaultUI, which registers the default
+    // SignInManager itself and would otherwise replace this one.
+    .AddSignInManager<EmployeeSignInManager>();
+
+// Re-check the security stamp often enough that a user who is
+// deactivated mid-session loses access promptly.
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.FromMinutes(5);
+});
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
