@@ -1,17 +1,16 @@
 ﻿/* ==========================================================
    HR Portal bridge
 
-   The look is the IT Service Management System's: its tokens
-   are in itsm-core.css and its shell in itsm-shell.css, both
-   copied from that project.
+   Component structure follows the IT Service Management
+   System; the palette is Intellego's, sampled from
+   intellego-ic.com. The tokens live in app-core.css and the
+   shell in app-shell.css.
 
    This file maps the class names this app's views already use
-   onto that design, so the two systems match without rewriting
-   every view. Where a view uses an ITSM class name directly
-   (.data-card, .status-badge) it gets the real thing.
+   onto that design, so the two match without rewriting every
+   view.
 
-   Light only. The source system has no dark mode, so the
-   theme toggle has gone with it.
+   Light only: the design it derives from has no dark mode.
    ========================================================== */
 
 :root {
@@ -28,7 +27,7 @@
     --hairline:       var(--border-light);
     --ring:           var(--primary-glow);
 
-    --accent:         var(--primary);
+    --accent:         var(--brand-teal);
     --accent-strong:  var(--primary-dark);
     --accent-wash:    var(--primary-surface);
 
@@ -52,7 +51,7 @@
    layout does not load the shell, and it should still be
    Inter. */
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-main);
     color: var(--text-primary);
 }
@@ -208,22 +207,26 @@ body {
     font-size: 0.8rem;
 }
 
+/* The site puts its calls to action in olive gold against
+   teal chrome, so the primary action does the same here. */
 .btn-primary,
 .btn-success {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg,
+                var(--accent-gold), var(--accent-gold-dark));
     color: #fff;
     border: none;
-    box-shadow: 0 4px 12px var(--primary-glow);
+    box-shadow: 0 4px 12px rgba(126, 110, 30, 0.28);
 }
 
 .btn-primary:hover,
 .btn-success:hover,
 .btn-primary:active,
 .btn-success:active {
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary-dark)) !important;
+    background: linear-gradient(135deg,
+                var(--accent-gold-dark), var(--accent-gold-dark)) !important;
     color: #fff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px var(--primary-glow);
+    box-shadow: 0 6px 16px rgba(126, 110, 30, 0.34);
 }
 
 .btn-secondary,
@@ -673,3 +676,23 @@ a.stat-tile:hover {
 .auth-card h2 { font-size: 1.1rem; }
 .auth-card h3 { font-size: 1rem; }
 .auth-card hr { border-color: var(--border-light); }
+
+
+/* ==========================================================
+   Sidebar legibility on the teal ground
+
+   The design this derives from ran its sidebar on near-black
+   charcoal, where muted slate text was legible. Intellego's
+   deep teal is a lighter ground, so the inherited colours fell
+   to 3.9:1 for a nav link and 2.1:1 for a section heading,
+   both short of the 4.5:1 floor. Lifted a couple of steps,
+   which measures 6.9:1 and 5.1:1.
+   ========================================================== */
+
+.sidebar .nav-item {
+    color: #cbd5e1;
+}
+
+.sidebar .nav-group {
+    color: #a7c4bf;
+}

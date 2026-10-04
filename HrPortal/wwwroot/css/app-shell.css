@@ -18,7 +18,7 @@
 
             body {
                 margin: 0;
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
                 background: var(--bg-main);
                 color: var(--text-primary);
                 font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
@@ -308,11 +308,11 @@
 
                 .sidebar-header i {
                     font-size: 1.6rem;
-                    background: linear-gradient(135deg, #b11d23, #d9565d);
+                    background: linear-gradient(135deg, #10675d, #4e9c92);
                     -webkit-background-clip: text;
                     background-clip: text;
                     color: transparent;
-                    text-shadow: 0 2px 5px rgba(177, 29, 35,0.3);
+                    text-shadow: 0 2px 5px rgba(16, 103, 93,0.3);
                 }
 
                 .sidebar-header span {
@@ -384,7 +384,7 @@
                     }
 
                 .nav-item.active {
-                    background: linear-gradient(95deg, rgba(177, 29, 35,0.18) 0%, rgba(177, 29, 35,0.04) 100%);
+                    background: linear-gradient(95deg, rgba(16, 103, 93,0.18) 0%, rgba(16, 103, 93,0.04) 100%);
                     color: white;
                     font-weight: 600;
                 }
@@ -511,7 +511,7 @@
                 justify-content: center;
                 font-weight: 700;
                 font-size: 0.9rem;
-                box-shadow: 0 4px 8px rgba(177, 29, 35,0.2);
+                box-shadow: 0 4px 8px rgba(16, 103, 93,0.2);
                 transition: var(--transition-smooth);
                 flex-shrink: 0;
             }
@@ -612,7 +612,7 @@
             }
 
                 .btn-primary-modern:hover {
-                    background: linear-gradient(135deg, var(--primary-dark), #7a1418);
+                    background: linear-gradient(135deg, var(--primary-dark), #043f38);
                     color: white;
                 }
 

@@ -1,21 +1,39 @@
-/* ============================================================
-   Axis IT Operations — shared design system
-   Single source of truth for design tokens, accessibility
-   primitives and small cross-page utilities. Linked globally
-   from _Layout. Page-level <style> blocks may still override.
-   ============================================================ */
+﻿/* ==========================================================
+   Core design tokens and shared components.
+
+   Structure taken from the IT Service Management System's
+   stylesheet; the palette has been swapped from that system's
+   crimson to Intellego's own colours, sampled from
+   intellego-ic.com:
+
+       deep teal   #10675d   brand surfaces, primary actions
+       darker teal #056459   hover and pressed
+       bright teal #018080   links, active navigation, accents
+       olive gold  #7e6e1e   the site's call-to-action pills
+       warm paper  #eceae5   panel tint
+       ink         #3f4245   body text
+
+   ========================================================== */
 
 :root {
-    --primary: #b11d23;
-    --primary-dark: #8f171c;
-    --primary-light: #f8dcde;
-    --primary-glow: rgba(177, 29, 35,0.25);
+    --primary: #10675d;
+    --primary-dark: #056459;
+    --primary-light: #e2efed;
+    --primary-glow: rgba(16, 103, 93,0.25);
 
     /* Pale tint used *behind* --primary-coloured text (badges, hover states).
        Deliberately separate from --primary-light: individual pages redefine
        --primary-light in their own :root block, which leaks into the shared
        sidebar/topbar and would leave primary-on-primary text unreadable. */
-    --primary-surface: #f8dcde;
+    --primary-surface: #e2efed;
+
+    /* The site's bright teal, used for links and the active
+       navigation item, and the olive gold of its hero buttons,
+       which this app uses for the primary action. */
+    --brand-teal: #018080;
+    --accent-gold: #7e6e1e;
+    --accent-gold-dark: #635616;
+    --paper: #eceae5;
 
     /* Semantic colors */
     --success: #2c9e6e;
@@ -24,7 +42,7 @@
     --warning-light: #fff5e6;
     --danger: #e53e3e;
     --danger-light: #fff5f5;
-    --info: #b11d23;
+    --info: #018080;
 
     /* Neutral / gray scale (slate) */
     --gray-50: #f8fafc;
@@ -37,9 +55,9 @@
     --gray-700: #334155;
     --gray-800: #1e293b;
 
-    --sidebar-bg: #18191d;
-    --sidebar-hover: #26272d;
-    --sidebar-active: #b11d23;
+    --sidebar-bg: #0b4a43;
+    --sidebar-hover: #10675d;
+    --sidebar-active: #018080;
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-light: #e2e8f0;
@@ -335,7 +353,7 @@ textarea:focus-visible,
 .filter-select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(177, 29, 35,0.1);
+    box-shadow: 0 0 0 3px rgba(16, 103, 93,0.1);
 }
 .search-wrapper { position: relative; }
 .search-wrapper i {
@@ -358,7 +376,7 @@ textarea:focus-visible,
 .search-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(177, 29, 35,0.1);
+    box-shadow: 0 0 0 3px rgba(16, 103, 93,0.1);
 }
 .btn-clear-filters {
     background: #fff;
@@ -390,7 +408,7 @@ textarea:focus-visible,
 .badge-green { background: #e6f5e9; color: var(--success); border: 1px solid #c6e0c9; }
 .badge-amber { background: #fff5e6; color: #b45309; border: 1px solid #ffe0b3; }
 .badge-red   { background: #fff5f5; color: var(--danger); border: 1px solid #fed7d7; }
-.badge-blue  { background: #fceaeb; color: var(--primary-dark); border: 1px solid #f4ced0; }
+.badge-blue  { background: #e8f3f1; color: var(--primary-dark); border: 1px solid #c3ded9; }
 .badge-gray  { background: var(--gray-100); color: var(--gray-500); border: 1px solid var(--gray-300); }
 
 /* ---- Row avatar + chips ---- */
@@ -411,7 +429,7 @@ textarea:focus-visible,
 .list-avatar-cell { display: flex; align-items: center; gap: 0.5rem; }
 .chip {
     display: inline-flex; align-items: center; gap: 0.35rem;
-    background: #fdf3f3; color: var(--primary-dark); border: 1px solid #f4ced0;
+    background: #f1f8f7; color: var(--primary-dark); border: 1px solid #c3ded9;
     padding: 0.2rem 0.6rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 600;
 }
 .chip-muted { color: var(--gray-400); font-size: 0.72rem; font-style: italic; }
@@ -463,42 +481,42 @@ textarea:focus-visible,
    overrides win and keep those components on-brand.
    ============================================================ */
 :root {
-    --bs-primary: #b11d23;
-    --bs-primary-rgb: 177, 29, 35;
-    --bs-link-color: #b11d23;
-    --bs-link-color-rgb: 177, 29, 35;
-    --bs-link-hover-color: #8f171c;
-    --bs-link-hover-color-rgb: 143, 23, 28;
+    --bs-primary: #10675d;
+    --bs-primary-rgb: 16, 103, 93;
+    --bs-link-color: #018080;
+    --bs-link-color-rgb: 1, 128, 128;
+    --bs-link-hover-color: #056459;
+    --bs-link-hover-color-rgb: 5, 100, 89;
 }
 .btn-primary {
-    --bs-btn-bg: #b11d23; --bs-btn-border-color: #b11d23;
-    --bs-btn-hover-bg: #8f171c; --bs-btn-hover-border-color: #8f171c;
-    --bs-btn-active-bg: #7a1418; --bs-btn-active-border-color: #7a1418;
-    --bs-btn-disabled-bg: #b11d23; --bs-btn-disabled-border-color: #b11d23;
+    --bs-btn-bg: #10675d; --bs-btn-border-color: #10675d;
+    --bs-btn-hover-bg: #056459; --bs-btn-hover-border-color: #056459;
+    --bs-btn-active-bg: #043f38; --bs-btn-active-border-color: #043f38;
+    --bs-btn-disabled-bg: #10675d; --bs-btn-disabled-border-color: #10675d;
 }
 .btn-outline-primary {
-    --bs-btn-color: #b11d23; --bs-btn-border-color: #b11d23;
-    --bs-btn-hover-bg: #b11d23; --bs-btn-hover-border-color: #b11d23;
-    --bs-btn-active-bg: #b11d23; --bs-btn-active-border-color: #b11d23;
+    --bs-btn-color: #10675d; --bs-btn-border-color: #10675d;
+    --bs-btn-hover-bg: #10675d; --bs-btn-hover-border-color: #10675d;
+    --bs-btn-active-bg: #10675d; --bs-btn-active-border-color: #10675d;
 }
-.text-primary { color: #b11d23 !important; }
-.bg-primary { background-color: #b11d23 !important; }
-.border-primary { border-color: #b11d23 !important; }
-.link-primary { color: #b11d23 !important; }
-.nav-pills { --bs-nav-pills-link-active-bg: #b11d23; }
+.text-primary { color: #10675d !important; }
+.bg-primary { background-color: #10675d !important; }
+.border-primary { border-color: #10675d !important; }
+.link-primary { color: #10675d !important; }
+.nav-pills { --bs-nav-pills-link-active-bg: #10675d; }
 .pagination {
-    --bs-pagination-color: #b11d23;
-    --bs-pagination-hover-color: #8f171c;
-    --bs-pagination-focus-color: #8f171c;
-    --bs-pagination-active-bg: #b11d23;
-    --bs-pagination-active-border-color: #b11d23;
-    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(177, 29, 35, 0.25);
+    --bs-pagination-color: #10675d;
+    --bs-pagination-hover-color: #056459;
+    --bs-pagination-focus-color: #056459;
+    --bs-pagination-active-bg: #10675d;
+    --bs-pagination-active-border-color: #10675d;
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(16, 103, 93, 0.25);
 }
-.form-check-input:checked { background-color: #b11d23; border-color: #b11d23; }
+.form-check-input:checked { background-color: #10675d; border-color: #10675d; }
 .form-check-input:focus,
 .form-control:focus,
-.form-select:focus { border-color: #d9565d; box-shadow: 0 0 0 0.25rem rgba(177, 29, 35, 0.25); }
-.form-switch .form-check-input:checked { background-color: #b11d23; border-color: #b11d23; }
+.form-select:focus { border-color: #4e9c92; box-shadow: 0 0 0 0.25rem rgba(16, 103, 93, 0.25); }
+.form-switch .form-check-input:checked { background-color: #10675d; border-color: #10675d; }
 
 /* ============================================================
    SHARED PAGE SHELL
