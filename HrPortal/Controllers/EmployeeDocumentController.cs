@@ -21,15 +21,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AuditService _audit;
 
         public EmployeeDocumentController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            AuditService audit)
         {
             _context = context;
             _fileStorage = fileStorage;
             _userManager = userManager;
+            _audit = audit;
         }
 
 
@@ -201,6 +204,13 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(
+                AuditService.DocumentUploaded,
+                nameof(EmployeeDocument),
+                document.Id.ToString(),
+                $"{document.OriginalFileName} filed against " +
+                $"employee {document.EmployeeId}.");
+
             TempData["Success"] =
                 "Document uploaded successfully.";
 
@@ -356,6 +366,12 @@ namespace HrPortal.Controllers
             // Remove the file only after the row is gone, so a
             // failed save never leaves a row pointing at nothing.
             _fileStorage.Delete(filePath);
+
+            await _audit.LogAsync(
+                AuditService.Deleted,
+                nameof(EmployeeDocument),
+                document.Id.ToString(),
+                $"{document.OriginalFileName} removed.");
 
             TempData["Success"] =
                 "Document deleted successfully.";

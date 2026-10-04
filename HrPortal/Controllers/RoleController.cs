@@ -1,6 +1,7 @@
 ﻿using HrPortal.Data;
 using HrPortal.ViewModels;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,16 @@ namespace HrPortal.Controllers
     {
         private readonly RoleManager<IdentityRole<int>> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AuditService _audit;
 
         public RoleController(
             RoleManager<IdentityRole<int>> roleManager,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            AuditService audit)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _audit = audit;
         }
 
         // GET: /Role
@@ -324,6 +328,9 @@ namespace HrPortal.Controllers
                     .Select(u => u.UserId)
                     .ToHashSet();
 
+            var added = new List<string>();
+            var removed = new List<string>();
+
             // Users to add
             foreach (var userId in selectedUserIds.Except(currentUserIds))
             {
@@ -334,6 +341,11 @@ namespace HrPortal.Controllers
                 {
                     var result =
                         await _userManager.AddToRoleAsync(user, roleName);
+
+                    if (result.Succeeded)
+                    {
+                        added.Add(user.Email ?? user.UserName ?? "unknown");
+                    }
 
                     if (!result.Succeeded)
                     {
@@ -370,6 +382,11 @@ namespace HrPortal.Controllers
                             user,
                             roleName);
 
+                    if (result.Succeeded)
+                    {
+                        removed.Add(user.Email ?? user.UserName ?? "unknown");
+                    }
+
                     if (!result.Succeeded)
                     {
                         foreach (var error in result.Errors)
@@ -380,6 +397,25 @@ namespace HrPortal.Controllers
                         }
                     }
                 }
+            }
+
+            if (ModelState.ErrorCount == 0 &&
+                (added.Count > 0 || removed.Count > 0))
+            {
+                var changes = new List<string>();
+
+                if (added.Count > 0)
+                    changes.Add("added " + string.Join(", ", added));
+
+                if (removed.Count > 0)
+                    changes.Add("removed " + string.Join(", ", removed));
+
+                await _audit.LogAsync(
+                    AuditService.RoleChanged,
+                    "Role",
+                    roleName,
+                    char.ToUpper(string.Join("; ", changes)[0]) +
+                    string.Join("; ", changes).Substring(1) + ".");
             }
 
             if (ModelState.ErrorCount > 0)

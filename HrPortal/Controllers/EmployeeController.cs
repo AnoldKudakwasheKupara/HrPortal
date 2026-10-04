@@ -3,6 +3,7 @@ using HrPortal.Data;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,13 +17,16 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AuditService _audit;
 
         public EmployeeController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            AuditService audit)
         {
             _context = context;
             _userManager = userManager;
+            _audit = audit;
         }
 
 
@@ -229,6 +233,15 @@ namespace HrPortal.Controllers
                 }
             }
 
+            await _audit.LogAsync(
+                AuditService.Created,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"{employee.FirstName} {employee.LastName} added" +
+                (model.CreateLoginAccount
+                    ? " with a login account."
+                    : "."));
+
             TempData["Success"] =
                 "Employee created successfully.";
 
@@ -317,6 +330,12 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(
+                AuditService.Updated,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"{employee.FirstName} {employee.LastName} updated.");
+
             TempData["Success"] =
                 "Employee updated successfully.";
 
@@ -348,6 +367,15 @@ namespace HrPortal.Controllers
                 await _userManager.UpdateSecurityStampAsync(
                     employee.User);
             }
+
+            await _audit.LogAsync(
+                employee.IsActive
+                    ? AuditService.Activated
+                    : AuditService.Deactivated,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"{employee.FirstName} {employee.LastName} " +
+                (employee.IsActive ? "activated." : "deactivated."));
 
             TempData["Success"] =
                 employee.IsActive

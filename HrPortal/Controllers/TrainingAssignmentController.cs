@@ -2,6 +2,7 @@
 using HrPortal.Entities;
 using HrPortal.ViewModels;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,11 +14,17 @@ namespace HrPortal.Controllers
     public class TrainingAssignmentController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly NotificationService _notifications;
+        private readonly AuditService _audit;
 
         public TrainingAssignmentController(
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            NotificationService notifications,
+            AuditService audit)
         {
             _context = context;
+            _notifications = notifications;
+            _audit = audit;
         }
 
 
@@ -141,6 +148,10 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
+            var course = await _context.TrainingCourses
+                .FirstOrDefaultAsync(c =>
+                    c.Id == model.TrainingCourseId);
+
             foreach (var employeeId in toAssign)
             {
                 _context.TrainingAssignments.Add(
@@ -152,9 +163,24 @@ namespace HrPortal.Controllers
                         IsCompleted = false,
                         AssignedAt = DateTime.UtcNow
                     });
+
+                _notifications.Notify(
+                    employeeId,
+                    "Training assigned",
+                    $"You have been assigned \"{course?.Title}\"" +
+                    (model.DueDate.HasValue
+                        ? $", due {model.DueDate.Value:dd MMM yyyy}."
+                        : "."),
+                    "/MyTraining");
             }
 
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.TrainingAssigned,
+                nameof(TrainingCourse),
+                course?.Title,
+                $"Assigned to {toAssign.Count} employee(s).");
 
             var skipped = model.EmployeeIds.Distinct().Count()
                 - toAssign.Count;
@@ -288,6 +314,15 @@ namespace HrPortal.Controllers
                     : null;
 
             await _context.SaveChangesAsync();
+
+            if (assignment.IsCompleted)
+            {
+                await _audit.LogAsync(
+                    AuditService.TrainingCompleted,
+                    nameof(TrainingAssignment),
+                    assignment.Id.ToString(),
+                    "Marked as completed.");
+            }
 
             TempData["Success"] =
                 assignment.IsCompleted
