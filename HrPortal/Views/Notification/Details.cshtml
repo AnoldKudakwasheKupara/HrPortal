@@ -1,0 +1,139 @@
+﻿@model HrPortal.Entities.Notification
+
+@{
+    ViewData["Title"] = "Notification Details";
+}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>@Model.Title</h2>
+
+            <p class="text-muted">
+                Notification Details
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+
+                Edit
+
+            </a>
+
+            <a asp-action="Index"
+               class="btn btn-secondary">
+
+                Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <strong>Employee</strong>
+
+                    <p>
+                        @Model.Employee.FirstName
+                        @Model.Employee.LastName
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>Department</strong>
+
+                    <p>
+                        @Model.Employee.Department.Name
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <strong>State</strong>
+
+                    <p>
+                        @if (Model.IsRead)
+                        {
+                            <span class="badge bg-secondary">
+                                Read
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary">
+                                Unread
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Created</strong>
+
+                    <p>
+                        @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                    </p>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <strong>Link</strong>
+
+                    <p>
+                        @if (!string.IsNullOrWhiteSpace(Model.Link))
+                        {
+                            <a href="@Model.Link">@Model.Link</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                No link
+                            </span>
+                        }
+                    </p>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <strong>Message</strong>
+
+                    <p>
+                        @Model.Message
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

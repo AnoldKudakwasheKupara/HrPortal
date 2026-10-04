@@ -1,0 +1,138 @@
+﻿@model HrPortal.ViewModels.NotificationCreateViewModel
+
+@{
+    ViewData["Title"] = "Send Notification";
+}
+
+<div class="container">
+
+    <div class="mb-4">
+
+        <h2>Send Notification</h2>
+
+        <p class="text-muted">
+            Send a message to an employee's portal inbox.
+        </p>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="EmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="EmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Employee --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="EmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="Title"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Title"
+                               class="form-control"
+                               placeholder="e.g. Leave request approved" />
+
+                        <span asp-validation-for="Title"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label asp-for="Message"
+                           class="form-label">
+                    </label>
+
+                    <textarea asp-for="Message"
+                              class="form-control"
+                              rows="4">
+                    </textarea>
+
+                    <span asp-validation-for="Message"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <label asp-for="Link"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="Link"
+                           class="form-control"
+                           placeholder="Optional link, e.g. /LeaveRequest/Details/1" />
+
+                    <span asp-validation-for="Link"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Send Notification
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}
