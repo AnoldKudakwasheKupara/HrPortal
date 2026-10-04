@@ -41,6 +41,144 @@
                                     Employees
                                 </a>
                             </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown">
+                                    Leave
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="LeaveRequest"
+                                           asp-action="Index">
+                                            Leave Requests
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="LeaveBalance"
+                                           asp-action="Index">
+                                            Leave Balances
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="LeaveType"
+                                           asp-action="Index">
+                                            Leave Types
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown">
+                                    Training
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="TrainingCourse"
+                                           asp-action="Index">
+                                            Courses
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="TrainingAssignment"
+                                           asp-action="Index">
+                                            Assignments
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="TrainingMaterial"
+                                           asp-action="Index">
+                                            Materials
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="TrainingFeedback"
+                                           asp-action="Index">
+                                            Feedback
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown">
+                                    Documents
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="EmployeeDocument"
+                                           asp-action="Index">
+                                            Employee Documents
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="DocumentCategory"
+                                           asp-action="Index">
+                                            Categories
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown">
+                                    System
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Role"
+                                           asp-action="Index">
+                                            Roles
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="ApprovalConfiguration"
+                                           asp-action="Index">
+                                            Approval Configuration
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Notification"
+                                           asp-action="Index">
+                                            Notifications
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="AuditLog"
+                                           asp-action="Index">
+                                            Audit Log
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                         }
                     </ul>
                     <partial name="_LoginPartial" />
