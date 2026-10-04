@@ -1,226 +1,166 @@
-﻿@*  The left navigation.
+﻿@*  Navigation, in the IT Service Management System's sidebar
+    idiom: .nav-group headings with .nav-item links and Font
+    Awesome icons, active state on the controller.           *@
 
-    A sidebar has room to show the whole structure at once, so
-    the sections are flat lists under headings rather than
-    dropdowns: nothing is hidden behind a click, and the current
-    page is visible in context.                                *@
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"] as string;
+    var act = ViewContext.RouteData.Values["action"] as string;
 
-@functions {
-    /// <summary>
-    /// Marks the link for the page being viewed. Matching on the
-    /// controller alone is right for most entries, since a
-    /// section's list, details and edit pages all belong to the
-    /// same nav item; an action is given only where one
-    /// controller serves two separate entries.
-    /// </summary>
-    string Active(string controller, string? action = null)
-    {
-        var route = ViewContext.RouteData.Values;
+    string On(string controller) =>
+        string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase)
+            ? "active"
+            : "";
 
-        var onController = string.Equals(
-            route["controller"] as string,
-            controller,
-            StringComparison.OrdinalIgnoreCase);
+    string OnAction(string controller, string action) =>
+        string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(act, action, StringComparison.OrdinalIgnoreCase)
+            ? "active"
+            : "";
 
-        if (!onController)
-            return string.Empty;
-
-        if (action == null)
-            return "active";
-
-        return string.Equals(
-            route["action"] as string,
-            action,
-            StringComparison.OrdinalIgnoreCase)
-                ? "active"
-                : string.Empty;
-    }
+    var isAdmin = User.IsInRole("Administrator");
+    var isHr = User.IsInRole("HR Officer");
+    var isMd = User.IsInRole("MD");
 }
 
-<nav class="sidebar-nav">
+<nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation">
 
-    <a class="sidebar-link @Active("Home")"
-       asp-controller="Home"
-       asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-        Dashboard
+    <div class="nav-group">Core</div>
+
+    <a class="nav-item @On("Home")"
+       asp-controller="Home" asp-action="Index">
+        <i class="fas fa-chart-line"></i> Dashboard
     </a>
 
 
-    <div class="sidebar-section">Mine</div>
+    <div class="nav-group">Mine</div>
 
-    <a class="sidebar-link @Active("MyProfile")"
-       asp-controller="MyProfile"
-       asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
-        My Profile
+    <a class="nav-item @On("MyProfile")"
+       asp-controller="MyProfile" asp-action="Index">
+        <i class="fas fa-id-badge"></i> My Profile
     </a>
 
-    <a class="sidebar-link @Active("MyLeave")"
-       asp-controller="MyLeave"
-       asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
-        My Leave
+    <a class="nav-item @On("MyLeave")"
+       asp-controller="MyLeave" asp-action="Index">
+        <i class="fas fa-umbrella-beach"></i> My Leave
     </a>
 
-    <a class="sidebar-link @Active("MyTraining")"
-       asp-controller="MyTraining"
-       asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-book" /></svg>
-        My Training
+    <a class="nav-item @On("MyTraining")"
+       asp-controller="MyTraining" asp-action="Index">
+        <i class="fas fa-graduation-cap"></i> My Training
     </a>
 
 
-    @if (User.IsInRole("HR Officer") ||
-         User.IsInRole("MD") ||
-         User.IsInRole("Administrator"))
+    @if (isHr || isMd || isAdmin)
     {
-        <div class="sidebar-section">Approvals</div>
+        <div class="nav-group">Approvals</div>
 
-        @if (User.IsInRole("HR Officer") ||
-             User.IsInRole("Administrator"))
+        @if (isHr || isAdmin)
         {
-            <a class="sidebar-link @Active("LeaveApproval", "Index")"
-               asp-controller="LeaveApproval"
-               asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-inbox" /></svg>
-                Leave Review
+            <a class="nav-item @OnAction("LeaveApproval", "Index")"
+               asp-controller="LeaveApproval" asp-action="Index">
+                <i class="fas fa-inbox"></i> Leave Review
             </a>
         }
 
-        @if (User.IsInRole("MD") ||
-             User.IsInRole("Administrator"))
+        @if (isMd || isAdmin)
         {
-            <a class="sidebar-link @Active("LeaveApproval", "FinalApproval")"
-               asp-controller="LeaveApproval"
-               asp-action="FinalApproval">
-        <svg class="icon" aria-hidden="true"><use href="#i-inbox" /></svg>
-                Final Approval
+            <a class="nav-item @OnAction("LeaveApproval", "FinalApproval")"
+               asp-controller="LeaveApproval" asp-action="FinalApproval">
+                <i class="fas fa-stamp"></i> Final Approval
             </a>
         }
     }
 
 
-    @if (User.IsInRole("Administrator") ||
-         User.IsInRole("HR Officer"))
+    @if (isHr || isAdmin)
     {
-        <div class="sidebar-section">People</div>
+        <div class="nav-group">People</div>
 
-        <a class="sidebar-link @Active("Employee")"
-           asp-controller="Employee"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-users" /></svg>
-            Employees
+        <a class="nav-item @On("Employee")"
+           asp-controller="Employee" asp-action="Index">
+            <i class="fas fa-users"></i> Employees
         </a>
 
-        <a class="sidebar-link @Active("EmployeeDocument")"
-           asp-controller="EmployeeDocument"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
-            Employee Documents
+        <a class="nav-item @On("EmployeeDocument")"
+           asp-controller="EmployeeDocument" asp-action="Index">
+            <i class="fas fa-folder-open"></i> Employee Documents
         </a>
 
 
-        <div class="sidebar-section">Leave</div>
+        <div class="nav-group">Leave</div>
 
-        <a class="sidebar-link @Active("LeaveRequest")"
-           asp-controller="LeaveRequest"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
-            All Requests
+        <a class="nav-item @On("LeaveRequest")"
+           asp-controller="LeaveRequest" asp-action="Index">
+            <i class="fas fa-calendar-days"></i> All Requests
         </a>
 
-        <a class="sidebar-link @Active("LeaveBalance")"
-           asp-controller="LeaveBalance"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-list" /></svg>
-            Leave Balances
+        <a class="nav-item @On("LeaveBalance")"
+           asp-controller="LeaveBalance" asp-action="Index">
+            <i class="fas fa-scale-balanced"></i> Leave Balances
         </a>
 
-        <a class="sidebar-link @Active("LeaveType")"
-           asp-controller="LeaveType"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>
-            Leave Types
+        <a class="nav-item @On("LeaveType")"
+           asp-controller="LeaveType" asp-action="Index">
+            <i class="fas fa-tags"></i> Leave Types
         </a>
 
 
-        <div class="sidebar-section">Training</div>
+        <div class="nav-group">Training</div>
 
-        <a class="sidebar-link @Active("TrainingCourse")"
-           asp-controller="TrainingCourse"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-book" /></svg>
-            Courses
+        <a class="nav-item @On("TrainingCourse")"
+           asp-controller="TrainingCourse" asp-action="Index">
+            <i class="fas fa-chalkboard-user"></i> Courses
         </a>
 
-        <a class="sidebar-link @Active("TrainingAssignment")"
-           asp-controller="TrainingAssignment"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-check-circle" /></svg>
-            Assignments
+        <a class="nav-item @On("TrainingAssignment")"
+           asp-controller="TrainingAssignment" asp-action="Index">
+            <i class="fas fa-clipboard-check"></i> Assignments
         </a>
 
-        <a class="sidebar-link @Active("TrainingMaterial")"
-           asp-controller="TrainingMaterial"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
-            Materials
+        <a class="nav-item @On("TrainingMaterial")"
+           asp-controller="TrainingMaterial" asp-action="Index">
+            <i class="fas fa-file-lines"></i> Materials
         </a>
 
-        <a class="sidebar-link @Active("TrainingFeedback")"
-           asp-controller="TrainingFeedback"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-inbox" /></svg>
-            Feedback
+        <a class="nav-item @On("TrainingFeedback")"
+           asp-controller="TrainingFeedback" asp-action="Index">
+            <i class="fas fa-comment-dots"></i> Feedback
         </a>
     }
 
 
-    @if (User.IsInRole("Administrator"))
+    @if (isAdmin)
     {
-        <div class="sidebar-section">System</div>
+        <div class="nav-group">System</div>
 
-        <a class="sidebar-link @Active("Department")"
-           asp-controller="Department"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-building" /></svg>
-            Departments
+        <a class="nav-item @On("Department")"
+           asp-controller="Department" asp-action="Index">
+            <i class="fas fa-sitemap"></i> Departments
         </a>
 
-        <a class="sidebar-link @Active("DocumentCategory")"
-           asp-controller="DocumentCategory"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-folder" /></svg>
-            Document Categories
+        <a class="nav-item @On("DocumentCategory")"
+           asp-controller="DocumentCategory" asp-action="Index">
+            <i class="fas fa-folder-tree"></i> Document Categories
         </a>
 
-        <a class="sidebar-link @Active("Role")"
-           asp-controller="Role"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg>
-            Roles
+        <a class="nav-item @On("Role")"
+           asp-controller="Role" asp-action="Index">
+            <i class="fas fa-user-shield"></i> Roles
         </a>
 
-        <a class="sidebar-link @Active("ApprovalConfiguration")"
-           asp-controller="ApprovalConfiguration"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>
-            Approval Configuration
+        <a class="nav-item @On("ApprovalConfiguration")"
+           asp-controller="ApprovalConfiguration" asp-action="Index">
+            <i class="fas fa-sliders"></i> Approval Configuration
         </a>
 
-        <a class="sidebar-link @Active("Notification")"
-           asp-controller="Notification"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-bell" /></svg>
-            Notifications
+        <a class="nav-item @On("Notification")"
+           asp-controller="Notification" asp-action="Index">
+            <i class="fas fa-bell"></i> Notifications
         </a>
 
-        <a class="sidebar-link @Active("AuditLog")"
-           asp-controller="AuditLog"
-           asp-action="Index">
-        <svg class="icon" aria-hidden="true"><use href="#i-list" /></svg>
-            Audit Log
+        <a class="nav-item @On("AuditLog")"
+           asp-controller="AuditLog" asp-action="Index">
+            <i class="fas fa-clipboard-list"></i> Audit Log
         </a>
     }
 

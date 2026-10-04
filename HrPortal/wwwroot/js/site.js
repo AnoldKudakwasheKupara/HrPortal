@@ -1,50 +1,61 @@
-﻿// Light and dark switching.
+﻿// Sidebar drawer, matching the IT Service Management System.
 //
-// The theme itself is applied in a small inline script in the
-// layout head, before first paint, so the page never flashes the
-// wrong colours. This only wires up the toggle button and keeps
-// its icon in step.
+// The sidebar is a fixed rail on desktop and slides in over an
+// overlay on small screens. The markup calls these by name from
+// onclick attributes, so they have to be global.
 
-(function () {
+function toggleSidebar() {
     "use strict";
 
-    var STORAGE_KEY = "hrportal-theme";
+    var sidebar = document.getElementById("sidebar");
+    var overlay = document.getElementById("sidebarOverlay");
 
-    var root = document.documentElement;
-    var button = document.getElementById("themeToggle");
-    var icon = document.getElementById("themeToggleIcon");
-
-    if (!button || !icon) {
+    if (!sidebar || !overlay) {
         return;
     }
 
-    function currentTheme() {
-        return root.getAttribute("data-bs-theme") === "dark"
-            ? "dark"
-            : "light";
+    sidebar.classList.toggle("active");
+
+    if (sidebar.classList.contains("active")) {
+        overlay.classList.add("active");
+        document.body.style.overflow = "hidden";
+    } else {
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+}
+
+function closeSidebar() {
+    "use strict";
+
+    var sidebar = document.getElementById("sidebar");
+    var overlay = document.getElementById("sidebarOverlay");
+
+    if (!sidebar || !overlay) {
+        return;
     }
 
-    function paintIcon() {
-        // Shows the thing you would switch to.
-        icon.setAttribute(
-            "href",
-            currentTheme() === "dark" ? "#i-sun" : "#i-moon");
-    }
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+    document.body.style.overflow = "";
+}
 
-    button.addEventListener("click", function () {
-        var next = currentTheme() === "dark" ? "light" : "dark";
+// Following a link inside the drawer should close it, otherwise
+// the new page loads behind an overlay on a phone.
+(function () {
+    "use strict";
 
-        root.setAttribute("data-bs-theme", next);
+    document.addEventListener("DOMContentLoaded", function () {
+        var nav = document.getElementById("sidebarNav");
 
-        try {
-            localStorage.setItem(STORAGE_KEY, next);
-        } catch (e) {
-            // Storage blocked. The change still applies for this
-            // page view, it just will not be remembered.
+        if (!nav) {
+            return;
         }
 
-        paintIcon();
+        nav.addEventListener("click", function (event) {
+            if (event.target.closest(".nav-item")) {
+                closeSidebar();
+            }
+        });
     });
-
-    paintIcon();
 })();

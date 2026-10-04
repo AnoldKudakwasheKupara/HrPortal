@@ -3,161 +3,121 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
+@*  Shell copied from the IT Service Management System so the
+    two systems read as one product. The chrome, tokens and
+    component classes are theirs; only the navigation and the
+    identity source differ, since this app uses ASP.NET
+    Identity rather than session values.                      *@
+
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - HR Portal</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <script>
-        // Applied before first paint so the page never flashes
-        // light before switching to dark.
-        (function () {
-            try {
-                var stored = localStorage.getItem("hrportal-theme");
-                var prefersDark = window.matchMedia(
-                    "(prefers-color-scheme: dark)").matches;
-                document.documentElement.setAttribute(
-                    "data-bs-theme",
-                    stored || (prefersDark ? "dark" : "light"));
-            } catch (e) { /* storage blocked: stay on light */ }
-        })();
-    </script>
+
+    <link rel="stylesheet" href="~/css/itsm-core.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/itsm-shell.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
 </head>
 <body>
 
-    <partial name="_Icons" />
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <div class="app-shell">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-        @*  offcanvas-lg: a drawer below the large breakpoint,
-            an ordinary column at and above it.                *@
-        <aside class="sidebar offcanvas-lg offcanvas-start"
-               tabindex="-1"
-               id="appSidebar"
-               aria-label="Main navigation">
+    <div class="app-layout">
 
-            <div class="sidebar-brand">
+        <aside class="sidebar" id="sidebar">
 
-                <a class="brand-link"
-                   asp-controller="Home"
-                   asp-action="Index">
-                    <span class="brand-mark">HR</span>
-                    <span class="brand-name">HR Portal</span>
-                </a>
-
-                <button type="button"
-                        class="btn-close d-lg-none"
-                        data-bs-dismiss="offcanvas"
-                        data-bs-target="#appSidebar"
-                        aria-label="Close navigation"></button>
-
+            <div class="sidebar-header">
+                <i class="fas fa-users-gear"></i>
+                <span>Axis HR</span>
             </div>
 
-            <div class="sidebar-scroll">
-                <partial name="_Sidebar" />
-            </div>
+            <partial name="_Sidebar" />
 
-            @*  The account sits at the foot of the rail, which
-                frees the content area of a second header bar
-                repeating the page title.                      *@
-            <div class="sidebar-foot">
+        </aside>
+
+        <div class="main-wrapper">
+
+            <div class="topbar">
+
+                <div class="topbar-left">
+
+                    <button class="mobile-toggle"
+                            onclick="toggleSidebar()"
+                            aria-label="Toggle menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <h5>
+                        @ViewData["Title"]
+                        <small>Axis Human Resources</small>
+                    </h5>
+
+                </div>
 
                 @if (SignInManager.IsSignedIn(User))
                 {
                     var currentUser = await UserManager.GetUserAsync(User);
 
-                    <a class="account-link"
-                       asp-area="Identity"
-                       asp-page="/Account/Manage/Index"
-                       title="Manage your account">
+                    var displayName = currentUser?.FullName
+                        ?? User.Identity?.Name
+                        ?? "User";
 
-                        <span class="account-avatar" aria-hidden="true">
-                            @(string.IsNullOrWhiteSpace(currentUser?.FullName)
-                                ? "?"
-                                : currentUser!.FullName.Trim()[0].ToString().ToUpper())
-                        </span>
+                    var roleName = User.IsInRole("Administrator") ? "Administrator"
+                        : User.IsInRole("HR Officer") ? "HR Officer"
+                        : User.IsInRole("MD") ? "Managing Director"
+                        : "Employee";
 
-                        <span class="account-name">
-                            @(currentUser?.FullName ?? User.Identity?.Name)
-                        </span>
+                    <div class="user-profile">
 
-                    </a>
-                }
+                        <a asp-area="Identity"
+                           asp-page="/Account/Manage/Index"
+                           class="profile-link">
 
-                <div class="sidebar-foot-actions">
+                            <div class="user-avatar">
+                                @displayName.Trim()[0].ToString().ToUpper()
+                            </div>
 
-                    <button type="button"
-                            class="icon-button"
-                            id="themeToggle"
-                            title="Switch between light and dark"
-                            aria-label="Switch between light and dark">
-                        <svg class="icon" aria-hidden="true">
-                            <use id="themeToggleIcon" href="#i-moon" />
-                        </svg>
-                    </button>
+                            <div class="user-info">
+                                <div class="user-name">@displayName</div>
+                                <div class="user-role">@roleName</div>
+                            </div>
 
-                    @if (SignInManager.IsSignedIn(User))
-                    {
+                        </a>
+
                         <form asp-area="Identity"
                               asp-page="/Account/Logout"
                               asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
-                              method="post">
+                              method="post"
+                              class="logout-form">
 
                             <button type="submit"
-                                    class="icon-button"
-                                    title="Sign out"
-                                    aria-label="Sign out">
-                                <svg class="icon" aria-hidden="true">
-                                    <use href="#i-logout" />
-                                </svg>
+                                    class="btn-logout"
+                                    title="Log out"
+                                    aria-label="Log out">
+                                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                             </button>
 
                         </form>
-                    }
 
-                </div>
+                    </div>
+                }
 
             </div>
 
-        </aside>
-
-
-        <div class="app-main">
-
-            @*  Only on small screens, where the rail is hidden
-                behind a button. *@
-            <header class="mobile-bar d-lg-none">
-
-                <button type="button"
-                        class="icon-button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#appSidebar"
-                        aria-controls="appSidebar"
-                        aria-label="Open navigation">
-                    <svg class="icon" aria-hidden="true">
-                        <use href="#i-menu" />
-                    </svg>
-                </button>
-
-                <span class="mobile-bar-title">
-                    @ViewData["Title"]
-                </span>
-
-            </header>
-
-            <main role="main" class="app-content">
+            <main id="main-content" class="content fade-in" tabindex="-1">
                 @RenderBody()
             </main>
-
-            <footer class="app-footer">
-                &copy; 2026 HR Portal
-                &middot;
-                <a asp-controller="Home" asp-action="Privacy">Privacy</a>
-            </footer>
 
         </div>
 
