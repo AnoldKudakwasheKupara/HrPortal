@@ -1018,3 +1018,101 @@ a.stat-tile:hover {
     color: var(--ink-secondary);
     margin-top: .2rem;
 }
+
+
+/* ==========================================================
+   Signed-out pages
+
+   A centred card on the page plane. These are the first thing
+   anyone sees, so they get the same tokens as the rest rather
+   than the scaffold's defaults.
+   ========================================================== */
+
+.auth-body {
+    background-color: var(--plane);
+}
+
+.auth-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    gap: 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 380px;
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 1.6rem;
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.3rem;
+}
+
+.auth-head {
+    margin-bottom: 1.1rem;
+}
+
+.auth-head h1 {
+    font-size: 1.3rem;
+    margin-bottom: .15rem;
+}
+
+.auth-head p {
+    color: var(--ink-secondary);
+    font-size: .88rem;
+    margin-bottom: 0;
+}
+
+.auth-minor {
+    font-size: .84rem;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: 1.1rem 0;
+    color: var(--ink-secondary);
+    font-size: .8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--hairline);
+}
+
+.auth-foot-link {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: .84rem;
+}
+
+.auth-foot {
+    color: var(--ink-muted);
+    font-size: .8rem;
+    margin: 0;
+}
+
+/* The scaffold pages that are still on their default markup
+   should at least not shout. */
+.auth-card h1 { font-size: 1.3rem; }
+.auth-card h2 { font-size: 1.05rem; }
+.auth-card h3 { font-size: .98rem; }
+.auth-card hr { border-color: var(--hairline); }
