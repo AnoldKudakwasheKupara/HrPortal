@@ -205,9 +205,27 @@ namespace HrPortal.Controllers
                 await _context.SaveChangesAsync();
 
                 // New employees are regular Employees
-                await _userManager.AddToRoleAsync(
+                var roleResult = await _userManager.AddToRoleAsync(
                     user,
                     "Employee");
+
+                if (!roleResult.Succeeded)
+                {
+                    foreach (var error in roleResult.Errors)
+                    {
+                        ModelState.AddModelError(
+                            "",
+                            error.Description);
+                    }
+
+                    await _userManager.DeleteAsync(user);
+
+                    _context.Employees.Remove(employee);
+                    await _context.SaveChangesAsync();
+
+                    await LoadDepartments();
+                    return View(model);
+                }
             }
 
             TempData["Success"] =

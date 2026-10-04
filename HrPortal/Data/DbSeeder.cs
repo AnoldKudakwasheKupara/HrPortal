@@ -5,25 +5,41 @@ namespace HrPortal.Data
 {
     public static class DbSeeder
     {
+        /// <summary>
+        /// The roles the portal is built around. Access is granted
+        /// by role throughout, so all four must exist before any
+        /// user can be given one.
+        /// </summary>
+        private static readonly string[] Roles =
+        {
+            "Administrator",
+            "HR Officer",
+            "MD",
+            "Employee"
+        };
+
         public static async Task SeedAdministratorAsync(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole<int>> roleManager)
         {
-            const string roleName = "Administrator";
-
-            if (!await roleManager.RoleExistsAsync(roleName))
+            foreach (var role in Roles)
             {
+                if (await roleManager.RoleExistsAsync(role))
+                    continue;
+
                 var roleResult = await roleManager.CreateAsync(
-                    new IdentityRole<int>(roleName));
+                    new IdentityRole<int>(role));
 
                 if (!roleResult.Succeeded)
                 {
                     throw new Exception(
-                        "Failed to create Administrator role: " +
+                        $"Failed to create {role} role: " +
                         string.Join(", ",
                             roleResult.Errors.Select(e => e.Description)));
                 }
             }
+
+            const string roleName = "Administrator";
 
             const string email = "admin@hrportal.local";
             const string password = "Admin@12345";
