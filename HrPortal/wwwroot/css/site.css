@@ -1,31 +1,654 @@
+﻿/* ==========================================================
+   HR Portal design tokens
+
+   Colour roles rather than raw hex, so light and dark swap in
+   one place. Status colours are reserved for state and always
+   ship beside a word, never as colour alone.
+   ========================================================== */
+
+:root {
+    --surface:        #fcfcfb;
+    --surface-sunken: #f4f4f1;
+    --plane:          #f9f9f7;
+
+    --ink:            #0b0b0b;
+    --ink-secondary:  #52514e;
+    --ink-muted:      #898781;
+
+    --hairline:       #e1e0d9;
+    --ring:           rgba(11, 11, 11, 0.10);
+
+    --accent:         #2a78d6;
+    --accent-strong:  #1c5cab;
+    --accent-wash:    #eaf2fd;
+
+    --good:           #0ca30c;
+    --good-ink:       #006300;
+    --good-wash:      #e8f6e8;
+
+    --warning:        #fab219;
+    --warning-ink:    #7a5200;
+    --warning-wash:   #fdf3dd;
+
+    --critical:       #d03b3b;
+    --critical-ink:   #a32020;
+    --critical-wash:  #fbeaea;
+
+    --radius:     10px;
+    --radius-lg:  14px;
+
+    --shadow-sm: 0 1px 2px rgba(11, 11, 11, .05);
+    --shadow:    0 1px 3px rgba(11, 11, 11, .07),
+                 0 6px 18px rgba(11, 11, 11, .05);
+}
+
+[data-bs-theme="dark"] {
+    --surface:        #1a1a19;
+    --surface-sunken: #141413;
+    --plane:          #0d0d0d;
+
+    --ink:            #ffffff;
+    --ink-secondary:  #c3c2b7;
+    --ink-muted:      #898781;
+
+    --hairline:       #2c2c2a;
+    --ring:           rgba(255, 255, 255, 0.10);
+
+    --accent:         #3987e5;
+    --accent-strong:  #86b6ef;
+    --accent-wash:    #16283f;
+
+    --good:           #0ca30c;
+    --good-ink:       #5ec75e;
+    --good-wash:      #152915;
+
+    --warning:        #fab219;
+    --warning-ink:    #f0c45c;
+    --warning-wash:   #2e2410;
+
+    --critical:       #d03b3b;
+    --critical-ink:   #e88686;
+    --critical-wash:  #2e1717;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow:    0 1px 3px rgba(0, 0, 0, .5),
+                 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+
+/* ==========================================================
+   Base
+   ========================================================== */
+
 html {
-  font-size: 14px;
+    font-size: 15px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: var(--plane);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+h1, h2, h3, h4, h5 {
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    color: var(--ink);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+h2 {
+    font-size: 1.5rem;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--accent-strong);
+    text-decoration: underline;
+}
+
+.text-muted {
+    color: var(--ink-secondary) !important;
+}
+
+
+/* ==========================================================
+   Focus
+
+   One visible ring everywhere, on the accent rather than the
+   browser default, so keyboard users always see where they are.
+   ========================================================== */
+
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.dropdown-item:focus-visible,
+.nav-link:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-wash),
+                0 0 0 1px var(--accent);
+}
+
+
+/* ==========================================================
+   Navigation
+   ========================================================== */
+
+.navbar {
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--hairline);
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.navbar-brand .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg,
+                var(--accent), var(--accent-strong));
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+}
+
+.navbar .nav-link {
+    color: var(--ink-secondary);
+    font-weight: 500;
+    border-radius: 8px;
+    padding: .4rem .7rem !important;
+}
+
+.navbar .nav-link:hover {
+    color: var(--ink);
+    background-color: var(--surface-sunken);
+    text-decoration: none;
+}
+
+/* The sign-out control is a form button; keep it looking like
+   the links beside it in both themes. */
+.navbar .nav-link.btn-link {
+    color: var(--ink-secondary);
+    text-decoration: none;
+}
+
+.navbar .nav-link.btn-link:hover {
+    color: var(--ink);
+    background-color: var(--surface-sunken);
+}
+
+.dropdown-menu {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: .35rem;
+    background-color: var(--surface);
+}
+
+.dropdown-item {
+    border-radius: 7px;
+    padding: .45rem .65rem;
+    color: var(--ink-secondary);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--surface-sunken);
+    color: var(--ink);
+}
+
+
+/* ==========================================================
+   Cards
+   ========================================================== */
+
+.card {
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--hairline);
+    padding: .85rem 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.card-body {
+    padding: 1.1rem;
+}
+
+.card-footer {
+    background-color: transparent;
+    border-top: 1px solid var(--hairline);
+}
+
+
+/* ==========================================================
+   Tables
+   ========================================================== */
+
+.table {
+    --bs-table-bg: transparent;
+    color: var(--ink);
+    margin-bottom: 0;
+}
+
+.table > thead th {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-secondary);
+    border-bottom: 1px solid var(--hairline);
+    padding: .6rem .75rem;
+}
+
+.table > tbody td {
+    border-bottom: 1px solid var(--hairline);
+    padding: .7rem .75rem;
+    vertical-align: middle;
+    color: var(--ink-secondary);
+}
+
+.table > tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table > tbody td strong {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: var(--surface-sunken);
+}
+
+/* Columns of figures line up; standalone values do not. */
+.table td.num,
+.table th.num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+
+/* ==========================================================
+   Buttons
+   ========================================================== */
+
+.btn {
+    border-radius: 9px;
+    font-weight: 550;
+    padding: .45rem .9rem;
+}
+
+.btn-sm {
+    border-radius: 7px;
+    padding: .28rem .6rem;
+    font-size: .83rem;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+    background-color: var(--accent-strong) !important;
+    border-color: var(--accent-strong) !important;
+}
+
+.btn-secondary,
+.btn-outline-secondary {
+    color: var(--ink-secondary);
+    background-color: transparent;
+    border-color: var(--hairline);
+}
+
+.btn-secondary:hover,
+.btn-outline-secondary:hover {
+    background-color: var(--surface-sunken);
+    border-color: var(--ink-muted);
+    color: var(--ink);
+}
+
+
+/* ==========================================================
+   Badges
+
+   A status badge is always a colour plus the word, so the
+   state never rests on hue alone.
+   ========================================================== */
+
+.badge {
+    font-weight: 600;
+    font-size: .72rem;
+    letter-spacing: .01em;
+    padding: .32em .6em;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: var(--good-wash) !important;
+    color: var(--good-ink) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--warning-wash) !important;
+    color: var(--warning-ink) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--critical-wash) !important;
+    color: var(--critical-ink) !important;
+}
+
+.badge.bg-primary,
+.badge.bg-info {
+    background-color: var(--accent-wash) !important;
+    color: var(--accent-strong) !important;
+}
+
+.badge.bg-secondary,
+.badge.bg-light {
+    background-color: var(--surface-sunken) !important;
+    color: var(--ink-secondary) !important;
+}
+
+
+/* ==========================================================
+   Alerts
+   ========================================================== */
+
+.alert {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: .8rem 1rem;
+}
+
+.alert-success {
+    background-color: var(--good-wash);
+    border-color: var(--good);
+    color: var(--good-ink);
+}
+
+.alert-danger {
+    background-color: var(--critical-wash);
+    border-color: var(--critical);
+    color: var(--critical-ink);
+}
+
+.alert-warning {
+    background-color: var(--warning-wash);
+    border-color: var(--warning);
+    color: var(--warning-ink);
+}
+
+.alert-info,
+.alert-secondary {
+    background-color: var(--accent-wash);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+}
+
+
+/* ==========================================================
+   Forms
+   ========================================================== */
+
+.form-label {
+    font-weight: 550;
+    font-size: .87rem;
+    color: var(--ink-secondary);
+    margin-bottom: .3rem;
+}
+
+.form-control,
+.form-select {
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+    padding: .5rem .7rem;
+    color: var(--ink);
+}
+
+.form-control::placeholder {
+    color: var(--ink-muted);
+}
+
+.form-control:disabled,
+.form-control[disabled] {
+    background-color: var(--surface-sunken);
+    color: var(--ink-muted);
+}
+
+
+/* ==========================================================
+   Footer
+   ========================================================== */
+
+.footer {
+    border-top: 1px solid var(--hairline);
+    background-color: var(--surface);
+    color: var(--ink-muted);
+    font-size: .85rem;
+    padding: 1rem 0;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    line-height: 2.2rem;
+}
+
+body {
+    margin-bottom: 70px;
+}
+
+
+/* ==========================================================
+   Dashboard
+   ========================================================== */
+
+.page-head {
+    margin-bottom: 1.5rem;
+}
+
+.page-head h1 {
+    font-size: 1.75rem;
+    margin-bottom: .15rem;
+}
+
+.page-head p {
+    color: var(--ink-secondary);
+    margin-bottom: 0;
+}
+
+/* The one number the dashboard leads with. Proportional
+   figures: tabular-nums makes a large value look loose. */
+.hero-figure {
+    font-size: 3rem;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+}
+
+.hero-unit {
+    font-size: 1rem;
+    font-weight: 550;
+    color: var(--ink-secondary);
+    margin-left: .3rem;
+}
+
+/* Stat tile: label, value, and an optional footnote. */
+.stat-tile {
+    background-color: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem 1.1rem;
+    height: 100%;
+    display: block;
+    color: inherit;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+a.stat-tile:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+    text-decoration: none;
+    border-color: var(--ink-muted);
+}
+
+.stat-tile .stat-label {
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    /* Secondary, not muted: muted is the chart axis role and
+       falls below 4.5:1 at this size. */
+    color: var(--ink-secondary);
+    display: block;
+    margin-bottom: .4rem;
+}
+
+.stat-tile .stat-value {
+    font-size: 2rem;
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+}
+
+.stat-tile .stat-note {
+    font-size: .82rem;
+    color: var(--ink-secondary);
+    margin-top: .25rem;
+}
+
+/* State is carried by a left edge plus the words in the note,
+   so the colour is reinforcement rather than the only signal. */
+.stat-tile.is-action {
+    border-left: 3px solid var(--accent);
+}
+
+.stat-tile.is-good {
+    border-left: 3px solid var(--good);
+}
+
+.stat-tile.is-warning {
+    border-left: 3px solid var(--warning);
+}
+
+.stat-tile.is-critical {
+    border-left: 3px solid var(--critical);
+}
+
+.stat-tile.is-critical .stat-value {
+    color: var(--critical-ink);
+}
+
+.section-heading {
+    font-size: .78rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--ink-secondary);
+    margin: 2rem 0 .75rem;
+}
+
+.empty-state {
+    color: var(--ink-secondary);
+    text-align: center;
+    padding: 1.5rem .5rem;
+    margin: 0;
+}
+
+.empty-state .empty-icon {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: .35rem;
+    opacity: .6;
+}
+
+/* A compact row list used for queues and recent activity. */
+.row-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.row-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.row-list li:last-child {
+    border-bottom: 0;
+}
+
+.row-list .row-main {
+    min-width: 0;
+}
+
+.row-list .row-title {
+    font-weight: 600;
+    color: var(--ink);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row-list .row-meta {
+    font-size: .83rem;
+    color: var(--ink-secondary);
+}
+
+.theme-toggle {
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    color: var(--ink-secondary);
+    padding: .3rem .55rem;
+    line-height: 1;
+    font-size: .95rem;
+}
+
+.theme-toggle:hover {
+    background-color: var(--surface-sunken);
+    color: var(--ink);
 }

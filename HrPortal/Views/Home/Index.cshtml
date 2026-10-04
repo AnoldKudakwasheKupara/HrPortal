@@ -1,8 +1,728 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model HrPortal.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var hour = DateTime.Now.Hour;
+
+    var greeting =
+        hour < 12 ? "Good morning"
+        : hour < 18 ? "Good afternoon"
+        : "Good evening";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">HR POrtal testing</a>.</p>
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <h1>@greeting, @Model.GreetingName</h1>
+
+        <p>
+            @DateTime.Today.ToString("dddd, d MMMM yyyy")
+        </p>
+
+    </div>
+
+
+    @if (!Model.HasEmployeeRecord)
+    {
+        <div class="alert alert-info">
+
+            <strong>No employee record is linked to your account.</strong>
+
+            <div>
+                Personal sections such as leave and training are
+                hidden until an administrator links one.
+            </div>
+
+        </div>
+    }
+
+
+    @*  The MD and HR queues come first: they are the things
+        waiting on somebody, and everything else is reference. *@
+
+    @if (Model.Md != null && Model.Md.AwaitingFinalApproval > 0)
+    {
+        <div class="row g-3 mb-1">
+
+            <div class="col-12">
+
+                <a class="stat-tile is-action"
+                   asp-controller="LeaveApproval"
+                   asp-action="FinalApproval">
+
+                    <span class="stat-label">
+                        Waiting for your final approval
+                    </span>
+
+                    <span class="hero-figure">
+                        @Model.Md.AwaitingFinalApproval
+                    </span>
+
+                    <span class="hero-unit">
+                        @(Model.Md.AwaitingFinalApproval == 1
+                            ? "request" : "requests")
+                    </span>
+
+                    <div class="stat-note">
+                        Approved by HR and needing your decision.
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Mine != null)
+    {
+        <div class="section-heading">Me</div>
+
+        <div class="row g-3">
+
+            <div class="col-6 col-lg-3">
+
+                <div class="stat-tile">
+
+                    <span class="stat-label">Leave remaining</span>
+
+                    <span class="stat-value">
+                        @(Model.Mine.HasBalances
+                            ? Model.Mine.RemainingDays.ToString("0.##")
+                            : "--")
+                    </span>
+
+                    <div class="stat-note">
+                        @if (Model.Mine.HasBalances)
+                        {
+                            @Model.Mine.HeadlineLeaveType
+                            <text> days left this year</text>
+                        }
+                        else
+                        {
+                            <text>No balance set up yet</text>
+                        }
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Mine.RequestsInProgress > 0 ? "is-action" : "")"
+                   asp-controller="MyLeave"
+                   asp-action="Index">
+
+                    <span class="stat-label">Requests in progress</span>
+
+                    <span class="stat-value">
+                        @Model.Mine.RequestsInProgress
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Mine.RequestsInProgress == 0
+                            ? "Nothing awaiting a decision"
+                            : "Awaiting a decision")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Mine.OverdueTraining > 0 ? "is-critical" : Model.Mine.OutstandingTraining > 0 ? "is-warning" : "is-good")"
+                   asp-controller="MyTraining"
+                   asp-action="Index">
+
+                    <span class="stat-label">Training to do</span>
+
+                    <span class="stat-value">
+                        @Model.Mine.OutstandingTraining
+                    </span>
+
+                    <div class="stat-note">
+                        @if (Model.Mine.OverdueTraining > 0)
+                        {
+                            <strong>@Model.Mine.OverdueTraining overdue</strong>
+                        }
+                        else if (Model.Mine.OutstandingTraining > 0)
+                        {
+                            <text>None overdue</text>
+                        }
+                        else
+                        {
+                            <text>All caught up</text>
+                        }
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="MyProfile"
+                   asp-action="Index">
+
+                    <span class="stat-label">Unread notices</span>
+
+                    <span class="stat-value">
+                        @Model.Mine.UnreadNotifications
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Mine.UnreadNotifications == 0
+                            ? "Nothing new"
+                            : "On your profile")
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Mine != null)
+    {
+        <div class="row g-3 mt-1">
+
+            <div class="col-lg-6">
+
+                <div class="card h-100">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+
+                        <span>My recent leave</span>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-controller="MyLeave"
+                           asp-action="Create">
+                            Request leave
+                        </a>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (Model.Mine.RecentRequests.Any())
+                        {
+                            <ul class="row-list">
+
+                            @foreach (var request in Model.Mine.RecentRequests)
+                            {
+                                <li>
+                                    <div class="row-main">
+                                        <span class="row-title">
+                                            @request.LeaveType.Name
+                                        </span>
+                                        <span class="row-meta">
+                                            @request.StartDate.ToString("d MMM")
+                                            &ndash;
+                                            @request.EndDate.ToString("d MMM yyyy")
+                                            &middot;
+                                            @request.NumberOfDays.ToString("0.##") days
+                                        </span>
+                                    </div>
+
+                                    <partial name="_LeaveStatusBadge"
+                                             model="request.Status" />
+                                </li>
+                            }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                <span class="empty-icon">&#128197;</span>
+                                You have not requested any leave yet.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-lg-6">
+
+                <div class="card h-100">
+
+                    <div class="card-header">
+                        Training to complete
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (Model.Mine.TrainingToDo.Any())
+                        {
+                            <ul class="row-list">
+
+                            @foreach (var assignment in Model.Mine.TrainingToDo)
+                            {
+                                <li>
+                                    <div class="row-main">
+                                        <span class="row-title">
+                                            @assignment.TrainingCourse.Title
+                                        </span>
+                                        <span class="row-meta">
+                                            @if (assignment.DueDate.HasValue)
+                                            {
+                                                <text>Due @assignment.DueDate.Value.ToString("d MMM yyyy")</text>
+                                            }
+                                            else
+                                            {
+                                                <text>No due date</text>
+                                            }
+                                        </span>
+                                    </div>
+
+                                    @if (assignment.DueDate.HasValue &&
+                                         assignment.DueDate.Value.Date < DateTime.Today)
+                                    {
+                                        <span class="badge bg-danger">Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-controller="MyTraining"
+                                           asp-action="Details"
+                                           asp-route-id="@assignment.Id">
+                                            Open
+                                        </a>
+                                    }
+                                </li>
+                            }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                <span class="empty-icon">&#9989;</span>
+                                No outstanding training.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Hr != null)
+    {
+        <div class="section-heading">HR</div>
+
+        <div class="row g-3">
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.AwaitingReview > 0 ? "is-action" : "")"
+                   asp-controller="LeaveApproval"
+                   asp-action="Index">
+
+                    <span class="stat-label">Awaiting review</span>
+
+                    <span class="stat-value">@Model.Hr.AwaitingReview</span>
+
+                    <div class="stat-note">
+                        @(Model.Hr.AwaitingReview == 0
+                            ? "Queue is clear"
+                            : "Leave requests to action")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Employee"
+                   asp-action="Index">
+
+                    <span class="stat-label">Active employees</span>
+
+                    <span class="stat-value">@Model.Hr.ActiveEmployees</span>
+
+                    <div class="stat-note">On the books</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.OverdueTrainingOrgWide > 0 ? "is-critical" : "is-good")"
+                   asp-controller="TrainingAssignment"
+                   asp-action="Index">
+
+                    <span class="stat-label">Overdue training</span>
+
+                    <span class="stat-value">
+                        @Model.Hr.OverdueTrainingOrgWide
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Hr.OverdueTrainingOrgWide == 0
+                            ? "Nothing past its due date"
+                            : "Past the due date")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.DocumentsExpiringSoon > 0 ? "is-warning" : "")"
+                   asp-controller="EmployeeDocument"
+                   asp-action="Index">
+
+                    <span class="stat-label">Documents expiring</span>
+
+                    <span class="stat-value">
+                        @Model.Hr.DocumentsExpiringSoon
+                    </span>
+
+                    <div class="stat-note">Within 30 days</div>
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-3 mt-1">
+
+            <div class="col-12">
+
+                <div class="card">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+
+                        <span>Leave awaiting HR review</span>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-controller="LeaveApproval"
+                           asp-action="Index">
+                            Open queue
+                        </a>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (Model.Hr.ReviewQueue.Any())
+                        {
+                            <ul class="row-list">
+
+                            @foreach (var request in Model.Hr.ReviewQueue)
+                            {
+                                <li>
+                                    <div class="row-main">
+                                        <span class="row-title">
+                                            @request.Employee.FirstName
+                                            @request.Employee.LastName
+                                        </span>
+                                        <span class="row-meta">
+                                            @request.LeaveType.Name
+                                            &middot;
+                                            @request.NumberOfDays.ToString("0.##") days
+                                            &middot;
+                                            from @request.StartDate.ToString("d MMM yyyy")
+                                        </span>
+                                    </div>
+
+                                    <a class="btn btn-sm btn-primary"
+                                       asp-controller="LeaveApproval"
+                                       asp-action="Details"
+                                       asp-route-id="@request.Id">
+                                        Review
+                                    </a>
+                                </li>
+                            }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                <span class="empty-icon">&#9989;</span>
+                                Nothing is waiting for review.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Md != null && Model.Md.ApprovalQueue.Any())
+    {
+        <div class="section-heading">Final approval</div>
+
+        <div class="card">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>Cleared HR, awaiting the Managing Director</span>
+
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-controller="LeaveApproval"
+                   asp-action="FinalApproval">
+                    Open queue
+                </a>
+
+            </div>
+
+            <div class="card-body">
+
+                <ul class="row-list">
+
+                @foreach (var request in Model.Md.ApprovalQueue)
+                {
+                    <li>
+                        <div class="row-main">
+                            <span class="row-title">
+                                @request.Employee.FirstName
+                                @request.Employee.LastName
+                            </span>
+                            <span class="row-meta">
+                                @request.LeaveType.Name
+                                &middot;
+                                @request.NumberOfDays.ToString("0.##") days
+                                &middot;
+                                from @request.StartDate.ToString("d MMM yyyy")
+                            </span>
+                        </div>
+
+                        <a class="btn btn-sm btn-primary"
+                           asp-controller="LeaveApproval"
+                           asp-action="Details"
+                           asp-route-id="@request.Id">
+                            Decide
+                        </a>
+                    </li>
+                }
+
+                </ul>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Admin != null)
+    {
+        <div class="section-heading">System</div>
+
+        @if (!Model.Admin.HrApproverConfigured ||
+             !Model.Admin.MdApproverConfigured)
+        {
+            <div class="alert alert-warning">
+
+                <strong>Leave approval is not fully configured.</strong>
+
+                <div>
+                    @if (!Model.Admin.HrApproverConfigured)
+                    {
+                        <text>No active HR Officer approver. </text>
+                    }
+
+                    @if (!Model.Admin.MdApproverConfigured)
+                    {
+                        <text>No active MD approver. </text>
+                    }
+
+                    Requests will still be raised, but nobody is
+                    notified to act on them.
+
+                    <a asp-controller="ApprovalConfiguration"
+                       asp-action="Index">Set the approvers</a>.
+                </div>
+
+            </div>
+        }
+
+        <div class="row g-3">
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Employee"
+                   asp-action="Index">
+
+                    <span class="stat-label">Employees</span>
+
+                    <span class="stat-value">@Model.Admin.Employees</span>
+
+                    <div class="stat-note">Active and inactive</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Department"
+                   asp-action="Index">
+
+                    <span class="stat-label">Departments</span>
+
+                    <span class="stat-value">@Model.Admin.Departments</span>
+
+                    <div class="stat-note">Active</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="LeaveType"
+                   asp-action="Index">
+
+                    <span class="stat-label">Leave types</span>
+
+                    <span class="stat-value">@Model.Admin.LeaveTypes</span>
+
+                    <div class="stat-note">Available to request</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured ? "is-good" : "is-warning")"
+                   asp-controller="ApprovalConfiguration"
+                   asp-action="Index">
+
+                    <span class="stat-label">Approvers</span>
+
+                    <span class="stat-value">
+                        @((Model.Admin.HrApproverConfigured ? 1 : 0) + (Model.Admin.MdApproverConfigured ? 1 : 0)) / 2
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured
+                            ? "HR and MD both set"
+                            : "Roles still to fill")
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Admin != null)
+    {
+        <div class="row g-3 mt-1">
+
+            <div class="col-12">
+
+                <div class="card">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+
+                        <span>Recent activity</span>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-controller="AuditLog"
+                           asp-action="Index">
+                            Full audit log
+                        </a>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (Model.Admin.RecentActivity.Any())
+                        {
+                            <ul class="row-list">
+
+                            @foreach (var entry in Model.Admin.RecentActivity)
+                            {
+                                <li>
+                                    <div class="row-main">
+                                        <span class="row-title">
+                                            @entry.Action
+                                            <span class="text-muted">
+                                                &middot; @entry.EntityName
+                                            </span>
+                                        </span>
+                                        <span class="row-meta">
+                                            @(entry.Employee != null
+                                                ? entry.Employee.FirstName + " " + entry.Employee.LastName
+                                                : "System")
+                                            &middot;
+                                            @entry.Timestamp.ToString("d MMM yyyy HH:mm")
+                                        </span>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(entry.EntityId))
+                                    {
+                                        <span class="badge bg-secondary">
+                                            @entry.EntityId
+                                        </span>
+                                    }
+                                </li>
+                            }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                <span class="empty-icon">&#128220;</span>
+                                No activity has been recorded yet.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
 </div>
