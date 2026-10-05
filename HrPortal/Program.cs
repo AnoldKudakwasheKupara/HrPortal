@@ -5,13 +5,31 @@ using HrPortal.Services;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// A new machine can point at its own SQL Server without editing the
+// committed appsettings.json, via user secrets, an environment
+// variable, or ConnectionStrings__DefaultConnection.
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "No 'DefaultConnection' connection string was found. Set one in " +
+        "appsettings.Development.json, in user secrets " +
+        "(dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" " +
+        "\"...\"), or in the ConnectionStrings__DefaultConnection " +
+        "environment variable.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
+        connectionString,
+        sql => sql.EnableRetryOnFailure()
     ));
 
 builder.Services
@@ -105,17 +123,43 @@ using (var scope = app.Services.CreateScope())
     var db =
         services.GetRequiredService<ApplicationDbContext>();
 
-    await db.Database.MigrateAsync();
+    try
+    {
+        // Creates the database on a machine that has never run the app
+        // before, then brings it up to the latest migration. Must happen
+        // before anything else touches the database.
+        await db.Database.MigrateAsync();
 
-    var userManager =
-        services.GetRequiredService<UserManager<ApplicationUser>>();
+        var userManager =
+            services.GetRequiredService<UserManager<ApplicationUser>>();
 
-    var roleManager =
-        services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+        var roleManager =
+            services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
-    await DbSeeder.SeedAdministratorAsync(
-        userManager,
-        roleManager);
+        await DbSeeder.SeedAdministratorAsync(
+            userManager,
+            roleManager);
+    }
+    catch (SqlException ex)
+    {
+        var target = new SqlConnectionStringBuilder(connectionString);
+
+        var logger = services
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("Startup");
+
+        logger.LogError(
+            ex,
+            "Could not prepare the database '{Database}' on server " +
+            "'{Server}'. Check that SQL Server is installed and running " +
+            "on this machine and that your Windows account can reach it, " +
+            "or point 'ConnectionStrings:DefaultConnection' at a server " +
+            "you can use. See README.md for first-run setup.",
+            target.InitialCatalog,
+            target.DataSource);
+
+        throw;
+    }
 }
 
 if (!app.Environment.IsDevelopment())
