@@ -1,37 +1,64 @@
-@page
+﻿@page
 @model LoginWith2faModel
+
 @{
     ViewData["Title"] = "Two-factor authentication";
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
-            <input asp-for="RememberMe" type="hidden" />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label asp-for="Input.TwoFactorCode" class="form-label"></label>
-                <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
-            </div>
-            <div class="checkbox mb-3">
-                <label asp-for="Input.RememberMachine" class="form-label">
-                    <input asp-for="Input.RememberMachine" />
-                    @Html.DisplayNameFor(m => m.Input.RememberMachine)
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </form>
-    </div>
+<div class="auth-head">
+    <h1>Two-factor authentication</h1>
+    <p>Enter the code from your authenticator app.</p>
 </div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">log in with a recovery code</a>.
+
+<form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+
+    <div asp-validation-summary="ModelOnly"
+         class="alert alert-danger"
+         role="alert"
+         data-valmsg-summary="true"></div>
+
+    <input asp-for="RememberMe" type="hidden" />
+
+    <div class="mb-3">
+
+        <label asp-for="Input.TwoFactorCode" class="form-label">
+            Authenticator code
+        </label>
+
+        <input asp-for="Input.TwoFactorCode"
+               class="form-control"
+               autocomplete="one-time-code"
+               aria-required="true" />
+
+        <span asp-validation-for="Input.TwoFactorCode"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="form-check mb-3">
+
+        <input class="form-check-input" asp-for="Input.RememberMachine" />
+
+        <label asp-for="Input.RememberMachine" class="form-check-label">
+            @Html.DisplayNameFor(m => m.Input.RememberMachine)
+        </label>
+
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary w-100 justify-content-center">
+        Sign in
+    </button>
+
+</form>
+
+<p class="auth-foot-link">
+    Don't have your authenticator device?
+    <a id="recovery-code-login"
+       asp-page="./LoginWithRecoveryCode"
+       asp-route-returnUrl="@Model.ReturnUrl">
+        Use a recovery code
+    </a>
 </p>
 
 @section Scripts {
