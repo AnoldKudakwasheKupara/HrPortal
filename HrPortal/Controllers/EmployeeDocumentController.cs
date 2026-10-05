@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.AdminOrHr)]
+    [Authorize(Roles = Roles.HrOnly)]
     public class EmployeeDocumentController : Controller
     {
         private const string UploadFolder = "employee-documents";

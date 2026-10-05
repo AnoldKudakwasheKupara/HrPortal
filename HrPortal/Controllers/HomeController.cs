@@ -45,17 +45,11 @@ namespace HrPortal.Controllers
             if (employee != null)
                 model.Mine = await BuildMineAsync(employee.Id);
 
-            if (User.IsInRole(Roles.HrOfficer) ||
-                User.IsInRole(Roles.Administrator))
-            {
+            if (User.IsInRole(Roles.HrOfficer))
                 model.Hr = await BuildHrAsync();
-            }
 
-            if (User.IsInRole(Roles.Md) ||
-                User.IsInRole(Roles.Administrator))
-            {
+            if (User.IsInRole(Roles.Md))
                 model.Md = await BuildMdAsync();
-            }
 
             if (User.IsInRole(Roles.Administrator))
                 model.Admin = await BuildAdminAsync();
@@ -203,9 +197,6 @@ namespace HrPortal.Controllers
 
                 Departments = await _context.Departments
                     .CountAsync(d => d.IsActive),
-
-                LeaveTypes = await _context.LeaveTypes
-                    .CountAsync(l => l.IsActive),
 
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.AdminOrHr)]
+    [Authorize(Roles = Roles.HrOnly)]
     public class LeaveBalanceController : Controller
     {
         private readonly ApplicationDbContext _context;

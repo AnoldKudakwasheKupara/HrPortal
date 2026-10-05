@@ -22,12 +22,6 @@ namespace HrPortal.Security
             OperationAuthorizationRequirement requirement,
             IEmployeeOwned resource)
         {
-            if (context.User.IsInRole(Roles.Administrator))
-            {
-                context.Succeed(requirement);
-                return;
-            }
-
             if (ElevatedRoleMay(context.User, requirement, resource))
             {
                 context.Succeed(requirement);

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.AdminOrHr)]
+    [Authorize(Roles = Roles.HrOnly)]
     public class TrainingAssignmentController : Controller
     {
         private readonly ApplicationDbContext _context;

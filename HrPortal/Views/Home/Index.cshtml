@@ -593,23 +593,6 @@
 
             <div class="col-6 col-lg-3">
 
-                <a class="stat-tile"
-                   asp-controller="LeaveType"
-                   asp-action="Index">
-
-                    <span class="stat-label">Leave types</span>
-
-                    <span class="stat-value">@Model.Admin.LeaveTypes</span>
-
-                    <div class="stat-note">Available to request</div>
-
-                </a>
-
-            </div>
-
-
-            <div class="col-6 col-lg-3">
-
                 <a class="stat-tile @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured ? "is-good" : "is-warning")"
                    asp-controller="ApprovalConfiguration"
                    asp-action="Index">

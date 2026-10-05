@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.AdminOrHrOrMd)]
+    [Authorize(Roles = Roles.HrOrMd)]
     public class LeaveApprovalController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -26,7 +26,7 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        [Authorize(Roles = Roles.AdminOrHr)]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Index()
         {
             var requests = await _context.LeaveRequests
@@ -44,7 +44,7 @@ namespace HrPortal.Controllers
             return View("Queue", requests);
         }
 
-        [Authorize(Roles = Roles.Administrator + "," + Roles.Md)]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> FinalApproval()
         {
             var requests = await _context.LeaveRequests
@@ -85,12 +85,10 @@ namespace HrPortal.Controllers
                 Balance = balance,
                 CanActAsHr =
                     LeaveWorkflowService.IsAwaitingHr(request.Status) &&
-                    (User.IsInRole(Roles.HrOfficer) ||
-                     User.IsInRole(Roles.Administrator)),
+                    User.IsInRole(Roles.HrOfficer),
                 CanActAsMd =
                     LeaveWorkflowService.IsAwaitingMd(request.Status) &&
-                    (User.IsInRole(Roles.Md) ||
-                     User.IsInRole(Roles.Administrator))
+                    User.IsInRole(Roles.Md)
             };
 
             return View(model);
@@ -98,7 +96,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Roles.AdminOrHr)]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> HrApprove(
             int id,
             string? comment)
@@ -113,7 +111,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Roles.AdminOrHr)]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> HrReject(
             int id,
             string? comment)
@@ -129,7 +127,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Roles.AdminOrHr)]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> HrReturn(
             int id,
             string? comment)
@@ -145,7 +143,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Roles.Administrator + "," + Roles.Md)]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> MdApprove(
             int id,
             string? comment)
@@ -160,7 +158,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Roles.Administrator + "," + Roles.Md)]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> MdReject(
             int id,
             string? comment)

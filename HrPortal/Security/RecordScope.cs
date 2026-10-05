@@ -32,9 +32,6 @@ namespace HrPortal.Security
         public static bool SeesEveryone<T>(ClaimsPrincipal user)
             where T : IEmployeeOwned
         {
-            if (user.IsInRole(Roles.Administrator))
-                return true;
-
             var isHr = user.IsInRole(Roles.HrOfficer);
             var isMd = user.IsInRole(Roles.Md);
 

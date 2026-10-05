@@ -62,8 +62,6 @@ namespace HrPortal.ViewModels
 
         public int Departments { get; set; }
 
-        public int LeaveTypes { get; set; }
-
         public bool HrApproverConfigured { get; set; }
 
         public bool MdApproverConfigured { get; set; }

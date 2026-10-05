@@ -15,8 +15,9 @@
         public const string AdminOrHr =
             Administrator + "," + HrOfficer;
 
-        public const string AdminOrHrOrMd =
-            Administrator + "," + HrOfficer + "," + Md;
+        public const string HrOnly = HrOfficer;
+
+        public const string HrOrMd = HrOfficer + "," + Md;
 
         public const string MdOnly = Md;
     }
