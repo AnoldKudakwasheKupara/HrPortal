@@ -57,7 +57,20 @@ namespace HrPortal.Services
         {
             var previous = request.Status;
 
-            request.Status = LeaveRequestStatus.Submitted;
+            // Nobody reviews their own leave. When the request belongs
+            // to the HR Officer the HR stage is skipped and it goes
+            // straight to the MD.
+            var hrApproverId = await _notifications
+                .GetApproverEmployeeId(ApprovalRole.HROfficer);
+
+            var isHrOfficersOwn =
+                hrApproverId != null &&
+                hrApproverId.Value == request.EmployeeId;
+
+            request.Status = isHrOfficersOwn
+                ? LeaveRequestStatus.HRApproved
+                : LeaveRequestStatus.Submitted;
+
             request.SubmittedAt = DateTime.UtcNow;
             request.CompletedAt = null;
 
@@ -70,13 +83,28 @@ namespace HrPortal.Services
                     ? LeaveRequestAction.Resubmitted
                     : LeaveRequestAction.Submitted,
                 previous,
-                comment);
+                isHrOfficersOwn
+                    ? "Sent straight to the Managing Director: the " +
+                      "request belongs to the HR Officer."
+                    : comment);
 
-            await _notifications.NotifyApproverAsync(
-                ApprovalRole.HROfficer,
-                "Leave request submitted",
-                $"{request.RequestNumber} is waiting for your review.",
-                $"/LeaveApproval/Details/{request.Id}");
+            if (isHrOfficersOwn)
+            {
+                await _notifications.NotifyApproverAsync(
+                    ApprovalRole.MD,
+                    "Leave request awaiting final approval",
+                    $"{request.RequestNumber} is the HR Officer's own " +
+                    "request and needs your decision.",
+                    $"/LeaveApproval/Details/{request.Id}");
+            }
+            else
+            {
+                await _notifications.NotifyApproverAsync(
+                    ApprovalRole.HROfficer,
+                    "Leave request submitted",
+                    $"{request.RequestNumber} is waiting for your review.",
+                    $"/LeaveApproval/Details/{request.Id}");
+            }
 
             await _context.SaveChangesAsync();
 
@@ -84,7 +112,10 @@ namespace HrPortal.Services
                 AuditService.LeaveSubmitted,
                 nameof(LeaveRequest),
                 request.RequestNumber,
-                $"{request.NumberOfDays:0.##} day(s) submitted for review.");
+                $"{request.NumberOfDays:0.##} day(s) submitted " +
+                (isHrOfficersOwn
+                    ? "straight to the MD."
+                    : "for review."));
         }
 
         public async Task HrApproveAsync(

@@ -8,6 +8,8 @@ namespace HrPortal.ViewModels
 
         public bool HasEmployeeRecord { get; set; }
 
+        public bool ShowsOwnLeave { get; set; } = true;
+
         public MyDashboardSection? Mine { get; set; }
 
         public HrDashboardSection? Hr { get; set; }

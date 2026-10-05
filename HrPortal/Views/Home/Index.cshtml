@@ -83,6 +83,8 @@
 
         <div class="row g-3">
 
+            @if (Model.ShowsOwnLeave)
+            {
             <div class="col-6 col-lg-3">
 
                 <div class="stat-tile">
@@ -133,6 +135,7 @@
                 </a>
 
             </div>
+            }
 
 
             <div class="col-6 col-lg-3">
@@ -190,6 +193,8 @@
             </div>
 
 
+            @if (Model.ShowsOwnLeave)
+            {
             <div class="col-6 col-lg-3">
 
                 <div class="stat-tile">
@@ -233,6 +238,7 @@
                 </a>
 
             </div>
+            }
 
         </div>
     }
@@ -242,6 +248,8 @@
     {
         <div class="row g-3 mt-1">
 
+            @if (Model.ShowsOwnLeave)
+            {
             <div class="col-lg-6">
 
                 <div class="card h-100">
@@ -300,9 +308,10 @@
                 </div>
 
             </div>
+            }
 
 
-            <div class="col-lg-6">
+            <div class="@(Model.ShowsOwnLeave ? "col-lg-6" : "col-12")">
 
                 <div class="card h-100">
 

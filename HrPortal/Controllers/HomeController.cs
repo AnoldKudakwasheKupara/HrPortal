@@ -41,7 +41,9 @@ namespace HrPortal.Controllers
                 GreetingName = employee?.FirstName
                     ?? await GetAccountFirstNameAsync(),
 
-                HasEmployeeRecord = employee != null
+                HasEmployeeRecord = employee != null,
+
+                ShowsOwnLeave = !User.IsInRole(Roles.Md)
             };
 
             if (employee != null)
