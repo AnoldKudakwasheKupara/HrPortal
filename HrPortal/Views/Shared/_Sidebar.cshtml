@@ -96,26 +96,36 @@
     }
 
 
-    @if (isHr)
+    @if (isHr || isMd)
     {
         <div class="nav-group">Leave</div>
+
+        @*  The MD approves leave, so they can read the whole
+            register, not only what is sitting in their own
+            queue. The rest of this group is HR's housekeeping. *@
 
         <a class="nav-item @On("LeaveRequest")"
            asp-controller="LeaveRequest" asp-action="Index">
             <i class="fas fa-calendar-days"></i> All Requests
         </a>
 
-        <a class="nav-item @On("LeaveBalance")"
-           asp-controller="LeaveBalance" asp-action="Index">
-            <i class="fas fa-scale-balanced"></i> Leave Balances
-        </a>
+        @if (isHr)
+        {
+            <a class="nav-item @On("LeaveBalance")"
+               asp-controller="LeaveBalance" asp-action="Index">
+                <i class="fas fa-scale-balanced"></i> Leave Balances
+            </a>
 
-        <a class="nav-item @On("LeaveType")"
-           asp-controller="LeaveType" asp-action="Index">
-            <i class="fas fa-tags"></i> Leave Types
-        </a>
+            <a class="nav-item @On("LeaveType")"
+               asp-controller="LeaveType" asp-action="Index">
+                <i class="fas fa-tags"></i> Leave Types
+            </a>
+        }
+    }
 
 
+    @if (isHr)
+    {
         <div class="nav-group">Training</div>
 
         <a class="nav-item @On("TrainingCourse")"
