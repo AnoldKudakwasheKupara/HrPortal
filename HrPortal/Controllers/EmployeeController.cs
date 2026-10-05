@@ -18,15 +18,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly AuditService _audit;
+        private readonly FileStorageService _fileStorage;
 
         public EmployeeController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            AuditService audit)
+            AuditService audit,
+            FileStorageService fileStorage)
         {
             _context = context;
             _userManager = userManager;
             _audit = audit;
+            _fileStorage = fileStorage;
         }
 
         public async Task<IActionResult> Index()
@@ -300,42 +303,162 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleStatus(int id)
+        public async Task<IActionResult> Delete(int? id)
         {
+            if (id == null)
+                return NotFound();
+
             var employee = await _context.Employees
+                .Include(e => e.Department)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employee == null)
                 return NotFound();
 
-            employee.IsActive = !employee.IsActive;
+            ViewBag.Blockers = await GetDeleteBlockers(employee.Id);
+            ViewBag.Removals = await GetDeleteRemovals(employee.Id);
+
+            return View(employee);
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var employee = await _context.Employees
+                .Include(e => e.User)
+                .Include(e => e.Documents)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            var blockers = await GetDeleteBlockers(id);
+
+            if (blockers.Count > 0)
+            {
+                TempData["Error"] =
+                    "This employee cannot be deleted because their " +
+                    "record is referenced elsewhere: " +
+                    string.Join("; ", blockers) +
+                    ". Mark them inactive instead.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var filePaths = employee.Documents
+                .Select(d => d.FilePath)
+                .ToList();
+
+            var user = employee.User;
+
+            var description =
+                $"{employee.FirstName} {employee.LastName} " +
+                "and their balances, training assignments, " +
+                "documents and notifications were deleted.";
+
+            _context.Employees.Remove(employee);
 
             await _context.SaveChangesAsync();
 
-            if (employee.User != null)
+            foreach (var filePath in filePaths)
             {
-                await _userManager.UpdateSecurityStampAsync(
-                    employee.User);
+                _fileStorage.Delete(filePath);
+            }
+
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
             }
 
             await _audit.LogAsync(
-                employee.IsActive
-                    ? AuditService.Activated
-                    : AuditService.Deactivated,
+                AuditService.Deleted,
                 nameof(Employee),
                 employee.EmployeeNumber,
-                $"{employee.FirstName} {employee.LastName} " +
-                (employee.IsActive ? "activated." : "deactivated."));
+                description);
 
             TempData["Success"] =
-                employee.IsActive
-                    ? "Employee activated successfully."
-                    : "Employee deactivated successfully.";
+                "Employee deleted successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<List<string>> GetDeleteBlockers(int employeeId)
+        {
+            var blockers = new List<string>();
+
+            void Add(int count, string label)
+            {
+                if (count > 0)
+                    blockers.Add($"{count} {label}");
+            }
+
+            Add(
+                await _context.LeaveRequests
+                    .CountAsync(r => r.EmployeeId == employeeId),
+                "leave request(s)");
+
+            Add(
+                await _context.LeaveRequestHistories
+                    .CountAsync(h => h.ActionedByEmployeeId == employeeId),
+                "leave approval action(s)");
+
+            Add(
+                await _context.TrainingCourses
+                    .CountAsync(c => c.CreatedByEmployeeId == employeeId),
+                "training course(s) they created");
+
+            Add(
+                await _context.TrainingMaterials
+                    .CountAsync(m => m.UploadedByEmployeeId == employeeId),
+                "training material(s) they uploaded");
+
+            Add(
+                await _context.EmployeeDocuments
+                    .CountAsync(d => d.UploadedByEmployeeId == employeeId),
+                "document(s) they uploaded for others");
+
+            Add(
+                await _context.ApprovalConfigurations
+                    .CountAsync(a => a.EmployeeId == employeeId),
+                "approval role assignment(s)");
+
+            return blockers;
+        }
+
+        private async Task<List<string>> GetDeleteRemovals(int employeeId)
+        {
+            var removals = new List<string>();
+
+            void Add(int count, string label)
+            {
+                if (count > 0)
+                    removals.Add($"{count} {label}");
+            }
+
+            Add(
+                await _context.LeaveBalances
+                    .CountAsync(b => b.EmployeeId == employeeId),
+                "leave balance(s)");
+
+            Add(
+                await _context.TrainingAssignments
+                    .CountAsync(a => a.EmployeeId == employeeId),
+                "training assignment(s)");
+
+            Add(
+                await _context.EmployeeDocuments
+                    .CountAsync(d => d.EmployeeId == employeeId),
+                "document(s) held on file");
+
+            Add(
+                await _context.Notifications
+                    .CountAsync(n => n.EmployeeId == employeeId),
+                "notification(s)");
+
+            return removals;
         }
 
         private async Task LoadDepartments()

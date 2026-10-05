@@ -28,6 +28,13 @@
         </div>
     }
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
     <div class="card shadow-sm">
 
         <div class="card-body is-table">
@@ -118,22 +125,11 @@
                                         Edit
                                     </a>
 
-                                    <form asp-action="ToggleStatus"
-                                          asp-route-id="@employee.Id"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
-
-                                            @(employee.IsActive
-                                                ? "Deactivate"
-                                                : "Activate")
-
-                                        </button>
-
-                                    </form>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="Delete"
+                                       asp-route-id="@employee.Id">
+                                        Delete
+                                    </a>
 
                                 </div>
                             </td>
