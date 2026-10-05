@@ -169,8 +169,8 @@
 
             <div class="col-6 col-lg-3">
 
-                <a class="stat-tile"
-                   asp-controller="MyProfile"
+                <a class="stat-tile @(Model.Mine.UnreadNotifications > 0 ? "is-action" : "")"
+                   asp-controller="MyNotifications"
                    asp-action="Index">
 
                     <span class="stat-label">Unread notices</span>
@@ -182,7 +182,52 @@
                     <div class="stat-note">
                         @(Model.Mine.UnreadNotifications == 0
                             ? "Nothing new"
-                            : "On your profile")
+                            : "Waiting for you")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <div class="stat-tile">
+
+                    <span class="stat-label">Leave taken</span>
+
+                    <span class="stat-value">
+                        @(Model.Mine.HasBalances
+                            ? Model.Mine.DaysTakenThisYear.ToString("0.##")
+                            : "--")
+                    </span>
+
+                    <div class="stat-note">
+                        Days used in @DateTime.Today.Year
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Mine.NextLeaveStart != null ? "is-good" : "")"
+                   asp-controller="MyLeave"
+                   asp-action="Index">
+
+                    <span class="stat-label">Next leave</span>
+
+                    <span class="stat-value">
+                        @(Model.Mine.NextLeaveStart?.ToString("d MMM")
+                            ?? "--")
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Mine.NextLeaveStart == null
+                            ? "Nothing booked"
+                            : "Approved and upcoming")
                     </div>
 
                 </a>
@@ -357,6 +402,46 @@
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+
+                    <span class="stat-label">With the MD</span>
+
+                    <span class="stat-value">@Model.Hr.WithMd</span>
+
+                    <div class="stat-note">Past you, awaiting sign-off</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.ReturnedToEmployees > 0 ? "is-warning" : "")"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+
+                    <span class="stat-label">Returned</span>
+
+                    <span class="stat-value">
+                        @Model.Hr.ReturnedToEmployees
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Hr.ReturnedToEmployees == 0
+                            ? "None sent back"
+                            : "Waiting on the employee")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
                    asp-controller="Employee"
                    asp-action="Index">
 
@@ -365,6 +450,72 @@
                     <span class="stat-value">@Model.Hr.ActiveEmployees</span>
 
                     <div class="stat-note">On the books</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.OnLeaveToday > 0 ? "is-action" : "")"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+
+                    <span class="stat-label">On leave today</span>
+
+                    <span class="stat-value">@Model.Hr.OnLeaveToday</span>
+
+                    <div class="stat-note">
+                        @(Model.Hr.OnLeaveToday == 0
+                            ? "Everyone is in"
+                            : "Away right now")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Hr.EmployeesWithoutLogin > 0 ? "is-warning" : "is-good")"
+                   asp-controller="Employee"
+                   asp-action="Index">
+
+                    <span class="stat-label">No sign-in yet</span>
+
+                    <span class="stat-value">
+                        @Model.Hr.EmployeesWithoutLogin
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Hr.EmployeesWithoutLogin == 0
+                            ? "Everyone has an account"
+                            : "Active staff with no account")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile is-good"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+
+                    <span class="stat-label">Approved this month</span>
+
+                    <span class="stat-value">
+                        @Model.Hr.ApprovedThisMonth
+                    </span>
+
+                    <div class="stat-note">
+                        Fully signed off since
+                        @DateTime.Today.ToString("1 MMM")
+                    </div>
 
                 </a>
 
@@ -464,6 +615,168 @@
             </div>
 
         </div>
+
+
+        <div class="row g-3 mt-1">
+
+            <div class="col-12">
+
+                <div class="card">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+
+                        <span>Away in the next two weeks</span>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-controller="LeaveRequest"
+                           asp-action="Index">
+                            All requests
+                        </a>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        @if (Model.Hr.StartingSoon.Any())
+                        {
+                            <ul class="row-list">
+
+                            @foreach (var request in Model.Hr.StartingSoon)
+                            {
+                                <li>
+                                    <div class="row-main">
+                                        <span class="row-title">
+                                            @request.Employee.FirstName
+                                            @request.Employee.LastName
+                                        </span>
+                                        <span class="row-meta">
+                                            @request.LeaveType.Name
+                                            &middot;
+                                            @request.NumberOfDays.ToString("0.##") days
+                                            &middot;
+                                            @request.StartDate.ToString("d MMM")
+                                            &ndash;
+                                            @request.EndDate.ToString("d MMM yyyy")
+                                        </span>
+                                    </div>
+
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-controller="LeaveRequest"
+                                       asp-action="Details"
+                                       asp-route-id="@request.Id">
+                                        View
+                                    </a>
+                                </li>
+                            }
+
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="empty-state">
+                                <span class="empty-icon">&#128197;</span>
+                                Nobody is booked off in the next two weeks.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    @if (Model.Md != null)
+    {
+        <div class="section-heading">Managing Director</div>
+
+        <div class="row g-3">
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Md.AwaitingFinalApproval > 0 ? "is-action" : "is-good")"
+                   asp-controller="LeaveApproval"
+                   asp-action="FinalApproval">
+
+                    <span class="stat-label">Awaiting your decision</span>
+
+                    <span class="stat-value">
+                        @Model.Md.AwaitingFinalApproval
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Md.AwaitingFinalApproval == 0
+                            ? "Queue is clear"
+                            : "Cleared HR, needs sign-off")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <div class="stat-tile">
+
+                    <span class="stat-label">Days approved</span>
+
+                    <span class="stat-value">
+                        @Model.Md.DaysApprovedThisMonth.ToString("0.##")
+                    </span>
+
+                    <div class="stat-note">
+                        Across the business this month
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <div class="stat-tile is-good">
+
+                    <span class="stat-label">Approved this month</span>
+
+                    <span class="stat-value">
+                        @Model.Md.ApprovedThisMonth
+                    </span>
+
+                    <div class="stat-note">
+                        @Model.Md.RejectedThisMonth rejected
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Md.OnLeaveToday > 0 ? "is-action" : "")"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+
+                    <span class="stat-label">On leave today</span>
+
+                    <span class="stat-value">@Model.Md.OnLeaveToday</span>
+
+                    <div class="stat-note">
+                        @(Model.Md.OnLeaveToday == 0
+                            ? "Everyone is in"
+                            : "Away right now")
+                    </div>
+
+                </a>
+
+            </div>
+
+        </div>
     }
 
 
@@ -523,6 +836,62 @@
     }
 
 
+    @if (Model.Md != null && Model.Md.StartingSoon.Any())
+    {
+        <div class="card mt-3">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>Away in the next two weeks</span>
+
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-controller="LeaveRequest"
+                   asp-action="Index">
+                    All requests
+                </a>
+
+            </div>
+
+            <div class="card-body">
+
+                <ul class="row-list">
+
+                @foreach (var request in Model.Md.StartingSoon)
+                {
+                    <li>
+                        <div class="row-main">
+                            <span class="row-title">
+                                @request.Employee.FirstName
+                                @request.Employee.LastName
+                            </span>
+                            <span class="row-meta">
+                                @request.LeaveType.Name
+                                &middot;
+                                @request.NumberOfDays.ToString("0.##") days
+                                &middot;
+                                @request.StartDate.ToString("d MMM")
+                                &ndash;
+                                @request.EndDate.ToString("d MMM yyyy")
+                            </span>
+                        </div>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           asp-controller="LeaveRequest"
+                           asp-action="Details"
+                           asp-route-id="@request.Id">
+                            View
+                        </a>
+                    </li>
+                }
+
+                </ul>
+
+            </div>
+
+        </div>
+    }
+
+
     @if (Model.Admin != null)
     {
         <div class="section-heading">System</div>
@@ -567,7 +936,9 @@
 
                     <span class="stat-value">@Model.Admin.Employees</span>
 
-                    <div class="stat-note">Active and inactive</div>
+                    <div class="stat-note">
+                        @Model.Admin.ActiveEmployees active
+                    </div>
 
                 </a>
 
@@ -585,6 +956,69 @@
                     <span class="stat-value">@Model.Admin.Departments</span>
 
                     <div class="stat-note">Active</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Employee"
+                   asp-action="Index">
+
+                    <span class="stat-label">Sign-in accounts</span>
+
+                    <span class="stat-value">
+                        @Model.Admin.SignInAccounts
+                    </span>
+
+                    <div class="stat-note">
+                        Employees who can log in
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Admin.EmployeesWithoutLogin > 0 ? "is-warning" : "is-good")"
+                   asp-controller="Employee"
+                   asp-action="Index">
+
+                    <span class="stat-label">No account yet</span>
+
+                    <span class="stat-value">
+                        @Model.Admin.EmployeesWithoutLogin
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Admin.EmployeesWithoutLogin == 0
+                            ? "Everyone is set up"
+                            : "Active staff needing access")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="DocumentCategory"
+                   asp-action="Index">
+
+                    <span class="stat-label">Document categories</span>
+
+                    <span class="stat-value">
+                        @Model.Admin.DocumentCategories
+                    </span>
+
+                    <div class="stat-note">Active filing categories</div>
 
                 </a>
 

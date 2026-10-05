@@ -33,6 +33,10 @@ namespace HrPortal.ViewModels
 
         public int UnreadNotifications { get; set; }
 
+        public decimal DaysTakenThisYear { get; set; }
+
+        public DateTime? NextLeaveStart { get; set; }
+
         public List<LeaveRequest> RecentRequests { get; set; } = new();
 
         public List<TrainingAssignment> TrainingToDo { get; set; } = new();
@@ -42,25 +46,55 @@ namespace HrPortal.ViewModels
     {
         public int AwaitingReview { get; set; }
 
+        public int WithMd { get; set; }
+
+        public int ReturnedToEmployees { get; set; }
+
+        public int ApprovedThisMonth { get; set; }
+
         public int ActiveEmployees { get; set; }
+
+        public int EmployeesWithoutLogin { get; set; }
+
+        public int OnLeaveToday { get; set; }
 
         public int OverdueTrainingOrgWide { get; set; }
 
         public List<LeaveRequest> ReviewQueue { get; set; } = new();
+
+        public List<LeaveRequest> StartingSoon { get; set; } = new();
     }
 
     public class MdDashboardSection
     {
         public int AwaitingFinalApproval { get; set; }
 
+        public int ApprovedThisMonth { get; set; }
+
+        public int RejectedThisMonth { get; set; }
+
+        public decimal DaysApprovedThisMonth { get; set; }
+
+        public int OnLeaveToday { get; set; }
+
         public List<LeaveRequest> ApprovalQueue { get; set; } = new();
+
+        public List<LeaveRequest> StartingSoon { get; set; } = new();
     }
 
     public class AdminDashboardSection
     {
         public int Employees { get; set; }
 
+        public int ActiveEmployees { get; set; }
+
         public int Departments { get; set; }
+
+        public int SignInAccounts { get; set; }
+
+        public int EmployeesWithoutLogin { get; set; }
+
+        public int DocumentCategories { get; set; }
 
         public bool HrApproverConfigured { get; set; }
 

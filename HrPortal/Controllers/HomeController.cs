@@ -14,7 +14,9 @@ using System.Diagnostics;
 namespace HrPortal.Controllers
 {
     public class HomeController : Controller
-    {        private const int ListLength = 5;
+    {
+        private const int ListLength = 5;
+        private const int StartingSoonDays = 14;
 
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
@@ -117,6 +119,17 @@ namespace HrPortal.Controllers
                         n.EmployeeId == employeeId &&
                         !n.IsRead),
 
+                DaysTakenThisYear = balances.Sum(b => b.UsedDays),
+
+                NextLeaveStart = await _context.LeaveRequests
+                    .Where(r =>
+                        r.EmployeeId == employeeId &&
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.StartDate >= today)
+                    .OrderBy(r => r.StartDate)
+                    .Select(r => (DateTime?)r.StartDate)
+                    .FirstOrDefaultAsync(),
+
                 RecentRequests = await _context.LeaveRequests
                     .Include(r => r.LeaveType)
                     .Where(r => r.EmployeeId == employeeId)
@@ -139,6 +152,9 @@ namespace HrPortal.Controllers
         private async Task<HrDashboardSection> BuildHrAsync()
         {
             var today = DateTime.Today;
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var soon = today.AddDays(StartingSoonDays);
+
             return new HrDashboardSection
             {
                 AwaitingReview = await _context.LeaveRequests
@@ -146,8 +162,32 @@ namespace HrPortal.Controllers
                         r.Status == LeaveRequestStatus.Submitted ||
                         r.Status == LeaveRequestStatus.HRReview),
 
+                WithMd = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.HRApproved ||
+                        r.Status == LeaveRequestStatus.MDReview),
+
+                ReturnedToEmployees = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.ReturnedToEmployee),
+
+                ApprovedThisMonth = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.CompletedAt != null &&
+                        r.CompletedAt >= monthStart),
+
                 ActiveEmployees = await _context.Employees
                     .CountAsync(e => e.IsActive),
+
+                EmployeesWithoutLogin = await _context.Employees
+                    .CountAsync(e => e.IsActive && e.UserId == null),
+
+                OnLeaveToday = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.StartDate <= today &&
+                        r.EndDate >= today),
 
                 OverdueTrainingOrgWide =
                     await _context.TrainingAssignments
@@ -164,18 +204,58 @@ namespace HrPortal.Controllers
                         r.Status == LeaveRequestStatus.HRReview)
                     .OrderBy(r => r.SubmittedAt)
                     .Take(ListLength)
+                    .ToListAsync(),
+
+                StartingSoon = await _context.LeaveRequests
+                    .Include(r => r.Employee)
+                    .Include(r => r.LeaveType)
+                    .Where(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.EndDate >= today &&
+                        r.StartDate <= soon)
+                    .OrderBy(r => r.StartDate)
+                    .Take(ListLength)
                     .ToListAsync()
             };
         }
 
         private async Task<MdDashboardSection> BuildMdAsync()
         {
+            var today = DateTime.Today;
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var soon = today.AddDays(StartingSoonDays);
+
             return new MdDashboardSection
             {
                 AwaitingFinalApproval = await _context.LeaveRequests
                     .CountAsync(r =>
                         r.Status == LeaveRequestStatus.HRApproved ||
                         r.Status == LeaveRequestStatus.MDReview),
+
+                ApprovedThisMonth = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.CompletedAt != null &&
+                        r.CompletedAt >= monthStart),
+
+                RejectedThisMonth = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Rejected &&
+                        r.CompletedAt != null &&
+                        r.CompletedAt >= monthStart),
+
+                DaysApprovedThisMonth = await _context.LeaveRequests
+                    .Where(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.CompletedAt != null &&
+                        r.CompletedAt >= monthStart)
+                    .SumAsync(r => (decimal?)r.NumberOfDays) ?? 0,
+
+                OnLeaveToday = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.StartDate <= today &&
+                        r.EndDate >= today),
 
                 ApprovalQueue = await _context.LeaveRequests
                     .Include(r => r.Employee)
@@ -184,6 +264,17 @@ namespace HrPortal.Controllers
                         r.Status == LeaveRequestStatus.HRApproved ||
                         r.Status == LeaveRequestStatus.MDReview)
                     .OrderBy(r => r.SubmittedAt)
+                    .Take(ListLength)
+                    .ToListAsync(),
+
+                StartingSoon = await _context.LeaveRequests
+                    .Include(r => r.Employee)
+                    .Include(r => r.LeaveType)
+                    .Where(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.EndDate >= today &&
+                        r.StartDate <= soon)
+                    .OrderBy(r => r.StartDate)
                     .Take(ListLength)
                     .ToListAsync()
             };
@@ -195,8 +286,20 @@ namespace HrPortal.Controllers
             {
                 Employees = await _context.Employees.CountAsync(),
 
+                ActiveEmployees = await _context.Employees
+                    .CountAsync(e => e.IsActive),
+
                 Departments = await _context.Departments
                     .CountAsync(d => d.IsActive),
+
+                SignInAccounts = await _context.Employees
+                    .CountAsync(e => e.UserId != null),
+
+                EmployeesWithoutLogin = await _context.Employees
+                    .CountAsync(e => e.IsActive && e.UserId == null),
+
+                DocumentCategories = await _context.DocumentCategories
+                    .CountAsync(c => c.IsActive),
 
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations
