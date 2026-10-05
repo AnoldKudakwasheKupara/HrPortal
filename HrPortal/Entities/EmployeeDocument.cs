@@ -22,6 +22,8 @@ namespace HrPortal.Entities
 
         public int? UploadedByEmployeeId { get; set; }
 
+        public string? UploadedByName { get; set; }
+
         public Employee Employee { get; set; } = null!;
 
         public DocumentCategory DocumentCategory { get; set; } = null!;

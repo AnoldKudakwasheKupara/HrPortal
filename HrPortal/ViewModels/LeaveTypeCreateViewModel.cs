@@ -12,13 +12,5 @@ namespace HrPortal.ViewModels
         [Display(Name = "Description")]
         [StringLength(500)]
         public string? Description { get; set; }
-
-        [Required]
-        [Display(Name = "Default Days Per Year")]
-        [Range(0, 365)]
-        public decimal DefaultDays { get; set; }
-
-        [Display(Name = "Requires Approval")]
-        public bool RequiresApproval { get; set; } = true;
     }
 }

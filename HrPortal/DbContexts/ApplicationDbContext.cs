@@ -96,9 +96,6 @@ namespace HrPortal.DbContexts
                     .IsRequired()
                     .HasMaxLength(100);
 
-                entity.Property(l => l.DefaultDays)
-                    .HasPrecision(10, 2);
-
                 entity.HasIndex(l => l.Name)
                     .IsUnique();
             });
@@ -329,6 +326,9 @@ namespace HrPortal.DbContexts
                     .WithMany(c => c.Documents)
                     .HasForeignKey(d => d.DocumentCategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(d => d.UploadedByName)
+                    .HasMaxLength(200);
 
                 entity.HasOne(d => d.UploadedByEmployee)
                     .WithMany()

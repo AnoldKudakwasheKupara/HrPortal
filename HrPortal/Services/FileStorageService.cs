@@ -25,7 +25,29 @@
             ".jpeg"
         };
 
+        public static readonly string[] PreviewableExtensions =
+        {
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".txt",
+            ".csv"
+        };
+
         public const long MaxFileSizeBytes = 10 * 1024 * 1024;
+
+        public static bool CanPreview(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            var extension = Path
+                .GetExtension(fileName)
+                .ToLowerInvariant();
+
+            return PreviewableExtensions.Contains(extension);
+        }
 
         public static string? Validate(IFormFile? file)
         {

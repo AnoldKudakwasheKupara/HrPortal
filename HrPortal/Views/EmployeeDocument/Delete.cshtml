@@ -70,7 +70,11 @@
                     <span class="field-label">Uploaded By</span>
 
                     <p class="field-value">
-                        @if (Model.UploadedByEmployee != null)
+                        @if (!string.IsNullOrWhiteSpace(Model.UploadedByName))
+                        {
+                            @Model.UploadedByName
+                        }
+                        else if (Model.UploadedByEmployee != null)
                         {
                             @Model.UploadedByEmployee.FirstName
                             @Model.UploadedByEmployee.LastName

@@ -50,8 +50,6 @@
                         <tr>
                             <th>Leave Type</th>
                             <th>Description</th>
-                            <th>Default Days</th>
-                            <th>Approval</th>
                             <th>Requests</th>
                             <th>Status</th>
                             <th class="col-actions">Actions</th>
@@ -80,25 +78,6 @@
                                 {
                                     <span class="text-muted">
                                         No description
-                                    </span>
-                                }
-                            </td>
-
-                            <td>
-                                @leaveType.DefaultDays.ToString("0.##")
-                            </td>
-
-                            <td>
-                                @if (leaveType.RequiresApproval)
-                                {
-                                    <span class="badge bg-info text-dark">
-                                        Required
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-light text-dark">
-                                        Not required
                                     </span>
                                 }
                             </td>

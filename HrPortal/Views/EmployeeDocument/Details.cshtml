@@ -18,6 +18,19 @@
 
         <div>
 
+            @if (HrPortal.Services.FileStorageService
+                .CanPreview(Model.OriginalFileName))
+            {
+                <a asp-action="Preview"
+                   asp-route-id="@Model.Id"
+                   target="_blank"
+                   class="btn btn-outline-primary">
+
+                    Preview
+
+                </a>
+            }
+
             <a asp-action="Download"
                asp-route-id="@Model.Id"
                class="btn btn-outline-primary">
@@ -102,7 +115,11 @@
                     <span class="field-label">Uploaded By</span>
 
                     <p class="field-value">
-                        @if (Model.UploadedByEmployee != null)
+                        @if (!string.IsNullOrWhiteSpace(Model.UploadedByName))
+                        {
+                            @Model.UploadedByName
+                        }
+                        else if (Model.UploadedByEmployee != null)
                         {
                             @Model.UploadedByEmployee.FirstName
                             @Model.UploadedByEmployee.LastName

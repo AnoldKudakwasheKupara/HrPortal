@@ -124,6 +124,46 @@ namespace HrPortal.Controllers
                 document.OriginalFileName);
         }
 
+        public async Task<IActionResult> Preview(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var document = await _context.EmployeeDocuments
+                .FindAsync(id);
+
+            if (document == null)
+                return NotFound();
+
+            if (!FileStorageService.CanPreview(document.OriginalFileName))
+                return RedirectToAction(nameof(Download), new { id });
+
+            var fullPath =
+                _fileStorage.ResolveExistingPath(document.FilePath);
+
+            if (fullPath == null)
+            {
+                TempData["Error"] =
+                    "That file is no longer on the server.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            new FileExtensionContentTypeProvider()
+                .TryGetContentType(fullPath, out var contentType);
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+
+            Response.Headers.ContentDisposition =
+                "inline; filename=\"" +
+                Path.GetFileName(document.OriginalFileName) +
+                "\"";
+
+            return File(
+                bytes,
+                contentType ?? "application/octet-stream");
+        }
+
         public async Task<IActionResult> Create(int? employeeId)
         {
             await LoadLookups();
@@ -165,7 +205,8 @@ namespace HrPortal.Controllers
                 FilePath = filePath,
                 Description = model.Description?.Trim(),
                 UploadedAt = DateTime.UtcNow,
-                UploadedByEmployeeId = await GetCurrentEmployeeId()
+                UploadedByEmployeeId = await GetCurrentEmployeeId(),
+                UploadedByName = await GetCurrentUserName()
             };
 
             _context.EmployeeDocuments.Add(document);
@@ -257,6 +298,8 @@ namespace HrPortal.Controllers
                 document.UploadedAt = DateTime.UtcNow;
                 document.UploadedByEmployeeId =
                     await GetCurrentEmployeeId();
+                document.UploadedByName =
+                    await GetCurrentUserName();
 
                 _fileStorage.Delete(oldFilePath);
             }
@@ -350,6 +393,13 @@ namespace HrPortal.Controllers
                     categories,
                     "Id",
                     "Name");
+        }
+
+        private async Task<string?> GetCurrentUserName()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
 
         private async Task<int?> GetCurrentEmployeeId()

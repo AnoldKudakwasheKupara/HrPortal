@@ -75,8 +75,6 @@ namespace HrPortal.Controllers
             {
                 Name = name,
                 Description = model.Description?.Trim(),
-                DefaultDays = model.DefaultDays,
-                RequiresApproval = model.RequiresApproval,
                 IsActive = true
             };
 
@@ -106,8 +104,6 @@ namespace HrPortal.Controllers
                 Id = leaveType.Id,
                 Name = leaveType.Name,
                 Description = leaveType.Description,
-                DefaultDays = leaveType.DefaultDays,
-                RequiresApproval = leaveType.RequiresApproval,
                 IsActive = leaveType.IsActive
             };
 
@@ -150,8 +146,6 @@ namespace HrPortal.Controllers
 
             leaveType.Name = name;
             leaveType.Description = model.Description?.Trim();
-            leaveType.DefaultDays = model.DefaultDays;
-            leaveType.RequiresApproval = model.RequiresApproval;
             leaveType.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync();

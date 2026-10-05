@@ -147,7 +147,12 @@
                             </td>
 
                             <td>
-                                @if (document.UploadedByEmployee != null)
+                                @if (!string.IsNullOrWhiteSpace(
+                                    document.UploadedByName))
+                                {
+                                    @document.UploadedByName
+                                }
+                                else if (document.UploadedByEmployee != null)
                                 {
                                     @document.UploadedByEmployee.FirstName
                                     @document.UploadedByEmployee.LastName
@@ -171,6 +176,19 @@
                                         View
 
                                     </a>
+
+                                    @if (HrPortal.Services.FileStorageService
+                                        .CanPreview(document.OriginalFileName))
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Preview"
+                                           asp-route-id="@document.Id"
+                                           target="_blank">
+
+                                            Preview
+
+                                        </a>
+                                    }
 
                                     <a class="btn btn-sm btn-outline-secondary"
                                        asp-action="Download"
