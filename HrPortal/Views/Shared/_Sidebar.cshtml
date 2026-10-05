@@ -49,6 +49,11 @@
         <i class="fas fa-graduation-cap"></i> My Training
     </a>
 
+    <a class="nav-item @On("MyNotifications")"
+       asp-controller="MyNotifications" asp-action="Index">
+        <i class="fas fa-bell"></i> Notifications
+    </a>
+
 
     @if (isHr || isMd || isAdmin)
     {
@@ -151,11 +156,6 @@
         <a class="nav-item @On("ApprovalConfiguration")"
            asp-controller="ApprovalConfiguration" asp-action="Index">
             <i class="fas fa-sliders"></i> Approval Configuration
-        </a>
-
-        <a class="nav-item @On("Notification")"
-           asp-controller="Notification" asp-action="Index">
-            <i class="fas fa-bell"></i> Notifications
         </a>
 
         <a class="nav-item @On("AuditLog")"

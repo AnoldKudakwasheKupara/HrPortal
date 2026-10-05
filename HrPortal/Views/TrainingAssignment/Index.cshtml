@@ -24,7 +24,6 @@
 
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
@@ -38,7 +37,6 @@
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm mb-4">
 
@@ -83,7 +81,6 @@
 
     </div>
 
-
     <div class="card shadow-sm">
 
         <div class="card-body is-table">
@@ -100,7 +97,7 @@
                             <th>Due</th>
                             <th>Completed</th>
                             <th>Feedback</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -179,76 +176,50 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <div class="dropdown">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@assignment.Id">
 
-                                        Actions
+                                        View
 
-                                    </button>
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@assignment.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@assignment.Id">
+                                        Edit
 
-                                                View
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <form asp-action="ToggleCompletion"
+                                          asp-route-id="@assignment.Id"
+                                          method="post">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@assignment.Id">
+                                        @Html.AntiForgeryToken()
 
-                                                Edit
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
 
-                                            </a>
-                                        </li>
+                                            @(assignment.IsCompleted
+                                                ? "Mark Outstanding"
+                                                : "Mark Completed")
 
-                                        <li>
+                                        </button>
 
-                                            <form asp-action="ToggleCompletion"
-                                                  asp-route-id="@assignment.Id"
-                                                  method="post">
+                                    </form>
 
-                                                @Html.AntiForgeryToken()
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="Delete"
+                                       asp-route-id="@assignment.Id">
 
-                                                <button type="submit"
-                                                        class="dropdown-item">
+                                        Delete
 
-                                                    @(assignment.IsCompleted
-                                                        ? "Mark Outstanding"
-                                                        : "Mark Completed")
-
-                                                </button>
-
-                                            </form>
-
-                                        </li>
-
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item text-danger"
-                                               asp-action="Delete"
-                                               asp-route-id="@assignment.Id">
-
-                                                Delete
-
-                                            </a>
-                                        </li>
-
-                                    </ul>
+                                    </a>
 
                                 </div>
 

@@ -108,7 +108,7 @@
                             <th>Dates</th>
                             <th>Days</th>
                             <th>Status</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -171,12 +171,18 @@
                                 }
                             </td>
 
-                            <td>
-                                <a class="btn btn-sm btn-outline-secondary"
-                                   asp-action="Details"
-                                   asp-route-id="@request.Id">
-                                    View
-                                </a>
+                            <td class="col-actions">
+
+                                <div class="table-actions">
+
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@request.Id">
+                                        View
+                                    </a>
+
+                                </div>
+
                             </td>
 
                         </tr>

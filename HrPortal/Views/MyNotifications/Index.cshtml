@@ -1,0 +1,172 @@
+﻿@model IEnumerable<HrPortal.Entities.Notification>
+
+@{
+    ViewData["Title"] = "Notifications";
+
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>Notifications</h2>
+
+            <p class="text-muted mb-0">
+                Raised automatically when something happens to your
+                leave or your training.
+            </p>
+        </div>
+
+        @if (unreadCount > 0)
+        {
+            <form asp-action="MarkAllRead" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-primary">
+                    Mark all as read
+                </button>
+
+            </form>
+        }
+
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-header d-flex align-items-center gap-2">
+
+            <h5 class="mb-0">Your notifications</h5>
+
+            @if (unreadCount > 0)
+            {
+                <span class="badge bg-primary">
+                    @unreadCount unread
+                </span>
+            }
+
+        </div>
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Notification</th>
+                            <th>Received</th>
+                            <th>Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4"
+                                class="text-center text-muted py-4">
+                                You have no notifications yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var notification in Model)
+                        {
+                            <tr>
+
+                                <td>
+                                    <div>
+                                        <strong>@notification.Title</strong>
+                                    </div>
+
+                                    <div class="text-muted">
+                                        @notification.Message
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @(notification.CreatedAt
+                                        .ToLocalTime()
+                                        .ToString("dd MMM yyyy HH:mm"))
+                                </td>
+
+                                <td>
+                                    @if (notification.IsRead)
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Read
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">
+                                            Unread
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="col-actions">
+
+                                    <div class="table-actions">
+
+                                        @if (!string.IsNullOrWhiteSpace(
+                                            notification.Link))
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               asp-action="Open"
+                                               asp-route-id="@notification.Id">
+                                                Open
+                                            </a>
+                                        }
+
+                                        @if (!notification.IsRead)
+                                        {
+                                            <form asp-action="MarkRead"
+                                                  asp-route-id="@notification.Id"
+                                                  method="post">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-secondary">
+                                                    Mark as read
+                                                </button>
+
+                                            </form>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -27,7 +27,6 @@
 
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
@@ -41,7 +40,6 @@
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm mb-4">
 
@@ -93,7 +91,6 @@
 
     </div>
 
-
     <div class="card shadow-sm">
 
         <div class="card-body is-table">
@@ -110,7 +107,7 @@
                             <th>Used</th>
                             <th>Pending</th>
                             <th>Remaining</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -158,55 +155,33 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <div class="dropdown">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@balance.Id">
 
-                                        Actions
+                                        View
 
-                                    </button>
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@balance.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@balance.Id">
+                                        Edit
 
-                                                View
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="Delete"
+                                       asp-route-id="@balance.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@balance.Id">
+                                        Delete
 
-                                                Edit
-
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item text-danger"
-                                               asp-action="Delete"
-                                               asp-route-id="@balance.Id">
-
-                                                Delete
-
-                                            </a>
-                                        </li>
-
-                                    </ul>
+                                    </a>
 
                                 </div>
 

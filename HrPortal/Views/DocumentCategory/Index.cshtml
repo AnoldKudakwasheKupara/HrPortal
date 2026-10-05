@@ -24,7 +24,6 @@
 
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
@@ -38,7 +37,6 @@
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm">
 
@@ -54,7 +52,7 @@
                             <th>Description</th>
                             <th>Documents</th>
                             <th>Status</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -105,66 +103,42 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <div class="dropdown">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@category.Id">
 
-                                        Actions
+                                        View
 
-                                    </button>
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@category.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@category.Id">
+                                        Edit
 
-                                                View
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <form asp-action="ToggleStatus"
+                                          asp-route-id="@category.Id"
+                                          method="post">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@category.Id">
+                                        @Html.AntiForgeryToken()
 
-                                                Edit
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
 
-                                            </a>
-                                        </li>
+                                            @(category.IsActive
+                                                ? "Deactivate"
+                                                : "Activate")
 
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
+                                        </button>
 
-                                        <li>
-
-                                            <form asp-action="ToggleStatus"
-                                                  asp-route-id="@category.Id"
-                                                  method="post">
-
-                                                @Html.AntiForgeryToken()
-
-                                                <button type="submit"
-                                                        class="dropdown-item">
-
-                                                    @(category.IsActive
-                                                        ? "Deactivate"
-                                                        : "Activate")
-
-                                                </button>
-
-                                            </form>
-
-                                        </li>
-
-                                    </ul>
+                                    </form>
 
                                 </div>
 

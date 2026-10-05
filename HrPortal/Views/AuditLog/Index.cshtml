@@ -137,7 +137,7 @@
                             <th>Record</th>
                             <th>By</th>
                             <th>IP Address</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -203,14 +203,20 @@
                                 }
                             </td>
 
-                            <td>
-                                <a class="btn btn-sm btn-outline-secondary"
-                                   asp-action="Details"
-                                   asp-route-id="@log.Id">
+                            <td class="col-actions">
 
-                                    View
+                                <div class="table-actions">
 
-                                </a>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@log.Id">
+
+                                        View
+
+                                    </a>
+
+                                </div>
+
                             </td>
 
                         </tr>

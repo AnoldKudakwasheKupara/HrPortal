@@ -24,7 +24,6 @@
 
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
@@ -38,7 +37,6 @@
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm mb-4">
 
@@ -83,7 +81,6 @@
 
     </div>
 
-
     <div class="card shadow-sm">
 
         <div class="card-body is-table">
@@ -99,7 +96,7 @@
                             <th>Description</th>
                             <th>Uploaded By</th>
                             <th>Uploaded</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -142,65 +139,41 @@
                                 @material.UploadedAt.ToString("dd MMM yyyy")
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <div class="dropdown">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@material.Id">
 
-                                        Actions
+                                        View
 
-                                    </button>
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Download"
+                                       asp-route-id="@material.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@material.Id">
+                                        Download
 
-                                                View
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@material.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Download"
-                                               asp-route-id="@material.Id">
+                                        Edit
 
-                                                Download
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="Delete"
+                                       asp-route-id="@material.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@material.Id">
+                                        Delete
 
-                                                Edit
-
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item text-danger"
-                                               asp-action="Delete"
-                                               asp-route-id="@material.Id">
-
-                                                Delete
-
-                                            </a>
-                                        </li>
-
-                                    </ul>
+                                    </a>
 
                                 </div>
 

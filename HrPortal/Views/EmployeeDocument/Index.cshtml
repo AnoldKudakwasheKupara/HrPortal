@@ -25,7 +25,6 @@
 
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
@@ -39,7 +38,6 @@
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm mb-4">
 
@@ -104,7 +102,6 @@
 
     </div>
 
-
     <div class="card shadow-sm">
 
         <div class="card-body is-table">
@@ -120,7 +117,7 @@
                             <th>Category</th>
                             <th>Uploaded</th>
                             <th>Expires</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -173,65 +170,41 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <div class="dropdown">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@document.Id">
 
-                                        Actions
+                                        View
 
-                                    </button>
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Download"
+                                       asp-route-id="@document.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@document.Id">
+                                        Download
 
-                                                View
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@document.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Download"
-                                               asp-route-id="@document.Id">
+                                        Edit
 
-                                                Download
+                                    </a>
 
-                                            </a>
-                                        </li>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="Delete"
+                                       asp-route-id="@document.Id">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@document.Id">
+                                        Delete
 
-                                                Edit
-
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
-
-                                        <li>
-                                            <a class="dropdown-item text-danger"
-                                               asp-action="Delete"
-                                               asp-route-id="@document.Id">
-
-                                                Delete
-
-                                            </a>
-                                        </li>
-
-                                    </ul>
+                                    </a>
 
                                 </div>
 

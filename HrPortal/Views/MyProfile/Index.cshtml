@@ -99,7 +99,7 @@
                                 <th>Category</th>
                                 <th>Uploaded</th>
                                 <th>Expires</th>
-                                <th></th>
+                                <th class="col-actions">Actions</th>
                             </tr>
                         </thead>
 
@@ -137,12 +137,18 @@
                                     }
                                 </td>
 
-                                <td>
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Document"
-                                       asp-route-id="@document.Id">
-                                        Download
-                                    </a>
+                                <td class="col-actions">
+
+                                    <div class="table-actions">
+
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Document"
+                                           asp-route-id="@document.Id">
+                                            Download
+                                        </a>
+
+                                    </div>
+
                                 </td>
 
                             </tr>

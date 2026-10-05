@@ -48,7 +48,7 @@
                             <th>Due</th>
                             <th>Status</th>
                             <th>Feedback</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -122,23 +122,27 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <a class="btn btn-sm btn-outline-secondary"
-                                   asp-action="Details"
-                                   asp-route-id="@assignment.Id">
-                                    Open
-                                </a>
+                                <div class="table-actions">
 
-                                @if (assignment.IsCompleted &&
-                                     assignment.Feedback == null)
-                                {
                                     <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Feedback"
+                                       asp-action="Details"
                                        asp-route-id="@assignment.Id">
-                                        Give feedback
+                                        Open
                                     </a>
-                                }
+
+                                    @if (assignment.IsCompleted &&
+                                         assignment.Feedback == null)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Feedback"
+                                           asp-route-id="@assignment.Id">
+                                            Give feedback
+                                        </a>
+                                    }
+
+                                </div>
 
                             </td>
 

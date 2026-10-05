@@ -130,7 +130,7 @@
                             <th>Dates</th>
                             <th>Days</th>
                             <th>Status</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -200,41 +200,44 @@
                                 }
                             </td>
 
-                            <td>
+                            <td class="col-actions">
 
-                                <a class="btn btn-sm btn-outline-secondary"
-                                   asp-action="Details"
-                                   asp-route-id="@request.Id">
-                                    View
-                                </a>
+                                <div class="table-actions">
 
-                                @if (LeaveWorkflowService.IsWithEmployee(
-                                    request.Status))
-                                {
                                     <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Edit"
+                                       asp-action="Details"
                                        asp-route-id="@request.Id">
-                                        Edit and resend
+                                        View
                                     </a>
-                                }
 
-                                @if (!LeaveWorkflowService.IsFinal(
-                                    request.Status))
-                                {
-                                    <form asp-action="Cancel"
-                                          asp-route-id="@request.Id"
-                                          method="post"
-                                          class="d-inline">
+                                    @if (LeaveWorkflowService.IsWithEmployee(
+                                        request.Status))
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit"
+                                           asp-route-id="@request.Id">
+                                            Edit and resend
+                                        </a>
+                                    }
 
-                                        @Html.AntiForgeryToken()
+                                    @if (!LeaveWorkflowService.IsFinal(
+                                        request.Status))
+                                    {
+                                        <form asp-action="Cancel"
+                                              asp-route-id="@request.Id"
+                                              method="post">
 
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-danger">
-                                            Cancel
-                                        </button>
+                                            @Html.AntiForgeryToken()
 
-                                    </form>
-                                }
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Cancel
+                                            </button>
+
+                                        </form>
+                                    }
+
+                                </div>
 
                             </td>
 

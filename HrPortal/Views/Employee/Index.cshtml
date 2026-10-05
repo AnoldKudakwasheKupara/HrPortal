@@ -21,14 +21,12 @@
         </a>
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">
             @TempData["Success"]
         </div>
     }
-
 
     <div class="card shadow-sm">
 
@@ -46,7 +44,7 @@
                             <th>Department</th>
                             <th>Login</th>
                             <th>Status</th>
-                            <th></th>
+                            <th class="col-actions">Actions</th>
                         </tr>
                     </thead>
 
@@ -105,57 +103,37 @@
                                 }
                             </td>
 
-                            <td>
-                                <div class="dropdown">
+                            <td class="col-actions">
+                                <div class="table-actions">
 
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                            type="button"
-                                            data-bs-toggle="dropdown">
-                                        Actions
-                                    </button>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="Details"
+                                       asp-route-id="@employee.Id">
+                                        View
+                                    </a>
 
-                                    <ul class="dropdown-menu">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@employee.Id">
+                                        Edit
+                                    </a>
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Details"
-                                               asp-route-id="@employee.Id">
-                                                View
-                                            </a>
-                                        </li>
+                                    <form asp-action="ToggleStatus"
+                                          asp-route-id="@employee.Id"
+                                          method="post">
 
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-action="Edit"
-                                               asp-route-id="@employee.Id">
-                                                Edit
-                                            </a>
-                                        </li>
+                                        @Html.AntiForgeryToken()
 
-                                        <li>
-                                            <hr class="dropdown-divider" />
-                                        </li>
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
 
-                                        <li>
-                                            <form asp-action="ToggleStatus"
-                                                  asp-route-id="@employee.Id"
-                                                  method="post">
+                                            @(employee.IsActive
+                                                ? "Deactivate"
+                                                : "Activate")
 
-                                                @Html.AntiForgeryToken()
+                                        </button>
 
-                                                <button type="submit"
-                                                        class="dropdown-item">
-
-                                                    @(employee.IsActive
-                                                        ? "Deactivate"
-                                                        : "Activate")
-
-                                                </button>
-
-                                            </form>
-                                        </li>
-
-                                    </ul>
+                                    </form>
 
                                 </div>
                             </td>
