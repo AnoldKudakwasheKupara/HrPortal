@@ -10,9 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// A new machine can point at its own SQL Server without editing the
-// committed appsettings.json, via user secrets, an environment
-// variable, or ConnectionStrings__DefaultConnection.
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -52,12 +49,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders()
-    // Must come after AddDefaultUI, which registers the default
-    // SignInManager itself and would otherwise replace this one.
     .AddSignInManager<EmployeeSignInManager>();
 
-// Re-check the security stamp often enough that a user who is
-// deactivated mid-session loses access promptly.
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
     options.ValidationInterval = TimeSpan.FromMinutes(5);
@@ -90,8 +83,6 @@ builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 
-// Scoped, not singleton: the handler resolves the caller's
-// employee record, which needs the request's DbContext.
 builder.Services.AddScoped<
     IAuthorizationHandler,
     EmployeeOwnedHandler>();
@@ -113,7 +104,6 @@ builder.Services.AddRazorPages(options =>
         "/Account/Manage");
 });
 
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -125,9 +115,6 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // Creates the database on a machine that has never run the app
-        // before, then brings it up to the latest migration. Must happen
-        // before anything else touches the database.
         await db.Database.MigrateAsync();
 
         var userManager =

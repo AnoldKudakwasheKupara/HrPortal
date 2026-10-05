@@ -30,11 +30,6 @@ namespace HrPortal.Controllers
             _scope = scope;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index(int? courseId)
         {
             var query = await _scope.VisibleToAsync(
@@ -61,11 +56,6 @@ namespace HrPortal.Controllers
             return View(assignments);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -84,11 +74,6 @@ namespace HrPortal.Controllers
             return View(assignment);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create(int? courseId)
         {
             await LoadCourses();
@@ -99,11 +84,6 @@ namespace HrPortal.Controllers
                 TrainingCourseId = courseId ?? 0
             });
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -128,8 +108,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // Skip anyone already assigned to this course so the
-            // unique course/employee pair is never violated.
             var alreadyAssigned = await _context.TrainingAssignments
                 .Where(a => a.TrainingCourseId == model.TrainingCourseId)
                 .Select(a => a.EmployeeId)
@@ -200,11 +178,6 @@ namespace HrPortal.Controllers
                 new { courseId = model.TrainingCourseId });
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -231,11 +204,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -281,7 +249,6 @@ namespace HrPortal.Controllers
             assignment.DueDate = model.DueDate;
             assignment.IsCompleted = model.IsCompleted;
 
-            // Keep the completion date consistent with the flag.
             assignment.CompletedAt =
                 model.IsCompleted
                     ? model.CompletedAt ?? DateTime.UtcNow
@@ -294,11 +261,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // TOGGLE COMPLETION
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -336,11 +298,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // DELETE - GET
-        // ============================================================
-
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -358,11 +315,6 @@ namespace HrPortal.Controllers
             return View(assignment);
         }
 
-
-        // ============================================================
-        // DELETE - POST
-        // ============================================================
-
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -374,7 +326,6 @@ namespace HrPortal.Controllers
             if (assignment == null)
                 return NotFound();
 
-            // Feedback is cascade deleted with the assignment.
             _context.TrainingAssignments.Remove(assignment);
 
             await _context.SaveChangesAsync();
@@ -384,11 +335,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadCourses()
         {

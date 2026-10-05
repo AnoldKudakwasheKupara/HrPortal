@@ -11,15 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// An employee's own training: what they have been assigned,
-    /// the materials for each course, marking a course complete
-    /// and leaving feedback afterwards.
-    ///
-    /// Every action is scoped to the signed-in user's assignments,
-    /// so one employee cannot open another's training or download
-    /// materials for a course they were never assigned.
-    /// </summary>
     [Authorize]
     public class MyTrainingController : Controller
     {
@@ -43,11 +34,6 @@ namespace HrPortal.Controllers
             _authorization = authorization;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
@@ -66,11 +52,6 @@ namespace HrPortal.Controllers
             return View(assignments);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -86,15 +67,6 @@ namespace HrPortal.Controllers
             return View(assignment);
         }
 
-
-        // ============================================================
-        // DOWNLOAD MATERIAL
-        // ============================================================
-
-        /// <summary>
-        /// Serves a course material, but only to someone actually
-        /// assigned to that course.
-        /// </summary>
         public async Task<IActionResult> Material(int? id)
         {
             if (id == null)
@@ -141,11 +113,6 @@ namespace HrPortal.Controllers
                 material.OriginalFileName);
         }
 
-
-        // ============================================================
-        // COMPLETE
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Complete(int id)
@@ -183,11 +150,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Feedback), new { id });
         }
 
-
-        // ============================================================
-        // FEEDBACK - GET
-        // ============================================================
-
         public async Task<IActionResult> Feedback(int? id)
         {
             if (id == null)
@@ -223,11 +185,6 @@ namespace HrPortal.Controllers
             });
         }
 
-
-        // ============================================================
-        // FEEDBACK - POST
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Feedback(
@@ -254,8 +211,6 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Feedback is one per assignment, and the employee may
-            // have opened this page twice.
             if (assignment.Feedback != null)
             {
                 TempData["Error"] =
@@ -281,16 +236,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        /// <summary>
-        /// Loads an assignment and asks the authorization handler
-        /// whether the caller may do this with it. Null when they
-        /// may not, which the actions turn into a 404.
-        /// </summary>
         private async Task<TrainingAssignment?> LoadAuthorizedAssignment(
             int id,
             OperationAuthorizationRequirement operation)

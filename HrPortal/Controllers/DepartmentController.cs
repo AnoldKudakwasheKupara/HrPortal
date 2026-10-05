@@ -18,11 +18,6 @@ namespace HrPortal.Controllers
             _context = context;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var departments = await _context.Departments
@@ -32,11 +27,6 @@ namespace HrPortal.Controllers
 
             return View(departments);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -53,20 +43,10 @@ namespace HrPortal.Controllers
             return View(department);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public IActionResult Create()
         {
             return View();
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -107,11 +87,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -133,11 +108,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -185,11 +155,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // TOGGLE STATUS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -201,12 +166,8 @@ namespace HrPortal.Controllers
             if (department == null)
                 return NotFound();
 
-
-            // Deactivating
             if (department.IsActive)
             {
-                // Don't deactivate a department that still
-                // has active employees.
                 var hasActiveEmployees =
                     department.Employees
                         .Any(e => e.IsActive);
@@ -221,7 +182,6 @@ namespace HrPortal.Controllers
                     return RedirectToAction(nameof(Index));
                 }
             }
-
 
             department.IsActive = !department.IsActive;
 

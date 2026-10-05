@@ -18,7 +18,6 @@ namespace HrPortal.Entities
 
         public DateTime AssignedAt { get; set; }
 
-
         public TrainingCourse TrainingCourse { get; set; } = null!;
 
         public Employee Employee { get; set; } = null!;

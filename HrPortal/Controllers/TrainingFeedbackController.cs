@@ -20,11 +20,6 @@ namespace HrPortal.Controllers
             _context = context;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var feedback = await _context.TrainingFeedbacks
@@ -37,11 +32,6 @@ namespace HrPortal.Controllers
 
             return View(feedback);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -62,22 +52,12 @@ namespace HrPortal.Controllers
             return View(feedback);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             await LoadAssignmentsWithoutFeedback();
 
             return View(new TrainingFeedbackCreateViewModel());
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -90,7 +70,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // Feedback is one-to-one with an assignment.
             var alreadyHasFeedback = await _context.TrainingFeedbacks
                 .AnyAsync(f =>
                     f.TrainingAssignmentId == model.TrainingAssignmentId);
@@ -124,11 +103,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -161,11 +135,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -184,8 +153,6 @@ namespace HrPortal.Controllers
             if (feedback == null)
                 return NotFound();
 
-            // The assignment a piece of feedback belongs to never
-            // changes; only the rating and comments do.
             feedback.Rating = model.Rating;
             feedback.Comments = model.Comments?.Trim();
 
@@ -196,11 +163,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // DELETE - GET
-        // ============================================================
 
         public async Task<IActionResult> Delete(int? id)
         {
@@ -219,11 +181,6 @@ namespace HrPortal.Controllers
 
             return View(feedback);
         }
-
-
-        // ============================================================
-        // DELETE - POST
-        // ============================================================
 
         [HttpPost]
         [ActionName("Delete")]
@@ -245,11 +202,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadAssignmentsWithoutFeedback()
         {

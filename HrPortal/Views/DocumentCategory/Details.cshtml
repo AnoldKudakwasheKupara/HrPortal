@@ -119,7 +119,6 @@
                                 <th>Document</th>
                                 <th>Employee</th>
                                 <th>Uploaded</th>
-                                <th>Expires</th>
                             </tr>
                         </thead>
 
@@ -141,19 +140,6 @@
 
                                 <td>
                                     @document.UploadedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                                <td>
-                                    @if (document.ExpiryDate.HasValue)
-                                    {
-                                        @document.ExpiryDate.Value.ToString("dd MMM yyyy")
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">
-                                            No expiry
-                                        </span>
-                                    }
                                 </td>
 
                             </tr>

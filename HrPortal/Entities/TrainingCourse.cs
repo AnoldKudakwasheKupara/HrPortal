@@ -18,7 +18,6 @@
 
         public bool IsActive { get; set; } = true;
 
-
         public Employee CreatedByEmployee { get; set; } = null!;
 
         public ICollection<TrainingMaterial> Materials { get; set; }

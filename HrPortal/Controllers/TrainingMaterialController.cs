@@ -32,11 +32,6 @@ namespace HrPortal.Controllers
             _userManager = userManager;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index(int? courseId)
         {
             var query = _context.TrainingMaterials
@@ -61,11 +56,6 @@ namespace HrPortal.Controllers
             return View(materials);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -81,11 +71,6 @@ namespace HrPortal.Controllers
 
             return View(material);
         }
-
-
-        // ============================================================
-        // DOWNLOAD
-        // ============================================================
 
         public async Task<IActionResult> Download(int? id)
         {
@@ -120,11 +105,6 @@ namespace HrPortal.Controllers
                 material.OriginalFileName);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create(int? courseId)
         {
             await LoadCourses();
@@ -137,11 +117,6 @@ namespace HrPortal.Controllers
                     await GetCurrentEmployeeId() ?? 0
             });
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -189,11 +164,6 @@ namespace HrPortal.Controllers
                 new { courseId = model.TrainingCourseId });
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -220,11 +190,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -234,7 +199,6 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            // Replacing the file is optional on edit.
             if (model.File != null)
             {
                 var fileError = FileStorageService.Validate(model.File);
@@ -271,7 +235,6 @@ namespace HrPortal.Controllers
                 material.FilePath = filePath;
                 material.UploadedAt = DateTime.UtcNow;
 
-                // Only drop the old file once the new one is stored.
                 _fileStorage.Delete(oldFilePath);
             }
 
@@ -286,11 +249,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // DELETE - GET
-        // ============================================================
 
         public async Task<IActionResult> Delete(int? id)
         {
@@ -307,11 +265,6 @@ namespace HrPortal.Controllers
 
             return View(material);
         }
-
-
-        // ============================================================
-        // DELETE - POST
-        // ============================================================
 
         [HttpPost]
         [ActionName("Delete")]
@@ -330,8 +283,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Remove the file only after the row is gone, so a
-            // failed save never leaves a row pointing at nothing.
             _fileStorage.Delete(filePath);
 
             TempData["Success"] =
@@ -339,11 +290,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadCourses()
         {

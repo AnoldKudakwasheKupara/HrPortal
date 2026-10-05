@@ -20,11 +20,6 @@ namespace HrPortal.Controllers
             _context = context;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var configurations = await _context.ApprovalConfigurations
@@ -36,11 +31,6 @@ namespace HrPortal.Controllers
 
             return View(configurations);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -58,22 +48,12 @@ namespace HrPortal.Controllers
             return View(configuration);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             await LoadEmployees();
 
             return View(new ApprovalConfigurationCreateViewModel());
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -86,7 +66,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // Only one approver may be active per role.
             var roleAlreadyFilled = await _context.ApprovalConfigurations
                 .AnyAsync(a =>
                     a.Role == model.Role &&
@@ -120,11 +99,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -149,11 +123,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -175,7 +144,6 @@ namespace HrPortal.Controllers
             if (configuration == null)
                 return NotFound();
 
-            // Only one approver may be active per role.
             if (model.IsActive)
             {
                 var roleAlreadyFilled =
@@ -209,11 +177,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // TOGGLE STATUS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -224,8 +187,6 @@ namespace HrPortal.Controllers
             if (configuration == null)
                 return NotFound();
 
-
-            // Activating
             if (!configuration.IsActive)
             {
                 var roleAlreadyFilled =
@@ -246,7 +207,6 @@ namespace HrPortal.Controllers
                 }
             }
 
-
             configuration.IsActive = !configuration.IsActive;
 
             await _context.SaveChangesAsync();
@@ -258,11 +218,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadEmployees()
         {

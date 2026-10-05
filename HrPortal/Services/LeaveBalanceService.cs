@@ -4,19 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Keeps leave balances in step with the requests that move
-    /// through the approval chain.
-    ///
-    /// Submitting holds days in Pending. Final approval moves the
-    /// hold into Used. Rejection, cancellation or a return to the
-    /// employee releases it. Remaining is always
-    /// Allocated - Used - Pending, so it is never typed in.
-    ///
-    /// A leave type with no balance row for that employee and year
-    /// is treated as unrationed, which is how unpaid and
-    /// compassionate leave are normally run.
-    /// </summary>
     public class LeaveBalanceService
     {
         private readonly ApplicationDbContext _context;
@@ -26,16 +13,6 @@ namespace HrPortal.Services
             _context = context;
         }
 
-
-        // ============================================================
-        // VALIDATION
-        // ============================================================
-
-        /// <summary>
-        /// Returns a message when the request would exceed the
-        /// employee's remaining days, or null when it is fine or
-        /// the leave type is not rationed.
-        /// </summary>
         public async Task<string?> ValidateAgainstBalanceAsync(
             int employeeId,
             int leaveTypeId,
@@ -53,8 +30,6 @@ namespace HrPortal.Services
 
             var remaining = balance.RemainingDays;
 
-            // When editing, the days this request is already
-            // holding should not count against itself.
             if (excludeRequestId.HasValue)
             {
                 var existing = await _context.LeaveRequests
@@ -81,14 +56,6 @@ namespace HrPortal.Services
             return null;
         }
 
-
-        // ============================================================
-        // MOVEMENTS
-        // ============================================================
-
-        /// <summary>
-        /// Places a hold when a request is submitted.
-        /// </summary>
         public async Task HoldAsync(LeaveRequest request)
         {
             var balance = await FindBalance(
@@ -104,10 +71,6 @@ namespace HrPortal.Services
             Recalculate(balance);
         }
 
-        /// <summary>
-        /// Releases a hold when a request is rejected, cancelled
-        /// or sent back for correction.
-        /// </summary>
         public async Task ReleaseAsync(LeaveRequest request)
         {
             var balance = await FindBalance(
@@ -126,9 +89,6 @@ namespace HrPortal.Services
             Recalculate(balance);
         }
 
-        /// <summary>
-        /// Converts a hold into used days on final approval.
-        /// </summary>
         public async Task ConsumeAsync(LeaveRequest request)
         {
             var balance = await FindBalance(
@@ -149,14 +109,6 @@ namespace HrPortal.Services
             Recalculate(balance);
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        /// <summary>
-        /// True while a request in this status is holding days.
-        /// </summary>
         public static bool HoldsPendingDays(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Submitted

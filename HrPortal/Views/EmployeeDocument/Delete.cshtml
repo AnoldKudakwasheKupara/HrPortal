@@ -70,8 +70,15 @@
                     <span class="field-label">Uploaded By</span>
 
                     <p class="field-value">
-                        @Model.UploadedByEmployee.FirstName
-                        @Model.UploadedByEmployee.LastName
+                        @if (Model.UploadedByEmployee != null)
+                        {
+                            @Model.UploadedByEmployee.FirstName
+                            @Model.UploadedByEmployee.LastName
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not recorded</span>
+                        }
                     </p>
 
                 </div>

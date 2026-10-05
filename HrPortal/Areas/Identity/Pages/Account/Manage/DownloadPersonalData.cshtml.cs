@@ -1,5 +1,3 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
 using System.Collections.Generic;
@@ -43,7 +41,6 @@ public class DownloadPersonalDataModel : PageModel
 
         _logger.LogInformation("User with ID '{UserId}' asked for their personal data.", _userManager.GetUserId(User));
 
-        // Only include personal data for download
         var personalData = new Dictionary<string, string?>();
         var personalDataProps = typeof(ApplicationUser).GetProperties().Where(
                         prop => Attribute.IsDefined(prop, typeof(PersonalDataAttribute)));

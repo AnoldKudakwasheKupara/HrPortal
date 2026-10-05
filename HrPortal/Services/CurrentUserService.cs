@@ -5,13 +5,6 @@ using System.Security.Claims;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Resolves the signed-in user to their employee record.
-    ///
-    /// Administrative accounts such as the seeded administrator
-    /// have no employee record, so every caller has to cope with
-    /// null rather than assume one exists.
-    /// </summary>
     public class CurrentUserService
     {
         private readonly ApplicationDbContext _context;
@@ -24,7 +17,6 @@ namespace HrPortal.Services
             _context = context;
             _httpContextAccessor = httpContextAccessor;
         }
-
 
         public int? GetUserId()
         {

@@ -9,13 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// An employee's own employment information, the documents
-    /// held on their file, and their notifications.
-    ///
-    /// Read only. Changes to employment information go through HR
-    /// so the audit trail records who made them.
-    /// </summary>
     [Authorize]
     public class MyProfileController : Controller
     {
@@ -35,11 +28,6 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
             _authorization = authorization;
         }
-
-
-        // ============================================================
-        // INDEX
-        // ============================================================
 
         public async Task<IActionResult> Index()
         {
@@ -68,11 +56,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // DOWNLOAD OWN DOCUMENT
-        // ============================================================
-
         public async Task<IActionResult> Document(int? id)
         {
             if (id == null)
@@ -84,9 +67,6 @@ namespace HrPortal.Controllers
             if (document == null)
                 return NotFound();
 
-            // The handler decides whether this file is yours, so
-            // changing the id in the address bar reaches nothing
-            // you are not entitled to.
             var allowed = await _authorization.AuthorizeAsync(
                 User,
                 document,
@@ -116,11 +96,6 @@ namespace HrPortal.Controllers
                 contentType ?? "application/octet-stream",
                 document.OriginalFileName);
         }
-
-
-        // ============================================================
-        // MARK NOTIFICATION READ
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]

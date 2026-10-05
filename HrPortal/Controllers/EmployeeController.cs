@@ -29,11 +29,6 @@ namespace HrPortal.Controllers
             _audit = audit;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var employees = await _context.Employees
@@ -45,11 +40,6 @@ namespace HrPortal.Controllers
 
             return View(employees);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -67,11 +57,6 @@ namespace HrPortal.Controllers
             return View(employee);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             await LoadDepartments();
@@ -81,11 +66,6 @@ namespace HrPortal.Controllers
                 DateJoined = DateTime.Today
             });
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -98,7 +78,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // Check employee number
             var employeeNumberExists =
                 await _context.Employees
                     .AnyAsync(e =>
@@ -114,7 +93,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // Check email
             var emailExists =
                 await _context.Employees
                     .AnyAsync(e => e.Email == model.Email);
@@ -128,11 +106,6 @@ namespace HrPortal.Controllers
                 await LoadDepartments();
                 return View(model);
             }
-
-
-            // ========================================================
-            // CREATE EMPLOYEE
-            // ========================================================
 
             var employee = new Employee
             {
@@ -150,11 +123,6 @@ namespace HrPortal.Controllers
             _context.Employees.Add(employee);
 
             await _context.SaveChangesAsync();
-
-
-            // ========================================================
-            // CREATE LOGIN ACCOUNT
-            // ========================================================
 
             if (model.CreateLoginAccount)
             {
@@ -202,14 +170,12 @@ namespace HrPortal.Controllers
                     return View(model);
                 }
 
-                // Connect User to Employee
                 employee.UserId = user.Id;
 
                 _context.Employees.Update(employee);
 
                 await _context.SaveChangesAsync();
 
-                // New employees are regular Employees
                 var roleResult = await _userManager.AddToRoleAsync(
                     user,
                     "Employee");
@@ -247,11 +213,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
 
         public async Task<IActionResult> Edit(int? id)
         {
@@ -305,7 +266,6 @@ namespace HrPortal.Controllers
             if (employee == null)
                 return NotFound();
 
-
             employee.EmployeeNumber = model.EmployeeNumber;
             employee.FirstName = model.FirstName;
             employee.LastName = model.LastName;
@@ -316,8 +276,6 @@ namespace HrPortal.Controllers
             employee.DepartmentId = model.DepartmentId;
             employee.IsActive = model.IsActive;
 
-
-            // Update Identity user email/name
             if (employee.User != null)
             {
                 employee.User.Email = model.Email;
@@ -357,11 +315,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // EmployeeSignInManager refuses sign-in while the
-            // employee is inactive. Changing the security stamp
-            // additionally invalidates any cookie already issued,
-            // so a user deactivated mid-session is signed out
-            // rather than keeping access until it expires.
             if (employee.User != null)
             {
                 await _userManager.UpdateSecurityStampAsync(

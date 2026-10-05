@@ -25,11 +25,6 @@ namespace HrPortal.Controllers
             _userManager = userManager;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var courses = await _context.TrainingCourses
@@ -41,11 +36,6 @@ namespace HrPortal.Controllers
 
             return View(courses);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -65,11 +55,6 @@ namespace HrPortal.Controllers
             return View(course);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             await LoadEmployees();
@@ -80,11 +65,6 @@ namespace HrPortal.Controllers
                     await GetCurrentEmployeeId() ?? 0
             });
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -133,11 +113,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -164,11 +139,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -223,11 +193,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // TOGGLE STATUS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -239,11 +204,8 @@ namespace HrPortal.Controllers
             if (course == null)
                 return NotFound();
 
-
-            // Deactivating
             if (course.IsActive)
             {
-                // Don't retire a course people are still working through.
                 var hasOutstandingAssignments =
                     course.Assignments
                         .Any(a => !a.IsCompleted);
@@ -259,7 +221,6 @@ namespace HrPortal.Controllers
                 }
             }
 
-
             course.IsActive = !course.IsActive;
 
             await _context.SaveChangesAsync();
@@ -271,11 +232,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadEmployees()
         {

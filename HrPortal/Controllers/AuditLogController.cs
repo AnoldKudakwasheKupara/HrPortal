@@ -7,13 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// Audit logs are deliberately read-only. A trail that can be
-    /// edited or deleted from the portal is no longer evidence of
-    /// anything, so this controller offers no create, edit or
-    /// delete actions. Entries are written by the code that
-    /// performs the audited action.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class AuditLogController : Controller
     {
@@ -25,11 +18,6 @@ namespace HrPortal.Controllers
         {
             _context = context;
         }
-
-
-        // ============================================================
-        // INDEX
-        // ============================================================
 
         public async Task<IActionResult> Index(
             int? employeeId,
@@ -98,11 +86,6 @@ namespace HrPortal.Controllers
             return View(logs);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -118,11 +101,6 @@ namespace HrPortal.Controllers
 
             return View(log);
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadFilters()
         {
@@ -142,8 +120,6 @@ namespace HrPortal.Controllers
                     "Id",
                     "FullName");
 
-            // Only offer entity names that actually appear in the
-            // log, so the filter never has dead options.
             var entityNames = await _context.AuditLogs
                 .Select(a => a.EntityName)
                 .Distinct()

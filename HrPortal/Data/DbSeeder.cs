@@ -5,11 +5,6 @@ namespace HrPortal.Data
 {
     public static class DbSeeder
     {
-        /// <summary>
-        /// The roles the portal is built around. Access is granted
-        /// by role throughout, so all four must exist before any
-        /// user can be given one.
-        /// </summary>
         private static readonly string[] Roles =
         {
             "Administrator",

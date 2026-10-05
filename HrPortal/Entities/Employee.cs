@@ -26,8 +26,6 @@ namespace HrPortal.Entities
 
         public bool IsActive { get; set; } = true;
 
-
-        // Relationships
         public Department Department { get; set; } = null!;
 
         public ApplicationUser? User { get; set; }

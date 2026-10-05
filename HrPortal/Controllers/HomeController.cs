@@ -14,9 +14,7 @@ using System.Diagnostics;
 namespace HrPortal.Controllers
 {
     public class HomeController : Controller
-    {
-        private const int ExpiringSoonDays = 30;
-        private const int ListLength = 5;
+    {        private const int ListLength = 5;
 
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
@@ -31,11 +29,6 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
             _userManager = userManager;
         }
-
-
-        // ============================================================
-        // DASHBOARD
-        // ============================================================
 
         public async Task<IActionResult> Index()
         {
@@ -70,13 +63,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        /// <summary>
-        /// A first name for an account with no employee record,
-        /// taken from the account's full name. Falls back to a
-        /// neutral word rather than greeting someone by their
-        /// email address.
-        /// </summary>
         private async Task<string> GetAccountFirstNameAsync()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -88,11 +74,6 @@ namespace HrPortal.Controllers
 
             return fullName.Trim().Split(' ')[0];
         }
-
-
-        // ============================================================
-        // SECTIONS
-        // ============================================================
 
         private async Task<MyDashboardSection> BuildMineAsync(
             int employeeId)
@@ -107,8 +88,6 @@ namespace HrPortal.Controllers
                     b.Year == year)
                 .ToListAsync();
 
-            // The headline figure is the balance with the most
-            // days left, which is what an employee books against.
             var headline = balances
                 .OrderByDescending(b => b.RemainingDays)
                 .FirstOrDefault();
@@ -163,12 +142,9 @@ namespace HrPortal.Controllers
             };
         }
 
-
         private async Task<HrDashboardSection> BuildHrAsync()
         {
             var today = DateTime.Today;
-            var soon = today.AddDays(ExpiringSoonDays);
-
             return new HrDashboardSection
             {
                 AwaitingReview = await _context.LeaveRequests
@@ -186,13 +162,6 @@ namespace HrPortal.Controllers
                             a.DueDate != null &&
                             a.DueDate < today),
 
-                DocumentsExpiringSoon =
-                    await _context.EmployeeDocuments
-                        .CountAsync(d =>
-                            d.ExpiryDate != null &&
-                            d.ExpiryDate >= today &&
-                            d.ExpiryDate <= soon),
-
                 ReviewQueue = await _context.LeaveRequests
                     .Include(r => r.Employee)
                     .Include(r => r.LeaveType)
@@ -204,7 +173,6 @@ namespace HrPortal.Controllers
                     .ToListAsync()
             };
         }
-
 
         private async Task<MdDashboardSection> BuildMdAsync()
         {
@@ -226,7 +194,6 @@ namespace HrPortal.Controllers
                     .ToListAsync()
             };
         }
-
 
         private async Task<AdminDashboardSection> BuildAdminAsync()
         {
@@ -259,11 +226,6 @@ namespace HrPortal.Controllers
                     .ToListAsync()
             };
         }
-
-
-        // ============================================================
-        // STATIC PAGES
-        // ============================================================
 
         public IActionResult Privacy()
         {

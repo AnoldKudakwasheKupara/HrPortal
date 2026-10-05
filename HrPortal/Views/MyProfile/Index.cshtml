@@ -98,7 +98,6 @@
                                 <th>Document</th>
                                 <th>Category</th>
                                 <th>Uploaded</th>
-                                <th>Expires</th>
                                 <th class="col-actions">Actions</th>
                             </tr>
                         </thead>
@@ -115,26 +114,6 @@
 
                                 <td>
                                     @document.UploadedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                                <td>
-                                    @if (document.ExpiryDate.HasValue)
-                                    {
-                                        if (document.ExpiryDate.Value.Date < DateTime.Today)
-                                        {
-                                            <span class="badge bg-danger">
-                                                Expired
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            @document.ExpiryDate.Value.ToString("dd MMM yyyy")
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">None</span>
-                                    }
                                 </td>
 
                                 <td class="col-actions">

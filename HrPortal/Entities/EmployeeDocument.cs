@@ -20,15 +20,12 @@ namespace HrPortal.Entities
 
         public DateTime UploadedAt { get; set; }
 
-        public int UploadedByEmployeeId { get; set; }
-
-        public DateTime? ExpiryDate { get; set; }
-
+        public int? UploadedByEmployeeId { get; set; }
 
         public Employee Employee { get; set; } = null!;
 
         public DocumentCategory DocumentCategory { get; set; } = null!;
 
-        public Employee UploadedByEmployee { get; set; } = null!;
+        public Employee? UploadedByEmployee { get; set; }
     }
 }

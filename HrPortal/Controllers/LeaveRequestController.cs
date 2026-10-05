@@ -7,18 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// A read-only view of every leave request, for HR and
-    /// management oversight and reporting.
-    ///
-    /// Deliberately has no create, edit or delete. Requests are
-    /// raised by employees through MyLeave and decided by the
-    /// approvers through LeaveApproval, which is where the
-    /// balance movements, history, notifications and audit
-    /// entries are produced. Editing a request's status here
-    /// would quietly skip all of that, and leave records are
-    /// historical HR information that should not be removed.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOrHrOrMd)]
     public class LeaveRequestController : Controller
     {
@@ -35,19 +23,11 @@ namespace HrPortal.Controllers
             _scope = scope;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index(
             LeaveRequestStatus? status,
             int? employeeId,
             int page = 1)
         {
-            // Scoped rather than trusting the role attribute
-            // alone: if this page is ever opened to more roles,
-            // it narrows to their own records by itself.
             var query = await _scope.VisibleToAsync(
                 _context.LeaveRequests
                     .Include(r => r.Employee)
@@ -91,11 +71,6 @@ namespace HrPortal.Controllers
             return View(requests);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -114,11 +89,6 @@ namespace HrPortal.Controllers
 
             return View(request);
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadEmployees()
         {

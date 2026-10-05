@@ -23,13 +23,5 @@ namespace HrPortal.ViewModels
         [Display(Name = "Description")]
         [StringLength(1000)]
         public string? Description { get; set; }
-
-        [Display(Name = "Expiry Date")]
-        [DataType(DataType.Date)]
-        public DateTime? ExpiryDate { get; set; }
-
-        [Required]
-        [Display(Name = "Uploaded By")]
-        public int UploadedByEmployeeId { get; set; }
     }
 }

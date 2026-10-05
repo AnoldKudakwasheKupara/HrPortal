@@ -12,7 +12,6 @@
 
         public DateTime SubmittedAt { get; set; }
 
-
         public TrainingAssignment TrainingAssignment { get; set; } = null!;
     }
 }

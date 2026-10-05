@@ -102,8 +102,15 @@
                     <span class="field-label">Uploaded By</span>
 
                     <p class="field-value">
-                        @Model.UploadedByEmployee.FirstName
-                        @Model.UploadedByEmployee.LastName
+                        @if (Model.UploadedByEmployee != null)
+                        {
+                            @Model.UploadedByEmployee.FirstName
+                            @Model.UploadedByEmployee.LastName
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not recorded</span>
+                        }
                     </p>
 
                 </div>
@@ -115,36 +122,6 @@
 
                     <p class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
-                    </p>
-
-                </div>
-
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Expires</span>
-
-                    <p class="field-value">
-                        @if (Model.ExpiryDate.HasValue)
-                        {
-                            if (Model.ExpiryDate.Value.Date < DateTime.Today)
-                            {
-                                <span class="badge bg-danger">
-                                    Expired
-                                    @Model.ExpiryDate.Value.ToString("dd MMM yyyy")
-                                </span>
-                            }
-                            else
-                            {
-                                @Model.ExpiryDate.Value.ToString("dd MMM yyyy")
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                No expiry
-                            </span>
-                        }
                     </p>
 
                 </div>

@@ -10,7 +10,6 @@
 
         public bool IsActive { get; set; }
 
-
         public Employee Employee { get; set; } = null!;
     }
 

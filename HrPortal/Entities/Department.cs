@@ -10,7 +10,6 @@
 
         public bool IsActive { get; set; } = true;
 
-
         public ICollection<Employee> Employees { get; set; }
             = new List<Employee>();
     }

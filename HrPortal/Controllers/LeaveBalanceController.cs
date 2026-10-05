@@ -23,11 +23,6 @@ namespace HrPortal.Controllers
             _scope = scope;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index(int? year)
         {
             var selectedYear = year ?? DateTime.Today.Year;
@@ -60,11 +55,6 @@ namespace HrPortal.Controllers
             return View(balances);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -82,22 +72,12 @@ namespace HrPortal.Controllers
             return View(balance);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             await LoadLookups();
 
             return View(new LeaveBalanceCreateViewModel());
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -110,7 +90,6 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            // One balance per employee, leave type and year.
             var exists = await _context.LeaveBalances
                 .AnyAsync(b =>
                     b.EmployeeId == model.EmployeeId &&
@@ -154,11 +133,6 @@ namespace HrPortal.Controllers
                 new { year = balance.Year });
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,11 +159,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -252,11 +221,6 @@ namespace HrPortal.Controllers
                 new { year = balance.Year });
         }
 
-
-        // ============================================================
-        // DELETE - GET
-        // ============================================================
-
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -272,11 +236,6 @@ namespace HrPortal.Controllers
 
             return View(balance);
         }
-
-
-        // ============================================================
-        // DELETE - POST
-        // ============================================================
 
         [HttpPost]
         [ActionName("Delete")]
@@ -302,11 +261,6 @@ namespace HrPortal.Controllers
                 nameof(Index),
                 new { year });
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadLookups()
         {

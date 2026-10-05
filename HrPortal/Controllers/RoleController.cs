@@ -26,7 +26,6 @@ namespace HrPortal.Controllers
             _audit = audit;
         }
 
-        // GET: /Role
         public async Task<IActionResult> Index()
         {
             var roles = await _roleManager.Roles
@@ -50,14 +49,12 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        // GET: /Role/Create
         [HttpGet]
         public IActionResult Create()
         {
             return View(new RoleCreateViewModel());
         }
 
-        // POST: /Role/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(RoleCreateViewModel model)
@@ -100,7 +97,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        // GET: /Role/Edit/5
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -123,7 +119,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        // POST: /Role/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -188,7 +183,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        // POST: /Role/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -203,7 +197,6 @@ namespace HrPortal.Controllers
 
             var roleName = role.Name ?? string.Empty;
 
-            // Never allow deletion of Administrator role.
             if (string.Equals(
                 roleName,
                 "Administrator",
@@ -242,7 +235,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Role/Users/5
         [HttpGet]
         public async Task<IActionResult> Users(int id)
         {
@@ -279,7 +271,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        // POST: /Role/Users/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Users(
@@ -295,7 +286,6 @@ namespace HrPortal.Controllers
 
             var roleName = role.Name ?? string.Empty;
 
-            // Protect Administrator role.
             if (string.Equals(
                 roleName,
                 "Administrator",
@@ -331,7 +321,6 @@ namespace HrPortal.Controllers
             var added = new List<string>();
             var removed = new List<string>();
 
-            // Users to add
             foreach (var userId in selectedUserIds.Except(currentUserIds))
             {
                 var user = await _userManager.FindByIdAsync(
@@ -359,7 +348,6 @@ namespace HrPortal.Controllers
                 }
             }
 
-            // Users to remove
             foreach (var userId in currentUserIds.Except(selectedUserIds))
             {
                 var user = await _userManager.FindByIdAsync(
@@ -367,7 +355,6 @@ namespace HrPortal.Controllers
 
                 if (user != null)
                 {
-                    // Never allow the last Administrator to be removed.
                     if (string.Equals(
                         roleName,
                         "Administrator",

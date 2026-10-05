@@ -5,13 +5,6 @@ using System.Security.Claims;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Writes the audit trail. Who did what, to which record, when
-    /// and from where.
-    ///
-    /// Entries are written by the code performing the audited
-    /// action. Nothing in the portal edits or removes them.
-    /// </summary>
     public class AuditService
     {
         private readonly ApplicationDbContext _context;
@@ -24,11 +17,6 @@ namespace HrPortal.Services
             _context = context;
             _httpContextAccessor = httpContextAccessor;
         }
-
-
-        // ============================================================
-        // ACTIONS
-        // ============================================================
 
         public const string Created = "Created";
         public const string Updated = "Updated";
@@ -45,16 +33,6 @@ namespace HrPortal.Services
         public const string TrainingCompleted = "Training Completed";
         public const string DocumentUploaded = "Document Uploaded";
 
-
-        // ============================================================
-        // WRITE
-        // ============================================================
-
-        /// <summary>
-        /// Records an entry and saves it. The acting employee and
-        /// the caller's address are resolved from the request, so
-        /// callers only describe what happened.
-        /// </summary>
         public async Task LogAsync(
             string action,
             string entityName,
@@ -77,11 +55,6 @@ namespace HrPortal.Services
             await _context.SaveChangesAsync();
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
         private async Task<int?> GetCurrentEmployeeId()
         {
             var user = _httpContextAccessor.HttpContext?.User;
@@ -96,8 +69,6 @@ namespace HrPortal.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.UserId == userId);
 
-            // Administrative accounts have no employee record, so
-            // the entry is attributed to the system.
             return employee?.Id;
         }
 

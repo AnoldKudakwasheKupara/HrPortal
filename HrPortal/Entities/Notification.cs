@@ -18,7 +18,6 @@ namespace HrPortal.Entities
 
         public DateTime CreatedAt { get; set; }
 
-
         public Employee Employee { get; set; } = null!;
     }
 }

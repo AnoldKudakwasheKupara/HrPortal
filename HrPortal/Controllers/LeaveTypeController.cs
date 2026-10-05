@@ -18,11 +18,6 @@ namespace HrPortal.Controllers
             _context = context;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var leaveTypes = await _context.LeaveTypes
@@ -32,11 +27,6 @@ namespace HrPortal.Controllers
 
             return View(leaveTypes);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -54,20 +44,10 @@ namespace HrPortal.Controllers
             return View(leaveType);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public IActionResult Create()
         {
             return View(new LeaveTypeCreateViewModel());
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -110,11 +90,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -138,11 +113,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -192,11 +162,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // TOGGLE STATUS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -207,12 +172,8 @@ namespace HrPortal.Controllers
             if (leaveType == null)
                 return NotFound();
 
-
-            // Deactivating
             if (leaveType.IsActive)
             {
-                // Don't deactivate a leave type that still has
-                // requests working their way through approval.
                 var hasOpenRequests = await _context.LeaveRequests
                     .AnyAsync(r =>
                         r.LeaveTypeId == id &&
@@ -230,7 +191,6 @@ namespace HrPortal.Controllers
                     return RedirectToAction(nameof(Index));
                 }
             }
-
 
             leaveType.IsActive = !leaveType.IsActive;
 

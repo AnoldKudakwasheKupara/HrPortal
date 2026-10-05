@@ -32,7 +32,6 @@ namespace HrPortal.DbContexts
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ApprovalConfiguration> ApprovalConfigurations { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -76,7 +75,6 @@ namespace HrPortal.DbContexts
                     .HasForeignKey<Employee>(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
-
 
             builder.Entity<Department>(entity =>
             {

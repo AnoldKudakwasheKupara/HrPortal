@@ -38,11 +38,6 @@ namespace HrPortal.Controllers
             _scope = scope;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index(
             int? employeeId,
             int? categoryId)
@@ -78,11 +73,6 @@ namespace HrPortal.Controllers
             return View(documents);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -100,11 +90,6 @@ namespace HrPortal.Controllers
 
             return View(document);
         }
-
-
-        // ============================================================
-        // DOWNLOAD
-        // ============================================================
 
         public async Task<IActionResult> Download(int? id)
         {
@@ -139,27 +124,15 @@ namespace HrPortal.Controllers
                 document.OriginalFileName);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create(int? employeeId)
         {
             await LoadLookups();
 
             return View(new EmployeeDocumentCreateViewModel
             {
-                EmployeeId = employeeId ?? 0,
-                UploadedByEmployeeId =
-                    await GetCurrentEmployeeId() ?? 0
+                EmployeeId = employeeId ?? 0
             });
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -170,14 +143,6 @@ namespace HrPortal.Controllers
 
             if (fileError != null)
                 ModelState.AddModelError("File", fileError);
-
-            if (model.ExpiryDate.HasValue &&
-                model.ExpiryDate.Value.Date < DateTime.Today)
-            {
-                ModelState.AddModelError(
-                    "ExpiryDate",
-                    "The expiry date cannot be in the past.");
-            }
 
             if (!ModelState.IsValid)
             {
@@ -200,8 +165,7 @@ namespace HrPortal.Controllers
                 FilePath = filePath,
                 Description = model.Description?.Trim(),
                 UploadedAt = DateTime.UtcNow,
-                UploadedByEmployeeId = model.UploadedByEmployeeId,
-                ExpiryDate = model.ExpiryDate
+                UploadedByEmployeeId = await GetCurrentEmployeeId()
             };
 
             _context.EmployeeDocuments.Add(document);
@@ -223,11 +187,6 @@ namespace HrPortal.Controllers
                 new { employeeId = model.EmployeeId });
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -245,20 +204,13 @@ namespace HrPortal.Controllers
                 EmployeeId = document.EmployeeId,
                 DocumentCategoryId = document.DocumentCategoryId,
                 CurrentFileName = document.OriginalFileName,
-                Description = document.Description,
-                ExpiryDate = document.ExpiryDate,
-                UploadedByEmployeeId = document.UploadedByEmployeeId
+                Description = document.Description
             };
 
             await LoadLookups();
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -269,7 +221,6 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            // Replacing the file is optional on edit.
             if (model.File != null)
             {
                 var fileError = FileStorageService.Validate(model.File);
@@ -304,16 +255,15 @@ namespace HrPortal.Controllers
                     Path.GetFileName(model.File.FileName);
                 document.FilePath = filePath;
                 document.UploadedAt = DateTime.UtcNow;
+                document.UploadedByEmployeeId =
+                    await GetCurrentEmployeeId();
 
-                // Only drop the old file once the new one is stored.
                 _fileStorage.Delete(oldFilePath);
             }
 
             document.EmployeeId = model.EmployeeId;
             document.DocumentCategoryId = model.DocumentCategoryId;
             document.Description = model.Description?.Trim();
-            document.ExpiryDate = model.ExpiryDate;
-            document.UploadedByEmployeeId = model.UploadedByEmployeeId;
 
             await _context.SaveChangesAsync();
 
@@ -322,11 +272,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // DELETE - GET
-        // ============================================================
 
         public async Task<IActionResult> Delete(int? id)
         {
@@ -345,11 +290,6 @@ namespace HrPortal.Controllers
             return View(document);
         }
 
-
-        // ============================================================
-        // DELETE - POST
-        // ============================================================
-
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -367,8 +307,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Remove the file only after the row is gone, so a
-            // failed save never leaves a row pointing at nothing.
             _fileStorage.Delete(filePath);
 
             await _audit.LogAsync(
@@ -382,11 +320,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
 
         private async Task LoadLookups()
         {

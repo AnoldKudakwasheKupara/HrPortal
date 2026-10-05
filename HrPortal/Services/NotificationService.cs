@@ -5,14 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Raises the notifications listed in the requirements and
-    /// targets them at the right people.
-    ///
-    /// Who holds an approval role is read from the approval
-    /// configuration, so the responsible person can change
-    /// without touching this code.
-    /// </summary>
     public class NotificationService
     {
         private readonly ApplicationDbContext _context;
@@ -22,16 +14,6 @@ namespace HrPortal.Services
             _context = context;
         }
 
-
-        // ============================================================
-        // SEND
-        // ============================================================
-
-        /// <summary>
-        /// Queues a notification for one employee. The caller
-        /// saves, so a notification is only stored if the action
-        /// that caused it is stored too.
-        /// </summary>
         public void Notify(
             int employeeId,
             string title,
@@ -50,10 +32,6 @@ namespace HrPortal.Services
                 });
         }
 
-        /// <summary>
-        /// Queues a notification for whoever currently holds an
-        /// approval role, if anyone does.
-        /// </summary>
         public async Task NotifyApproverAsync(
             ApprovalRole role,
             string title,
@@ -72,15 +50,6 @@ namespace HrPortal.Services
                 link);
         }
 
-
-        // ============================================================
-        // LOOKUPS
-        // ============================================================
-
-        /// <summary>
-        /// The employee currently configured for an approval role,
-        /// or null when nobody is configured.
-        /// </summary>
         public async Task<int?> GetApproverEmployeeId(ApprovalRole role)
         {
             return await _context.ApprovalConfigurations

@@ -20,7 +20,6 @@ namespace HrPortal.Entities
 
         public decimal RemainingDays { get; set; }
 
-
         public Employee Employee { get; set; } = null!;
 
         public LeaveType LeaveType { get; set; } = null!;

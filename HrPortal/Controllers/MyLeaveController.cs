@@ -11,14 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// An employee's own leave: their balances, their requests,
-    /// and the history of each.
-    ///
-    /// Every action is scoped to the signed-in user's employee
-    /// record, so an employee cannot reach anyone else's leave by
-    /// changing an id in the address bar.
-    /// </summary>
     [Authorize]
     public class MyLeaveController : Controller
     {
@@ -42,11 +34,6 @@ namespace HrPortal.Controllers
             _authorization = authorization;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
@@ -54,10 +41,6 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            // Deliberately always the caller's own records, even
-            // for HR and the MD: this page is "my leave". Their
-            // view of everyone else's lives in LeaveRequest and
-            // LeaveApproval.
             var model = new MyLeaveIndexViewModel
             {
                 Requests = await _context.LeaveRequests
@@ -78,11 +61,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -98,11 +76,6 @@ namespace HrPortal.Controllers
             return View(request);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public async Task<IActionResult> Create()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
@@ -114,11 +87,6 @@ namespace HrPortal.Controllers
 
             return View(new MyLeaveRequestViewModel());
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -172,15 +140,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
-        /// <summary>
-        /// Only a request that is back with the employee can be
-        /// changed. Anything in the approval chain is read only.
-        /// </summary>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -216,11 +175,6 @@ namespace HrPortal.Controllers
                 Reason = request.Reason
             });
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -282,11 +236,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // CANCEL
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -323,16 +272,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        /// <summary>
-        /// Shared checks for a new or resubmitted request.
-        /// Returns the working days the request comes to, and
-        /// adds any problems to ModelState.
-        /// </summary>
         private async Task<decimal> ValidateRequest(
             MyLeaveRequestViewModel model,
             int employeeId,
@@ -400,13 +339,6 @@ namespace HrPortal.Controllers
             return numberOfDays;
         }
 
-        /// <summary>
-        /// Loads a request and asks the authorization handler
-        /// whether the caller may do this with it. Returns null
-        /// when they may not, which the actions turn into a 404
-        /// so the page cannot be used to discover which ids
-        /// exist.
-        /// </summary>
         private async Task<LeaveRequest?> LoadAuthorizedRequest(
             int id,
             OperationAuthorizationRequirement operation)

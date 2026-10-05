@@ -18,7 +18,6 @@
 
         public string? IpAddress { get; set; }
 
-
         public Employee? Employee { get; set; }
     }
 }

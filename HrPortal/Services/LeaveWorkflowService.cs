@@ -4,18 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// The two stage leave approval chain.
-    ///
-    ///   Employee submits
-    ///       -> HR Officer approves, rejects, or returns
-    ///           -> MD approves or rejects (final)
-    ///
-    /// Every transition is in one place so the status, the
-    /// history entry, the balance movement, the notification and
-    /// the audit record cannot drift apart. Callers decide who is
-    /// allowed to act; this decides what acting does.
-    /// </summary>
     public class LeaveWorkflowService
     {
         private readonly ApplicationDbContext _context;
@@ -35,32 +23,18 @@ namespace HrPortal.Services
             _audit = audit;
         }
 
-
-        // ============================================================
-        // QUEUES
-        // ============================================================
-
-        /// <summary>
-        /// Waiting on the HR Officer.
-        /// </summary>
         public static bool IsAwaitingHr(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Submitted
                 || status == LeaveRequestStatus.HRReview;
         }
 
-        /// <summary>
-        /// Waiting on the MD, having cleared HR.
-        /// </summary>
         public static bool IsAwaitingMd(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.HRApproved
                 || status == LeaveRequestStatus.MDReview;
         }
 
-        /// <summary>
-        /// Decided, and no longer moving.
-        /// </summary>
         public static bool IsFinal(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Approved
@@ -69,24 +43,12 @@ namespace HrPortal.Services
                 || status == LeaveRequestStatus.Cancelled;
         }
 
-        /// <summary>
-        /// The employee can still change and resend it.
-        /// </summary>
         public static bool IsWithEmployee(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Draft
                 || status == LeaveRequestStatus.ReturnedToEmployee;
         }
 
-
-        // ============================================================
-        // SUBMIT
-        // ============================================================
-
-        /// <summary>
-        /// Sends a new or returned request to the HR Officer and
-        /// holds the days against the employee's balance.
-        /// </summary>
         public async Task SubmitAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -125,14 +87,6 @@ namespace HrPortal.Services
                 $"{request.NumberOfDays:0.##} day(s) submitted for review.");
         }
 
-
-        // ============================================================
-        // HR OFFICER
-        // ============================================================
-
-        /// <summary>
-        /// HR approves, and the request moves on to the MD.
-        /// </summary>
         public async Task HrApproveAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -172,10 +126,6 @@ namespace HrPortal.Services
                 "Approved by HR and sent to the MD.");
         }
 
-        /// <summary>
-        /// HR rejects. The request ends here and the held days go
-        /// back to the employee's balance.
-        /// </summary>
         public async Task HrRejectAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -210,10 +160,6 @@ namespace HrPortal.Services
                 "Rejected by HR.");
         }
 
-        /// <summary>
-        /// HR sends it back for correction. The hold is released
-        /// because the dates may well change before it returns.
-        /// </summary>
         public async Task HrReturnAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -248,14 +194,6 @@ namespace HrPortal.Services
                 "Returned to the employee for correction.");
         }
 
-
-        // ============================================================
-        // MANAGING DIRECTOR
-        // ============================================================
-
-        /// <summary>
-        /// The final approval. The held days become used days.
-        /// </summary>
         public async Task MdApproveAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -292,9 +230,6 @@ namespace HrPortal.Services
                 "day(s) deducted from the balance.");
         }
 
-        /// <summary>
-        /// The final rejection. The hold is released.
-        /// </summary>
         public async Task MdRejectAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -330,15 +265,6 @@ namespace HrPortal.Services
                 "Rejected by the MD.");
         }
 
-
-        // ============================================================
-        // CANCEL
-        // ============================================================
-
-        /// <summary>
-        /// Withdraws a request that has not been decided. The
-        /// record is kept rather than deleted.
-        /// </summary>
         public async Task CancelAsync(
             LeaveRequest request,
             int actedByEmployeeId,
@@ -368,15 +294,6 @@ namespace HrPortal.Services
                 "Cancelled.");
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
-        /// <summary>
-        /// Counts the working days in a range, both ends
-        /// included, skipping weekends.
-        /// </summary>
         public static decimal CountWorkingDays(
             DateTime startDate,
             DateTime endDate)
@@ -397,10 +314,6 @@ namespace HrPortal.Services
             return days;
         }
 
-        /// <summary>
-        /// Builds the next reference for the current year, in the
-        /// form LR-2026-0001.
-        /// </summary>
         public async Task<string> GenerateRequestNumberAsync()
         {
             var year = DateTime.UtcNow.Year;

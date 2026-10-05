@@ -7,16 +7,8 @@ namespace HrPortal.ViewModels
     {
         public LeaveRequest Request { get; set; } = null!;
 
-        /// <summary>
-        /// The employee's balance for this leave type and year,
-        /// shown so the approver can see what the request costs.
-        /// Null when the leave type is not rationed.
-        /// </summary>
         public LeaveBalance? Balance { get; set; }
 
-        /// <summary>
-        /// Whether the signed-in user may act at this stage.
-        /// </summary>
         public bool CanActAsHr { get; set; }
 
         public bool CanActAsMd { get; set; }

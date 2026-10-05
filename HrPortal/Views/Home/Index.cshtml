@@ -394,24 +394,6 @@
             </div>
 
 
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Hr.DocumentsExpiringSoon > 0 ? "is-warning" : "")"
-                   asp-controller="EmployeeDocument"
-                   asp-action="Index">
-
-                    <span class="stat-label">Documents expiring</span>
-
-                    <span class="stat-value">
-                        @Model.Hr.DocumentsExpiringSoon
-                    </span>
-
-                    <div class="stat-note">Within 30 days</div>
-
-                </a>
-
-            </div>
-
         </div>
 
 

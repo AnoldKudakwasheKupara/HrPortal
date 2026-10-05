@@ -18,11 +18,6 @@ namespace HrPortal.Controllers
             _context = context;
         }
 
-
-        // ============================================================
-        // INDEX
-        // ============================================================
-
         public async Task<IActionResult> Index()
         {
             var categories = await _context.DocumentCategories
@@ -32,11 +27,6 @@ namespace HrPortal.Controllers
 
             return View(categories);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -54,20 +44,10 @@ namespace HrPortal.Controllers
             return View(category);
         }
 
-
-        // ============================================================
-        // CREATE - GET
-        // ============================================================
-
         public IActionResult Create()
         {
             return View();
         }
-
-
-        // ============================================================
-        // CREATE - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -108,11 +88,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // EDIT - GET
-        // ============================================================
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -134,11 +109,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // EDIT - POST
-        // ============================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -186,11 +156,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-        // ============================================================
-        // TOGGLE STATUS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleStatus(int id)
@@ -201,8 +166,6 @@ namespace HrPortal.Controllers
             if (category == null)
                 return NotFound();
 
-            // Deactivating only hides the category from new uploads.
-            // Documents already filed under it stay where they are.
             category.IsActive = !category.IsActive;
 
             await _context.SaveChangesAsync();

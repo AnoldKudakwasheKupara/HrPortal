@@ -18,7 +18,6 @@
 
         public int UploadedByEmployeeId { get; set; }
 
-
         public TrainingCourse TrainingCourse { get; set; } = null!;
 
         public Employee UploadedByEmployee { get; set; } = null!;

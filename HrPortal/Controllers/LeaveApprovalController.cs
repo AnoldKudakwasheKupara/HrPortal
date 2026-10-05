@@ -9,14 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The approval side of leave: the HR Officer's queue, the
-    /// MD's queue, and the actions available at each stage.
-    ///
-    /// The class is open to everyone in the chain, but each
-    /// action checks the caller's role, so an HR Officer cannot
-    /// give final approval and the MD cannot act before HR has.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOrHrOrMd)]
     public class LeaveApprovalController : Controller
     {
@@ -33,11 +25,6 @@ namespace HrPortal.Controllers
             _workflow = workflow;
             _currentUser = currentUser;
         }
-
-
-        // ============================================================
-        // HR QUEUE
-        // ============================================================
 
         [Authorize(Roles = Roles.AdminOrHr)]
         public async Task<IActionResult> Index()
@@ -57,11 +44,6 @@ namespace HrPortal.Controllers
             return View("Queue", requests);
         }
 
-
-        // ============================================================
-        // MD QUEUE
-        // ============================================================
-
         [Authorize(Roles = Roles.Administrator + "," + Roles.Md)]
         public async Task<IActionResult> FinalApproval()
         {
@@ -79,11 +61,6 @@ namespace HrPortal.Controllers
 
             return View("Queue", requests);
         }
-
-
-        // ============================================================
-        // DETAILS
-        // ============================================================
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -119,11 +96,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // HR ACTIONS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.AdminOrHr)]
@@ -138,7 +110,6 @@ namespace HrPortal.Controllers
                     _workflow.HrApproveAsync(request, actorId, comment),
                 "Leave request approved and sent to the MD.");
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -156,7 +127,6 @@ namespace HrPortal.Controllers
                 commentRequired: true);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.AdminOrHr)]
@@ -173,11 +143,6 @@ namespace HrPortal.Controllers
                 commentRequired: true);
         }
 
-
-        // ============================================================
-        // MD ACTIONS
-        // ============================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.Administrator + "," + Roles.Md)]
@@ -192,7 +157,6 @@ namespace HrPortal.Controllers
                     _workflow.MdApproveAsync(request, actorId, comment),
                 "Leave request approved.");
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -209,11 +173,6 @@ namespace HrPortal.Controllers
                 "Leave request rejected.",
                 commentRequired: true);
         }
-
-
-        // ============================================================
-        // SHARED ACTION HANDLING
-        // ============================================================
 
         private async Task<IActionResult> ActAsHr(
             int id,
@@ -267,8 +226,6 @@ namespace HrPortal.Controllers
             if (request == null)
                 return NotFound();
 
-            // Guards against a stale page: someone else may have
-            // actioned this request since it was opened.
             if (!stageCheck(request.Status))
             {
                 TempData["Error"] = wrongStageMessage;

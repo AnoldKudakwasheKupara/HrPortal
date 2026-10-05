@@ -6,17 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// An employee's own notifications.
-    ///
-    /// Nothing here creates a notification. They are raised by the
-    /// actions that cause them — the leave workflow in
-    /// <see cref="LeaveWorkflowService"/> and training assignment —
-    /// so this controller only reads them and marks them read.
-    ///
-    /// Every query is scoped to the signed-in user's employee
-    /// record, so one employee cannot read another's.
-    /// </summary>
     [Authorize]
     public class MyNotificationsController : Controller
     {
@@ -30,11 +19,6 @@ namespace HrPortal.Controllers
             _context = context;
             _currentUser = currentUser;
         }
-
-
-        // ============================================================
-        // INDEX
-        // ============================================================
 
         public async Task<IActionResult> Index()
         {
@@ -52,15 +36,6 @@ namespace HrPortal.Controllers
             return View(notifications);
         }
 
-
-        // ============================================================
-        // READING
-        // ============================================================
-
-        /// <summary>
-        /// Opens what a notification is about, marking it read on
-        /// the way through.
-        /// </summary>
         public async Task<IActionResult> Open(int id)
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
@@ -82,8 +57,6 @@ namespace HrPortal.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // The link is written by this application, but it is
-            // still checked rather than trusted as a redirect.
             if (!string.IsNullOrWhiteSpace(notification.Link) &&
                 Url.IsLocalUrl(notification.Link))
             {
