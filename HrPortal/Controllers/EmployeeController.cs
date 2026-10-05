@@ -303,6 +303,106 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        public async Task<IActionResult> ResetPassword(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            if (employee.User == null)
+            {
+                TempData["Error"] =
+                    "That employee has no sign-in account, so there " +
+                    "is no password to reset.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(new EmployeeResetPasswordViewModel
+            {
+                Id = employee.Id,
+                FullName =
+                    $"{employee.FirstName} {employee.LastName}",
+                EmployeeNumber = employee.EmployeeNumber,
+                Email = employee.User.Email ?? employee.Email
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(
+            int id,
+            EmployeeResetPasswordViewModel model)
+        {
+            if (id != model.Id)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            if (employee.User == null)
+            {
+                TempData["Error"] =
+                    "That employee has no sign-in account, so there " +
+                    "is no password to reset.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            model.FullName =
+                $"{employee.FirstName} {employee.LastName}";
+            model.EmployeeNumber = employee.EmployeeNumber;
+            model.Email = employee.User.Email ?? employee.Email;
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var token = await _userManager
+                .GeneratePasswordResetTokenAsync(employee.User);
+
+            var result = await _userManager.ResetPasswordAsync(
+                employee.User,
+                token,
+                model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.NewPassword),
+                        error.Description);
+                }
+
+                return View(model);
+            }
+
+            await _userManager.UpdateSecurityStampAsync(employee.User);
+
+            await _audit.LogAsync(
+                AuditService.PasswordReset,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"Password reset for {model.FullName}.");
+
+            TempData["Success"] =
+                $"Password reset for {model.FullName}. They will be " +
+                "signed out of any open sessions and must use the " +
+                "new password.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)

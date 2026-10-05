@@ -24,6 +24,7 @@ namespace HrPortal.Services
         public const string Deactivated = "Deactivated";
         public const string Deleted = "Deleted";
         public const string RoleChanged = "Role Changed";
+        public const string PasswordReset = "Password Reset";
         public const string LeaveSubmitted = "Leave Submitted";
         public const string LeaveApproved = "Leave Approved";
         public const string LeaveRejected = "Leave Rejected";
