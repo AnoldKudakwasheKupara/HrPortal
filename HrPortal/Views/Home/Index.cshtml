@@ -52,6 +52,8 @@
                    asp-controller="LeaveApproval"
                    asp-action="FinalApproval">
 
+                    <i class="fas fa-stamp stat-icon" aria-hidden="true"></i>
+
                     <span class="stat-label">
                         Waiting for your final approval
                     </span>
@@ -89,6 +91,7 @@
 
                 <div class="stat-tile">
 
+                    <i class="fas fa-umbrella-beach stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Leave remaining</span>
 
                     <span class="stat-value">
@@ -120,6 +123,7 @@
                    asp-controller="MyLeave"
                    asp-action="Index">
 
+                    <i class="fas fa-hourglass-half stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Requests in progress</span>
 
                     <span class="stat-value">
@@ -144,6 +148,7 @@
                    asp-controller="MyTraining"
                    asp-action="Index">
 
+                    <i class="fas fa-graduation-cap stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Training to do</span>
 
                     <span class="stat-value">
@@ -176,6 +181,7 @@
                    asp-controller="MyAssets"
                    asp-action="Index">
 
+                    <i class="fas fa-laptop stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">My assets</span>
 
                     <span class="stat-value">@Model.Mine.MyAssets</span>
@@ -197,6 +203,7 @@
                    asp-controller="MyNotifications"
                    asp-action="Index">
 
+                    <i class="fas fa-bell stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Unread notices</span>
 
                     <span class="stat-value">
@@ -220,6 +227,7 @@
 
                 <div class="stat-tile">
 
+                    <i class="fas fa-calendar-check stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Leave taken</span>
 
                     <span class="stat-value">
@@ -243,6 +251,7 @@
                    asp-controller="MyLeave"
                    asp-action="Index">
 
+                    <i class="fas fa-plane-departure stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Next leave</span>
 
                     <span class="stat-value">
@@ -414,6 +423,7 @@
                    asp-controller="LeaveApproval"
                    asp-action="Index">
 
+                    <i class="fas fa-inbox stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Awaiting review</span>
 
                     <span class="stat-value">@Model.Hr.AwaitingReview</span>
@@ -435,6 +445,7 @@
                    asp-controller="LeaveRequest"
                    asp-action="Index">
 
+                    <i class="fas fa-paper-plane stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">With the MD</span>
 
                     <span class="stat-value">@Model.Hr.WithMd</span>
@@ -452,6 +463,7 @@
                    asp-controller="LeaveRequest"
                    asp-action="Index">
 
+                    <i class="fas fa-rotate-left stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Returned</span>
 
                     <span class="stat-value">
@@ -475,6 +487,7 @@
                    asp-controller="Employee"
                    asp-action="Index">
 
+                    <i class="fas fa-users stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Active employees</span>
 
                     <span class="stat-value">@Model.Hr.ActiveEmployees</span>
@@ -492,6 +505,7 @@
                    asp-controller="LeaveRequest"
                    asp-action="Index">
 
+                    <i class="fas fa-person-walking-luggage stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">On leave today</span>
 
                     <span class="stat-value">@Model.Hr.OnLeaveToday</span>
@@ -513,6 +527,7 @@
                    asp-controller="Employee"
                    asp-action="Index">
 
+                    <i class="fas fa-user-lock stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">No sign-in yet</span>
 
                     <span class="stat-value">
@@ -536,6 +551,7 @@
                    asp-controller="LeaveRequest"
                    asp-action="Index">
 
+                    <i class="fas fa-circle-check stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Approved this month</span>
 
                     <span class="stat-value">
@@ -558,6 +574,7 @@
                    asp-controller="TrainingAssignment"
                    asp-action="Index">
 
+                    <i class="fas fa-triangle-exclamation stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Overdue training</span>
 
                     <span class="stat-value">
@@ -731,6 +748,7 @@
                    asp-controller="LeaveApproval"
                    asp-action="FinalApproval">
 
+                    <i class="fas fa-stamp stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Awaiting your decision</span>
 
                     <span class="stat-value">
@@ -752,6 +770,7 @@
 
                 <div class="stat-tile">
 
+                    <i class="fas fa-calendar-day stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Days approved</span>
 
                     <span class="stat-value">
@@ -771,6 +790,7 @@
 
                 <div class="stat-tile is-good">
 
+                    <i class="fas fa-circle-check stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Approved this month</span>
 
                     <span class="stat-value">
@@ -792,6 +812,7 @@
                    asp-controller="LeaveRequest"
                    asp-action="Index">
 
+                    <i class="fas fa-person-walking-luggage stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">On leave today</span>
 
                     <span class="stat-value">@Model.Md.OnLeaveToday</span>
@@ -962,6 +983,7 @@
                    asp-controller="Employee"
                    asp-action="Index">
 
+                    <i class="fas fa-users stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Employees</span>
 
                     <span class="stat-value">@Model.Admin.Employees</span>
@@ -981,6 +1003,7 @@
                    asp-controller="Department"
                    asp-action="Index">
 
+                    <i class="fas fa-sitemap stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Departments</span>
 
                     <span class="stat-value">@Model.Admin.Departments</span>
@@ -998,6 +1021,7 @@
                    asp-controller="Employee"
                    asp-action="Index">
 
+                    <i class="fas fa-right-to-bracket stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Sign-in accounts</span>
 
                     <span class="stat-value">
@@ -1019,6 +1043,7 @@
                    asp-controller="Employee"
                    asp-action="Index">
 
+                    <i class="fas fa-user-plus stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">No account yet</span>
 
                     <span class="stat-value">
@@ -1042,6 +1067,7 @@
                    asp-controller="Asset"
                    asp-action="Index">
 
+                    <i class="fas fa-laptop stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Assets</span>
 
                     <span class="stat-value">@Model.Admin.Assets</span>
@@ -1061,6 +1087,7 @@
                    asp-controller="Asset"
                    asp-action="Index">
 
+                    <i class="fas fa-screwdriver-wrench stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Ageing machines</span>
 
                     <span class="stat-value">
@@ -1084,6 +1111,7 @@
                    asp-controller="DocumentCategory"
                    asp-action="Index">
 
+                    <i class="fas fa-folder-tree stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Document categories</span>
 
                     <span class="stat-value">
@@ -1103,6 +1131,7 @@
                    asp-controller="ApprovalConfiguration"
                    asp-action="Index">
 
+                    <i class="fas fa-user-shield stat-icon" aria-hidden="true"></i>
                     <span class="stat-label">Approvers</span>
 
                     <span class="stat-value">
@@ -1151,13 +1180,38 @@
 
                             @foreach (var entry in Model.Admin.RecentActivity)
                             {
+                                var icon = entry.Action switch
+                                    {
+                                        "Created" => "fa-plus",
+                                        "Updated" => "fa-pen",
+                                        "Deleted" => "fa-trash-can",
+                                        "Activated" => "fa-toggle-on",
+                                        "Deactivated" => "fa-toggle-off",
+                                        "Password Reset" => "fa-key",
+                                        "Role Changed" => "fa-user-shield",
+                                        "Document Uploaded" => "fa-file-arrow-up",
+                                        var a when a.StartsWith("Leave") => "fa-umbrella-beach",
+                                        var a when a.StartsWith("Training") => "fa-graduation-cap",
+                                        _ => "fa-circle-dot"
+                                    };
+
                                 <li>
+                                    <span class="row-icon">
+                                        <i class="fas @icon" aria-hidden="true"></i>
+                                    </span>
+
                                     <div class="row-main">
                                         <span class="row-title">
                                             @entry.Action
                                             <span class="text-muted">
                                                 &middot; @entry.EntityName
                                             </span>
+                                            @if (!string.IsNullOrWhiteSpace(entry.EntityId))
+                                            {
+                                                <span class="row-ref">
+                                                    @entry.EntityId
+                                                </span>
+                                            }
                                         </span>
                                         <span class="row-meta">
                                             @(entry.Employee != null
@@ -1167,13 +1221,6 @@
                                             @entry.Timestamp.ToString("d MMM yyyy HH:mm")
                                         </span>
                                     </div>
-
-                                    @if (!string.IsNullOrWhiteSpace(entry.EntityId))
-                                    {
-                                        <span class="badge bg-secondary">
-                                            @entry.EntityId
-                                        </span>
-                                    }
                                 </li>
                             }
 

@@ -3,7 +3,6 @@ using HrPortal.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace HrPortal.DbContexts
 {
@@ -427,8 +426,6 @@ namespace HrPortal.DbContexts
                     .HasConversion<string>()
                     .HasMaxLength(20);
 
-                // An asset outlives the person holding it, so losing
-                // the employee only unassigns it.
                 entity.HasOne(a => a.AssignedToEmployee)
                     .WithMany()
                     .HasForeignKey(a => a.AssignedToEmployeeId)

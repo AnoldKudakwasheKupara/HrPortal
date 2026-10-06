@@ -1,6 +1,11 @@
-# HrPortal
+# My Intellego
 
-ASP.NET Core MVC HR portal with ASP.NET Identity and EF Core (SQL Server).
+Staff portal for Intellego Investment Consultants: leave, training,
+employee records and the IT asset register. ASP.NET Core MVC with
+ASP.NET Identity and EF Core (SQL Server).
+
+The solution, project and database are still named `HrPortal` — only
+the product name changed.
 
 ## First run on a new machine
 

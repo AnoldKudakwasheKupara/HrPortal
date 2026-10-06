@@ -482,14 +482,19 @@ body {
    The tiles take the source system's .stat-card treatment.
    ========================================================== */
 
+/* The tile is a column so the note can be pushed to the bottom: in a
+   row of tiles the labels and notes then line up with each other
+   instead of the shorter tiles trailing empty space. */
 .stat-tile {
+    position: relative;
     background: var(--bg-card);
-    padding: 1.5rem;
+    padding: 1.15rem 1.25rem;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-light);
-    display: block;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
     color: inherit;
     text-decoration: none;
     transition: var(--transition-smooth);
@@ -498,31 +503,58 @@ body {
 a.stat-tile:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    border-color: var(--gray-300);
     text-decoration: none;
     color: inherit;
 }
 
+a.stat-tile:hover .stat-icon {
+    background: var(--accent);
+    color: #fff;
+}
+
+.stat-tile .stat-icon {
+    position: absolute;
+    top: 1.05rem;
+    right: 1.1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+    color: var(--accent);
+    font-size: 0.8rem;
+    transition: var(--transition-smooth);
+}
+
 .stat-tile .stat-label {
     display: block;
+    padding-right: 2.5rem;
     color: var(--gray-500);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    margin-bottom: 0.45rem;
 }
 
 .stat-tile .stat-value {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--gray-800);
-    line-height: 1.1;
+    line-height: 1;
+    letter-spacing: -0.02em;
 }
 
 .stat-tile .stat-note {
-    color: var(--gray-500);
-    font-size: 0.85rem;
-    margin-top: 0.3rem;
+    color: var(--gray-400);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    margin-top: auto;
+    padding-top: 0.5rem;
 }
 
 /* State reads from a coloured left edge plus the words in the
@@ -532,6 +564,21 @@ a.stat-tile:hover {
 .stat-tile.is-warning  { border-left: 3px solid var(--warning); }
 .stat-tile.is-critical { border-left: 3px solid var(--danger); }
 .stat-tile.is-critical .stat-value { color: var(--danger); }
+
+.stat-tile.is-good .stat-icon {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.stat-tile.is-warning .stat-icon {
+    background: var(--warning-light);
+    color: var(--warning-ink);
+}
+
+.stat-tile.is-critical .stat-icon {
+    background: var(--danger-light);
+    color: var(--danger);
+}
 
 .hero-figure {
     font-size: 3rem;
@@ -580,8 +627,8 @@ a.stat-tile:hover {
 .row-list li {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-start;
+    gap: 0.85rem;
     padding: 0.9rem 0;
     border-bottom: 1px solid var(--gray-100);
 }
@@ -606,6 +653,37 @@ a.stat-tile:hover {
 .row-list .row-meta {
     font-size: 0.85rem;
     color: var(--gray-500);
+}
+
+/* A leading icon gives each row an anchor on the left, so a short
+   trailing element no longer floats alone across the card. */
+.row-list .row-icon {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+    color: var(--accent);
+    font-size: 0.75rem;
+}
+
+.row-list .row-icon + .row-main {
+    flex: 1;
+}
+
+.row-list .row-ref {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 0.35rem;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    font-size: 0.72rem;
+    font-weight: 600;
+    vertical-align: middle;
 }
 
 .record-grid {
@@ -851,4 +929,101 @@ a.stat-tile:hover {
     font-size: .75rem;
     color: var(--gray-300);
     transition: var(--transition-smooth);
+}
+
+/* ==========================================================
+   Record detail
+
+   Label and value pairs read as a list with a leading icon,
+   rather than a flat grid of text that gives the eye nothing
+   to follow.
+   ========================================================== */
+
+.detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .5rem;
+}
+
+.detail-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .85rem;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.detail-row:first-child {
+    padding-top: 0;
+}
+
+.detail-row:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.detail-icon {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+    color: var(--accent);
+    font-size: .75rem;
+}
+
+.detail-text {
+    min-width: 0;
+}
+
+.detail-text .field-label {
+    margin-bottom: .15rem;
+}
+
+.assignment-holder {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .25rem 0 1rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.assignment-avatar {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.assignment-avatar.is-empty {
+    background: var(--gray-100);
+    color: var(--gray-400);
+    font-size: .95rem;
+}
+
+.assignment-name {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.assignment-sub {
+    font-size: .82rem;
+    color: var(--gray-500);
 }
