@@ -1,0 +1,136 @@
+@model HrPortal.ViewModels.AssetCreateViewModel
+@using HrPortal.Entities
+
+@*  The fields are shared by Add and Edit so the two forms cannot
+    drift apart. They follow the columns used in the IT asset
+    registers: user, device, processor, serial, procured,
+    condition and notes.                                       *@
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="DeviceModel" class="form-label"></label>
+
+        <input asp-for="DeviceModel"
+               class="form-control"
+               placeholder="HP ProBook 450 G8" />
+
+        <span asp-validation-for="DeviceModel"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="Company" class="form-label"></label>
+
+        <input asp-for="Company"
+               class="form-control"
+               list="asset-companies"
+               placeholder="Intellego Investment Consultants" />
+
+        <datalist id="asset-companies">
+            @foreach (var name in
+                (ViewBag.Companies as IEnumerable<string>)
+                    ?? Enumerable.Empty<string>())
+            {
+                <option value="@name"></option>
+            }
+        </datalist>
+
+        <span asp-validation-for="Company" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="Processor" class="form-label"></label>
+
+        <input asp-for="Processor"
+               class="form-control"
+               placeholder="Core i5, 11th Gen" />
+
+        <span asp-validation-for="Processor"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="SerialNumber" class="form-label"></label>
+
+        <input asp-for="SerialNumber" class="form-control" />
+
+        <span asp-validation-for="SerialNumber"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="ProcuredOn" class="form-label"></label>
+
+        <input asp-for="ProcuredOn"
+               class="form-control"
+               type="date" />
+
+        <span asp-validation-for="ProcuredOn"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="Condition" class="form-label"></label>
+
+        <select asp-for="Condition"
+                class="form-select"
+                asp-items="Html.GetEnumSelectList<AssetCondition>()">
+        </select>
+
+        <span asp-validation-for="Condition"
+              class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="AssignedToEmployeeId"
+               class="form-label"></label>
+
+        <select asp-for="AssignedToEmployeeId"
+                class="form-select"
+                asp-items="ViewBag.Employees">
+            <option value="">-- Unassigned --</option>
+        </select>
+
+        <span asp-validation-for="AssignedToEmployeeId"
+              class="text-danger"></span>
+
+    </div>
+
+</div>
+
+<div class="mb-3">
+
+    <label asp-for="Notes" class="form-label"></label>
+
+    <textarea asp-for="Notes"
+              class="form-control"
+              rows="3"
+              placeholder="Fan and screen problems"></textarea>
+
+    <span asp-validation-for="Notes" class="text-danger"></span>
+
+</div>
+
+<div class="form-check mb-4">
+
+    <input asp-for="IsInUse" class="form-check-input" />
+
+    <label asp-for="IsInUse" class="form-check-label">
+        This machine is in use
+    </label>
+
+</div>

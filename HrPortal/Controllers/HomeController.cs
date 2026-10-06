@@ -121,6 +121,10 @@ namespace HrPortal.Controllers
                         n.EmployeeId == employeeId &&
                         !n.IsRead),
 
+                MyAssets = await _context.Assets
+                    .CountAsync(a =>
+                        a.AssignedToEmployeeId == employeeId),
+
                 DaysTakenThisYear = balances.Sum(b => b.UsedDays),
 
                 NextLeaveStart = await _context.LeaveRequests
@@ -302,6 +306,16 @@ namespace HrPortal.Controllers
 
                 DocumentCategories = await _context.DocumentCategories
                     .CountAsync(c => c.IsActive),
+
+                Assets = await _context.Assets.CountAsync(),
+
+                AssetsNeedingAttention = await _context.Assets
+                    .CountAsync(a =>
+                        a.Condition == AssetCondition.Bad ||
+                        a.Condition == AssetCondition.Old),
+
+                UnassignedAssets = await _context.Assets
+                    .CountAsync(a => a.AssignedToEmployeeId == null),
 
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations

@@ -1,0 +1,50 @@
+@model HrPortal.ViewModels.AssetCreateViewModel
+@using HrPortal.Entities
+
+@{
+    ViewData["Title"] = "Add Asset";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Add Asset</h2>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Create" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <partial name="_AssetFields" model="Model" />
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit" class="btn btn-primary">
+                        Add Asset
+                    </button>
+
+                    <a asp-action="Index" class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

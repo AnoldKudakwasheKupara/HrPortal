@@ -54,6 +54,11 @@
         <i class="fas fa-graduation-cap"></i> My Training
     </a>
 
+    <a class="nav-item @On("MyAssets")"
+       asp-controller="MyAssets" asp-action="Index">
+        <i class="fas fa-laptop"></i> My Assets
+    </a>
+
     <a class="nav-item @On("MyNotifications")"
        asp-controller="MyNotifications" asp-action="Index">
         <i class="fas fa-bell"></i> Notifications
@@ -177,6 +182,11 @@
         <a class="nav-item @On("ApprovalConfiguration")"
            asp-controller="ApprovalConfiguration" asp-action="Index">
             <i class="fas fa-sliders"></i> Approval Configuration
+        </a>
+
+        <a class="nav-item @On("Asset")"
+           asp-controller="Asset" asp-action="Index">
+            <i class="fas fa-laptop"></i> Asset Register
         </a>
 
         <a class="nav-item @On("AuditLog")"

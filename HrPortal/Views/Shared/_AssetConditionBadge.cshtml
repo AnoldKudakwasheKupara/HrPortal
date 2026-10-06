@@ -1,0 +1,24 @@
+@using HrPortal.Entities
+@model AssetCondition
+
+@*  One place for how a machine's condition reads, matching the
+    condition key used in the IT asset registers.             *@
+
+@switch (Model)
+{
+    case AssetCondition.Good:
+        <span class="badge bg-success">Good</span>
+        break;
+
+    case AssetCondition.Fair:
+        <span class="badge bg-warning">Fair</span>
+        break;
+
+    case AssetCondition.Old:
+        <span class="badge bg-secondary">Old</span>
+        break;
+
+    default:
+        <span class="badge bg-danger">Bad</span>
+        break;
+}

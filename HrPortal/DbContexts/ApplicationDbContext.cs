@@ -31,6 +31,7 @@ namespace HrPortal.DbContexts
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ApprovalConfiguration> ApprovalConfigurations { get; set; }
+        public DbSet<Asset> Assets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -400,6 +401,38 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(a => a.Role)
                     .IsUnique()
                     .HasFilter("[IsActive] = 1");
+            });
+
+            builder.Entity<Asset>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+
+                entity.Property(a => a.DeviceModel)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(a => a.Company)
+                    .HasMaxLength(100);
+
+                entity.Property(a => a.Processor)
+                    .HasMaxLength(200);
+
+                entity.Property(a => a.SerialNumber)
+                    .HasMaxLength(100);
+
+                entity.Property(a => a.Notes)
+                    .HasMaxLength(1000);
+
+                entity.Property(a => a.Condition)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                // An asset outlives the person holding it, so losing
+                // the employee only unassigns it.
+                entity.HasOne(a => a.AssignedToEmployee)
+                    .WithMany()
+                    .HasForeignKey(a => a.AssignedToEmployeeId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

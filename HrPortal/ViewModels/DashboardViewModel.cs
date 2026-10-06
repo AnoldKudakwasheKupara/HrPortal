@@ -35,6 +35,8 @@ namespace HrPortal.ViewModels
 
         public int UnreadNotifications { get; set; }
 
+        public int MyAssets { get; set; }
+
         public decimal DaysTakenThisYear { get; set; }
 
         public DateTime? NextLeaveStart { get; set; }
@@ -97,6 +99,12 @@ namespace HrPortal.ViewModels
         public int EmployeesWithoutLogin { get; set; }
 
         public int DocumentCategories { get; set; }
+
+        public int Assets { get; set; }
+
+        public int AssetsNeedingAttention { get; set; }
+
+        public int UnassignedAssets { get; set; }
 
         public bool HrApproverConfigured { get; set; }
 

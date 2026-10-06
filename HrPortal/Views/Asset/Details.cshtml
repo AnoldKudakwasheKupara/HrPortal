@@ -1,0 +1,120 @@
+@model HrPortal.Entities.Asset
+
+@{
+    ViewData["Title"] = "Asset Details";
+}
+
+<div class="container">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@Model.DeviceModel</h2>
+            <p class="text-muted mb-0">Asset details</p>
+        </div>
+
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id"
+               class="btn btn-primary">Edit</a>
+
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Device / Model</span>
+                    <p class="field-value">@Model.DeviceModel</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Processor</span>
+                    <p class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.Processor)
+                            ? "Not recorded" : Model.Processor)
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Serial Number</span>
+                    <p class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.SerialNumber)
+                            ? "Not recorded" : Model.SerialNumber)
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Procured</span>
+                    <p class="field-value">
+                        @(Model.ProcuredOn?.ToString("dd MMM yyyy")
+                            ?? "Not recorded")
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Condition</span>
+                    <p class="field-value">
+                        <partial name="_AssetConditionBadge"
+                                 model="Model.Condition" />
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Status</span>
+                    <p class="field-value">
+                        @(Model.IsInUse ? "In use" : "Not in use")
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Assigned To</span>
+                    <p class="field-value">
+                        @if (Model.AssignedToEmployee != null)
+                        {
+                            @Model.AssignedToEmployee.FirstName
+                            @Model.AssignedToEmployee.LastName
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unassigned</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Department</span>
+                    <p class="field-value">
+                        @(Model.AssignedToEmployee?.Department?.Name
+                            ?? "--")
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Assigned On</span>
+                    <p class="field-value">
+                        @(Model.AssignedOn?.ToLocalTime()
+                            .ToString("dd MMM yyyy") ?? "--")
+                    </p>
+                </div>
+
+                <div class="col-12">
+                    <span class="field-label">Notes / Issues</span>
+                    <p class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.Notes)
+                            ? "None" : Model.Notes)
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

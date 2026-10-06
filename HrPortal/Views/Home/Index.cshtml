@@ -172,6 +172,27 @@
 
             <div class="col-6 col-lg-3">
 
+                <a class="stat-tile"
+                   asp-controller="MyAssets"
+                   asp-action="Index">
+
+                    <span class="stat-label">My assets</span>
+
+                    <span class="stat-value">@Model.Mine.MyAssets</span>
+
+                    <div class="stat-note">
+                        @(Model.Mine.MyAssets == 0
+                            ? "Nothing issued to you"
+                            : "Issued to you")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
                 <a class="stat-tile @(Model.Mine.UnreadNotifications > 0 ? "is-action" : "")"
                    asp-controller="MyNotifications"
                    asp-action="Index">
@@ -1008,6 +1029,48 @@
                         @(Model.Admin.EmployeesWithoutLogin == 0
                             ? "Everyone is set up"
                             : "Active staff needing access")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Asset"
+                   asp-action="Index">
+
+                    <span class="stat-label">Assets</span>
+
+                    <span class="stat-value">@Model.Admin.Assets</span>
+
+                    <div class="stat-note">
+                        @Model.Admin.UnassignedAssets unassigned
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Admin.AssetsNeedingAttention > 0 ? "is-warning" : "is-good")"
+                   asp-controller="Asset"
+                   asp-action="Index">
+
+                    <span class="stat-label">Ageing machines</span>
+
+                    <span class="stat-value">
+                        @Model.Admin.AssetsNeedingAttention
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Admin.AssetsNeedingAttention == 0
+                            ? "Fleet is healthy"
+                            : "Marked old or bad")
                     </div>
 
                 </a>

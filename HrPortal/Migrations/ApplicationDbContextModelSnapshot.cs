@@ -125,6 +125,59 @@ namespace HrPortal.Migrations
                     b.ToTable("ApprovalConfigurations");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Asset", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AssignedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("AssignedToEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Company")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("DeviceModel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsInUse")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Processor")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ProcuredOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToEmployeeId");
+
+                    b.ToTable("Assets");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -842,6 +895,16 @@ namespace HrPortal.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Asset", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "AssignedToEmployee")
+                        .WithMany()
+                        .HasForeignKey("AssignedToEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedToEmployee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.AuditLog", b =>

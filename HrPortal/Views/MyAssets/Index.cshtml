@@ -1,0 +1,105 @@
+@model IEnumerable<HrPortal.Entities.Asset>
+
+@{
+    ViewData["Title"] = "My Assets";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>My Assets</h2>
+
+        <p class="text-muted">
+            Equipment issued to you. If something here is wrong, or a
+            machine needs attention, speak to IT.
+        </p>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Device / Model</th>
+                            <th>Processor</th>
+                            <th>Serial</th>
+                            <th>Issued</th>
+                            <th>Condition</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-4">
+                                No equipment is assigned to you.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var asset in Model)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>@asset.DeviceModel</strong>
+                                    @if (!asset.IsInUse)
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Not in use
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(asset.Processor)
+                                        ? "--" : asset.Processor)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(asset.SerialNumber)
+                                        ? "--" : asset.SerialNumber)
+                                </td>
+
+                                <td>
+                                    @(asset.AssignedOn?.ToLocalTime()
+                                        .ToString("dd MMM yyyy") ?? "--")
+                                </td>
+
+                                <td>
+                                    <partial name="_AssetConditionBadge"
+                                             model="asset.Condition" />
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(asset.Notes)
+                                        ? "--" : asset.Notes)
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
