@@ -181,7 +181,7 @@ namespace HrPortal.Controllers
 
                 var roleResult = await _userManager.AddToRoleAsync(
                     user,
-                    "Employee");
+                    Roles.Employee);
 
                 if (!roleResult.Succeeded)
                 {

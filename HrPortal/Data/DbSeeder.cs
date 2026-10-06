@@ -1,5 +1,7 @@
 ﻿using HrPortal.Entities;
+using HrPortal.DbContexts;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Data
 {
@@ -66,6 +68,38 @@ namespace HrPortal.Data
                 await userManager.AddToRoleAsync(
                     admin,
                     roleName);
+            }
+        }
+
+        /// <summary>
+        /// Employee is the baseline role, so any account that predates
+        /// that rule, or lost the role some other way, is given it back
+        /// on startup. The administrator account is left alone: it is
+        /// not a member of staff.
+        /// </summary>
+        public static async Task BackfillEmployeeRoleAsync(
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context)
+        {
+            const string employeeRole = "Employee";
+
+            var linkedUserIds = await context.Employees
+                .Where(e => e.UserId != null)
+                .Select(e => e.UserId!.Value)
+                .ToListAsync();
+
+            foreach (var userId in linkedUserIds)
+            {
+                var user = await userManager.FindByIdAsync(
+                    userId.ToString());
+
+                if (user == null)
+                    continue;
+
+                if (await userManager.IsInRoleAsync(user, employeeRole))
+                    continue;
+
+                await userManager.AddToRoleAsync(user, employeeRole);
             }
         }
     }

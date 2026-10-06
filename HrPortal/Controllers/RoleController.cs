@@ -320,6 +320,7 @@ namespace HrPortal.Controllers
 
             var added = new List<string>();
             var removed = new List<string>();
+            var kept = new List<string>();
 
             foreach (var userId in selectedUserIds.Except(currentUserIds))
             {
@@ -364,6 +365,18 @@ namespace HrPortal.Controllers
                         continue;
                     }
 
+                    // Employee is the baseline role: every account keeps
+                    // it, so the personal pages never lose their footing
+                    // when somebody is also given HR or MD.
+                    if (string.Equals(
+                        roleName,
+                        Roles.Employee,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        kept.Add(user.Email ?? user.UserName ?? "unknown");
+                        continue;
+                    }
+
                     var result =
                         await _userManager.RemoveFromRoleAsync(
                             user,
@@ -384,6 +397,13 @@ namespace HrPortal.Controllers
                         }
                     }
                 }
+            }
+
+            if (kept.Count > 0)
+            {
+                TempData["ErrorMessage"] =
+                    "Employee is the baseline role and cannot be removed. " +
+                    $"{kept.Count} account(s) kept it.";
             }
 
             if (ModelState.ErrorCount == 0 &&
@@ -437,8 +457,12 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            TempData["SuccessMessage"] =
-                $"Users assigned to '{roleName}' were updated successfully.";
+            if (added.Count > 0 || removed.Count > 0)
+            {
+                TempData["SuccessMessage"] =
+                    $"Users assigned to '{roleName}' were updated " +
+                    "successfully.";
+            }
 
             return RedirectToAction(nameof(Users), new { id });
         }

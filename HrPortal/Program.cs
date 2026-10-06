@@ -126,6 +126,10 @@ using (var scope = app.Services.CreateScope())
         await DbSeeder.SeedAdministratorAsync(
             userManager,
             roleManager);
+
+        await DbSeeder.BackfillEmployeeRoleAsync(
+            userManager,
+            db);
     }
     catch (SqlException ex)
     {

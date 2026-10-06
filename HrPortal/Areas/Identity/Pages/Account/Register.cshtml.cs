@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using HrPortal.Data;
+using HrPortal.Security;
 
 namespace HrPortal.Areas.Identity.Pages.Account;
 
@@ -90,6 +91,10 @@ public class RegisterModel : PageModel
             if (result.Succeeded)
             {
                 _logger.LogInformation("User created a new account with password.");
+
+                // Employee is the baseline role every account carries,
+                // so a new sign-up is never left with no role at all.
+                await _userManager.AddToRoleAsync(user, Roles.Employee);
 
                 var userId = await _userManager.GetUserIdAsync(user);
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
