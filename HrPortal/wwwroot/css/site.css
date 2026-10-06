@@ -732,3 +732,69 @@ a.stat-tile:hover {
 .sidebar .nav-group {
     color: #a7c4bf;
 }
+
+/* ==========================================================
+   Account pages
+
+   The signed-in user's own account screens, which sit inside
+   the app shell rather than Identity's own layout.
+   ========================================================== */
+
+.account-identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.account-avatar {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.account-identity .badge + .badge {
+    margin-left: .25rem;
+}
+
+.account-link {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    height: 100%;
+    padding: .9rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md, .6rem);
+    background: var(--bg-card, #fff);
+    text-decoration: none;
+    transition: var(--transition-smooth, all .2s);
+}
+
+.account-link:hover {
+    border-color: var(--gray-300);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.account-link.is-current {
+    border-color: var(--accent);
+}
+
+.account-link-title {
+    font-weight: 600;
+    font-size: .92rem;
+    color: var(--gray-800);
+}
+
+.account-link-note {
+    font-size: .8rem;
+    color: var(--gray-500);
+}

@@ -1,15 +1,69 @@
 @inject SignInManager<ApplicationUser> SignInManager
+
+@*  The app shell replaces Identity's own Manage layout, so this is
+    the only route to the rest of the account pages. It is laid out
+    as cards rather than nav pills to match the portal.          *@
+
 @{
-    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+    var hasExternalLogins =
+        (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+
+    var current = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
 }
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item"><a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Profile</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Password</a></li>
+
+<div class="row g-2 account-links">
+
+    <div class="col-md-6 col-lg-4">
+        <a class="account-link @(current.EndsWith("/Email") ? "is-current" : "")"
+           asp-page="./Email">
+            <span class="account-link-title">Email</span>
+            <span class="account-link-note">
+                Change the address you sign in with
+            </span>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <a class="account-link @(current.EndsWith("/ChangePassword") ? "is-current" : "")"
+           asp-page="./ChangePassword">
+            <span class="account-link-title">Password</span>
+            <span class="account-link-note">
+                Set a new password for your account
+            </span>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <a class="account-link @(current.EndsWith("/TwoFactorAuthentication") ? "is-current" : "")"
+           asp-page="./TwoFactorAuthentication">
+            <span class="account-link-title">Two-factor authentication</span>
+            <span class="account-link-note">
+                Add a second step when signing in
+            </span>
+        </a>
+    </div>
+
     @if (hasExternalLogins)
     {
-        <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">External logins</a></li>
+        <div class="col-md-6 col-lg-4">
+            <a class="account-link @(current.EndsWith("/ExternalLogins") ? "is-current" : "")"
+               asp-page="./ExternalLogins">
+                <span class="account-link-title">External logins</span>
+                <span class="account-link-note">
+                    Accounts linked for signing in
+                </span>
+            </a>
+        </div>
     }
-    <li class="nav-item"><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Personal data</a></li>
-</ul>
+
+    <div class="col-md-6 col-lg-4">
+        <a class="account-link @(current.EndsWith("/PersonalData") ? "is-current" : "")"
+           asp-page="./PersonalData">
+            <span class="account-link-title">Personal data</span>
+            <span class="account-link-note">
+                Download or delete your account data
+            </span>
+        </a>
+    </div>
+
+</div>

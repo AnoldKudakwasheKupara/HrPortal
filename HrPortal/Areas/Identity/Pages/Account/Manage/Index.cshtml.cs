@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using HrPortal.Data;
+using HrPortal.Entities;
+using HrPortal.Services;
 
 namespace HrPortal.Areas.Identity.Pages.Account.Manage;
 
@@ -15,16 +17,31 @@ public class IndexModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly CurrentUserService _currentUser;
 
     public IndexModel(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        CurrentUserService currentUser)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _currentUser = currentUser;
     }
 
     public string? Username { get; set; }
+
+    public string? FullName { get; set; }
+
+    public string? Email { get; set; }
+
+    public bool EmailConfirmed { get; set; }
+
+    public bool TwoFactorEnabled { get; set; }
+
+    public IList<string> Roles { get; set; } = new List<string>();
+
+    public Employee? Employee { get; set; }
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -45,6 +62,16 @@ public class IndexModel : PageModel
         var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
         Username = userName;
+        FullName = user.FullName;
+        Email = user.Email;
+        EmailConfirmed = user.EmailConfirmed;
+        TwoFactorEnabled = user.TwoFactorEnabled;
+
+        Roles = await _userManager.GetRolesAsync(user);
+
+        // Administrative accounts have no employee record, so the
+        // employment panel is simply left out for them.
+        Employee = await _currentUser.GetEmployeeAsync();
 
         Input = new InputModel
         {

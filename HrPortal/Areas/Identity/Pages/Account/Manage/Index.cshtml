@@ -1,28 +1,276 @@
 @page
 @model IndexModel
+
 @{
-    ViewData["Title"] = "Profile";
+    ViewData["Title"] = "My Account";
     ViewData["ActivePage"] = ManageNavPages.Index;
+
+    var initial = string.IsNullOrWhiteSpace(Model.FullName)
+        ? "?"
+        : Model.FullName.Trim()[0].ToString().ToUpper();
 }
 
-<h3>@ViewData["Title"]</h3>
-<partial name="_StatusMessage" for="StatusMessage" />
-<div class="row">
-    <div class="col-md-6">
-        <form id="profile-form" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
-                <label asp-for="Username" class="form-label"></label>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
-            </div>
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </form>
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>My Account</h2>
+
+        <p class="text-muted">
+            Your sign-in details and how you are set up in the portal.
+        </p>
+
     </div>
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+
+    <div class="row g-3">
+
+        <div class="col-lg-5">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="account-identity">
+
+                        <div class="account-avatar">@initial</div>
+
+                        <div>
+                            <h5 class="mb-1">
+                                @(Model.FullName ?? Model.Username)
+                            </h5>
+
+                            <div class="text-muted">@Model.Email</div>
+
+                            <div class="mt-2">
+                                @if (Model.Roles.Any())
+                                {
+                                    foreach (var role in Model.Roles)
+                                    {
+                                        <span class="badge bg-primary">
+                                            @role
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        No role assigned
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+
+                        <div class="col-6 mb-3">
+                            <span class="field-label">Username</span>
+                            <div class="field-value">@Model.Username</div>
+                        </div>
+
+                        <div class="col-6 mb-3">
+                            <span class="field-label">Email confirmed</span>
+                            <div class="field-value">
+                                @if (Model.EmailConfirmed)
+                                {
+                                    <span class="badge bg-success">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">No</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <span class="field-label">Two-factor</span>
+                            <div class="field-value">
+                                @if (Model.TwoFactorEnabled)
+                                {
+                                    <span class="badge bg-success">On</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Off</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <span class="field-label">Employee record</span>
+                            <div class="field-value">
+                                @if (Model.Employee != null)
+                                {
+                                    <span class="badge bg-success">Linked</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        Not linked
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">
+                    Contact details
+                </div>
+
+                <div class="card-body">
+
+                    <form id="profile-form" method="post">
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">Username</label>
+
+                            <input asp-for="Username"
+                                   class="form-control"
+                                   disabled />
+
+                            <div class="form-text">
+                                Your username is your work email and
+                                cannot be changed here.
+                            </div>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="Input.PhoneNumber"
+                                   class="form-label">
+                                Phone number
+                            </label>
+
+                            <input asp-for="Input.PhoneNumber"
+                                   class="form-control"
+                                   placeholder="0771234567" />
+
+                            <span asp-validation-for="Input.PhoneNumber"
+                                  class="text-danger"></span>
+
+                        </div>
+
+                        <button id="update-profile-button"
+                                type="submit"
+                                class="btn btn-primary">
+                            Save changes
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    @if (Model.Employee != null)
+    {
+        <div class="card shadow-sm mt-3">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>Employment</span>
+
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-area=""
+                   asp-controller="MyProfile"
+                   asp-action="Index">
+                    Open my profile
+                </a>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-md-3 mb-3">
+                        <span class="field-label">Employee number</span>
+                        <div class="field-value">
+                            @Model.Employee.EmployeeNumber
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <span class="field-label">Department</span>
+                        <div class="field-value">
+                            @(Model.Employee.Department?.Name ?? "--")
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <span class="field-label">Date joined</span>
+                        <div class="field-value">
+                            @Model.Employee.DateJoined.ToString("dd MMM yyyy")
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <span class="field-label">Status</span>
+                        <div class="field-value">
+                            @if (Model.Employee.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Inactive
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <div class="card shadow-sm mt-3">
+
+        <div class="card-header">
+            Account settings
+        </div>
+
+        <div class="card-body">
+
+            <partial name="_ManageNav" />
+
+        </div>
+
+    </div>
+
 </div>
 
 @section Scripts {
