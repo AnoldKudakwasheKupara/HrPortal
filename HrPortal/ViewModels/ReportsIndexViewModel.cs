@@ -1,0 +1,57 @@
+namespace HrPortal.ViewModels
+{
+    /// <summary>
+    /// Headline figures for the reports hub, so the landing page says
+    /// something rather than being a list of links.
+    /// </summary>
+    public class ReportsIndexViewModel
+    {
+        public bool ShowLeave { get; set; }
+
+        public bool ShowBalances { get; set; }
+
+        public bool ShowTraining { get; set; }
+
+        public bool ShowPeople { get; set; }
+
+        public bool ShowDocuments { get; set; }
+
+        public bool ShowSystem { get; set; }
+
+        public int LeaveRequests { get; set; }
+
+        public int LeaveAwaitingDecision { get; set; }
+
+        public decimal ApprovedDaysThisYear { get; set; }
+
+        public int EmployeesOnLeaveThisYear { get; set; }
+
+        public decimal RemainingDays { get; set; }
+
+        public int BalancesFullyUsed { get; set; }
+
+        public int TrainingAssignments { get; set; }
+
+        public int TrainingOverdue { get; set; }
+
+        public int Courses { get; set; }
+
+        public double? AverageCourseRating { get; set; }
+
+        public int ActiveEmployees { get; set; }
+
+        public int EmployeesWithoutLogin { get; set; }
+
+        public int Documents { get; set; }
+
+        public int EmployeesWithoutDocuments { get; set; }
+
+        public int Assets { get; set; }
+
+        public int AssetsNeedingAttention { get; set; }
+
+        public int AuditEntries30Days { get; set; }
+
+        public DateTime GeneratedAt { get; set; } = DateTime.Now;
+    }
+}

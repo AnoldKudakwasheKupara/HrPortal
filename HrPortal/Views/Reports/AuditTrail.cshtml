@@ -5,9 +5,11 @@
 <div class="container-fluid">
 
     <partial name="_ReportHead"
-             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count, Model.Coverage, Model.GeneratedAt))" />
 
     <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportBreakdowns" model="Model.Breakdowns" />
 
     <partial name="_ReportFilters"
              model="@((Model.Filter, new[] { "from", "to", "action" }))" />

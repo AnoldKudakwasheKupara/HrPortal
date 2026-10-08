@@ -1073,3 +1073,177 @@ a.stat-tile:hover .stat-icon {
     font-size: .75rem;
     color: var(--gray-400);
 }
+
+/* Report hub cards: a link that also states where the figure stands,
+   so the landing page is worth reading on its own. */
+.report-card {
+    display: flex;
+    align-items: flex-start;
+    gap: .9rem;
+    height: 100%;
+    padding: 1.1rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.report-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.report-card:hover .report-card-icon {
+    background: var(--accent);
+    color: #fff;
+}
+
+.report-card-icon {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+    color: var(--accent);
+    transition: var(--transition-smooth);
+}
+
+.report-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.report-card-title {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.report-card-note {
+    font-size: .8rem;
+    color: var(--gray-500);
+}
+
+.report-card-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem 1rem;
+    margin-top: .55rem;
+    padding-top: .55rem;
+    border-top: 1px solid var(--gray-100);
+    font-size: .8rem;
+    color: var(--gray-500);
+}
+
+.report-card-figures strong {
+    color: var(--gray-800);
+    font-size: .95rem;
+}
+
+.report-card-figures .is-warning strong { color: var(--warning-ink); }
+.report-card-figures .is-critical strong { color: var(--danger); }
+
+.report-card-chevron {
+    align-self: center;
+    font-size: .75rem;
+    color: var(--gray-300);
+}
+
+/* Context chips under a report title. */
+.report-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+}
+
+.report-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .2rem .55rem;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--gray-50);
+    font-size: .75rem;
+    color: var(--gray-500);
+}
+
+.report-chip i { font-size: .7rem; }
+
+/* Ranked bars for a report's secondary breakdowns. */
+.breakdown {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.breakdown-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .5rem;
+}
+
+.breakdown-label {
+    font-size: .85rem;
+    color: var(--gray-700);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.breakdown-value {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--gray-800);
+}
+
+.breakdown-track {
+    display: block;
+    height: 6px;
+    margin: .3rem 0 .15rem;
+    border-radius: 999px;
+    background: var(--gray-100);
+    overflow: hidden;
+}
+
+.breakdown-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+}
+
+.breakdown-fill.is-good     { background: var(--success); }
+.breakdown-fill.is-warning  { background: var(--warning); }
+.breakdown-fill.is-critical { background: var(--danger); }
+
+.breakdown-share {
+    font-size: .72rem;
+    color: var(--gray-400);
+}
+
+@media print {
+    .sidebar, .topbar, .page-head-actions,
+    .report-filters, form[method="get"] {
+        display: none !important;
+    }
+
+    .main-area, .content { overflow: visible !important; }
+
+    .card, .report-stat {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+}

@@ -35,7 +35,131 @@ namespace HrPortal.Controllers
             _userManager = userManager;
         }
 
-        public IActionResult Index() => View();
+        public async Task<IActionResult> Index()
+        {
+            var isAdmin = User.IsInRole(Roles.Administrator);
+            var isHr = User.IsInRole(Roles.HrOfficer);
+            var isMd = User.IsInRole(Roles.Md);
+
+            var today = DateTime.Today;
+            var yearStart = new DateTime(today.Year, 1, 1);
+
+            var model = new ReportsIndexViewModel
+            {
+                ShowLeave = isHr || isMd,
+                ShowBalances = isHr,
+                ShowTraining = isHr,
+                ShowPeople = isHr || isAdmin,
+                ShowDocuments = isHr,
+                ShowSystem = isAdmin
+            };
+
+            // Each figure is only queried for the roles that may see
+            // the report it belongs to.
+            if (model.ShowLeave)
+            {
+                model.LeaveRequests = await _context.LeaveRequests
+                    .CountAsync();
+
+                model.LeaveAwaitingDecision = await _context.LeaveRequests
+                    .CountAsync(r =>
+                        r.Status == LeaveRequestStatus.Submitted ||
+                        r.Status == LeaveRequestStatus.HRReview ||
+                        r.Status == LeaveRequestStatus.HRApproved ||
+                        r.Status == LeaveRequestStatus.MDReview);
+
+                var approvedThisYear = await _context.LeaveRequests
+                    .Where(r =>
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.StartDate >= yearStart)
+                    .ToListAsync();
+
+                model.ApprovedDaysThisYear =
+                    approvedThisYear.Sum(r => r.NumberOfDays);
+
+                model.EmployeesOnLeaveThisYear = approvedThisYear
+                    .Select(r => r.EmployeeId)
+                    .Distinct()
+                    .Count();
+            }
+
+            if (model.ShowBalances)
+            {
+                var balances = await _context.LeaveBalances
+                    .Where(b => b.Year == today.Year)
+                    .ToListAsync();
+
+                model.RemainingDays = balances.Sum(b => b.RemainingDays);
+                model.BalancesFullyUsed =
+                    balances.Count(b => b.RemainingDays <= 0);
+            }
+
+            if (model.ShowTraining)
+            {
+                model.TrainingAssignments = await _context.TrainingAssignments
+                    .CountAsync();
+
+                model.TrainingOverdue = await _context.TrainingAssignments
+                    .CountAsync(a =>
+                        !a.IsCompleted &&
+                        a.DueDate != null &&
+                        a.DueDate < today);
+
+                model.Courses = await _context.TrainingCourses
+                    .CountAsync(c => c.IsActive);
+
+                var ratings = await _context.TrainingFeedbacks
+                    .Select(f => f.Rating)
+                    .ToListAsync();
+
+                model.AverageCourseRating = ratings.Count == 0
+                    ? null
+                    : Math.Round(ratings.Average(), 2);
+            }
+
+            if (model.ShowPeople)
+            {
+                model.ActiveEmployees = await _context.Employees
+                    .CountAsync(e => e.IsActive);
+
+                model.EmployeesWithoutLogin = await _context.Employees
+                    .CountAsync(e => e.IsActive && e.UserId == null);
+            }
+
+            if (model.ShowDocuments)
+            {
+                model.Documents = await _context.EmployeeDocuments
+                    .CountAsync();
+
+                var covered = await _context.EmployeeDocuments
+                    .Select(d => d.EmployeeId)
+                    .Distinct()
+                    .CountAsync();
+
+                var active = await _context.Employees
+                    .CountAsync(e => e.IsActive);
+
+                model.EmployeesWithoutDocuments =
+                    Math.Max(0, active - covered);
+            }
+
+            if (model.ShowSystem)
+            {
+                model.Assets = await _context.Assets.CountAsync();
+
+                model.AssetsNeedingAttention = await _context.Assets
+                    .CountAsync(a =>
+                        a.Condition == AssetCondition.Old ||
+                        a.Condition == AssetCondition.Bad);
+
+                var since = today.AddDays(-30);
+
+                model.AuditEntries30Days = await _context.AuditLogs
+                    .CountAsync(a => a.Timestamp >= since);
+            }
+
+            return View(model);
+        }
 
 
         // ============================================================
@@ -157,8 +281,48 @@ namespace HrPortal.Controllers
                             ? "--"
                             : turnarounds.Average().ToString("0.#") + " d",
                         "Submission to decision")
-                }
+                },
+                Coverage = Period(filter)
             };
+
+            var byStatus = new ReportBreakdown("By status", "requests");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Status)
+                .OrderByDescending(g => g.Count()))
+            {
+                byStatus.Add(
+                    g.Key.ToString(),
+                    g.Count(),
+                    g.Key == LeaveRequestStatus.Approved ? "good"
+                        : g.Key == LeaveRequestStatus.Rejected ||
+                          g.Key == LeaveRequestStatus.HRRejected ? "critical"
+                        : null);
+            }
+
+            var byDepartment = new ReportBreakdown("Days by department", "days");
+
+            foreach (var g in rows
+                .Where(r => r.Status == LeaveRequestStatus.Approved)
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Sum(r => r.Days)))
+            {
+                byDepartment.Add(g.Key, g.Sum(r => r.Days));
+            }
+
+            var byType = new ReportBreakdown("Days by leave type", "days");
+
+            foreach (var g in rows
+                .Where(r => r.Status == LeaveRequestStatus.Approved)
+                .GroupBy(r => r.LeaveType)
+                .OrderByDescending(g => g.Sum(r => r.Days)))
+            {
+                byType.Add(g.Key, g.Sum(r => r.Days));
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { byStatus, byDepartment, byType }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -246,8 +410,33 @@ namespace HrPortal.Controllers
                         "Fully used",
                         rows.Count(r => r.Remaining <= 0).ToString(),
                         "nothing left")
-                }
+                },
+                Coverage = $"Balance year {filter.Year}"
             };
+
+            var remainingByDept =
+                new ReportBreakdown("Remaining by department", "days");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Sum(r => r.Remaining)))
+            {
+                remainingByDept.Add(g.Key, g.Sum(r => r.Remaining));
+            }
+
+            var usageByType =
+                new ReportBreakdown("Days used by leave type", "days");
+
+            foreach (var g in rows
+                .GroupBy(r => r.LeaveType)
+                .OrderByDescending(g => g.Sum(r => r.Used)))
+            {
+                usageByType.Add(g.Key, g.Sum(r => r.Used));
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { remainingByDept, usageByType }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -350,8 +539,27 @@ namespace HrPortal.Controllers
                             : N(rows.Sum(r => r.ApprovedDays) / rows.Count)),
                     new ReportStat(
                         "Days in progress", N(rows.Sum(r => r.PendingDays)))
-                }
+                },
+                Coverage = Period(filter)
             };
+
+            var topTakers = new ReportBreakdown("Most days taken", "days");
+
+            foreach (var r in rows.Take(8).Where(r => r.ApprovedDays > 0))
+                topTakers.Add(r.Employee, r.ApprovedDays);
+
+            var deptDays = new ReportBreakdown("Days by department", "days");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Sum(r => r.ApprovedDays)))
+            {
+                deptDays.Add(g.Key, g.Sum(r => r.ApprovedDays));
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { topTakers, deptDays }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -461,8 +669,40 @@ namespace HrPortal.Controllers
                         "Overdue",
                         rows.Count(r => r.IsOverdue).ToString(),
                         "past the due date")
-                }
+                },
+                Coverage = Period(filter)
             };
+
+            var progress = new ReportBreakdown("Progress", "assignments")
+                .Add("Completed", rows.Count(r => r.IsCompleted), "good")
+                .Add("Outstanding",
+                    rows.Count(r => !r.IsCompleted && !r.IsOverdue))
+                .Add("Overdue", rows.Count(r => r.IsOverdue), "critical");
+
+            var byCourse =
+                new ReportBreakdown("Assignments by course", "assignments");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Course)
+                .OrderByDescending(g => g.Count()))
+            {
+                byCourse.Add(g.Key, g.Count());
+            }
+
+            var outstandingByDept =
+                new ReportBreakdown("Outstanding by department", "assignments");
+
+            foreach (var g in rows
+                .Where(r => !r.IsCompleted)
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Count()))
+            {
+                outstandingByDept.Add(g.Key, g.Count());
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { progress, byCourse, outstandingByDept }
+                    .Where(b => b.Total > 0));
 
             await LoadLookups();
 
@@ -565,8 +805,45 @@ namespace HrPortal.Controllers
                                 .Average(r => r.AverageRating!.Value)
                                 .ToString("0.00"),
                         "out of 5")
-                }
+                },
+                Coverage = filter.IncludeInactive
+                    ? "All courses"
+                    : "Active courses"
             };
+
+            var completion =
+                new ReportBreakdown("Completion rate by course", "%");
+
+            foreach (var r in rows
+                .Where(r => r.Assigned > 0)
+                .OrderByDescending(r => r.CompletionRate))
+            {
+                completion.Add(
+                    r.Course,
+                    r.CompletionRate,
+                    r.CompletionRate >= 80 ? "good"
+                        : r.CompletionRate < 40 ? "critical"
+                        : "warning");
+            }
+
+            var ratingsByCourse =
+                new ReportBreakdown("Average rating", "out of 5");
+
+            foreach (var r in rows
+                .Where(r => r.AverageRating.HasValue)
+                .OrderByDescending(r => r.AverageRating))
+            {
+                ratingsByCourse.Add(
+                    r.Course,
+                    (decimal)r.AverageRating!.Value,
+                    r.AverageRating >= 4 ? "good"
+                        : r.AverageRating < 3 ? "critical"
+                        : null);
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { completion, ratingsByCourse }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -676,8 +953,47 @@ namespace HrPortal.Controllers
                             ? "--"
                             : rows.Average(r => r.YearsOfService)
                                 .ToString("0.#") + " yrs")
-                }
+                },
+                Coverage = filter.IncludeInactive
+                    ? "Active and inactive employees"
+                    : "Active employees"
             };
+
+            var headcount =
+                new ReportBreakdown("Headcount by department", "people");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Count()))
+            {
+                headcount.Add(g.Key, g.Count());
+            }
+
+            var service = new ReportBreakdown("Length of service", "people")
+                .Add("Under 1 year",
+                    rows.Count(r => r.YearsOfService < 1))
+                .Add("1 to 3 years",
+                    rows.Count(r => r.YearsOfService is >= 1 and < 3))
+                .Add("3 to 5 years",
+                    rows.Count(r => r.YearsOfService is >= 3 and < 5))
+                .Add("5 years or more",
+                    rows.Count(r => r.YearsOfService >= 5));
+
+            var byRole = new ReportBreakdown("By role", "people");
+
+            foreach (var g in rows
+                .SelectMany(r => string.IsNullOrWhiteSpace(r.Roles)
+                    ? new[] { "No role" }
+                    : r.Roles.Split(", "))
+                .GroupBy(role => role)
+                .OrderByDescending(g => g.Count()))
+            {
+                byRole.Add(g.Key, g.Count());
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { headcount, service, byRole }
+                    .Where(b => b.Total > 0));
 
             await LoadLookups();
 
@@ -779,8 +1095,31 @@ namespace HrPortal.Controllers
                         "Nothing on file",
                         Math.Max(0, activeEmployees - withDocs).ToString(),
                         "active employees")
-                }
+                },
+                Coverage = Period(filter)
             };
+
+            var byCategory = new ReportBreakdown("By category", "documents");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Category)
+                .OrderByDescending(g => g.Count()))
+            {
+                byCategory.Add(g.Key, g.Count());
+            }
+
+            var byDept = new ReportBreakdown("By department", "documents");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Count()))
+            {
+                byDept.Add(g.Key, g.Count());
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { byCategory, byDept }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -881,8 +1220,52 @@ namespace HrPortal.Controllers
                     new ReportStat(
                         "Not in use",
                         rows.Count(r => !r.IsInUse).ToString())
-                }
+                },
+                Coverage = string.IsNullOrWhiteSpace(filter.Company)
+                    ? "All companies"
+                    : filter.Company
             };
+
+            var byCondition = new ReportBreakdown("By condition", "machines");
+
+            foreach (var c in Enum.GetValues<AssetCondition>())
+            {
+                var count = rows.Count(r => r.Condition == c);
+
+                if (count > 0)
+                {
+                    byCondition.Add(
+                        c.ToString(),
+                        count,
+                        c == AssetCondition.Good ? "good"
+                            : c == AssetCondition.Bad ? "critical"
+                            : "warning");
+                }
+            }
+
+            var byCompany = new ReportBreakdown("By company", "machines");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Company)
+                .OrderByDescending(g => g.Count()))
+            {
+                byCompany.Add(g.Key, g.Count());
+            }
+
+            var byHolder = new ReportBreakdown("Most machines held", "machines");
+
+            foreach (var g in rows
+                .Where(r => r.AssignedTo != "Unassigned")
+                .GroupBy(r => r.AssignedTo)
+                .OrderByDescending(g => g.Count())
+                .Take(8))
+            {
+                byHolder.Add(g.Key, g.Count());
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { byCondition, byCompany, byHolder }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -982,8 +1365,41 @@ namespace HrPortal.Controllers
                             : rows.GroupBy(r => r.Timestamp.Date)
                                 .OrderByDescending(g => g.Count())
                                 .First().Key.ToString("d MMM"))
-                }
+                },
+                Coverage = Period(filter)
             };
+
+            var byAction = new ReportBreakdown("By action", "entries");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Action)
+                .OrderByDescending(g => g.Count()))
+            {
+                byAction.Add(g.Key, g.Count());
+            }
+
+            var byActor = new ReportBreakdown("Most active", "entries");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Actor)
+                .OrderByDescending(g => g.Count())
+                .Take(8))
+            {
+                byActor.Add(g.Key, g.Count());
+            }
+
+            var byRecord = new ReportBreakdown("By record type", "entries");
+
+            foreach (var g in rows
+                .GroupBy(r => r.EntityName)
+                .OrderByDescending(g => g.Count()))
+            {
+                byRecord.Add(g.Key, g.Count());
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { byAction, byActor, byRecord }
+                    .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
 
@@ -1004,6 +1420,27 @@ namespace HrPortal.Controllers
                 CsvExportService.Build(headers, rows),
                 "text/csv",
                 CsvExportService.FileName(name));
+        }
+
+        /// <summary>
+        /// Says in words what the date filter currently covers, so a
+        /// printed report is not ambiguous about its period.
+        /// </summary>
+        private static string Period(ReportFilter filter)
+        {
+            if (filter.From.HasValue && filter.To.HasValue)
+            {
+                return $"{filter.From.Value:d MMM yyyy} to " +
+                       $"{filter.To.Value:d MMM yyyy}";
+            }
+
+            if (filter.From.HasValue)
+                return $"From {filter.From.Value:d MMM yyyy}";
+
+            if (filter.To.HasValue)
+                return $"Up to {filter.To.Value:d MMM yyyy}";
+
+            return "All dates";
         }
 
         private static string D(DateTime? value) =>

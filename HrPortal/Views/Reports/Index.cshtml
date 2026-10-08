@@ -1,185 +1,262 @@
-@using HrPortal.Security
+@model HrPortal.ViewModels.ReportsIndexViewModel
 
 @{
     ViewData["Title"] = "Reports";
+}
 
-    var isAdmin = User.IsInRole(Roles.Administrator);
-    var isHr = User.IsInRole(Roles.HrOfficer);
-    var isMd = User.IsInRole(Roles.Md);
+@functions {
+    string Num(decimal value) => value.ToString("0.##");
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head report-head">
 
-        <h2>Reports</h2>
+        <div>
+            <h2>Reports</h2>
+            <p class="text-muted mb-2">
+                Filter any report and export it to CSV. You see the
+                reports covering records your role already has access to.
+            </p>
 
-        <p class="text-muted">
-            Each report can be filtered and exported to CSV. You see
-            the reports for the records your role already covers.
-        </p>
+            <div class="report-meta">
+                <span class="report-chip">
+                    <i class="fas fa-clock"></i>
+                    Figures as at
+                    @Model.GeneratedAt.ToString("d MMM yyyy HH:mm")
+                </span>
+            </div>
+        </div>
 
     </div>
 
 
-    @if (isHr || isMd)
+    @if (Model.ShowLeave)
     {
         <div class="section-heading">Leave</div>
 
-        <div class="settings-grid mb-3">
+        <div class="row g-3 mb-3">
 
-            <a class="settings-item" asp-action="LeaveRequests">
-                <span class="settings-icon">
-                    <i class="fas fa-calendar-days"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Leave requests</span>
-                    <span class="settings-note">
-                        Every request, with turnaround times
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="LeaveRequests">
+                    <span class="report-card-icon">
+                        <i class="fas fa-calendar-days"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
-
-            <a class="settings-item" asp-action="Absence">
-                <span class="settings-icon">
-                    <i class="fas fa-person-walking-luggage"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Absence summary</span>
-                    <span class="settings-note">
-                        Days taken per person over a period
-                    </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
-
-            @if (isHr)
-            {
-                <a class="settings-item" asp-action="LeaveBalances">
-                    <span class="settings-icon">
-                        <i class="fas fa-scale-balanced"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Leave balances</span>
-                        <span class="settings-note">
-                            Entitlement, taken and remaining
+                    <span class="report-card-body">
+                        <span class="report-card-title">Leave requests</span>
+                        <span class="report-card-note">
+                            Every request, with turnaround times
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.LeaveRequests</strong> total</span>
+                            <span><strong>@Model.LeaveAwaitingDecision</strong> awaiting a decision</span>
                         </span>
                     </span>
-                    <i class="fas fa-chevron-right settings-chevron"></i>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
                 </a>
+            </div>
+
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="Absence">
+                    <span class="report-card-icon">
+                        <i class="fas fa-person-walking-luggage"></i>
+                    </span>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Absence summary</span>
+                        <span class="report-card-note">
+                            Days taken per person over a period
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Num(Model.ApprovedDaysThisYear)</strong> days this year</span>
+                            <span><strong>@Model.EmployeesOnLeaveThisYear</strong> people</span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
+
+            @if (Model.ShowBalances)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <a class="report-card" asp-action="LeaveBalances">
+                        <span class="report-card-icon">
+                            <i class="fas fa-scale-balanced"></i>
+                        </span>
+                        <span class="report-card-body">
+                            <span class="report-card-title">Leave balances</span>
+                            <span class="report-card-note">
+                                Entitlement, taken and remaining
+                            </span>
+                            <span class="report-card-figures">
+                                <span><strong>@Num(Model.RemainingDays)</strong> days remaining</span>
+                                <span><strong>@Model.BalancesFullyUsed</strong> fully used</span>
+                            </span>
+                        </span>
+                        <i class="fas fa-chevron-right report-card-chevron"></i>
+                    </a>
+                </div>
             }
 
         </div>
     }
 
 
-    @if (isHr)
+    @if (Model.ShowTraining)
     {
         <div class="section-heading">Training</div>
 
-        <div class="settings-grid mb-3">
+        <div class="row g-3 mb-3">
 
-            <a class="settings-item" asp-action="Training">
-                <span class="settings-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Training assignments</span>
-                    <span class="settings-note">
-                        Who is assigned what, and progress
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="Training">
+                    <span class="report-card-icon">
+                        <i class="fas fa-clipboard-check"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Training assignments</span>
+                        <span class="report-card-note">
+                            Who is assigned what, and progress
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.TrainingAssignments</strong> assignments</span>
+                            <span class="@(Model.TrainingOverdue > 0 ? "is-critical" : "")">
+                                <strong>@Model.TrainingOverdue</strong> overdue
+                            </span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
 
-            <a class="settings-item" asp-action="TrainingCourses">
-                <span class="settings-icon">
-                    <i class="fas fa-chalkboard-user"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Course effectiveness</span>
-                    <span class="settings-note">
-                        Completion rates and feedback scores
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="TrainingCourses">
+                    <span class="report-card-icon">
+                        <i class="fas fa-chalkboard-user"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Course effectiveness</span>
+                        <span class="report-card-note">
+                            Completion rates and feedback scores
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.Courses</strong> active courses</span>
+                            <span>
+                                <strong>
+                                    @(Model.AverageCourseRating?.ToString("0.00") ?? "--")
+                                </strong> average rating
+                            </span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
 
         </div>
     }
 
 
-    @if (isHr || isAdmin)
+    @if (Model.ShowPeople)
     {
         <div class="section-heading">People</div>
 
-        <div class="settings-grid mb-3">
+        <div class="row g-3 mb-3">
 
-            <a class="settings-item" asp-action="Employees">
-                <span class="settings-icon">
-                    <i class="fas fa-users"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Employees</span>
-                    <span class="settings-note">
-                        Headcount, service and account status
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="Employees">
+                    <span class="report-card-icon">
+                        <i class="fas fa-users"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
-
-            @if (isHr)
-            {
-                <a class="settings-item" asp-action="Documents">
-                    <span class="settings-icon">
-                        <i class="fas fa-folder-open"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Employee documents</span>
-                        <span class="settings-note">
-                            What is on file and who filed it
+                    <span class="report-card-body">
+                        <span class="report-card-title">Employees</span>
+                        <span class="report-card-note">
+                            Headcount, service and account status
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.ActiveEmployees</strong> active</span>
+                            <span class="@(Model.EmployeesWithoutLogin > 0 ? "is-warning" : "")">
+                                <strong>@Model.EmployeesWithoutLogin</strong> without a login
+                            </span>
                         </span>
                     </span>
-                    <i class="fas fa-chevron-right settings-chevron"></i>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
                 </a>
+            </div>
+
+            @if (Model.ShowDocuments)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <a class="report-card" asp-action="Documents">
+                        <span class="report-card-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </span>
+                        <span class="report-card-body">
+                            <span class="report-card-title">Employee documents</span>
+                            <span class="report-card-note">
+                                What is on file and who filed it
+                            </span>
+                            <span class="report-card-figures">
+                                <span><strong>@Model.Documents</strong> on file</span>
+                                <span class="@(Model.EmployeesWithoutDocuments > 0 ? "is-warning" : "")">
+                                    <strong>@Model.EmployeesWithoutDocuments</strong> with none
+                                </span>
+                            </span>
+                        </span>
+                        <i class="fas fa-chevron-right report-card-chevron"></i>
+                    </a>
+                </div>
             }
 
         </div>
     }
 
 
-    @if (isAdmin)
+    @if (Model.ShowSystem)
     {
         <div class="section-heading">System</div>
 
-        <div class="settings-grid mb-3">
+        <div class="row g-3 mb-3">
 
-            <a class="settings-item" asp-action="Assets">
-                <span class="settings-icon">
-                    <i class="fas fa-laptop"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Asset register</span>
-                    <span class="settings-note">
-                        Condition, holders and spare machines
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="Assets">
+                    <span class="report-card-icon">
+                        <i class="fas fa-laptop"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Asset register</span>
+                        <span class="report-card-note">
+                            Condition, holders and spare machines
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.Assets</strong> machines</span>
+                            <span class="@(Model.AssetsNeedingAttention > 0 ? "is-warning" : "")">
+                                <strong>@Model.AssetsNeedingAttention</strong> old or bad
+                            </span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
 
-            <a class="settings-item" asp-action="AuditTrail">
-                <span class="settings-icon">
-                    <i class="fas fa-clipboard-list"></i>
-                </span>
-                <span class="settings-text">
-                    <span class="settings-title">Audit trail</span>
-                    <span class="settings-note">
-                        Who did what, and when
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="AuditTrail">
+                    <span class="report-card-icon">
+                        <i class="fas fa-clipboard-list"></i>
                     </span>
-                </span>
-                <i class="fas fa-chevron-right settings-chevron"></i>
-            </a>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Audit trail</span>
+                        <span class="report-card-note">
+                            Who did what, and when
+                        </span>
+                        <span class="report-card-figures">
+                            <span>
+                                <strong>@Model.AuditEntries30Days</strong>
+                                entries in 30 days
+                            </span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
 
         </div>
     }

@@ -1,16 +1,41 @@
-@model (string Title, string Description, string Action, int RowCount)
+@model (string Title, string Description, string Action, int RowCount, string Coverage, DateTime GeneratedAt)
 
-@*  The title, the row count and the export button, shared by every
-    report so they all behave the same way.                      *@
+@*  Title, what the report covers and when it was run, plus the
+    export. Shared so every report states its own scope.        *@
 
-<div class="page-head">
+<div class="page-head report-head">
 
     <div>
         <h2>@Model.Title</h2>
-        <p class="text-muted mb-0">@Model.Description</p>
+        <p class="text-muted mb-2">@Model.Description</p>
+
+        <div class="report-meta">
+            <span class="report-chip">
+                <i class="fas fa-list-ul"></i>
+                @Model.RowCount row@(Model.RowCount == 1 ? "" : "s")
+            </span>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Coverage))
+            {
+                <span class="report-chip">
+                    <i class="fas fa-calendar-day"></i>
+                    @Model.Coverage
+                </span>
+            }
+
+            <span class="report-chip">
+                <i class="fas fa-clock"></i>
+                Run @Model.GeneratedAt.ToString("d MMM yyyy HH:mm")
+            </span>
+        </div>
     </div>
 
     <div class="page-head-actions">
+
+        <button type="button" class="btn btn-outline-secondary"
+                onclick="window.print()">
+            Print
+        </button>
 
         <a class="btn btn-outline-secondary"
            asp-action="@Model.Action"

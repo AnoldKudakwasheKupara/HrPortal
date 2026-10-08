@@ -71,11 +71,88 @@ namespace HrPortal.ViewModels
         public string? Note { get; }
     }
 
+    /// <summary>
+    /// A secondary cut of the same data, shown as a short ranked list
+    /// beside the table so a report answers "how is this distributed"
+    /// as well as "what are the rows".
+    /// </summary>
+    public class ReportBreakdown
+    {
+        public ReportBreakdown(string title, string unit = "")
+        {
+            Title = title;
+            Unit = unit;
+        }
+
+        public string Title { get; }
+
+        public string Unit { get; }
+
+        public List<ReportBreakdownItem> Items { get; } = new();
+
+        public decimal Max =>
+            Items.Count == 0 ? 0 : Items.Max(i => i.Value);
+
+        public decimal Total => Items.Sum(i => i.Value);
+
+        public ReportBreakdown Add(
+            string label,
+            decimal value,
+            string? tone = null)
+        {
+            Items.Add(new ReportBreakdownItem(label, value, tone));
+            return this;
+        }
+    }
+
+    public class ReportBreakdownItem
+    {
+        public ReportBreakdownItem(
+            string label,
+            decimal value,
+            string? tone)
+        {
+            Label = label;
+            Value = value;
+            Tone = tone;
+        }
+
+        public string Label { get; }
+
+        public decimal Value { get; }
+
+        /// <summary>good, warning or critical; null for the default.</summary>
+        public string? Tone { get; }
+    }
+
+    public class ReportColumnTotal
+    {
+        public ReportColumnTotal(int columnIndex, string value)
+        {
+            ColumnIndex = columnIndex;
+            Value = value;
+        }
+
+        public int ColumnIndex { get; }
+
+        public string Value { get; }
+    }
+
     public class ReportViewModel<TRow>
     {
         public string Title { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>
+        /// What the filter currently covers, written out so a printed
+        /// or exported report says what it is showing.
+        /// </summary>
+        public string Coverage { get; set; } = string.Empty;
+
+        public List<ReportBreakdown> Breakdowns { get; set; } = new();
+
+        public DateTime GeneratedAt { get; set; } = DateTime.Now;
 
         /// <summary>
         /// The action to post the filter form back to, and to export
