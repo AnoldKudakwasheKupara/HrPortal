@@ -1,0 +1,69 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.LeaveBalanceReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "year", "department", "employee", "leaveType" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Leave type</th>
+                            <th class="num">Allocated</th>
+                            <th class="num">Used</th>
+                            <th class="num">Pending</th>
+                            <th class="num">Remaining</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            No balances match this filter.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.Employee</strong></td>
+                                <td>@r.Department</td>
+                                <td>@r.LeaveType</td>
+                                <td class="num">@r.Allocated.ToString("0.##")</td>
+                                <td class="num">@r.Used.ToString("0.##")</td>
+                                <td class="num">@r.Pending.ToString("0.##")</td>
+                                <td class="num">
+                                    @if (r.Remaining <= 0)
+                                    {
+                                        <span class="badge bg-danger">
+                                            @r.Remaining.ToString("0.##")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @r.Remaining.ToString("0.##")
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,219 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model (HrPortal.ViewModels.ReportFilter Filter, string[] Show)
+
+@*  One filter bar for every report. The caller lists which filters
+    its report offers, so the markup and the query string keys stay
+    identical wherever a filter appears.                        *@
+
+@{
+    var f = Model.Filter;
+    var show = Model.Show;
+
+    bool Has(string name) => show.Contains(name);
+
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-body">
+
+        <form method="get" class="row g-2 align-items-end">
+
+            @if (Has("from"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">From</label>
+                    <input name="From" type="date" class="form-control"
+                           value="@(f.From?.ToString("yyyy-MM-dd"))" />
+                </div>
+            }
+
+            @if (Has("to"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">To</label>
+                    <input name="To" type="date" class="form-control"
+                           value="@(f.To?.ToString("yyyy-MM-dd"))" />
+                </div>
+            }
+
+            @if (Has("year"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Year</label>
+                    <input name="Year" type="number" class="form-control"
+                           value="@f.Year" />
+                </div>
+            }
+
+            @if (Has("department"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Department</label>
+                    <select name="DepartmentId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var i in Items(ViewBag.Departments))
+                        {
+                            <option value="@i.Value"
+                                    selected="@(f.DepartmentId?.ToString() == i.Value)">
+                                @i.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("employee"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Employee</label>
+                    <select name="EmployeeId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var i in Items(ViewBag.Employees))
+                        {
+                            <option value="@i.Value"
+                                    selected="@(f.EmployeeId?.ToString() == i.Value)">
+                                @i.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("leaveType"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Leave type</label>
+                    <select name="LeaveTypeId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var i in Items(ViewBag.LeaveTypes))
+                        {
+                            <option value="@i.Value"
+                                    selected="@(f.LeaveTypeId?.ToString() == i.Value)">
+                                @i.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("status"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="Status" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var s in Enum.GetValues<LeaveRequestStatus>())
+                        {
+                            <option value="@s" selected="@(f.Status == s)">@s</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("course"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Course</label>
+                    <select name="TrainingCourseId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var i in Items(ViewBag.Courses))
+                        {
+                            <option value="@i.Value"
+                                    selected="@(f.TrainingCourseId?.ToString() == i.Value)">
+                                @i.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("category"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Category</label>
+                    <select name="DocumentCategoryId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var i in Items(ViewBag.Categories))
+                        {
+                            <option value="@i.Value"
+                                    selected="@(f.DocumentCategoryId?.ToString() == i.Value)">
+                                @i.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("company"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Company</label>
+                    <select name="Company" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var c in (ViewBag.Companies as List<string>)
+                            ?? new List<string>())
+                        {
+                            <option value="@c" selected="@(f.Company == c)">@c</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("condition"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Condition</label>
+                    <select name="Condition" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var c in Enum.GetValues<AssetCondition>())
+                        {
+                            <option value="@c" selected="@(f.Condition == c)">@c</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("action"))
+            {
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Action</label>
+                    <select name="AuditAction" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var a in (ViewBag.Actions as List<string>)
+                            ?? new List<string>())
+                        {
+                            <option value="@a" selected="@(f.AuditAction == a)">@a</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            @if (Has("inactive"))
+            {
+                <div class="col-6 col-md-2">
+                    <div class="form-check mt-4">
+                        <input name="IncludeInactive" value="true"
+                               type="checkbox" class="form-check-input"
+                               checked="@f.IncludeInactive" />
+                        <label class="form-check-label">
+                            Include inactive
+                        </label>
+                    </div>
+                </div>
+            }
+
+            <div class="col-6 col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    Apply
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>

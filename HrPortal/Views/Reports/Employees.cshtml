@@ -1,0 +1,82 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.EmployeeReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "department", "inactive" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Joined</th>
+                            <th class="num">Years</th>
+                            <th>Status</th>
+                            <th>Roles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-4">
+                            No employees match this filter.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.EmployeeNumber</td>
+                                <td><strong>@r.Name</strong></td>
+                                <td>@r.Department</td>
+                                <td>@r.Email</td>
+                                <td>@r.DateJoined.ToString("d MMM yyyy")</td>
+                                <td class="num">@r.YearsOfService</td>
+                                <td>
+                                    @if (r.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!r.HasLogin)
+                                    {
+                                        <span class="badge bg-warning">No login</span>
+                                    }
+                                    else if (string.IsNullOrWhiteSpace(r.Roles))
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                    else
+                                    {
+                                        @r.Roles
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

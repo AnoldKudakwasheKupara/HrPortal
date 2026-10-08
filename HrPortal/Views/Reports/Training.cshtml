@@ -1,0 +1,71 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.TrainingReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "department", "employee", "course" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Assigned</th>
+                            <th>Due</th>
+                            <th>Status</th>
+                            <th class="num">Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            No assignments match this filter.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.Course</strong></td>
+                                <td>@r.Employee</td>
+                                <td>@r.Department</td>
+                                <td>@r.AssignedAt.ToString("d MMM yyyy")</td>
+                                <td>@(r.DueDate?.ToString("d MMM yyyy") ?? "--")</td>
+                                <td>
+                                    @if (r.IsCompleted)
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                    else if (r.IsOverdue)
+                                    {
+                                        <span class="badge bg-danger">Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">Outstanding</span>
+                                    }
+                                </td>
+                                <td class="num">@(r.Rating?.ToString() ?? "--")</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

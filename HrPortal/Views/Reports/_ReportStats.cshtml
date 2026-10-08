@@ -1,0 +1,18 @@
+@model List<HrPortal.ViewModels.ReportStat>
+
+@if (Model.Any())
+{
+    <div class="report-stats">
+        @foreach (var stat in Model)
+        {
+            <div class="report-stat">
+                <span class="report-stat-label">@stat.Label</span>
+                <span class="report-stat-value">@stat.Value</span>
+                @if (!string.IsNullOrWhiteSpace(stat.Note))
+                {
+                    <span class="report-stat-note">@stat.Note</span>
+                }
+            </div>
+        }
+    </div>
+}

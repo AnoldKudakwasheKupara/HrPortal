@@ -1,0 +1,60 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.AuditReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "action" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Action</th>
+                            <th>Record</th>
+                            <th>Actor</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-4">
+                            No activity in this period.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.Timestamp.ToLocalTime().ToString("d MMM yyyy HH:mm")</td>
+                                <td><strong>@r.Action</strong></td>
+                                <td>
+                                    @r.EntityName
+                                    @if (!string.IsNullOrWhiteSpace(r.EntityId))
+                                    {
+                                        <span class="row-ref">@r.EntityId</span>
+                                    }
+                                </td>
+                                <td>@r.Actor</td>
+                                <td class="text-muted">@r.Description</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,187 @@
+@using HrPortal.Security
+
+@{
+    ViewData["Title"] = "Reports";
+
+    var isAdmin = User.IsInRole(Roles.Administrator);
+    var isHr = User.IsInRole(Roles.HrOfficer);
+    var isMd = User.IsInRole(Roles.Md);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>Reports</h2>
+
+        <p class="text-muted">
+            Each report can be filtered and exported to CSV. You see
+            the reports for the records your role already covers.
+        </p>
+
+    </div>
+
+
+    @if (isHr || isMd)
+    {
+        <div class="section-heading">Leave</div>
+
+        <div class="settings-grid mb-3">
+
+            <a class="settings-item" asp-action="LeaveRequests">
+                <span class="settings-icon">
+                    <i class="fas fa-calendar-days"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Leave requests</span>
+                    <span class="settings-note">
+                        Every request, with turnaround times
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+            <a class="settings-item" asp-action="Absence">
+                <span class="settings-icon">
+                    <i class="fas fa-person-walking-luggage"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Absence summary</span>
+                    <span class="settings-note">
+                        Days taken per person over a period
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+            @if (isHr)
+            {
+                <a class="settings-item" asp-action="LeaveBalances">
+                    <span class="settings-icon">
+                        <i class="fas fa-scale-balanced"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Leave balances</span>
+                        <span class="settings-note">
+                            Entitlement, taken and remaining
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"></i>
+                </a>
+            }
+
+        </div>
+    }
+
+
+    @if (isHr)
+    {
+        <div class="section-heading">Training</div>
+
+        <div class="settings-grid mb-3">
+
+            <a class="settings-item" asp-action="Training">
+                <span class="settings-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Training assignments</span>
+                    <span class="settings-note">
+                        Who is assigned what, and progress
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+            <a class="settings-item" asp-action="TrainingCourses">
+                <span class="settings-icon">
+                    <i class="fas fa-chalkboard-user"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Course effectiveness</span>
+                    <span class="settings-note">
+                        Completion rates and feedback scores
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+        </div>
+    }
+
+
+    @if (isHr || isAdmin)
+    {
+        <div class="section-heading">People</div>
+
+        <div class="settings-grid mb-3">
+
+            <a class="settings-item" asp-action="Employees">
+                <span class="settings-icon">
+                    <i class="fas fa-users"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Employees</span>
+                    <span class="settings-note">
+                        Headcount, service and account status
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+            @if (isHr)
+            {
+                <a class="settings-item" asp-action="Documents">
+                    <span class="settings-icon">
+                        <i class="fas fa-folder-open"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Employee documents</span>
+                        <span class="settings-note">
+                            What is on file and who filed it
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"></i>
+                </a>
+            }
+
+        </div>
+    }
+
+
+    @if (isAdmin)
+    {
+        <div class="section-heading">System</div>
+
+        <div class="settings-grid mb-3">
+
+            <a class="settings-item" asp-action="Assets">
+                <span class="settings-icon">
+                    <i class="fas fa-laptop"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Asset register</span>
+                    <span class="settings-note">
+                        Condition, holders and spare machines
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+            <a class="settings-item" asp-action="AuditTrail">
+                <span class="settings-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Audit trail</span>
+                    <span class="settings-note">
+                        Who did what, and when
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"></i>
+            </a>
+
+        </div>
+    }
+
+</div>

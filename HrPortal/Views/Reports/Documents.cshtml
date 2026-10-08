@@ -1,0 +1,56 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.DocumentReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "department", "employee", "category" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Category</th>
+                            <th>File</th>
+                            <th>Uploaded</th>
+                            <th>Uploaded by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">
+                            No documents match this filter.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.Employee</strong></td>
+                                <td>@r.Department</td>
+                                <td>@r.Category</td>
+                                <td>@r.FileName</td>
+                                <td>@r.UploadedAt.ToString("d MMM yyyy")</td>
+                                <td>@r.UploadedBy</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

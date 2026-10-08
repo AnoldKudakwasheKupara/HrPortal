@@ -1027,3 +1027,49 @@ a.stat-tile:hover .stat-icon {
     font-size: .82rem;
     color: var(--gray-500);
 }
+
+/* ==========================================================
+   Reports
+
+   A compact figure strip above each report, denser than the
+   dashboard tiles because a report shows more of them.
+   ========================================================== */
+
+.report-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.report-stat {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    padding: .85rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+}
+
+.report-stat-label {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--gray-500);
+}
+
+.report-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--gray-800);
+}
+
+.report-stat-note {
+    font-size: .75rem;
+    color: var(--gray-400);
+}

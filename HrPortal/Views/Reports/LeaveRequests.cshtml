@@ -1,0 +1,72 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.LeaveRequestReportRow>
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "department", "employee", "leaveType", "status" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Type</th>
+                            <th>Dates</th>
+                            <th class="num">Days</th>
+                            <th>Status</th>
+                            <th class="num">Turnaround</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                No requests match this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.RequestNumber</strong></td>
+                                <td>@r.Employee</td>
+                                <td>@r.Department</td>
+                                <td>@r.LeaveType</td>
+                                <td>
+                                    @r.StartDate.ToString("d MMM yyyy")
+                                    &ndash;
+                                    @r.EndDate.ToString("d MMM yyyy")
+                                </td>
+                                <td class="num">@r.Days.ToString("0.##")</td>
+                                <td>
+                                    <partial name="_LeaveStatusBadge" model="r.Status" />
+                                </td>
+                                <td class="num">
+                                    @(r.TurnaroundDays?.ToString("0.#") ?? "--")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

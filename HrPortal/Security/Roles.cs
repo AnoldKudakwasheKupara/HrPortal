@@ -19,6 +19,13 @@
 
         public const string HrOrMd = HrOfficer + "," + Md;
 
+        /// <summary>
+        /// Anyone who gets a reports section. Each report is still
+        /// restricted to the roles that may see its underlying data.
+        /// </summary>
+        public const string AnyManager =
+            Administrator + "," + HrOfficer + "," + Md;
+
         public const string MdOnly = Md;
     }
 }

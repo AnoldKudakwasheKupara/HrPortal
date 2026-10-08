@@ -1,0 +1,28 @@
+@model (string Title, string Description, string Action, int RowCount)
+
+@*  The title, the row count and the export button, shared by every
+    report so they all behave the same way.                      *@
+
+<div class="page-head">
+
+    <div>
+        <h2>@Model.Title</h2>
+        <p class="text-muted mb-0">@Model.Description</p>
+    </div>
+
+    <div class="page-head-actions">
+
+        <a class="btn btn-outline-secondary"
+           asp-action="@Model.Action"
+           asp-all-route-data="@(Context.Request.Query
+               .Where(q => q.Key != "export")
+               .ToDictionary(q => q.Key, q => q.Value.ToString()))"
+           asp-route-export="csv">
+            Export CSV
+        </a>
+
+        <a asp-action="Index" class="btn btn-secondary">All reports</a>
+
+    </div>
+
+</div>

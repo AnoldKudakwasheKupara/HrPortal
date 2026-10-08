@@ -1,0 +1,66 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.AssetReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "company", "condition", "employee" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Device / model</th>
+                            <th>Processor</th>
+                            <th>Serial</th>
+                            <th>Procured</th>
+                            <th>Condition</th>
+                            <th>Holder</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            No assets match this filter.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.Company</td>
+                                <td>
+                                    <strong>@r.DeviceModel</strong>
+                                    @if (!r.IsInUse)
+                                    {
+                                        <span class="badge bg-secondary">Not in use</span>
+                                    }
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Processor) ? "--" : r.Processor)</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.SerialNumber) ? "--" : r.SerialNumber)</td>
+                                <td>@(r.ProcuredOn?.ToString("d MMM yyyy") ?? "--")</td>
+                                <td>
+                                    <partial name="_AssetConditionBadge" model="r.Condition" />
+                                </td>
+                                <td>@r.AssignedTo</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

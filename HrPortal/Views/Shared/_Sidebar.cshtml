@@ -65,6 +65,17 @@
     </a>
 
 
+    @if (isHr || isMd || isAdmin)
+    {
+        <div class="nav-group">Insight</div>
+
+        <a class="nav-item @On("Reports")"
+           asp-controller="Reports" asp-action="Index">
+            <i class="fas fa-chart-column"></i> Reports
+        </a>
+    }
+
+
     @if (isHr || isMd)
     {
         <div class="nav-group">Approvals</div>

@@ -1,0 +1,58 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.AbsenceReportRow>
+
+@{ ViewData["Title"] = Model.Title; }
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportFilters"
+             model="@((Model.Filter, new[] { "from", "to", "department" }))" />
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th class="num">Approved days</th>
+                            <th class="num">Requests</th>
+                            <th class="num">Days in progress</th>
+                            <th class="num">Rejected</th>
+                            <th>Last day off</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            Nobody took leave in this period.
+                        </td></tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.Employee</strong></td>
+                                <td>@r.Department</td>
+                                <td class="num">@r.ApprovedDays.ToString("0.##")</td>
+                                <td class="num">@r.ApprovedRequests</td>
+                                <td class="num">@r.PendingDays.ToString("0.##")</td>
+                                <td class="num">@r.RejectedRequests</td>
+                                <td>@(r.LastLeaveEnd?.ToString("d MMM yyyy") ?? "--")</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
