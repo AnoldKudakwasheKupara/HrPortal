@@ -78,6 +78,13 @@ namespace HrPortal.Controllers
             if (asset == null)
                 return NotFound();
 
+            ViewBag.Maintenance = await _context.AssetMaintenances
+                .Include(m => m.Vendor)
+                .Where(m => m.AssetId == asset.Id)
+                .OrderBy(m => m.Status == MaintenanceStatus.Scheduled ? 0 : 1)
+                .ThenByDescending(m => m.ScheduledFor)
+                .ToListAsync();
+
             return View(asset);
         }
 

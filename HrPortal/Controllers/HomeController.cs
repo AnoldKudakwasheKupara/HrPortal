@@ -288,6 +288,8 @@ namespace HrPortal.Controllers
 
         private async Task<AdminDashboardSection> BuildAdminAsync()
         {
+            var today = DateTime.Today;
+
             return new AdminDashboardSection
             {
                 Employees = await _context.Employees.CountAsync(),
@@ -316,6 +318,17 @@ namespace HrPortal.Controllers
 
                 UnassignedAssets = await _context.Assets
                     .CountAsync(a => a.AssignedToEmployeeId == null),
+
+                MaintenanceOverdue = await _context.AssetMaintenances
+                    .CountAsync(m =>
+                        m.Status == MaintenanceStatus.Scheduled &&
+                        m.ScheduledFor < today),
+
+                MaintenanceDueSoon = await _context.AssetMaintenances
+                    .CountAsync(m =>
+                        m.Status == MaintenanceStatus.Scheduled &&
+                        m.ScheduledFor >= today &&
+                        m.ScheduledFor <= today.AddDays(30)),
 
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations

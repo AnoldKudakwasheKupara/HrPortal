@@ -1,0 +1,73 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.AssetMaintenanceEditViewModel
+
+@{
+    ViewData["Title"] = "Edit Maintenance";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Edit Maintenance</h2>
+        <p class="text-muted">
+            Update the booking, or record what was done.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <partial name="_MaintenanceFields" model="Model" />
+
+                <div class="section-heading">Outcome</div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select"
+                                asp-items="Html.GetEnumSelectList<MaintenanceStatus>()">
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="CompletedOn" class="form-label"></label>
+                        <input asp-for="CompletedOn" class="form-control"
+                               type="date" />
+                        <div class="form-text">
+                            Needed once the status is Completed.
+                        </div>
+                        <span asp-validation-for="CompletedOn" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Save Changes
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

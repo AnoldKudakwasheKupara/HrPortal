@@ -106,6 +106,10 @@ namespace HrPortal.ViewModels
 
         public int UnassignedAssets { get; set; }
 
+        public int MaintenanceOverdue { get; set; }
+
+        public int MaintenanceDueSoon { get; set; }
+
         public bool HrApproverConfigured { get; set; }
 
         public bool MdApproverConfigured { get; set; }

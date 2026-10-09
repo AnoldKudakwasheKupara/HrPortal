@@ -32,6 +32,7 @@ namespace HrPortal.DbContexts
         public DbSet<ApprovalConfiguration> ApprovalConfigurations { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -335,6 +336,39 @@ namespace HrPortal.DbContexts
                     .WithMany()
                     .HasForeignKey(d => d.UploadedByEmployeeId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<AssetMaintenance>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+
+                entity.Property(m => m.Type)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(m => m.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(m => m.PerformedBy).HasMaxLength(200);
+                entity.Property(m => m.Notes).HasMaxLength(1000);
+
+                entity.Property(m => m.Cost).HasPrecision(12, 2);
+
+                // Maintenance belongs to the machine, so it goes when
+                // the machine goes.
+                entity.HasOne(m => m.Asset)
+                    .WithMany()
+                    .HasForeignKey(m => m.AssetId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Removing a vendor must not erase the service history.
+                entity.HasOne(m => m.Vendor)
+                    .WithMany()
+                    .HasForeignKey(m => m.VendorId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(m => m.ScheduledFor);
             });
 
             builder.Entity<Notification>(entity =>

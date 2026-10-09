@@ -1,0 +1,245 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<HrPortal.Entities.AssetMaintenance>
+
+@{
+    ViewData["Title"] = "Maintenance Schedule";
+
+    var today = DateTime.Today;
+
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Maintenance Schedule</h2>
+            <p class="text-muted mb-0">
+                Servicing, repairs and inspections booked against the
+                machines on the register.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">
+            Schedule Maintenance
+        </a>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+
+    <div class="report-stats">
+
+        <a class="report-stat @(((int)ViewBag.Overdue) > 0 ? "is-critical" : "")"
+           asp-action="Index" asp-route-overdueOnly="true">
+            <span class="report-stat-label">Overdue</span>
+            <span class="report-stat-value">@ViewBag.Overdue</span>
+            <span class="report-stat-note">Past the booked date</span>
+        </a>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Due in 30 days</span>
+            <span class="report-stat-value">@ViewBag.DueSoon</span>
+            <span class="report-stat-note">Coming up</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Open</span>
+            <span class="report-stat-value">@ViewBag.Scheduled</span>
+            <span class="report-stat-note">Still to be done</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Done this year</span>
+            <span class="report-stat-value">@ViewBag.CompletedThisYear</span>
+            <span class="report-stat-note">@today.Year</span>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label">Asset</label>
+                    <select name="assetId" class="form-select">
+                        <option value="">All assets</option>
+                        @foreach (var a in Items(ViewBag.Assets))
+                        {
+                            <option value="@a.Value"
+                                    selected="@((ViewBag.AssetFilter as int?)?.ToString() == a.Value)">
+                                @a.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var s in Enum.GetValues<MaintenanceStatus>())
+                        {
+                            <option value="@s"
+                                    selected="@(ViewBag.StatusFilter as MaintenanceStatus? == s)">
+                                @s
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Work</label>
+                    <select name="type" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var t in Enum.GetValues<MaintenanceType>())
+                        {
+                            <option value="@t"
+                                    selected="@(ViewBag.TypeFilter as MaintenanceType? == t)">
+                                @t
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Work</th>
+                            <th>Scheduled</th>
+                            <th>Done by</th>
+                            <th class="num">Cost</th>
+                            <th>Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Nothing matches this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var m in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@m.Asset.DeviceModel</strong>
+                                    @if (!string.IsNullOrWhiteSpace(m.Asset.SerialNumber))
+                                    {
+                                        <div class="text-muted small">
+                                            @m.Asset.SerialNumber
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>@m.Type</td>
+
+                                <td>
+                                    @m.ScheduledFor.ToString("d MMM yyyy")
+                                    @if (m.CompletedOn.HasValue)
+                                    {
+                                        <div class="text-muted small">
+                                            Done @m.CompletedOn.Value.ToString("d MMM yyyy")
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (m.Vendor != null)
+                                    {
+                                        @m.Vendor.Name
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(m.PerformedBy))
+                                    {
+                                        @m.PerformedBy
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                </td>
+
+                                <td class="num">
+                                    @(m.Cost?.ToString("0.00") ?? "--")
+                                </td>
+
+                                <td>
+                                    <partial name="_MaintenanceStatusBadge" model="m" />
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+
+                                        @if (m.Status == MaintenanceStatus.Scheduled)
+                                        {
+                                            <form asp-action="Complete"
+                                                  asp-route-id="@m.Id"
+                                                  method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-primary">
+                                                    Mark done
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit" asp-route-id="@m.Id">
+                                            Edit
+                                        </a>
+
+                                        <a class="btn btn-sm btn-outline-danger"
+                                           asp-action="Delete" asp-route-id="@m.Id">
+                                            Delete
+                                        </a>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

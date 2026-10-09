@@ -1,0 +1,67 @@
+@model HrPortal.Entities.AssetMaintenance
+
+@{
+    ViewData["Title"] = "Delete Maintenance Record";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Delete Maintenance Record</h2>
+        <p class="text-muted">
+            This entry will be removed from the schedule permanently.
+        </p>
+    </div>
+
+    <div class="alert alert-warning">
+        Deleting a completed record removes it from the machine's
+        service history. If the work simply is not going ahead, set
+        the status to <strong>Cancelled</strong> instead.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Asset</span>
+                    <p class="field-value">@Model.Asset.DeviceModel</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Work</span>
+                    <p class="field-value">@Model.Type</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Scheduled</span>
+                    <p class="field-value">
+                        @Model.ScheduledFor.ToString("dd MMM yyyy")
+                    </p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Status</span>
+                    <p class="field-value">
+                        <partial name="_MaintenanceStatusBadge" model="Model" />
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">
+                Delete Record
+            </button>
+        </form>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+    </div>
+
+</div>
