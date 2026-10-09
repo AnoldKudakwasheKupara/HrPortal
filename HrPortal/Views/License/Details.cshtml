@@ -1,0 +1,271 @@
+@model HrPortal.Entities.License
+
+@{
+    ViewData["Title"] = "Licence Details";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@Model.Name</h2>
+
+            <div class="detail-badges">
+                <partial name="_LicenseStatusBadge" model="Model" />
+
+                <span class="badge bg-light text-dark">@Model.Type</span>
+
+                @if (Model.AutoRenews)
+                {
+                    <span class="badge bg-info">Renews automatically</span>
+                }
+            </div>
+        </div>
+
+        <div class="page-head-actions">
+            <a asp-action="Renew" asp-route-id="@Model.Id"
+               class="btn btn-primary">Renew</a>
+
+            <a asp-action="Edit" asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">Edit</a>
+
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+
+    </div>
+
+
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">The licence</div>
+
+                <div class="card-body">
+                    <div class="detail-rows">
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-certificate"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Reference or key</span>
+                                @if (!string.IsNullOrWhiteSpace(Model.Reference))
+                                {
+                                    <p class="field-value">@Model.Reference</p>
+                                }
+                                else
+                                {
+                                    <p class="field-value is-empty">Not recorded</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Seats</span>
+                                <p class="field-value">
+                                    @(Model.Seats?.ToString() ?? "Not per seat")
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Started</span>
+                                <p class="field-value">
+                                    @(Model.StartDate?.ToString("dd MMM yyyy")
+                                        ?? "Not recorded")
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-hourglass-end"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Expires</span>
+                                <p class="field-value">
+                                    @Model.ExpiryDate.ToString("dd MMM yyyy")
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-coins"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Current cost</span>
+                                <p class="field-value">
+                                    @(Model.Cost?.ToString("0.00") ?? "Not recorded")
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-5">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">Supplier and holder</div>
+
+                <div class="card-body">
+                    <div class="detail-rows">
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-truck-field"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Vendor</span>
+                                @if (Model.Vendor != null)
+                                {
+                                    <p class="field-value">@Model.Vendor.Name</p>
+                                }
+                                else
+                                {
+                                    <p class="field-value is-empty">
+                                        Not on the vendor register
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Held by</span>
+                                @if (Model.AssignedToEmployee != null)
+                                {
+                                    <p class="field-value">
+                                        @Model.AssignedToEmployee.FirstName
+                                        @Model.AssignedToEmployee.LastName
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="field-value is-empty">Company wide</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </span>
+                            <div class="detail-text">
+                                <span class="field-label">Department</span>
+                                <p class="field-value">
+                                    @(Model.AssignedToEmployee?.Department?.Name
+                                        ?? "--")
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mt-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Renewal history</span>
+
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Renew" asp-route-id="@Model.Id">
+                Record a renewal
+            </a>
+
+        </div>
+
+        <div class="card-body is-table">
+
+            @if (Model.Renewals.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Renewed on</th>
+                                <th>Previous expiry</th>
+                                <th>New expiry</th>
+                                <th class="num">Cost</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var r in Model.Renewals)
+                        {
+                            <tr>
+                                <td>@r.RenewedOn.ToString("d MMM yyyy")</td>
+                                <td>@r.PreviousExpiry.ToString("d MMM yyyy")</td>
+                                <td><strong>@r.NewExpiry.ToString("d MMM yyyy")</strong></td>
+                                <td class="num">@(r.Cost?.ToString("0.00") ?? "--")</td>
+                                <td class="text-muted">
+                                    @(string.IsNullOrWhiteSpace(r.Notes) ? "--" : r.Notes)
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="field-value is-empty mb-0 p-3">
+                    This licence has not been renewed through the portal yet.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mt-3">
+
+        <div class="card-header">Notes</div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+            {
+                <p class="field-value mb-0">@Model.Notes</p>
+            }
+            else
+            {
+                <p class="field-value is-empty mb-0">
+                    Nothing recorded against this licence.
+                </p>
+            }
+        </div>
+
+    </div>
+
+</div>

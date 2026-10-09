@@ -33,6 +33,8 @@ namespace HrPortal.DbContexts
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
+        public DbSet<License> Licenses { get; set; }
+        public DbSet<LicenseRenewal> LicenseRenewals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -369,6 +371,54 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasIndex(m => m.ScheduledFor);
+            });
+
+            builder.Entity<License>(entity =>
+            {
+                entity.HasKey(l => l.Id);
+
+                entity.Property(l => l.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(l => l.Type)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(l => l.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(l => l.Reference).HasMaxLength(200);
+                entity.Property(l => l.Notes).HasMaxLength(1000);
+                entity.Property(l => l.Cost).HasPrecision(12, 2);
+
+                // Losing a vendor or a seat holder must not take the
+                // licence with it.
+                entity.HasOne(l => l.Vendor)
+                    .WithMany()
+                    .HasForeignKey(l => l.VendorId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(l => l.AssignedToEmployee)
+                    .WithMany()
+                    .HasForeignKey(l => l.AssignedToEmployeeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(l => l.ExpiryDate);
+            });
+
+            builder.Entity<LicenseRenewal>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Notes).HasMaxLength(1000);
+                entity.Property(r => r.Cost).HasPrecision(12, 2);
+
+                entity.HasOne(r => r.License)
+                    .WithMany(l => l.Renewals)
+                    .HasForeignKey(r => r.LicenseId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<Notification>(entity =>

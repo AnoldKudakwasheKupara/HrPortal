@@ -1,0 +1,119 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.LicenseCreateViewModel
+
+@{
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control"
+               placeholder="Microsoft 365 Business Standard" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="Type" class="form-label"></label>
+        <select asp-for="Type" class="form-select"
+                asp-items="Html.GetEnumSelectList<LicenseType>()">
+        </select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="Seats" class="form-label"></label>
+        <input asp-for="Seats" class="form-control" type="number" min="1" />
+        <div class="form-text">Leave blank if it is not per seat.</div>
+        <span asp-validation-for="Seats" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 mb-3">
+        <label asp-for="Reference" class="form-label"></label>
+        <input asp-for="Reference" class="form-control"
+               placeholder="Licence key, policy number or certificate reference" />
+        <span asp-validation-for="Reference" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="section-heading">Dates and cost</div>
+
+<div class="row">
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="StartDate" class="form-label"></label>
+        <input asp-for="StartDate" class="form-control" type="date" />
+        <span asp-validation-for="StartDate" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ExpiryDate" class="form-label"></label>
+        <input asp-for="ExpiryDate" class="form-control" type="date" />
+        <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="Cost" class="form-label"></label>
+        <input asp-for="Cost" class="form-control"
+               type="number" step="0.01" min="0" />
+        <span asp-validation-for="Cost" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="section-heading">Who it comes from and who holds it</div>
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="VendorId" class="form-label"></label>
+        <select asp-for="VendorId" class="form-select">
+            <option value="">-- None on the register --</option>
+            @foreach (var v in Items(ViewBag.Vendors))
+            {
+                <option value="@v.Value"
+                        selected="@(Model.VendorId?.ToString() == v.Value)">
+                    @v.Text
+                </option>
+            }
+        </select>
+        <span asp-validation-for="VendorId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="AssignedToEmployeeId" class="form-label"></label>
+        <select asp-for="AssignedToEmployeeId" class="form-select">
+            <option value="">-- Company wide --</option>
+            @foreach (var e in Items(ViewBag.Employees))
+            {
+                <option value="@e.Value"
+                        selected="@(Model.AssignedToEmployeeId?.ToString() == e.Value)">
+                    @e.Text
+                </option>
+            }
+        </select>
+        <div class="form-text">
+            Only when the licence belongs to one person.
+        </div>
+        <span asp-validation-for="AssignedToEmployeeId" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-3">
+    <label asp-for="Notes" class="form-label"></label>
+    <textarea asp-for="Notes" class="form-control" rows="3"
+              placeholder="Renewal terms, who approves the spend, anything worth remembering"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+
+<div class="form-check mb-4">
+    <input asp-for="AutoRenews" class="form-check-input" />
+    <label asp-for="AutoRenews" class="form-check-label">
+        This renews automatically
+    </label>
+</div>

@@ -1,0 +1,78 @@
+@model HrPortal.Entities.License
+
+@{
+    ViewData["Title"] = "Delete Licence";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Delete Licence</h2>
+        <p class="text-muted">
+            This licence will be removed from the register permanently.
+        </p>
+    </div>
+
+    <div class="alert alert-warning">
+        @if (Model.Renewals.Any())
+        {
+            <text>
+                This will also delete
+                <strong>@Model.Renewals.Count renewal record(s)</strong>,
+                losing what was paid and when.
+            </text>
+        }
+        else
+        {
+            <text>Are you sure?</text>
+        }
+
+        If you have simply stopped using it, open the licence and set
+        the status to <strong>Cancelled</strong> instead &mdash; that
+        keeps the history and drops it out of the renewal list.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Licence</span>
+                    <p class="field-value">@Model.Name</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Type</span>
+                    <p class="field-value">@Model.Type</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Vendor</span>
+                    <p class="field-value">@(Model.Vendor?.Name ?? "--")</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Expires</span>
+                    <p class="field-value">
+                        @Model.ExpiryDate.ToString("dd MMM yyyy")
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">
+                Delete Licence
+            </button>
+        </form>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+    </div>
+
+</div>

@@ -1,0 +1,237 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<HrPortal.Entities.License>
+
+@{
+    ViewData["Title"] = "Licence Renewals";
+
+    var show = ViewBag.Show as string;
+
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Licence Renewals</h2>
+            <p class="text-muted mb-0">
+                Licences, subscriptions and certificates that expire,
+                and when each is next due.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">Add Licence</a>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+
+    <div class="report-stats">
+
+        <a class="report-stat @(((int)ViewBag.Expired) > 0 ? "is-critical" : "")"
+           asp-action="Index" asp-route-show="expired">
+            <span class="report-stat-label">Expired</span>
+            <span class="report-stat-value">@ViewBag.Expired</span>
+            <span class="report-stat-note">Past the renewal date</span>
+        </a>
+
+        <a class="report-stat @(((int)ViewBag.Expiring) > 0 ? "is-warning" : "")"
+           asp-action="Index" asp-route-show="expiring">
+            <span class="report-stat-label">Expiring soon</span>
+            <span class="report-stat-value">@ViewBag.Expiring</span>
+            <span class="report-stat-note">
+                Within @HrPortal.Controllers.LicenseController.ExpiringWindowDays days
+            </span>
+        </a>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Active</span>
+            <span class="report-stat-value">@ViewBag.Active</span>
+            <span class="report-stat-note">On the register</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Annual cost</span>
+            <span class="report-stat-value">
+                @(((decimal)ViewBag.AnnualCost).ToString("0.00"))
+            </span>
+            <span class="report-stat-note">Across active licences</span>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label">Show</label>
+                    <select name="show" class="form-select">
+                        <option value="" selected="@string.IsNullOrEmpty(show)">
+                            Active
+                        </option>
+                        <option value="expiring" selected="@(show == "expiring")">
+                            Expiring soon
+                        </option>
+                        <option value="expired" selected="@(show == "expired")">
+                            Expired
+                        </option>
+                        <option value="cancelled" selected="@(show == "cancelled")">
+                            Cancelled
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var t in Enum.GetValues<LicenseType>())
+                        {
+                            <option value="@t"
+                                    selected="@(ViewBag.TypeFilter as LicenseType? == t)">
+                                @t
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Vendor</label>
+                    <select name="vendorId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var v in Items(ViewBag.Vendors))
+                        {
+                            <option value="@v.Value"
+                                    selected="@((ViewBag.VendorFilter as int?)?.ToString() == v.Value)">
+                                @v.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Licence</th>
+                            <th>Type</th>
+                            <th>Vendor</th>
+                            <th>Held by</th>
+                            <th class="num">Seats</th>
+                            <th>Expires</th>
+                            <th class="num">Cost</th>
+                            <th>Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                Nothing matches this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var l in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@l.Name</strong>
+                                    @if (l.AutoRenews)
+                                    {
+                                        <span class="badge bg-light text-dark">
+                                            Auto
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>@l.Type</td>
+
+                                <td>@(l.Vendor?.Name ?? "--")</td>
+
+                                <td>
+                                    @if (l.AssignedToEmployee != null)
+                                    {
+                                        @(l.AssignedToEmployee.FirstName + " " +
+                                          l.AssignedToEmployee.LastName)
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Company wide</span>
+                                    }
+                                </td>
+
+                                <td class="num">@(l.Seats?.ToString() ?? "--")</td>
+
+                                <td>@l.ExpiryDate.ToString("d MMM yyyy")</td>
+
+                                <td class="num">@(l.Cost?.ToString("0.00") ?? "--")</td>
+
+                                <td>
+                                    <partial name="_LicenseStatusBadge" model="l" />
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Renew" asp-route-id="@l.Id">
+                                            Renew
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Details" asp-route-id="@l.Id">
+                                            View
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit" asp-route-id="@l.Id">
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger"
+                                           asp-action="Delete" asp-route-id="@l.Id">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

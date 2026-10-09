@@ -1,0 +1,44 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.LicenseEditViewModel
+
+@{ ViewData["Title"] = "Edit Licence"; }
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Edit Licence</h2>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <partial name="_LicenseFields" model="Model" />
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select"
+                                asp-items="Html.GetEnumSelectList<LicenseStatus>()">
+                        </select>
+                        <div class="form-text">
+                            Cancelled licences drop out of the renewal list.
+                        </div>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

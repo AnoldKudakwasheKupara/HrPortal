@@ -110,6 +110,10 @@ namespace HrPortal.ViewModels
 
         public int MaintenanceDueSoon { get; set; }
 
+        public int LicensesExpired { get; set; }
+
+        public int LicensesExpiringSoon { get; set; }
+
         public bool HrApproverConfigured { get; set; }
 
         public bool MdApproverConfigured { get; set; }

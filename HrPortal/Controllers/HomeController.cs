@@ -330,6 +330,18 @@ namespace HrPortal.Controllers
                         m.ScheduledFor >= today &&
                         m.ScheduledFor <= today.AddDays(30)),
 
+                LicensesExpired = await _context.Licenses
+                    .CountAsync(l =>
+                        l.Status == LicenseStatus.Active &&
+                        l.ExpiryDate < today),
+
+                LicensesExpiringSoon = await _context.Licenses
+                    .CountAsync(l =>
+                        l.Status == LicenseStatus.Active &&
+                        l.ExpiryDate >= today &&
+                        l.ExpiryDate <= today.AddDays(
+                            LicenseController.ExpiringWindowDays)),
+
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations
                         .AnyAsync(a =>
