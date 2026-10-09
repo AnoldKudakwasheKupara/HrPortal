@@ -5,6 +5,12 @@ namespace HrPortal.ViewModels
 {
     public class AssetMaintenanceCreateViewModel
     {
+        // Narrows the asset list on the form. Not stored: the
+        // maintenance record belongs to the asset, not the holder,
+        // who may change.
+        [Display(Name = "Employee")]
+        public int? EmployeeFilterId { get; set; }
+
         [Required]
         [Display(Name = "Asset")]
         public int AssetId { get; set; }

@@ -7,24 +7,72 @@
         bag as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
+@{
+    var assetOptions =
+        ViewBag.AssetOptions as List<HrPortal.ViewModels.AssetOptionViewModel>
+        ?? new List<HrPortal.ViewModels.AssetOptionViewModel>();
+
+    var unassignedCount = (int?)ViewBag.UnassignedCount ?? 0;
+}
+
 <div class="row">
 
     <div class="col-md-6 mb-3">
-        <label asp-for="AssetId" class="form-label"></label>
-        <select asp-for="AssetId" class="form-select">
-            <option value="">-- Select Asset --</option>
-            @foreach (var a in Items(ViewBag.Assets))
+
+        <label asp-for="EmployeeFilterId" class="form-label"></label>
+
+        <select asp-for="EmployeeFilterId"
+                id="maintenance-employee"
+                class="form-select">
+            <option value="">-- Everyone --</option>
+
+            @foreach (var e in Items(ViewBag.AssetHolders))
             {
-                <option value="@a.Value"
-                        selected="@(Model.AssetId.ToString() == a.Value)">
-                    @a.Text
+                <option value="@e.Value"
+                        selected="@(Model.EmployeeFilterId?.ToString() == e.Value)">
+                    @e.Text
+                </option>
+            }
+
+            @if (unassignedCount > 0)
+            {
+                <option value="0"
+                        selected="@(Model.EmployeeFilterId == 0)">
+                    Unassigned machines (@unassignedCount)
                 </option>
             }
         </select>
-        <span asp-validation-for="AssetId" class="text-danger"></span>
+
+        <div class="form-text">
+            Pick who holds the machine to narrow the list below.
+        </div>
+
     </div>
 
-    <div class="col-md-3 mb-3">
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="AssetId" class="form-label"></label>
+
+        <select asp-for="AssetId"
+                id="maintenance-asset"
+                class="form-select">
+            <option value="">-- Select Asset --</option>
+
+            @foreach (var a in assetOptions)
+            {
+                <option value="@a.Id"
+                        data-employee="@(a.EmployeeId?.ToString() ?? "0")"
+                        selected="@(Model.AssetId == a.Id)">
+                    @a.Label
+                </option>
+            }
+        </select>
+
+        <span asp-validation-for="AssetId" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
         <label asp-for="Type" class="form-label"></label>
         <select asp-for="Type" class="form-select"
                 asp-items="Html.GetEnumSelectList<MaintenanceType>()">
@@ -32,7 +80,7 @@
         <span asp-validation-for="Type" class="text-danger"></span>
     </div>
 
-    <div class="col-md-3 mb-3">
+    <div class="col-md-6 mb-3">
         <label asp-for="ScheduledFor" class="form-label"></label>
         <input asp-for="ScheduledFor" class="form-control" type="date" />
         <span asp-validation-for="ScheduledFor" class="text-danger"></span>
@@ -84,3 +132,63 @@
               placeholder="What needs doing, or what was found"></textarea>
     <span asp-validation-for="Notes" class="text-danger"></span>
 </div>
+
+@*  Narrowing happens in the browser from data already on the page:
+    no round trip, and the form still works if the script does not
+    run because every asset is in the list to begin with.      *@
+
+<script>
+(function () {
+    var employee = document.getElementById('maintenance-employee');
+    var asset = document.getElementById('maintenance-asset');
+
+    if (!employee || !asset) return;
+
+    // Keep the full list so narrowing is always reversible.
+    var all = Array.prototype.slice
+        .call(asset.options)
+        .map(function (o) {
+            return {
+                value: o.value,
+                text: o.text,
+                employee: o.getAttribute('data-employee')
+            };
+        });
+
+    function narrow() {
+        var pick = employee.value;
+        var current = asset.value;
+
+        asset.innerHTML = '';
+
+        all.forEach(function (o) {
+            if (o.value === '') return;
+            if (pick !== '' && o.employee !== pick) return;
+
+            var option = document.createElement('option');
+            option.value = o.value;
+            option.text = o.text;
+            option.setAttribute('data-employee', o.employee);
+            asset.appendChild(option);
+        });
+
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.text = asset.options.length === 0
+            ? '-- No machines for this person --'
+            : '-- Select Asset --';
+        asset.insertBefore(placeholder, asset.firstChild);
+
+        // Hold the chosen machine if it survived the narrowing.
+        asset.value =
+            Array.prototype.some.call(asset.options, function (o) {
+                return o.value === current;
+            })
+                ? current
+                : '';
+    }
+
+    employee.addEventListener('change', narrow);
+    narrow();
+})();
+</script>

@@ -96,9 +96,19 @@ namespace HrPortal.Controllers
         {
             await LoadLookups();
 
+            // Arriving from an asset's own page: preselect its holder
+            // so the narrowed list already contains that machine.
+            int? holder = assetId == null
+                ? null
+                : await _context.Assets
+                    .Where(a => a.Id == assetId.Value)
+                    .Select(a => a.AssignedToEmployeeId)
+                    .FirstOrDefaultAsync();
+
             return View(new AssetMaintenanceCreateViewModel
             {
                 AssetId = assetId ?? 0,
+                EmployeeFilterId = holder,
                 ScheduledFor = DateTime.Today
             });
         }
@@ -160,10 +170,16 @@ namespace HrPortal.Controllers
 
             await LoadLookups();
 
+            var holder = await _context.Assets
+                .Where(a => a.Id == record.AssetId)
+                .Select(a => a.AssignedToEmployeeId)
+                .FirstOrDefaultAsync();
+
             return View(new AssetMaintenanceEditViewModel
             {
                 Id = record.Id,
                 AssetId = record.AssetId,
+                EmployeeFilterId = holder,
                 Type = record.Type,
                 Status = record.Status,
                 ScheduledFor = record.ScheduledFor,
@@ -313,15 +329,47 @@ namespace HrPortal.Controllers
 
         private async Task LoadLookups()
         {
-            ViewBag.Assets = await _context.Assets
+            var assets = await _context.Assets
+                .Include(a => a.AssignedToEmployee)
                 .OrderBy(a => a.DeviceModel)
+                .ToListAsync();
+
+            ViewBag.Assets = assets
                 .Select(a => new SelectListItem(
                     a.DeviceModel +
-                    (a.SerialNumber != null && a.SerialNumber != ""
+                    (!string.IsNullOrWhiteSpace(a.SerialNumber)
                         ? " (" + a.SerialNumber + ")"
                         : ""),
                     a.Id.ToString()))
-                .ToListAsync();
+                .ToList();
+
+            ViewBag.AssetOptions = assets
+                .Select(a => new AssetOptionViewModel
+                {
+                    Id = a.Id,
+                    Label = a.DeviceModel +
+                        (!string.IsNullOrWhiteSpace(a.SerialNumber)
+                            ? " (" + a.SerialNumber + ")"
+                            : ""),
+                    EmployeeId = a.AssignedToEmployeeId
+                })
+                .ToList();
+
+            // Only people who actually hold something, so the picker
+            // never offers a name with no machines behind it.
+            ViewBag.AssetHolders = assets
+                .Where(a => a.AssignedToEmployee != null)
+                .Select(a => a.AssignedToEmployee!)
+                .DistinctBy(e => e.Id)
+                .OrderBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .Select(e => new SelectListItem(
+                    e.FirstName + " " + e.LastName,
+                    e.Id.ToString()))
+                .ToList();
+
+            ViewBag.UnassignedCount =
+                assets.Count(a => a.AssignedToEmployeeId == null);
 
             ViewBag.Vendors = await _context.Vendors
                 .Where(v => v.IsActive)

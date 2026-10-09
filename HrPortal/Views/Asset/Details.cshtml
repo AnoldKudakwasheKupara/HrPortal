@@ -281,6 +281,7 @@
                                 <th>Done by</th>
                                 <th class="num">Cost</th>
                                 <th>Status</th>
+                                <th>Work done / notes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -314,6 +315,10 @@
                                 <td class="num">@(m.Cost?.ToString("0.00") ?? "--")</td>
                                 <td>
                                     <partial name="_MaintenanceStatusBadge" model="m" />
+                                </td>
+                                <td class="text-muted">
+                                    @(string.IsNullOrWhiteSpace(m.Notes)
+                                        ? "--" : m.Notes)
                                 </td>
                             </tr>
                         }
