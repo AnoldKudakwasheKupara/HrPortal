@@ -1,0 +1,98 @@
+@model HrPortal.ViewModels.VendorCreateViewModel
+
+@*  Shared by Add and Edit so the two forms cannot drift apart. *@
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control"
+               placeholder="Acme Office Supplies" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Category" class="form-label"></label>
+        <input asp-for="Category" class="form-control"
+               list="vendor-categories"
+               placeholder="IT Equipment" />
+        <datalist id="vendor-categories">
+            @foreach (var c in (ViewBag.Categories as List<string>)
+                ?? new List<string>())
+            {
+                <option value="@c"></option>
+            }
+        </datalist>
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 mb-3">
+        <label asp-for="ProductOrService" class="form-label"></label>
+        <input asp-for="ProductOrService" class="form-control"
+               placeholder="Laptops, desktops and printer consumables" />
+        <div class="form-text">
+            What this vendor supplies us with.
+        </div>
+        <span asp-validation-for="ProductOrService" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="section-heading">Contact details</div>
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="ContactPerson" class="form-label"></label>
+        <input asp-for="ContactPerson" class="form-control" />
+        <span asp-validation-for="ContactPerson" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control"
+               placeholder="sales@acme.co.zw" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control"
+               placeholder="0771234567" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="AlternatePhone" class="form-label"></label>
+        <input asp-for="AlternatePhone" class="form-control" />
+        <span asp-validation-for="AlternatePhone" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Website" class="form-label"></label>
+        <input asp-for="Website" class="form-control"
+               placeholder="www.acme.co.zw" />
+        <span asp-validation-for="Website" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-3">
+    <label asp-for="Notes" class="form-label"></label>
+    <textarea asp-for="Notes" class="form-control" rows="3"
+              placeholder="Payment terms, account number, anything worth remembering"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+
+<div class="form-check mb-4">
+    <input asp-for="IsActive" class="form-check-input" />
+    <label asp-for="IsActive" class="form-check-label">
+        We still use this vendor
+    </label>
+</div>

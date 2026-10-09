@@ -1,0 +1,115 @@
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.VendorReportRow>
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count, Model.Coverage, Model.GeneratedAt))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportBreakdowns" model="Model.Breakdowns" />
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label">Category</label>
+                    <select name="Company" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var c in (ViewBag.VendorCategories as List<string>)
+                            ?? new List<string>())
+                        {
+                            <option value="@c"
+                                    selected="@(Model.Filter.Company == c)">
+                                @c
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-check mt-4">
+                        <input name="IncludeInactive" value="true"
+                               type="checkbox" class="form-check-input"
+                               checked="@Model.Filter.IncludeInactive" />
+                        <label class="form-check-label">
+                            Include vendors no longer used
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Apply
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Product / service</th>
+                            <th>Category</th>
+                            <th>Contact person</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No vendors match this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td><strong>@r.Name</strong></td>
+                                <td>@r.ProductOrService</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Category) ? "--" : r.Category)</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.ContactPerson) ? "--" : r.ContactPerson)</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.Email) ? "--" : r.Email)</td>
+                                <td>@(string.IsNullOrWhiteSpace(r.PhoneNumber) ? "--" : r.PhoneNumber)</td>
+                                <td>
+                                    @if (r.IsActive)
+                                    {
+                                        <span class="badge bg-success">In use</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Not used</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

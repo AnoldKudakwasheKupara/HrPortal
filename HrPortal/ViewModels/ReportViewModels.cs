@@ -267,6 +267,17 @@ namespace HrPortal.ViewModels
         public string? Notes { get; set; }
     }
 
+    public class VendorReportRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ProductOrService { get; set; } = string.Empty;
+        public string? Category { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public bool IsActive { get; set; }
+    }
+
     public class AuditReportRow
     {
         public DateTime Timestamp { get; set; }

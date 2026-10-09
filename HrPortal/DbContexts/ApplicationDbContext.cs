@@ -31,6 +31,7 @@ namespace HrPortal.DbContexts
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ApprovalConfiguration> ApprovalConfigurations { get; set; }
         public DbSet<Asset> Assets { get; set; }
+        public DbSet<Vendor> Vendors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -400,6 +401,30 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(a => a.Role)
                     .IsUnique()
                     .HasFilter("[IsActive] = 1");
+            });
+
+            builder.Entity<Vendor>(entity =>
+            {
+                entity.HasKey(v => v.Id);
+
+                entity.Property(v => v.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(v => v.ProductOrService)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(v => v.Category).HasMaxLength(100);
+                entity.Property(v => v.ContactPerson).HasMaxLength(150);
+                entity.Property(v => v.Email).HasMaxLength(200);
+                entity.Property(v => v.PhoneNumber).HasMaxLength(50);
+                entity.Property(v => v.AlternatePhone).HasMaxLength(50);
+                entity.Property(v => v.Website).HasMaxLength(200);
+                entity.Property(v => v.Address).HasMaxLength(300);
+                entity.Property(v => v.Notes).HasMaxLength(1000);
+
+                entity.HasIndex(v => v.Name);
             });
 
             builder.Entity<Asset>(entity =>

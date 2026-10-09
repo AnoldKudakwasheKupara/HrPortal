@@ -46,6 +46,10 @@ namespace HrPortal.ViewModels
 
         public int EmployeesWithoutDocuments { get; set; }
 
+        public int Vendors { get; set; }
+
+        public int VendorsWithoutContact { get; set; }
+
         public int Assets { get; set; }
 
         public int AssetsNeedingAttention { get; set; }

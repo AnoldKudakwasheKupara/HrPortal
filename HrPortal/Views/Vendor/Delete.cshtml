@@ -1,0 +1,73 @@
+@model HrPortal.Entities.Vendor
+
+@{
+    ViewData["Title"] = "Delete Vendor";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>Delete Vendor</h2>
+
+        <p class="text-muted">
+            This vendor will be removed from the register permanently.
+        </p>
+
+    </div>
+
+    <div class="alert alert-warning">
+        Are you sure? If you have simply stopped buying from them, open
+        the vendor and clear the
+        <strong>We still use this vendor</strong> tick instead &mdash;
+        that keeps the contact details on record.
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Vendor</span>
+                    <p class="field-value">@Model.Name</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Product or service</span>
+                    <p class="field-value">@Model.ProductOrService</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Contact</span>
+                    <p class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.ContactPerson)
+                            ? "Not recorded"
+                            : Model.ContactPerson)
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+
+            @Html.AntiForgeryToken()
+
+            <button type="submit" class="btn btn-danger">
+                Delete Vendor
+            </button>
+
+        </form>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+    </div>
+
+</div>

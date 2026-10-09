@@ -145,6 +145,15 @@ namespace HrPortal.Controllers
 
             if (model.ShowSystem)
             {
+                model.Vendors = await _context.Vendors
+                    .CountAsync(v => v.IsActive);
+
+                model.VendorsWithoutContact = await _context.Vendors
+                    .CountAsync(v =>
+                        v.IsActive &&
+                        (v.Email == null || v.Email == "") &&
+                        (v.PhoneNumber == null || v.PhoneNumber == ""));
+
                 model.Assets = await _context.Assets.CountAsync();
 
                 model.AssetsNeedingAttention = await _context.Assets
@@ -1273,6 +1282,117 @@ namespace HrPortal.Controllers
         }
 
         [Authorize(Roles = Roles.AdminOnly)]
+        public async Task<IActionResult> Vendors(
+            ReportFilter filter,
+            string? export)
+        {
+            var query = _context.Vendors.AsNoTracking().AsQueryable();
+
+            if (!filter.IncludeInactive)
+                query = query.Where(v => v.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(filter.Company))
+                query = query.Where(v => v.Category == filter.Company);
+
+            var rows = await query
+                .OrderBy(v => v.Category)
+                .ThenBy(v => v.Name)
+                .Select(v => new VendorReportRow
+                {
+                    Name = v.Name,
+                    ProductOrService = v.ProductOrService,
+                    Category = v.Category,
+                    ContactPerson = v.ContactPerson,
+                    Email = v.Email,
+                    PhoneNumber = v.PhoneNumber,
+                    IsActive = v.IsActive
+                })
+                .ToListAsync();
+
+            if (export == "csv")
+            {
+                return Csv(
+                    "vendors",
+                    new[]
+                    {
+                        "Vendor", "Product or service", "Category",
+                        "Contact person", "Email", "Phone", "In use"
+                    },
+                    rows.Select(r => new string?[]
+                    {
+                        r.Name, r.ProductOrService, r.Category,
+                        r.ContactPerson, r.Email, r.PhoneNumber,
+                        r.IsActive ? "Yes" : "No"
+                    }));
+            }
+
+            var noContact = rows.Count(r =>
+                string.IsNullOrWhiteSpace(r.Email) &&
+                string.IsNullOrWhiteSpace(r.PhoneNumber));
+
+            var model = new ReportViewModel<VendorReportRow>
+            {
+                Title = "Vendors",
+                Description =
+                    "Who we buy from, what they supply and how " +
+                    "reachable they are.",
+                Action = nameof(Vendors),
+                Filter = filter,
+                Rows = rows,
+                Coverage = filter.IncludeInactive
+                    ? "All vendors"
+                    : "Vendors in use",
+                Stats =
+                {
+                    new ReportStat("Vendors", rows.Count.ToString()),
+                    new ReportStat(
+                        "In use", rows.Count(r => r.IsActive).ToString()),
+                    new ReportStat(
+                        "Categories",
+                        rows.Select(r => r.Category ?? "Uncategorised")
+                            .Distinct().Count().ToString()),
+                    new ReportStat(
+                        "No contact details",
+                        noContact.ToString(),
+                        "no email or phone")
+                }
+            };
+
+            var byCategory = new ReportBreakdown("By category", "vendors");
+
+            foreach (var g in rows
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.Category)
+                    ? "Uncategorised"
+                    : r.Category!)
+                .OrderByDescending(g => g.Count()))
+            {
+                byCategory.Add(g.Key, g.Count());
+            }
+
+            var contactable = new ReportBreakdown(
+                "Contact details held", "vendors")
+                .Add("Email and phone",
+                    rows.Count(r =>
+                        !string.IsNullOrWhiteSpace(r.Email) &&
+                        !string.IsNullOrWhiteSpace(r.PhoneNumber)),
+                    "good")
+                .Add("One of the two",
+                    rows.Count(r =>
+                        string.IsNullOrWhiteSpace(r.Email) !=
+                        string.IsNullOrWhiteSpace(r.PhoneNumber)),
+                    "warning")
+                .Add("Neither", noContact, "critical");
+
+            model.Breakdowns.AddRange(
+                new[] { byCategory, contactable }
+                    .Where(b => b.Total > 0));
+
+            await LoadLookups();
+
+            return View(model);
+        }
+
+        [Authorize(Roles = Roles.AdminOnly)]
         public async Task<IActionResult> AuditTrail(
             ReportFilter filter,
             string? export)
@@ -1477,6 +1597,13 @@ namespace HrPortal.Controllers
             ViewBag.Categories = await _context.DocumentCategories
                 .OrderBy(c => c.Name)
                 .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+                .ToListAsync();
+
+            ViewBag.VendorCategories = await _context.Vendors
+                .Where(v => v.Category != null && v.Category != "")
+                .Select(v => v.Category!)
+                .Distinct()
+                .OrderBy(c => c)
                 .ToListAsync();
 
             ViewBag.Companies = await _context.Assets
