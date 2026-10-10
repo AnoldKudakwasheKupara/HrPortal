@@ -47,7 +47,7 @@ namespace HrPortal.Controllers
             };
 
             if (employee != null)
-                model.Mine = await BuildMineAsync(employee.Id);
+                model.Mine = await BuildMineAsync(employee);
 
             if (User.IsInRole(Roles.HrOfficer))
                 model.Hr = await BuildHrAsync();
@@ -74,10 +74,33 @@ namespace HrPortal.Controllers
         }
 
         private async Task<MyDashboardSection> BuildMineAsync(
-            int employeeId)
+            Employee employee)
         {
+            var employeeId = employee.Id;
             var year = DateTime.Today.Year;
             var today = DateTime.Today;
+
+            var weekStart = MyTimesheetController.WeekStart(today);
+            var weekEnd = weekStart.AddDays(6);
+
+            var keepsTimesheet =
+                employee.IsActive &&
+                employee.Department.TracksTimesheets;
+
+            var timesheetWeek = !keepsTimesheet
+                ? null
+                : await _context.TimesheetEntries
+                    .Where(t =>
+                        t.EmployeeId == employeeId &&
+                        t.WorkDate >= weekStart &&
+                        t.WorkDate <= weekEnd)
+                    .GroupBy(_ => 1)
+                    .Select(g => new
+                    {
+                        Minutes = g.Sum(t => t.DurationMinutes),
+                        Count = g.Count()
+                    })
+                    .FirstOrDefaultAsync();
 
             var balances = await _context.LeaveBalances
                 .Include(b => b.LeaveType)
@@ -124,6 +147,10 @@ namespace HrPortal.Controllers
                 MyAssets = await _context.Assets
                     .CountAsync(a =>
                         a.AssignedToEmployeeId == employeeId),
+
+                KeepsTimesheet = keepsTimesheet,
+                TimesheetMinutesThisWeek = timesheetWeek?.Minutes ?? 0,
+                TimesheetEntriesThisWeek = timesheetWeek?.Count ?? 0,
 
                 DaysTakenThisYear = balances.Sum(b => b.UsedDays),
 
@@ -289,6 +316,7 @@ namespace HrPortal.Controllers
         private async Task<AdminDashboardSection> BuildAdminAsync()
         {
             var today = DateTime.Today;
+            var monthStart = new DateTime(today.Year, today.Month, 1);
 
             return new AdminDashboardSection
             {
@@ -329,6 +357,16 @@ namespace HrPortal.Controllers
                         m.Status == MaintenanceStatus.Scheduled &&
                         m.ScheduledFor >= today &&
                         m.ScheduledFor <= today.AddDays(30)),
+
+                TimesheetMinutesThisMonth = await _context.TimesheetEntries
+                    .Where(t => t.WorkDate >= monthStart && t.WorkDate <= today)
+                    .SumAsync(t => (int?)t.DurationMinutes) ?? 0,
+
+                TimesheetPeopleThisMonth = await _context.TimesheetEntries
+                    .Where(t => t.WorkDate >= monthStart && t.WorkDate <= today)
+                    .Select(t => t.EmployeeId)
+                    .Distinct()
+                    .CountAsync(),
 
                 LicensesExpired = await _context.Licenses
                     .CountAsync(l =>

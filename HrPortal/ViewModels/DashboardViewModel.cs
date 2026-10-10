@@ -37,6 +37,13 @@ namespace HrPortal.ViewModels
 
         public int MyAssets { get; set; }
 
+        /// <summary>Set when the employee's department keeps timesheets.</summary>
+        public bool KeepsTimesheet { get; set; }
+
+        public int TimesheetMinutesThisWeek { get; set; }
+
+        public int TimesheetEntriesThisWeek { get; set; }
+
         public decimal DaysTakenThisYear { get; set; }
 
         public DateTime? NextLeaveStart { get; set; }
@@ -113,6 +120,10 @@ namespace HrPortal.ViewModels
         public int LicensesExpired { get; set; }
 
         public int LicensesExpiringSoon { get; set; }
+
+        public int TimesheetMinutesThisMonth { get; set; }
+
+        public int TimesheetPeopleThisMonth { get; set; }
 
         public bool HrApproverConfigured { get; set; }
 

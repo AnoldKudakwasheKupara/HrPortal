@@ -12,5 +12,8 @@ namespace HrPortal.ViewModels
         [Display(Name = "Description")]
         [StringLength(500)]
         public string? Description { get; set; }
+
+        [Display(Name = "Keeps timesheets")]
+        public bool TracksTimesheets { get; set; }
     }
 }

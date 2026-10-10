@@ -1,0 +1,330 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.TimesheetRegisterViewModel
+
+@{
+    ViewData["Title"] = "Timesheets";
+
+    string Hours(int minutes) => TimesheetEntry.FormatDuration(minutes);
+
+    var employees = ViewBag.Employees as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    var averagePerWorkingDay = Model.WorkingDays == 0
+        ? 0
+        : Model.TotalMinutes / Model.WorkingDays;
+
+    var from = Model.From.ToString("yyyy-MM-dd");
+    var to = Model.To.ToString("yyyy-MM-dd");
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Timesheets</h2>
+            <p class="text-muted mb-0">
+                Work logged by staff in the departments that keep
+                timesheets: what was done and how long it took.
+            </p>
+        </div>
+
+        <a class="btn btn-outline-primary"
+           asp-action="Export"
+           asp-route-employeeId="@Model.EmployeeId"
+           asp-route-category="@Model.Category"
+           asp-route-from="@from"
+           asp-route-to="@to">
+            <i class="fas fa-file-csv"></i> Export CSV
+        </a>
+    </div>
+
+
+    <div class="report-stats">
+
+        <div class="report-stat">
+            <span class="report-stat-label">Hours logged</span>
+            <span class="report-stat-value">@Hours(Model.TotalMinutes)</span>
+            <span class="report-stat-note">
+                @Model.From.ToString("d MMM") to @Model.To.ToString("d MMM yyyy")
+            </span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Entries</span>
+            <span class="report-stat-value">@Model.Entries.Count</span>
+            <span class="report-stat-note">Pieces of work recorded</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">People logging</span>
+            <span class="report-stat-value">@Model.People</span>
+            <span class="report-stat-note">With at least one entry</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Per working day</span>
+            <span class="report-stat-value">@Hours(averagePerWorkingDay)</span>
+            <span class="report-stat-note">
+                Across @Model.WorkingDays working @(Model.WorkingDays == 1 ? "day" : "days")
+            </span>
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label">Employee</label>
+                    <select name="employeeId" class="form-select">
+                        <option value="">Everyone</option>
+                        @foreach (var e in employees)
+                        {
+                            <option value="@e.Value"
+                                    selected="@(Model.EmployeeId?.ToString() == e.Value)">
+                                @e.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Type of work</label>
+                    <select name="category" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var c in Enum.GetValues<WorkCategory>())
+                        {
+                            <option value="@c" selected="@(Model.Category == c)">
+                                @c
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input type="date" name="from" class="form-control"
+                           value="@from" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input type="date" name="to" class="form-control"
+                           value="@to" />
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+    @if (Model.Entries.Any())
+    {
+        <div class="row g-3 mb-3">
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header"><strong>By person</strong></div>
+                    <div class="card-body is-table">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th class="num">Entries</th>
+                                        <th class="num">Days</th>
+                                        <th class="num">Hours</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var p in Model.ByPerson)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-action="Index"
+                                               asp-route-employeeId="@p.EmployeeId"
+                                               asp-route-category="@Model.Category"
+                                               asp-route-from="@from"
+                                               asp-route-to="@to">
+                                                @p.Name
+                                            </a>
+                                        </td>
+                                        <td>@p.Department</td>
+                                        <td class="num">@p.Entries</td>
+                                        <td class="num">@p.DaysLogged</td>
+                                        <td class="num"><strong>@Hours(p.Minutes)</strong></td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header"><strong>By type of work</strong></div>
+                    <div class="card-body is-table">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th class="num">Entries</th>
+                                        <th class="num">Hours</th>
+                                        <th class="num">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var c in Model.ByCategory)
+                                {
+                                    var share = Model.TotalMinutes == 0
+                                        ? 0
+                                        : (int)Math.Round(c.Minutes * 100m / Model.TotalMinutes);
+
+                                    <tr>
+                                        <td>
+                                            <a asp-action="Index"
+                                               asp-route-employeeId="@Model.EmployeeId"
+                                               asp-route-category="@c.Category"
+                                               asp-route-from="@from"
+                                               asp-route-to="@to">
+                                                @c.Category
+                                            </a>
+                                        </td>
+                                        <td class="num">@c.Entries</td>
+                                        <td class="num"><strong>@Hours(c.Minutes)</strong></td>
+                                        <td class="num">@share%</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    }
+
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Task</th>
+                            <th>Reference</th>
+                            <th>Asset</th>
+                            <th>When</th>
+                            <th class="num">Time</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Entries.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                Nothing was logged in this range.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var e in Model.Entries)
+                        {
+                            <tr>
+                                <td class="text-nowrap">
+                                    @e.WorkDate.ToString("ddd d MMM yyyy")
+                                </td>
+
+                                <td>
+                                    @e.Employee.FirstName @e.Employee.LastName
+                                    <div class="text-muted small">
+                                        @e.Employee.Department.Name
+                                    </div>
+                                </td>
+
+                                <td>@e.Category</td>
+
+                                <td>
+                                    <strong>@e.Title</strong>
+                                    @if (!string.IsNullOrWhiteSpace(e.Details))
+                                    {
+                                        <div class="text-muted small">@e.Details</div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(e.Reference) ? "--" : e.Reference)
+                                </td>
+
+                                <td>
+                                    @if (e.Asset != null)
+                                    {
+                                        @e.Asset.DeviceModel
+                                        @if (!string.IsNullOrWhiteSpace(e.Asset.SerialNumber))
+                                        {
+                                            <div class="text-muted small">@e.Asset.SerialNumber</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @if (e.StartTime.HasValue && e.EndTime.HasValue)
+                                    {
+                                        @e.StartTime.Value.ToString("HH:mm")
+                                        <text>&ndash;</text>
+                                        @e.EndTime.Value.ToString("HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                </td>
+
+                                <td class="num"><strong>@Hours(e.DurationMinutes)</strong></td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                    @if (Model.Entries.Any())
+                    {
+                        <tfoot>
+                            <tr>
+                                <td colspan="7" class="text-end"><strong>Total</strong></td>
+                                <td class="num"><strong>@Hours(Model.TotalMinutes)</strong></td>
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

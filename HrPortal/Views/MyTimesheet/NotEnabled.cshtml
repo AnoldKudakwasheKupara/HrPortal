@@ -1,0 +1,41 @@
+@model string?
+
+@{
+    ViewData["Title"] = "Timesheets Not Kept";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Timesheets Not Kept</h2>
+    </div>
+
+    <div class="alert alert-info">
+
+        <p>
+            Timesheets are kept by departments that do service work,
+            such as IT.
+            @if (!string.IsNullOrWhiteSpace(Model))
+            {
+                <text>Your department, <strong>@Model</strong>, does not keep them.</text>
+            }
+            else
+            {
+                <text>Your department does not keep them.</text>
+            }
+        </p>
+
+        <p class="mb-0">
+            If it should, an administrator can switch timesheets on
+            for the department under System &rsaquo; Departments.
+        </p>
+
+    </div>
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-secondary">
+        Back to Home
+    </a>
+
+</div>

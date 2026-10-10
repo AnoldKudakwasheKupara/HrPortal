@@ -74,7 +74,8 @@ namespace HrPortal.Controllers
             {
                 Name = name,
                 Description = model.Description?.Trim(),
-                IsActive = true
+                IsActive = true,
+                TracksTimesheets = model.TracksTimesheets
             };
 
             _context.Departments.Add(department);
@@ -103,7 +104,8 @@ namespace HrPortal.Controllers
                 Id = department.Id,
                 Name = department.Name,
                 Description = department.Description,
-                IsActive = department.IsActive
+                IsActive = department.IsActive,
+                TracksTimesheets = department.TracksTimesheets
             };
 
             return View(model);
@@ -146,6 +148,7 @@ namespace HrPortal.Controllers
             department.Name = name;
             department.Description = model.Description?.Trim();
             department.IsActive = model.IsActive;
+            department.TracksTimesheets = model.TracksTimesheets;
 
             await _context.SaveChangesAsync();
 

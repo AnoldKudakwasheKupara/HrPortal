@@ -197,6 +197,34 @@
             </div>
 
 
+            @if (Model.Mine.KeepsTimesheet)
+            {
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Mine.TimesheetEntriesThisWeek == 0 ? "is-action" : "is-good")"
+                   asp-controller="MyTimesheet"
+                   asp-action="Index">
+
+                    <i class="fas fa-stopwatch stat-icon" aria-hidden="true"></i>
+                    <span class="stat-label">Logged this week</span>
+
+                    <span class="stat-value">
+                        @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Mine.TimesheetMinutesThisWeek)
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Mine.TimesheetEntriesThisWeek == 0
+                            ? "Nothing logged yet"
+                            : $"{Model.Mine.TimesheetEntriesThisWeek} " +
+                              (Model.Mine.TimesheetEntriesThisWeek == 1 ? "entry" : "entries"))
+                    </div>
+
+                </a>
+
+            </div>
+            }
+
+
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile @(Model.Mine.UnreadNotifications > 0 ? "is-action" : "")"
@@ -1149,6 +1177,33 @@
                         @(Model.Admin.LicensesExpired == 0
                             ? $"{Model.Admin.LicensesExpiringSoon} due in {HrPortal.Controllers.LicenseController.ExpiringWindowDays} days"
                             : $"lapsed, {Model.Admin.LicensesExpiringSoon} due soon")
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile"
+                   asp-controller="Timesheet"
+                   asp-action="Index">
+
+                    <i class="fas fa-business-time stat-icon" aria-hidden="true"></i>
+
+                    <span class="stat-label">Timesheet hours</span>
+
+                    <span class="stat-value">
+                        @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Admin.TimesheetMinutesThisMonth)
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Admin.TimesheetPeopleThisMonth == 0
+                            ? "Nothing logged this month"
+                            : $"{Model.Admin.TimesheetPeopleThisMonth} " +
+                              (Model.Admin.TimesheetPeopleThisMonth == 1 ? "person" : "people") +
+                              " logging this month")
                     </div>
 
                 </a>

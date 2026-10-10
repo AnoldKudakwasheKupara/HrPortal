@@ -2,6 +2,8 @@
     idiom: .nav-group headings with .nav-item links and Font
     Awesome icons, active state on the controller.           *@
 
+@inject HrPortal.Services.TimesheetAccessService TimesheetAccess
+
 @{
     var ctrl = ViewContext.RouteData.Values["controller"] as string;
     var act = ViewContext.RouteData.Values["action"] as string;
@@ -20,6 +22,10 @@
     var isAdmin = User.IsInRole("Administrator");
     var isHr = User.IsInRole("HR Officer");
     var isMd = User.IsInRole("MD");
+
+    // Only departments that keep timesheets (IT, typically) see the
+    // link, so everyone else's menu stays uncluttered.
+    var keepsTimesheet = (await TimesheetAccess.GetAsync()).Enabled;
 }
 
 <nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation">
@@ -58,6 +64,14 @@
        asp-controller="MyAssets" asp-action="Index">
         <i class="fas fa-laptop"></i> My Assets
     </a>
+
+    @if (keepsTimesheet)
+    {
+        <a class="nav-item @On("MyTimesheet")"
+           asp-controller="MyTimesheet" asp-action="Index">
+            <i class="fas fa-stopwatch"></i> My Timesheet
+        </a>
+    }
 
     <a class="nav-item @On("MyNotifications")"
        asp-controller="MyNotifications" asp-action="Index">
@@ -213,6 +227,11 @@
         <a class="nav-item @On("License")"
            asp-controller="License" asp-action="Index">
             <i class="fas fa-certificate"></i> Licence Renewals
+        </a>
+
+        <a class="nav-item @On("Timesheet")"
+           asp-controller="Timesheet" asp-action="Index">
+            <i class="fas fa-business-time"></i> Timesheets
         </a>
 
         <a class="nav-item @On("AuditLog")"

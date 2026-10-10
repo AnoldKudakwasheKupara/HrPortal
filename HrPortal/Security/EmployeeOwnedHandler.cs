@@ -58,6 +58,11 @@ namespace HrPortal.Security
 
                 Notification => false,
 
+                // Timesheets are the owner's own record. The
+                // administrator reads them through the register, not
+                // through this handler.
+                TimesheetEntry => false,
+
                 _ => false
             };
         }

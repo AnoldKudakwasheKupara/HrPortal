@@ -66,6 +66,13 @@
                                 <strong>
                                     @department.Name
                                 </strong>
+                                @if (department.TracksTimesheets)
+                                {
+                                    <span class="badge bg-info ms-1"
+                                          title="Staff in this department keep timesheets">
+                                        Timesheets
+                                    </span>
+                                }
                             </td>
 
                             <td>
