@@ -1,0 +1,165 @@
+@using HrPortal.Entities
+@using HrPortal.Services
+@model HrPortal.Entities.WeeklyReport
+
+@{
+    ViewData["Title"] = "Weekly Report";
+
+    var sections = Model.Sections
+        .OrderBy(s => s.Order)
+        .Where(s => !string.IsNullOrWhiteSpace(s.Body)
+                 || !string.IsNullOrWhiteSpace(s.Workstream))
+        .ToList();
+
+    var priorities = Model.Priorities.OrderBy(p => p.Order).ToList();
+
+    var nextNumber = (sections.Any() ? sections.Max(s => s.Order) : 0) + 1;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>
+                @Model.PeriodStart.ToString("dd MMM")
+                &ndash;
+                @Model.PeriodEnd.ToString("dd MMM yyyy")
+            </h2>
+
+            <div class="detail-badges">
+                @if (Model.Status == WeeklyReportStatus.Final)
+                {
+                    <span class="badge bg-success">
+                        Issued @(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "")
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark">Draft</span>
+                }
+
+                <span class="badge bg-light text-dark">
+                    Prepared by @Model.PreparedBy
+                </span>
+            </div>
+        </div>
+
+        <div class="page-head-actions">
+            <a asp-action="Pdf" asp-route-id="@Model.Id"
+               class="btn btn-primary">Download PDF</a>
+
+            <a asp-action="Edit" asp-route-id="@Model.Id"
+               class="btn btn-outline-primary">Edit</a>
+
+            <a asp-action="Index" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">Executive Overview</div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(Model.ExecutiveOverview))
+            {
+                <p class="field-value mb-0">@Model.ExecutiveOverview</p>
+            }
+            else
+            {
+                <p class="field-value is-empty mb-0">
+                    Not written yet. The report cannot be issued without it.
+                </p>
+            }
+        </div>
+
+    </div>
+
+
+    @foreach (var s in sections)
+    {
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>@s.Order.ToString("00"). @s.Heading</span>
+
+                @if (WeeklyReportPdfService.StatusLabel(s.WorkstreamStatus) is string label)
+                {
+                    <span class="badge bg-light text-dark">@label</span>
+                }
+            </div>
+
+            <div class="card-body">
+
+                @if (!string.IsNullOrWhiteSpace(s.Workstream))
+                {
+                    <p class="fw-semibold mb-2">@s.Workstream</p>
+                }
+
+                @{
+                    var lines = WeeklyReportPdfService.Lines(s.Body);
+                }
+
+                @if (lines.Any())
+                {
+                    <ul class="mb-0">
+                        @foreach (var line in lines)
+                        {
+                            <li class="mb-2">@line</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="field-value is-empty mb-0">
+                        Nothing recorded under this section.
+                    </p>
+                }
+
+            </div>
+
+        </div>
+    }
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            @nextNumber.ToString("00"). Priorities for the Next Reporting Period
+        </div>
+
+        <div class="card-body">
+            @if (priorities.Any())
+            {
+                <ul class="mb-0">
+                    @foreach (var p in priorities)
+                    {
+                        <li class="mb-2">
+                            @p.Text
+                            @if (p.CarriedForward)
+                            {
+                                <span class="badge bg-light text-dark">
+                                    Carried forward
+                                </span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="field-value is-empty mb-0">
+                    No priorities recorded for the next period.
+                </p>
+            }
+        </div>
+
+    </div>
+
+</div>

@@ -121,6 +121,12 @@ namespace HrPortal.ViewModels
 
         public int LicensesExpiringSoon { get; set; }
 
+        public int ActivitiesThisWeek { get; set; }
+
+        public int ActivitiesOutstanding { get; set; }
+
+        public bool WeeklyReportDue { get; set; }
+
         public int TimesheetMinutesThisMonth { get; set; }
 
         public int TimesheetPeopleThisMonth { get; set; }

@@ -1,0 +1,76 @@
+@using HrPortal.Entities
+@model HrPortal.Entities.WeeklyReport
+
+@{ ViewData["Title"] = "Delete Weekly Report"; }
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Delete Weekly Report</h2>
+        <p class="text-muted">
+            The report and everything written in it will be removed.
+        </p>
+    </div>
+
+    <div class="alert alert-warning">
+        @if (Model.Status == WeeklyReportStatus.Final)
+        {
+            <text>
+                <strong>This report has already been issued.</strong>
+                Deleting it leaves no record of what was reported for
+                this period, and the next draft will carry forward the
+                priorities from an earlier week instead.
+            </text>
+        }
+        else
+        {
+            <text>
+                Its @Model.Sections.Count sections and
+                @Model.Priorities.Count priorities go with it.
+            </text>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-5 mb-3">
+                    <span class="field-label">Reporting period</span>
+                    <p class="field-value">
+                        @Model.PeriodStart.ToString("dd MMM")
+                        &ndash;
+                        @Model.PeriodEnd.ToString("dd MMM yyyy")
+                    </p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Prepared by</span>
+                    <p class="field-value">@Model.PreparedBy</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Status</span>
+                    <p class="field-value">
+                        @(Model.Status == WeeklyReportStatus.Final
+                            ? "Issued"
+                            : "Draft")
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Delete Report</button>
+        </form>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+    </div>
+
+</div>

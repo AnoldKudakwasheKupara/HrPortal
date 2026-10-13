@@ -10,6 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// QuestPDF Community licence: free for organisations under the
+// revenue threshold set out in its licensing terms.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -83,6 +87,12 @@ builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
+builder.Services.AddScoped<WeeklyReportBuilder>();
+builder.Services.AddSingleton<WeeklyReportPdfService>();
+
+builder.Services.Configure<WeeklyReportBranding>(
+    builder.Configuration.GetSection(WeeklyReportBranding.Section));
+
 
 builder.Services.AddScoped<
     IAuthorizationHandler,
@@ -127,6 +137,10 @@ using (var scope = app.Services.CreateScope())
         await DbSeeder.SeedAdministratorAsync(
             userManager,
             roleManager);
+
+        await DbSeeder.SeedAdministratorEmployeeAsync(
+            userManager,
+            db);
 
         await DbSeeder.BackfillEmployeeRoleAsync(
             userManager,

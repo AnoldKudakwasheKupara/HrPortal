@@ -72,10 +72,140 @@ namespace HrPortal.Data
         }
 
         /// <summary>
+        /// The administrator is the IT person, so they get an employee
+        /// record in the IT department (created if there is none), which
+        /// puts them on the timesheet like the rest of the team. Runs on
+        /// every start and only fills what is missing.
+        /// </summary>
+        public static async Task SeedAdministratorEmployeeAsync(
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context)
+        {
+            const string email = "admin@hrportal.local";
+
+            var admin = await userManager.FindByEmailAsync(email);
+
+            if (admin == null)
+                return;
+
+            var department = await FindOrCreateItDepartmentAsync(context);
+
+            var employee = await context.Employees
+                .FirstOrDefaultAsync(e =>
+                    e.UserId == admin.Id ||
+                    e.Email.ToLower() == email);
+
+            if (employee == null)
+            {
+                context.Employees.Add(new Employee
+                {
+                    EmployeeNumber = await UniqueEmployeeNumberAsync(
+                        context,
+                        "ADMIN"),
+                    FirstName = "System",
+                    LastName = "Administrator",
+                    Email = email,
+                    DateJoined = DateTime.Today,
+                    DepartmentId = department.Id,
+                    UserId = admin.Id,
+                    IsActive = true
+                });
+
+                await context.SaveChangesAsync();
+                return;
+            }
+
+            // A record already exists: make sure it is linked to the
+            // sign-in and sitting in IT, without touching anything else.
+            var changed = false;
+
+            if (employee.UserId == null)
+            {
+                employee.UserId = admin.Id;
+                changed = true;
+            }
+
+            if (employee.DepartmentId != department.Id)
+            {
+                employee.DepartmentId = department.Id;
+                changed = true;
+            }
+
+            if (changed)
+                await context.SaveChangesAsync();
+        }
+
+        private static readonly string[] ItDepartmentNames =
+        {
+            "IT", "ICT", "I.T.", "I.T", "IT DEPARTMENT", "ICT DEPARTMENT",
+            "INFORMATION TECHNOLOGY",
+            "INFORMATION TECHNOLOGY DEPARTMENT",
+            "INFORMATION AND COMMUNICATION TECHNOLOGY",
+            "INFORMATION & COMMUNICATION TECHNOLOGY",
+            "INFORMATION COMMUNICATION TECHNOLOGY",
+            "IT SUPPORT", "IT SERVICES", "TECHNOLOGY"
+        };
+
+        private static async Task<Department> FindOrCreateItDepartmentAsync(
+            ApplicationDbContext context)
+        {
+            var departments = await context.Departments.ToListAsync();
+
+            var existing = departments
+                .Where(d => ItDepartmentNames.Contains(
+                    d.Name.Trim().ToUpperInvariant()))
+                .OrderByDescending(d => d.IsActive)
+                .ThenByDescending(d => d.TracksTimesheets)
+                .FirstOrDefault();
+
+            if (existing != null)
+            {
+                if (!existing.IsActive || !existing.TracksTimesheets)
+                {
+                    existing.IsActive = true;
+                    existing.TracksTimesheets = true;
+                    await context.SaveChangesAsync();
+                }
+
+                return existing;
+            }
+
+            var department = new Department
+            {
+                Name = "IT",
+                Description = "Information Technology",
+                IsActive = true,
+                TracksTimesheets = true
+            };
+
+            context.Departments.Add(department);
+
+            await context.SaveChangesAsync();
+
+            return department;
+        }
+
+        private static async Task<string> UniqueEmployeeNumberAsync(
+            ApplicationDbContext context,
+            string preferred)
+        {
+            var number = preferred;
+            var suffix = 1;
+
+            while (await context.Employees
+                .AnyAsync(e => e.EmployeeNumber == number))
+            {
+                number = preferred + "-" + (++suffix);
+            }
+
+            return number;
+        }
+
+        /// <summary>
         /// Employee is the baseline role, so any account that predates
         /// that rule, or lost the role some other way, is given it back
-        /// on startup. The administrator account is left alone: it is
-        /// not a member of staff.
+        /// on startup. The administrator picks it up too, now that they
+        /// have an employee record.
         /// </summary>
         public static async Task BackfillEmployeeRoleAsync(
             UserManager<ApplicationUser> userManager,

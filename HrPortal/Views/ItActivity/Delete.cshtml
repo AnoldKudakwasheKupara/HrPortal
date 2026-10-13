@@ -1,0 +1,53 @@
+@model HrPortal.Entities.ItActivity
+
+@{ ViewData["Title"] = "Delete Activity"; }
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Delete Activity</h2>
+        <p class="text-muted">
+            This entry will be removed from the log permanently.
+        </p>
+    </div>
+
+    <div class="alert alert-warning">
+        Weekly reports already issued keep whatever they said, but the
+        counts on any future report will no longer include this entry.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Date</span>
+                    <p class="field-value">@Model.LoggedOn.ToString("d MMM yyyy")</p>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <span class="field-label">Category</span>
+                    <p class="field-value">@Model.Category</p>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">What came up</span>
+                    <p class="field-value">@Model.Summary</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Delete Activity</button>
+        </form>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+
+    </div>
+
+</div>

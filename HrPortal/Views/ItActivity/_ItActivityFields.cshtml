@@ -1,0 +1,126 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.ItActivityCreateViewModel
+
+@{
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+
+    string Label(ItActivityStatus s) => s switch
+    {
+        ItActivityStatus.InProgress => "In progress",
+        _ => s.ToString()
+    };
+}
+
+<div class="row">
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="LoggedOn" class="form-label"></label>
+        <input asp-for="LoggedOn" class="form-control" type="date" />
+        <span asp-validation-for="LoggedOn" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="Category" class="form-label"></label>
+        <select asp-for="Category" class="form-select"
+                asp-items="Html.GetEnumSelectList<ItActivityCategory>()">
+        </select>
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Summary" class="form-label"></label>
+        <input asp-for="Summary" class="form-control"
+               placeholder="Outlook not sending for reception" />
+        <span asp-validation-for="Summary" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-3">
+    <label asp-for="ActionTaken" class="form-label"></label>
+    <textarea asp-for="ActionTaken" class="form-control" rows="3"
+              placeholder="Rebuilt the Outlook profile and re-added the mailbox. Sending confirmed."></textarea>
+    <div class="form-text">
+        A sentence here is what the weekly report quotes back.
+    </div>
+    <span asp-validation-for="ActionTaken" class="text-danger"></span>
+</div>
+
+<div class="section-heading">Who and what it involved</div>
+
+<div class="row">
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="RaisedByEmployeeId" class="form-label"></label>
+        <select asp-for="RaisedByEmployeeId" class="form-select">
+            <option value="">-- Not on the staff register --</option>
+            @foreach (var e in Items(ViewBag.Employees))
+            {
+                <option value="@e.Value"
+                        selected="@(Model.RaisedByEmployeeId?.ToString() == e.Value)">
+                    @e.Text
+                </option>
+            }
+        </select>
+        <span asp-validation-for="RaisedByEmployeeId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="RaisedByOther" class="form-label"></label>
+        <input asp-for="RaisedByOther" class="form-control"
+               placeholder="Elizabeth, external auditor, nobody" />
+        <div class="form-text">Only used when nobody is picked above.</div>
+        <span asp-validation-for="RaisedByOther" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="AssetId" class="form-label"></label>
+        <select asp-for="AssetId" class="form-select">
+            <option value="">-- No particular machine --</option>
+            @foreach (var a in Items(ViewBag.Assets))
+            {
+                <option value="@a.Value"
+                        selected="@(Model.AssetId?.ToString() == a.Value)">
+                    @a.Text
+                </option>
+            }
+        </select>
+        <span asp-validation-for="AssetId" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="section-heading">Where it stands</div>
+
+<div class="row">
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            @foreach (var s in Enum.GetValues<ItActivityStatus>())
+            {
+                <option value="@s" selected="@(Model.Status == s)">
+                    @Label(s)
+                </option>
+            }
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResolvedOn" class="form-label"></label>
+        <input asp-for="ResolvedOn" class="form-control" type="date" />
+        <div class="form-text">Ignored unless the status is Resolved.</div>
+        <span asp-validation-for="ResolvedOn" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="form-check mb-4">
+    <input asp-for="IsNotable" class="form-check-input" />
+    <label asp-for="IsNotable" class="form-check-label">
+        Worth naming in the weekly report, not just counting
+    </label>
+</div>

@@ -454,6 +454,72 @@ namespace HrPortal.Migrations
                     b.ToTable("EmployeeDocuments");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.ItActivity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionTaken")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("AssetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsNotable")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LoggedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("LoggedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RaisedByEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RaisedByOther")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ResolvedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("LoggedOn");
+
+                    b.HasIndex("RaisedByEmployeeId");
+
+                    b.HasIndex("Status", "LoggedOn");
+
+                    b.ToTable("ItActivities");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.LeaveBalance", b =>
                 {
                     b.Property<int>("Id")
@@ -1039,6 +1105,116 @@ namespace HrPortal.Migrations
                     b.ToTable("Vendors");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExecutiveOverview")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("FinalisedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodEnd")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PreparedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PeriodStart")
+                        .IsUnique();
+
+                    b.ToTable("WeeklyReports");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReportPriority", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CarriedForward")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("WeeklyReportId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WeeklyReportId");
+
+                    b.ToTable("WeeklyReportPriorities");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReportSection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Heading")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WeeklyReportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Workstream")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("WorkstreamStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WeeklyReportId");
+
+                    b.ToTable("WeeklyReportSections");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -1265,6 +1441,23 @@ namespace HrPortal.Migrations
                     b.Navigation("UploadedByEmployee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.ItActivity", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Asset", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HrPortal.Entities.Employee", "RaisedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("RaisedByEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("RaisedByEmployee");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.LeaveBalance", b =>
                 {
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
@@ -1439,6 +1632,28 @@ namespace HrPortal.Migrations
                     b.Navigation("UploadedByEmployee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReportPriority", b =>
+                {
+                    b.HasOne("HrPortal.Entities.WeeklyReport", "Report")
+                        .WithMany("Priorities")
+                        .HasForeignKey("WeeklyReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Report");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReportSection", b =>
+                {
+                    b.HasOne("HrPortal.Entities.WeeklyReport", "Report")
+                        .WithMany("Sections")
+                        .HasForeignKey("WeeklyReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Report");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
@@ -1541,6 +1756,13 @@ namespace HrPortal.Migrations
                     b.Navigation("Assignments");
 
                     b.Navigation("Materials");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReport", b =>
+                {
+                    b.Navigation("Priorities");
+
+                    b.Navigation("Sections");
                 });
 #pragma warning restore 612, 618
         }

@@ -316,6 +316,7 @@ namespace HrPortal.Controllers
         private async Task<AdminDashboardSection> BuildAdminAsync()
         {
             var today = DateTime.Today;
+            var weekStart = MyTimesheetController.WeekStart(today);
             var monthStart = new DateTime(today.Year, today.Month, 1);
 
             return new AdminDashboardSection
@@ -379,6 +380,19 @@ namespace HrPortal.Controllers
                         l.ExpiryDate >= today &&
                         l.ExpiryDate <= today.AddDays(
                             LicenseController.ExpiringWindowDays)),
+
+                ActivitiesThisWeek = await _context.ItActivities
+                    .CountAsync(a => a.LoggedOn >= weekStart),
+
+                ActivitiesOutstanding = await _context.ItActivities
+                    .CountAsync(a => a.Status != ItActivityStatus.Resolved),
+
+                // Due once the working week is over and nothing has
+                // been drafted for it.
+                WeeklyReportDue =
+                    today.DayOfWeek >= DayOfWeek.Friday &&
+                    !await _context.WeeklyReports
+                        .AnyAsync(r => r.PeriodStart == weekStart),
 
                 HrApproverConfigured =
                     await _context.ApprovalConfigurations

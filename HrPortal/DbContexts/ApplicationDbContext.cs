@@ -33,6 +33,10 @@ namespace HrPortal.DbContexts
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
+        public DbSet<ItActivity> ItActivities { get; set; }
+        public DbSet<WeeklyReport> WeeklyReports { get; set; }
+        public DbSet<WeeklyReportSection> WeeklyReportSections { get; set; }
+        public DbSet<WeeklyReportPriority> WeeklyReportPriorities { get; set; }
         public DbSet<License> Licenses { get; set; }
         public DbSet<LicenseRenewal> LicenseRenewals { get; set; }
         public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
@@ -419,6 +423,96 @@ namespace HrPortal.DbContexts
                 entity.HasOne(r => r.License)
                     .WithMany(l => l.Renewals)
                     .HasForeignKey(r => r.LicenseId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ItActivity>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+
+                entity.Property(a => a.Summary)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(a => a.Category)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(a => a.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(a => a.ActionTaken).HasMaxLength(2000);
+                entity.Property(a => a.RaisedByOther).HasMaxLength(200);
+                entity.Property(a => a.LoggedBy).HasMaxLength(200);
+
+                // Removing a person or retiring a machine must not
+                // erase the record of the work done.
+                entity.HasOne(a => a.RaisedByEmployee)
+                    .WithMany()
+                    .HasForeignKey(a => a.RaisedByEmployeeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(a => a.Asset)
+                    .WithMany()
+                    .HasForeignKey(a => a.AssetId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(a => a.LoggedOn);
+                entity.HasIndex(a => new { a.Status, a.LoggedOn });
+            });
+
+            builder.Entity<WeeklyReport>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.PreparedBy)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(r => r.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(r => r.ExecutiveOverview).HasMaxLength(4000);
+
+                // One report per reporting period.
+                entity.HasIndex(r => r.PeriodStart).IsUnique();
+            });
+
+            builder.Entity<WeeklyReportSection>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+
+                entity.Property(s => s.Heading)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(s => s.Workstream).HasMaxLength(200);
+
+                entity.Property(s => s.WorkstreamStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(40);
+
+                entity.Property(s => s.Body).HasMaxLength(8000);
+
+                entity.HasOne(s => s.Report)
+                    .WithMany(r => r.Sections)
+                    .HasForeignKey(s => s.WeeklyReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<WeeklyReportPriority>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.Text)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.HasOne(p => p.Report)
+                    .WithMany(r => r.Priorities)
+                    .HasForeignKey(p => p.WeeklyReportId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

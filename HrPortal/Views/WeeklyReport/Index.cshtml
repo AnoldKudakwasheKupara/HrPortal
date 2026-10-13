@@ -1,0 +1,174 @@
+@using HrPortal.Entities
+@model IEnumerable<HrPortal.Entities.WeeklyReport>
+
+@{
+    ViewData["Title"] = "Weekly Reports";
+
+    var nextStart = (DateTime)ViewBag.NextPeriodStart;
+    var unlogged = (int)ViewBag.UnloggedDays;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Weekly Reports</h2>
+            <p class="text-muted mb-0">
+                The IT department status report, drafted from the
+                activity log and issued as a PDF.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">New Report</a>
+    </div>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+
+    <div class="report-stats">
+
+        <div class="report-stat">
+            <span class="report-stat-label">Issued</span>
+            <span class="report-stat-value">@ViewBag.Issued</span>
+            <span class="report-stat-note">Final reports on file</span>
+        </div>
+
+        <div class="report-stat @(((int)ViewBag.Drafts) > 0 ? "is-warning" : "")">
+            <span class="report-stat-label">In draft</span>
+            <span class="report-stat-value">@ViewBag.Drafts</span>
+            <span class="report-stat-note">Not yet issued</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Next period</span>
+            <span class="report-stat-value" style="font-size:1.25rem">
+                @nextStart.ToString("d MMM")
+            </span>
+            <span class="report-stat-note">
+                to @nextStart.AddDays(4).ToString("d MMM yyyy")
+            </span>
+        </div>
+
+        <a class="report-stat @(unlogged > 0 ? "is-warning" : "is-good")"
+           asp-controller="ItActivity" asp-action="Index"
+           asp-route-from="@nextStart.ToString("yyyy-MM-dd")"
+           asp-route-to="@nextStart.AddDays(4).ToString("yyyy-MM-dd")">
+            <span class="report-stat-label">Days not logged</span>
+            <span class="report-stat-value">@unlogged</span>
+            <span class="report-stat-note">
+                @(unlogged == 0
+                    ? "This period is up to date"
+                    : "Log these before drafting")
+            </span>
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Reporting period</th>
+                            <th>Prepared by</th>
+                            <th class="num">Sections</th>
+                            <th class="num">Priorities</th>
+                            <th>Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No reports yet. Log a week's activity, then
+                                start a report.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>
+                                        @r.PeriodStart.ToString("dd MMM")
+                                        &ndash;
+                                        @r.PeriodEnd.ToString("dd MMM yyyy")
+                                    </strong>
+                                </td>
+
+                                <td>@r.PreparedBy</td>
+
+                                <td class="num">
+                                    @r.Sections.Count(s =>
+                                        !string.IsNullOrWhiteSpace(s.Body) ||
+                                        !string.IsNullOrWhiteSpace(s.Workstream))
+                                </td>
+
+                                <td class="num">@r.Priorities.Count</td>
+
+                                <td>
+                                    @if (r.Status == WeeklyReportStatus.Final)
+                                    {
+                                        <span class="badge bg-success">
+                                            Issued
+                                            @(r.FinalisedOn?.ToString("d MMM") ?? "")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Draft
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Pdf" asp-route-id="@r.Id">
+                                            PDF
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Details" asp-route-id="@r.Id">
+                                            View
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit" asp-route-id="@r.Id">
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger"
+                                           asp-action="Delete" asp-route-id="@r.Id">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
