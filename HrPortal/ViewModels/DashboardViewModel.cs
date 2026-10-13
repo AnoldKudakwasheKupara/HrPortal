@@ -80,6 +80,10 @@ namespace HrPortal.ViewModels
     {
         public int AwaitingFinalApproval { get; set; }
 
+        public int RequisitionsAwaitingApproval { get; set; }
+
+        public decimal RequisitionValueAwaiting { get; set; }
+
         public int ApprovedThisMonth { get; set; }
 
         public int RejectedThisMonth { get; set; }
@@ -126,6 +130,10 @@ namespace HrPortal.ViewModels
         public int ActivitiesOutstanding { get; set; }
 
         public bool WeeklyReportDue { get; set; }
+
+        public int RequisitionsAwaitingReview { get; set; }
+
+        public decimal RequisitionValueInReview { get; set; }
 
         public int TimesheetMinutesThisMonth { get; set; }
 

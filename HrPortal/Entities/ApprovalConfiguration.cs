@@ -1,4 +1,6 @@
-﻿namespace HrPortal.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace HrPortal.Entities
 {
     public class ApprovalConfiguration
     {
@@ -15,7 +17,13 @@
 
     public enum ApprovalRole
     {
+        [Display(Name = "HR Officer")]
         HROfficer,
-        MD
+
+        [Display(Name = "Managing Director")]
+        MD,
+
+        [Display(Name = "Requisition Reviewer")]
+        RequisitionReviewer
     }
 }

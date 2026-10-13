@@ -792,6 +792,30 @@
                 </a>
 
             </div>
+.
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Md.RequisitionsAwaitingApproval > 0 ? "is-action" : "is-good")"
+                   asp-controller="RequisitionApproval"
+                   asp-action="FinalApproval">
+
+                    <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
+                    <span class="stat-label">Requisitions to approve</span>
+
+                    <span class="stat-value">
+                        @Model.Md.RequisitionsAwaitingApproval
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Md.RequisitionsAwaitingApproval == 0
+                            ? "Nothing waiting"
+                            : $"{Model.Md.RequisitionValueAwaiting:N2} in value")
+                    </div>
+
+                </a>
+
+            </div>
 
 
             <div class="col-6 col-lg-3">
@@ -1202,6 +1226,30 @@
                         @(Model.Admin.WeeklyReportDue
                             ? "Weekly report not drafted yet"
                             : $"{Model.Admin.ActivitiesOutstanding} still outstanding")
+                    </div>
+
+                </a>
+
+            </div>
+.
+
+            <div class="col-6 col-lg-3">
+
+                <a class="stat-tile @(Model.Admin.RequisitionsAwaitingReview > 0 ? "is-action" : "is-good")"
+                   asp-controller="RequisitionApproval"
+                   asp-action="Index">
+
+                    <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
+                    <span class="stat-label">Requisitions to review</span>
+
+                    <span class="stat-value">
+                        @Model.Admin.RequisitionsAwaitingReview
+                    </span>
+
+                    <div class="stat-note">
+                        @(Model.Admin.RequisitionsAwaitingReview == 0
+                            ? "Nothing waiting"
+                            : $"{Model.Admin.RequisitionValueInReview:N2} in value")
                     </div>
 
                 </a>

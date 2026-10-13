@@ -260,6 +260,14 @@ namespace HrPortal.Controllers
 
             return new MdDashboardSection
             {
+                RequisitionsAwaitingApproval = await _context.Requisitions
+                    .CountAsync(r =>
+                        r.Status == RequisitionStatus.ReviewApproved),
+
+                RequisitionValueAwaiting = await _context.Requisitions
+                    .Where(r => r.Status == RequisitionStatus.ReviewApproved)
+                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m,
+
                 AwaitingFinalApproval = await _context.LeaveRequests
                     .CountAsync(r =>
                         r.Status == LeaveRequestStatus.HRApproved ||
@@ -368,6 +376,13 @@ namespace HrPortal.Controllers
                     .Select(t => t.EmployeeId)
                     .Distinct()
                     .CountAsync(),
+
+                RequisitionsAwaitingReview = await _context.Requisitions
+                    .CountAsync(r => r.Status == RequisitionStatus.Submitted),
+
+                RequisitionValueInReview = await _context.Requisitions
+                    .Where(r => r.Status == RequisitionStatus.Submitted)
+                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m,
 
                 LicensesExpired = await _context.Licenses
                     .CountAsync(l =>

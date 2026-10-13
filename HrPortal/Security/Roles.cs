@@ -26,6 +26,9 @@
         public const string AnyManager =
             Administrator + "," + HrOfficer + "," + Md;
 
+        public const string AdminOrMd =
+            Administrator + "," + Md;
+
         public const string MdOnly = Md;
     }
 }

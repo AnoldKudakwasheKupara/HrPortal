@@ -88,6 +88,10 @@ builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
+builder.Services.AddScoped<RequisitionWorkflowService>();
+
+builder.Services.Configure<RequisitionOptions>(
+    builder.Configuration.GetSection(RequisitionOptions.Section));
 builder.Services.AddSingleton<WeeklyReportPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(

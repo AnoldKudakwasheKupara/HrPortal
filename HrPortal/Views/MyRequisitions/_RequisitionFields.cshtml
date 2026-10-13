@@ -1,0 +1,127 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.RequisitionEditViewModel
+
+@{
+    List<SelectListItem> Items(object? bag) =>
+        bag as List<SelectListItem> ?? new List<SelectListItem>();
+
+    var currency = ViewBag.Currency as string ?? "USD";
+    var threshold = (decimal)(ViewBag.Threshold ?? 0m);
+}
+
+<div class="row">
+
+    <div class="col-md-8 mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control"
+               placeholder="Replacement laptop for reception" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="NeededBy" class="form-label"></label>
+        <input asp-for="NeededBy" class="form-control" type="date" />
+        <span asp-validation-for="NeededBy" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-3">
+    <label asp-for="Justification" class="form-label"></label>
+    <textarea asp-for="Justification" class="form-control" rows="3"
+              placeholder="Why it is needed, and what happens if it is not approved."></textarea>
+    <span asp-validation-for="Justification" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="VendorId" class="form-label"></label>
+    <select asp-for="VendorId" class="form-select">
+        <option value="">-- No particular vendor --</option>
+        @foreach (var v in Items(ViewBag.Vendors))
+        {
+            <option value="@v.Value"
+                    selected="@(Model.VendorId?.ToString() == v.Value)">
+                @v.Text
+            </option>
+        }
+    </select>
+    <div class="form-text">
+        A suggestion only. Whoever places the order can use someone else.
+    </div>
+</div>
+
+<div class="section-heading">What is being requested</div>
+
+<div class="table-responsive mb-2">
+    <table class="table align-middle">
+
+        <thead>
+            <tr>
+                <th style="min-width:16rem">Item or service</th>
+                <th style="width:7rem">Qty</th>
+                <th style="width:8rem">Unit</th>
+                <th style="width:10rem">Est. unit cost</th>
+                <th>Notes</th>
+                <th style="width:5rem">Drop</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        @for (var i = 0; i < Model.Lines.Count; i++)
+        {
+            <tr>
+                <td>
+                    <input type="hidden" asp-for="Lines[i].Id" />
+                    <input asp-for="Lines[i].Description"
+                           class="form-control"
+                           placeholder="Dell Latitude 5450, i5, 16GB" />
+                </td>
+
+                <td>
+                    <input asp-for="Lines[i].Quantity"
+                           class="form-control" type="number"
+                           step="0.01" min="0" />
+                </td>
+
+                <td>
+                    <input asp-for="Lines[i].UnitOfMeasure"
+                           class="form-control" placeholder="each" />
+                </td>
+
+                <td>
+                    <input asp-for="Lines[i].EstimatedUnitCost"
+                           class="form-control" type="number"
+                           step="0.01" min="0" />
+                </td>
+
+                <td>
+                    <input asp-for="Lines[i].Notes" class="form-control" />
+                </td>
+
+                <td class="text-center">
+                    @if (Model.Lines[i].Id != 0)
+                    {
+                        <input asp-for="Lines[i].Remove"
+                               class="form-check-input" />
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+
+    </table>
+</div>
+
+<div class="alert alert-info">
+    Leave spare rows blank &mdash; they are ignored. Saving keeps the
+    rows you filled in and gives you two fresh ones.
+
+    @if (threshold > 0)
+    {
+        <div class="mt-2 mb-0">
+            Anything estimated at <strong>@currency @threshold.ToString("N2")</strong>
+            or more goes to the Managing Director after review. Below
+            that, review is the final approval.
+        </div>
+    }
+</div>

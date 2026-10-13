@@ -1,0 +1,58 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.RequisitionEditViewModel
+
+@{ ViewData["Title"] = "Edit Requisition"; }
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>@Model.RequisitionNumber</h2>
+        <p class="text-muted">
+            @if (Model.Status == RequisitionStatus.ReturnedToRequester)
+            {
+                <text>
+                    This was sent back for amendment. Make the changes and
+                    submit it again.
+                </text>
+            }
+            else
+            {
+                <text>Still a draft. Nobody has seen it yet.</text>
+            }
+        </p>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Status" />
+                <input type="hidden" asp-for="RequisitionNumber" />
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <partial name="_RequisitionFields" model="Model" />
+                <div class="d-flex gap-2">
+                    <button type="submit" name="submit" value="true"
+                            class="btn btn-primary">
+                        @(Model.Status == RequisitionStatus.ReturnedToRequester
+                            ? "Resubmit for Review"
+                            : "Submit for Review")
+                    </button>
+                    <button type="submit" class="btn btn-outline-primary">
+                        Save Changes
+                    </button>
+                    <a asp-action="Details" asp-route-id="@Model.Id"
+                       class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -52,7 +52,7 @@ namespace HrPortal.Services
                         // Bundled with QuestPDF, so the document
                         // renders the same on any machine the portal
                         // happens to be running on.
-                        .FontFamily(Fonts.Lato));
+                        .FontFamily("Lato"));
 
                     page.Header().Element(e => Header(e, issued));
 

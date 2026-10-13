@@ -831,6 +831,156 @@ namespace HrPortal.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Requisition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("EstimatedTotal")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("decimal(14,2)");
+
+                    b.Property<string>("Justification")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("NeededBy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("RequiresMdApproval")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("RequisitionNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("VendorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequisitionNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("VendorId");
+
+                    b.HasIndex("EmployeeId", "Status");
+
+                    b.ToTable("Requisitions");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RequisitionHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("ActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ActionedByEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("RequisitionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionedByEmployeeId");
+
+                    b.HasIndex("RequisitionId");
+
+                    b.ToTable("RequisitionHistories");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RequisitionLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<decimal?>("EstimatedUnitCost")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("decimal(14,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<int>("RequisitionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequisitionId");
+
+                    b.ToTable("RequisitionLines");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.TimesheetEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -1554,6 +1704,54 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Requisition", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RequisitionHistory", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "ActionedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ActionedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Requisition", "Requisition")
+                        .WithMany("History")
+                        .HasForeignKey("RequisitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActionedByEmployee");
+
+                    b.Navigation("Requisition");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RequisitionLine", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Requisition", "Requisition")
+                        .WithMany("Lines")
+                        .HasForeignKey("RequisitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Requisition");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.TimesheetEntry", b =>
                 {
                     b.HasOne("HrPortal.Entities.Asset", "Asset")
@@ -1744,6 +1942,13 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.License", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Requisition", b =>
+                {
+                    b.Navigation("History");
+
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.TrainingAssignment", b =>
