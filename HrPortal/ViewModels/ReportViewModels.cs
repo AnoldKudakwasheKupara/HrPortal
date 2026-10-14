@@ -67,6 +67,9 @@ namespace HrPortal.ViewModels
         [Display(Name = "Show")]
         public string? Show { get; set; }
 
+        [Display(Name = "Status")]
+        public RequisitionStatus? RequisitionStatus { get; set; }
+
         [Display(Name = "Include inactive")]
         public bool IncludeInactive { get; set; }
     }
@@ -340,6 +343,29 @@ namespace HrPortal.ViewModels
         /// has been finished.
         /// </summary>
         public int? DaysToComplete { get; set; }
+    }
+
+    public class RequisitionReportRow
+    {
+        public string RequisitionNumber { get; set; } = string.Empty;
+        public string RaisedBy { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public RequisitionStatus Status { get; set; }
+        public string Vendor { get; set; } = string.Empty;
+        public int Lines { get; set; }
+        public decimal EstimatedTotal { get; set; }
+        public bool RequiresMdApproval { get; set; }
+        public DateTime? NeededBy { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? SubmittedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+
+        /// <summary>
+        /// Days from submission to the final decision, for the ones
+        /// that have been decided.
+        /// </summary>
+        public double? TurnaroundDays { get; set; }
     }
 
     public class AuditReportRow

@@ -51,7 +51,8 @@ namespace HrPortal.Controllers
                 ShowTraining = isHr,
                 ShowPeople = isHr || isAdmin,
                 ShowDocuments = isHr,
-                ShowSystem = isAdmin
+                ShowSystem = isAdmin,
+                ShowProcurement = isAdmin || isMd
             };
 
             // Each figure is only queried for the roles that may see
@@ -141,6 +142,21 @@ namespace HrPortal.Controllers
 
                 model.EmployeesWithoutDocuments =
                     Math.Max(0, active - covered);
+            }
+
+            if (model.ShowProcurement)
+            {
+                model.RequisitionsAwaiting = await _context.Requisitions
+                    .CountAsync(r =>
+                        r.Status == RequisitionStatus.Submitted ||
+                        r.Status == RequisitionStatus.ReviewApproved);
+
+                model.RequisitionsApprovedValue = await _context.Requisitions
+                    .Where(r =>
+                        r.Status == RequisitionStatus.Approved &&
+                        r.CompletedAt != null &&
+                        r.CompletedAt >= yearStart)
+                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m;
             }
 
             if (model.ShowSystem)
@@ -1405,6 +1421,250 @@ namespace HrPortal.Controllers
 
             model.Breakdowns.AddRange(
                 new[] { byCategory, contactable }
+                    .Where(b => b.Total > 0));
+
+            await LoadLookups();
+
+            return View(model);
+        }
+
+        [Authorize(Roles = Roles.AdminOrMd)]
+        public async Task<IActionResult> Requisitions(
+            ReportFilter filter,
+            string? export)
+        {
+            var query = _context.Requisitions
+                .AsNoTracking()
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(r => r.Vendor)
+                .Include(r => r.Lines)
+                .AsQueryable();
+
+            if (filter.From.HasValue)
+                query = query.Where(r => r.CreatedAt >= filter.From.Value);
+
+            if (filter.To.HasValue)
+            {
+                var to = filter.To.Value.Date.AddDays(1);
+                query = query.Where(r => r.CreatedAt < to);
+            }
+
+            if (filter.DepartmentId.HasValue)
+            {
+                query = query.Where(r =>
+                    r.Employee.DepartmentId == filter.DepartmentId.Value);
+            }
+
+            if (filter.EmployeeId.HasValue)
+                query = query.Where(r => r.EmployeeId == filter.EmployeeId.Value);
+
+            if (filter.VendorId.HasValue)
+                query = query.Where(r => r.VendorId == filter.VendorId.Value);
+
+            if (filter.RequisitionStatus.HasValue)
+            {
+                query = query.Where(r =>
+                    r.Status == filter.RequisitionStatus.Value);
+            }
+
+            query = filter.Show switch
+            {
+                "awaiting" => query.Where(r =>
+                    r.Status == RequisitionStatus.Submitted ||
+                    r.Status == RequisitionStatus.ReviewApproved),
+
+                "approved" => query.Where(r =>
+                    r.Status == RequisitionStatus.Approved),
+
+                "declined" => query.Where(r =>
+                    r.Status == RequisitionStatus.Rejected ||
+                    r.Status == RequisitionStatus.ReviewRejected),
+
+                "overthreshold" => query.Where(r => r.RequiresMdApproval),
+
+                _ => query
+            };
+
+            var rows = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => new RequisitionReportRow
+                {
+                    RequisitionNumber = r.RequisitionNumber,
+                    RaisedBy = r.Employee.FirstName + " " + r.Employee.LastName,
+                    Department = r.Employee.Department.Name,
+                    Title = r.Title,
+                    Status = r.Status,
+                    Vendor = r.Vendor != null ? r.Vendor.Name : string.Empty,
+                    Lines = r.Lines.Count,
+                    EstimatedTotal = r.EstimatedTotal,
+                    RequiresMdApproval = r.RequiresMdApproval,
+                    NeededBy = r.NeededBy,
+                    CreatedAt = r.CreatedAt,
+                    SubmittedAt = r.SubmittedAt,
+                    CompletedAt = r.CompletedAt
+                })
+                .ToListAsync();
+
+            foreach (var row in rows)
+            {
+                if (row.SubmittedAt.HasValue && row.CompletedAt.HasValue)
+                {
+                    row.TurnaroundDays =
+                        (row.CompletedAt.Value - row.SubmittedAt.Value)
+                            .TotalDays;
+                }
+            }
+
+            if (export == "csv")
+            {
+                return Csv(
+                    "requisitions",
+                    new[]
+                    {
+                        "Number", "Raised by", "Department", "What for",
+                        "Status", "Vendor", "Items", "Estimated total",
+                        "Needed MD approval", "Needed by", "Raised",
+                        "Submitted", "Decided", "Turnaround (days)"
+                    },
+                    rows.Select(r => new string?[]
+                    {
+                        r.RequisitionNumber,
+                        r.RaisedBy,
+                        r.Department,
+                        r.Title,
+                        r.Status.ToString(),
+                        r.Vendor,
+                        r.Lines.ToString(),
+                        r.EstimatedTotal.ToString("0.00"),
+                        r.RequiresMdApproval ? "Yes" : "No",
+                        D(r.NeededBy),
+                        D(r.CreatedAt),
+                        D(r.SubmittedAt),
+                        D(r.CompletedAt),
+                        r.TurnaroundDays?.ToString("0.#")
+                    }));
+            }
+
+            var approved = rows
+                .Where(r => r.Status == RequisitionStatus.Approved)
+                .ToList();
+
+            var awaiting = rows.Count(r =>
+                r.Status == RequisitionStatus.Submitted ||
+                r.Status == RequisitionStatus.ReviewApproved);
+
+            var declined = rows.Count(r =>
+                r.Status == RequisitionStatus.Rejected ||
+                r.Status == RequisitionStatus.ReviewRejected);
+
+            var decided = rows
+                .Where(r => r.TurnaroundDays.HasValue)
+                .Select(r => r.TurnaroundDays!.Value)
+                .ToList();
+
+            var model = new ReportViewModel<RequisitionReportRow>
+            {
+                Title = "Requisitions",
+                Description =
+                    "What has been asked for, what was approved and how " +
+                    "long the decision took.",
+                Action = nameof(Requisitions),
+                Filter = filter,
+                Rows = rows,
+                Coverage = Period(filter) +
+                    filter.Show switch
+                    {
+                        "awaiting" => ", awaiting a decision",
+                        "approved" => ", approved only",
+                        "declined" => ", declined only",
+                        "overthreshold" => ", those needing MD approval",
+                        _ => string.Empty
+                    },
+                Stats =
+                {
+                    new ReportStat("Requisitions", rows.Count.ToString()),
+                    new ReportStat(
+                        "Approved value",
+                        approved.Sum(r => r.EstimatedTotal).ToString("N2"),
+                        $"across {approved.Count} approved"),
+                    new ReportStat(
+                        "Awaiting a decision",
+                        awaiting.ToString(),
+                        awaiting == 0 ? "queues are clear" : "in review or with the MD"),
+                    new ReportStat(
+                        "Declined",
+                        declined.ToString(),
+                        rows.Count == 0
+                            ? null
+                            : $"{(decimal)declined / rows.Count:P0} of those shown")
+                }
+            };
+
+            if (decided.Any())
+            {
+                model.Stats.Add(new ReportStat(
+                    "Average turnaround",
+                    $"{decided.Average():0.#} days",
+                    "submitted to decided"));
+            }
+
+            var byStatus = new ReportBreakdown("By status", "requisitions")
+                .Add(
+                    "Draft",
+                    rows.Count(r => r.Status == RequisitionStatus.Draft))
+                .Add(
+                    "Awaiting review",
+                    rows.Count(r => r.Status == RequisitionStatus.Submitted),
+                    "warning")
+                .Add(
+                    "Awaiting the MD",
+                    rows.Count(r => r.Status == RequisitionStatus.ReviewApproved),
+                    "warning")
+                .Add(
+                    "Returned",
+                    rows.Count(r =>
+                        r.Status == RequisitionStatus.ReturnedToRequester))
+                .Add("Approved", approved.Count, "good")
+                .Add("Declined", declined, "critical")
+                .Add(
+                    "Withdrawn",
+                    rows.Count(r => r.Status == RequisitionStatus.Cancelled));
+
+            var byDepartment = new ReportBreakdown(
+                "Approved value by department", "");
+
+            foreach (var g in approved
+                .GroupBy(r => r.Department)
+                .OrderByDescending(g => g.Sum(r => r.EstimatedTotal)))
+            {
+                byDepartment.Add(g.Key, g.Sum(r => r.EstimatedTotal));
+            }
+
+            var byRequester = new ReportBreakdown(
+                "Most requisitions raised", "requisitions");
+
+            foreach (var g in rows
+                .GroupBy(r => r.RaisedBy)
+                .OrderByDescending(g => g.Count())
+                .Take(8))
+            {
+                byRequester.Add(g.Key, g.Count());
+            }
+
+            var byRoute = new ReportBreakdown(
+                "Approval route", "requisitions")
+                .Add(
+                    "Review was final",
+                    rows.Count(r =>
+                        !r.RequiresMdApproval && r.SubmittedAt != null))
+                .Add(
+                    "Went to the MD",
+                    rows.Count(r => r.RequiresMdApproval),
+                    "warning");
+
+            model.Breakdowns.AddRange(
+                new[] { byStatus, byDepartment, byRoute, byRequester }
                     .Where(b => b.Total > 0));
 
             await LoadLookups();
