@@ -259,6 +259,27 @@
             </div>
 
 
+
+            <div class="col-md-6 col-xl-4">
+                <a class="report-card" asp-action="Maintenance">
+                    <span class="report-card-icon">
+                        <i class="fas fa-screwdriver-wrench"></i>
+                    </span>
+                    <span class="report-card-body">
+                        <span class="report-card-title">Asset maintenance</span>
+                        <span class="report-card-note">
+                            Work done, what it cost and who did it
+                        </span>
+                        <span class="report-card-figures">
+                            <span><strong>@Model.MaintenanceOpen</strong> outstanding</span>
+                            <span class="@(Model.MaintenanceOverdue > 0 ? "is-warning" : "")">
+                                <strong>@Model.MaintenanceOverdue</strong> overdue
+                            </span>
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right report-card-chevron"></i>
+                </a>
+            </div>
             <div class="col-md-6 col-xl-4">
                 <a class="report-card" asp-action="Licences">
                     <span class="report-card-icon">

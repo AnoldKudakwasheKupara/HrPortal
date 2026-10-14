@@ -54,6 +54,10 @@ namespace HrPortal.ViewModels
 
         public int AssetsNeedingAttention { get; set; }
 
+        public int MaintenanceOpen { get; set; }
+
+        public int MaintenanceOverdue { get; set; }
+
         public int Licences { get; set; }
 
         public int LicencesDueSoon { get; set; }

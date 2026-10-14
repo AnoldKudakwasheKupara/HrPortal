@@ -317,6 +317,31 @@ namespace HrPortal.ViewModels
         public int DaysToExpiry { get; set; }
     }
 
+    public class MaintenanceReportRow
+    {
+        public string Asset { get; set; } = string.Empty;
+        public string? SerialNumber { get; set; }
+        public string HeldBy { get; set; } = string.Empty;
+        public MaintenanceType Type { get; set; }
+        public MaintenanceStatus Status { get; set; }
+        public DateTime ScheduledFor { get; set; }
+        public DateTime? CompletedOn { get; set; }
+        public string DoneBy { get; set; } = string.Empty;
+        public decimal? Cost { get; set; }
+        public string? Notes { get; set; }
+
+        /// <summary>
+        /// Scheduled, still open and already past its date.
+        /// </summary>
+        public bool IsOverdue { get; set; }
+
+        /// <summary>
+        /// Days from the scheduled date to completion, for work that
+        /// has been finished.
+        /// </summary>
+        public int? DaysToComplete { get; set; }
+    }
+
     public class AuditReportRow
     {
         public DateTime Timestamp { get; set; }

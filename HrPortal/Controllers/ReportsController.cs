@@ -161,6 +161,15 @@ namespace HrPortal.Controllers
                         a.Condition == AssetCondition.Old ||
                         a.Condition == AssetCondition.Bad);
 
+                model.MaintenanceOpen = await _context.AssetMaintenances
+                    .CountAsync(m =>
+                        m.Status == MaintenanceStatus.Scheduled);
+
+                model.MaintenanceOverdue = await _context.AssetMaintenances
+                    .CountAsync(m =>
+                        m.Status == MaintenanceStatus.Scheduled &&
+                        m.ScheduledFor < today);
+
                 model.Licences = await _context.Licenses
                     .CountAsync(l => l.Status == LicenseStatus.Active);
 
@@ -1396,6 +1405,215 @@ namespace HrPortal.Controllers
 
             model.Breakdowns.AddRange(
                 new[] { byCategory, contactable }
+                    .Where(b => b.Total > 0));
+
+            await LoadLookups();
+
+            return View(model);
+        }
+
+        [Authorize(Roles = Roles.AdminOnly)]
+        public async Task<IActionResult> Maintenance(
+            ReportFilter filter,
+            string? export)
+        {
+            var today = DateTime.Today;
+
+            var query = _context.AssetMaintenances
+                .AsNoTracking()
+                .Include(m => m.Asset)
+                    .ThenInclude(a => a.AssignedToEmployee)
+                .Include(m => m.Vendor)
+                .AsQueryable();
+
+            if (filter.From.HasValue)
+                query = query.Where(m => m.ScheduledFor >= filter.From.Value);
+
+            if (filter.To.HasValue)
+                query = query.Where(m => m.ScheduledFor <= filter.To.Value);
+
+            if (filter.VendorId.HasValue)
+                query = query.Where(m => m.VendorId == filter.VendorId.Value);
+
+            query = filter.Show switch
+            {
+                "overdue" => query.Where(m =>
+                    m.Status == MaintenanceStatus.Scheduled &&
+                    m.ScheduledFor < today),
+
+                "scheduled" => query.Where(m =>
+                    m.Status == MaintenanceStatus.Scheduled),
+
+                "completed" => query.Where(m =>
+                    m.Status == MaintenanceStatus.Completed),
+
+                "repairs" => query.Where(m =>
+                    m.Type == MaintenanceType.Repair),
+
+                _ => query
+            };
+
+            var rows = await query
+                .OrderByDescending(m => m.ScheduledFor)
+                .Select(m => new MaintenanceReportRow
+                {
+                    Asset = m.Asset.DeviceModel,
+                    SerialNumber = m.Asset.SerialNumber,
+                    HeldBy = m.Asset.AssignedToEmployee != null
+                        ? m.Asset.AssignedToEmployee.FirstName + " " +
+                          m.Asset.AssignedToEmployee.LastName
+                        : string.Empty,
+                    Type = m.Type,
+                    Status = m.Status,
+                    ScheduledFor = m.ScheduledFor,
+                    CompletedOn = m.CompletedOn,
+                    DoneBy = m.Vendor != null
+                        ? m.Vendor.Name
+                        : (m.PerformedBy ?? string.Empty),
+                    Cost = m.Cost,
+                    Notes = m.Notes,
+                    IsOverdue =
+                        m.Status == MaintenanceStatus.Scheduled &&
+                        m.ScheduledFor < today,
+                    DaysToComplete = m.CompletedOn != null
+                        ? EF.Functions.DateDiffDay(
+                            m.ScheduledFor, m.CompletedOn.Value)
+                        : (int?)null
+                })
+                .ToListAsync();
+
+            if (export == "csv")
+            {
+                return Csv(
+                    "asset-maintenance",
+                    new[]
+                    {
+                        "Machine", "Serial number", "Held by", "Work",
+                        "Status", "Scheduled for", "Completed on",
+                        "Days to complete", "Done by", "Cost",
+                        "Work done / notes"
+                    },
+                    rows.Select(r => new string?[]
+                    {
+                        r.Asset,
+                        r.SerialNumber,
+                        r.HeldBy,
+                        r.Type.ToString(),
+                        r.IsOverdue ? "Overdue" : r.Status.ToString(),
+                        r.ScheduledFor.ToString("yyyy-MM-dd"),
+                        D(r.CompletedOn),
+                        r.DaysToComplete?.ToString(),
+                        r.DoneBy,
+                        r.Cost?.ToString("0.00"),
+                        r.Notes
+                    }));
+            }
+
+            var completed = rows
+                .Where(r => r.Status == MaintenanceStatus.Completed)
+                .ToList();
+
+            var overdue = rows.Count(r => r.IsOverdue);
+
+            var turnaround = completed
+                .Where(r => r.DaysToComplete.HasValue)
+                .Select(r => (double)r.DaysToComplete!.Value)
+                .ToList();
+
+            var model = new ReportViewModel<MaintenanceReportRow>
+            {
+                Title = "Asset maintenance",
+                Description =
+                    "Work scheduled and done on the fleet, what it cost " +
+                    "and who did it.",
+                Action = nameof(Maintenance),
+                Filter = filter,
+                Rows = rows,
+                Coverage = Period(filter) +
+                    filter.Show switch
+                    {
+                        "overdue" => ", overdue work only",
+                        "scheduled" => ", work still outstanding",
+                        "completed" => ", completed work only",
+                        "repairs" => ", repairs only",
+                        _ => string.Empty
+                    },
+                Stats =
+                {
+                    new ReportStat("Jobs", rows.Count.ToString()),
+                    new ReportStat(
+                        "Completed",
+                        completed.Count.ToString(),
+                        rows.Count == 0
+                            ? null
+                            : $"{(decimal)completed.Count / rows.Count:P0} of those shown"),
+                    new ReportStat(
+                        "Overdue",
+                        overdue.ToString(),
+                        overdue == 0 ? "nothing outstanding" : "past the date"),
+                    new ReportStat(
+                        "Spend",
+                        rows.Sum(r => r.Cost ?? 0m).ToString("N2"),
+                        "on the work shown")
+                }
+            };
+
+            if (turnaround.Any())
+            {
+                model.Stats.Add(new ReportStat(
+                    "Average turnaround",
+                    $"{turnaround.Average():0.#} days",
+                    "scheduled to completed"));
+            }
+
+            var byType = new ReportBreakdown("Spend by work type", "");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Type)
+                .OrderByDescending(g => g.Sum(r => r.Cost ?? 0m)))
+            {
+                byType.Add(g.Key.ToString(), g.Sum(r => r.Cost ?? 0m));
+            }
+
+            var byStatus = new ReportBreakdown("By status", "jobs")
+                .Add("Overdue", overdue, "critical")
+                .Add(
+                    "Scheduled",
+                    rows.Count(r =>
+                        r.Status == MaintenanceStatus.Scheduled &&
+                        !r.IsOverdue),
+                    "warning")
+                .Add("Completed", completed.Count, "good")
+                .Add(
+                    "Cancelled",
+                    rows.Count(r => r.Status == MaintenanceStatus.Cancelled));
+
+            var byMachine = new ReportBreakdown(
+                "Most worked on", "jobs");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Asset)
+                .OrderByDescending(g => g.Count())
+                .ThenByDescending(g => g.Sum(r => r.Cost ?? 0m))
+                .Take(8))
+            {
+                byMachine.Add(g.Key, g.Count());
+            }
+
+            var byProvider = new ReportBreakdown("Spend by provider", "");
+
+            foreach (var g in rows
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.DoneBy)
+                    ? "Not recorded"
+                    : r.DoneBy)
+                .OrderByDescending(g => g.Sum(r => r.Cost ?? 0m))
+                .Take(8))
+            {
+                byProvider.Add(g.Key, g.Sum(r => r.Cost ?? 0m));
+            }
+
+            model.Breakdowns.AddRange(
+                new[] { byStatus, byType, byMachine, byProvider }
                     .Where(b => b.Total > 0));
 
             await LoadLookups();

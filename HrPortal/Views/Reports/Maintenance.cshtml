@@ -1,0 +1,217 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.MaintenanceReportRow>
+
+@{
+    ViewData["Title"] = Model.Title;
+
+    var vendors = ViewBag.Vendors as List<SelectListItem>
+        ?? new List<SelectListItem>();
+}
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count, Model.Coverage, Model.GeneratedAt))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportBreakdowns" model="Model.Breakdowns" />
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input type="date" name="From" class="form-control"
+                           value="@Model.Filter.From?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input type="date" name="To" class="form-control"
+                           value="@Model.Filter.To?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Show</label>
+                    <select name="Show" class="form-select">
+                        <option value="">Everything</option>
+                        <option value="overdue"
+                                selected="@(Model.Filter.Show == "overdue")">
+                            Overdue only
+                        </option>
+                        <option value="scheduled"
+                                selected="@(Model.Filter.Show == "scheduled")">
+                            Still outstanding
+                        </option>
+                        <option value="completed"
+                                selected="@(Model.Filter.Show == "completed")">
+                            Completed only
+                        </option>
+                        <option value="repairs"
+                                selected="@(Model.Filter.Show == "repairs")">
+                            Repairs only
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Provider</label>
+                    <select name="VendorId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var v in vendors)
+                        {
+                            <option value="@v.Value"
+                                    selected="@(Model.Filter.VendorId?.ToString() == v.Value)">
+                                @v.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Apply
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Machine</th>
+                            <th>Held by</th>
+                            <th>Work</th>
+                            <th>Scheduled</th>
+                            <th>Completed</th>
+                            <th>Done by</th>
+                            <th class="num">Cost</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                No maintenance matches this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@r.Asset</strong>
+                                    @if (!string.IsNullOrWhiteSpace(r.SerialNumber))
+                                    {
+                                        <div class="text-muted small">
+                                            @r.SerialNumber
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(r.HeldBy)
+                                        ? "Unassigned"
+                                        : r.HeldBy)
+                                </td>
+
+                                <td>
+                                    @r.Type
+                                    @if (!string.IsNullOrWhiteSpace(r.Notes))
+                                    {
+                                        <div class="text-muted small">@r.Notes</div>
+                                    }
+                                </td>
+
+                                <td>@r.ScheduledFor.ToString("d MMM yyyy")</td>
+
+                                <td>
+                                    @if (r.CompletedOn != null)
+                                    {
+                                        @r.CompletedOn.Value.ToString("d MMM yyyy")
+
+                                        @if (r.DaysToComplete != null)
+                                        {
+                                            <div class="text-muted small">
+                                                @(r.DaysToComplete == 0
+                                                    ? "on the day"
+                                                    : r.DaysToComplete > 0
+                                                        ? $"{r.DaysToComplete} day(s) late"
+                                                        : $"{-r.DaysToComplete.Value} day(s) early")
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(r.DoneBy)
+                                        ? "--"
+                                        : r.DoneBy)
+                                </td>
+
+                                <td class="num">@(r.Cost?.ToString("N2") ?? "--")</td>
+
+                                <td>
+                                    @if (r.IsOverdue)
+                                    {
+                                        <span class="badge bg-danger">Overdue</span>
+                                    }
+                                    else if (r.Status == MaintenanceStatus.Completed)
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                    else if (r.Status == MaintenanceStatus.Cancelled)
+                                    {
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Scheduled
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                    @if (Model.Rows.Any())
+                    {
+                        <tfoot>
+                            <tr>
+                                <th colspan="6" class="text-end">Total spend</th>
+                                <th class="num">
+                                    @Model.Rows.Sum(r => r.Cost ?? 0m).ToString("N2")
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
