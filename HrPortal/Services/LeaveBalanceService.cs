@@ -25,8 +25,23 @@ namespace HrPortal.Services
                 leaveTypeId,
                 year);
 
+            // No balance row means no entitlement has been recorded,
+            // which is not the same as an unlimited one. Allowing the
+            // request through here was letting leave be approved with
+            // nothing to deduct it from.
             if (balance == null)
-                return null;
+            {
+                var typeName = await _context.LeaveTypes
+                    .AsNoTracking()
+                    .Where(t => t.Id == leaveTypeId)
+                    .Select(t => t.Name)
+                    .FirstOrDefaultAsync();
+
+                return
+                    $"No {typeName ?? "leave"} entitlement has been set " +
+                    $"for {year}, so there is nothing to take these " +
+                    "day(s) from. Ask HR to set the balance first.";
+            }
 
             var remaining = balance.RemainingDays;
 
@@ -56,6 +71,12 @@ namespace HrPortal.Services
             return null;
         }
 
+        /// <summary>
+        /// A missing balance row is now refused at validation, so
+        /// these three only meet one on requests raised before that
+        /// check existed. They stay no-ops rather than throwing, so an
+        /// old request can still be approved or cancelled.
+        /// </summary>
         public async Task HoldAsync(LeaveRequest request)
         {
             var balance = await FindBalance(
