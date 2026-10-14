@@ -95,6 +95,11 @@ builder.Services.Configure<RequisitionOptions>(
 
 builder.Services.Configure<LeaveOptions>(
     builder.Configuration.GetSection(LeaveOptions.Section));
+
+builder.Services.AddSingleton<EmailService>();
+
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.Section));
 builder.Services.AddSingleton<WeeklyReportPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(
