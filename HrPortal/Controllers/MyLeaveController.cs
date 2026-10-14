@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace HrPortal.Controllers
 {
@@ -19,19 +20,22 @@ namespace HrPortal.Controllers
         private readonly LeaveBalanceService _balances;
         private readonly CurrentUserService _currentUser;
         private readonly IAuthorizationService _authorization;
+        private readonly LeaveOptions _leaveOptions;
 
         public MyLeaveController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
             LeaveBalanceService balances,
             CurrentUserService currentUser,
-            IAuthorizationService authorization)
+            IAuthorizationService authorization,
+            IOptions<LeaveOptions> leaveOptions)
         {
             _context = context;
             _workflow = workflow;
             _balances = balances;
             _currentUser = currentUser;
             _authorization = authorization;
+            _leaveOptions = leaveOptions.Value;
         }
 
         public async Task<IActionResult> Index()
@@ -277,6 +281,27 @@ namespace HrPortal.Controllers
             int employeeId,
             int? excludeRequestId)
         {
+            // All leave here is raised by the employee, so refusing
+            // every past date would make it impossible to record sick
+            // leave after returning. A short grace window is allowed
+            // and anything older has to go through HR.
+            var earliest = DateTime.Today.AddDays(
+                -_leaveOptions.BackdateGraceDays);
+
+            if (model.StartDate.Date < earliest)
+            {
+                ModelState.AddModelError(
+                    nameof(model.StartDate),
+                    _leaveOptions.BackdateGraceDays == 0
+                        ? "Leave cannot start before today."
+                        : $"Leave cannot start more than " +
+                          $"{_leaveOptions.BackdateGraceDays} day(s) in " +
+                          "the past. Ask HR to record leave taken " +
+                          "earlier than that.");
+
+                return 0;
+            }
+
             if (model.EndDate.Date < model.StartDate.Date)
             {
                 ModelState.AddModelError(

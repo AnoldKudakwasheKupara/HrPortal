@@ -92,6 +92,9 @@ builder.Services.AddScoped<RequisitionWorkflowService>();
 
 builder.Services.Configure<RequisitionOptions>(
     builder.Configuration.GetSection(RequisitionOptions.Section));
+
+builder.Services.Configure<LeaveOptions>(
+    builder.Configuration.GetSection(LeaveOptions.Section));
 builder.Services.AddSingleton<WeeklyReportPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(
