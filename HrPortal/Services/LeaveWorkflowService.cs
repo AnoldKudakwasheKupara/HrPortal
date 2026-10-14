@@ -316,6 +316,31 @@ namespace HrPortal.Services
                 previous,
                 comment);
 
+            // Whoever was holding the request has to be told it has
+            // gone away, or it sits in their queue until they open it.
+            if (IsAwaitingHr(previous))
+            {
+                await _notifications.NotifyApproverAsync(
+                    ApprovalRole.HROfficer,
+                    "Leave request withdrawn",
+                    $"{request.RequestNumber} was withdrawn by the " +
+                    "employee and no longer needs your review.",
+                    "/LeaveApproval");
+            }
+            else if (IsAwaitingMd(previous))
+            {
+                await _notifications.NotifyApproverAsync(
+                    ApprovalRole.MD,
+                    "Leave request withdrawn",
+                    $"{request.RequestNumber} was withdrawn by the " +
+                    "employee and no longer needs your decision.",
+                    "/LeaveApproval/FinalApproval");
+            }
+
+            // A draft or a returned request has not reached anyone, so
+            // there is nobody to tell. An approved one cannot be
+            // cancelled at all, since IsFinal blocks it.
+
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
