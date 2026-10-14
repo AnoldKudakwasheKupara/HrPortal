@@ -161,6 +161,17 @@ namespace HrPortal.Controllers
                         a.Condition == AssetCondition.Old ||
                         a.Condition == AssetCondition.Bad);
 
+                model.Licences = await _context.Licenses
+                    .CountAsync(l => l.Status == LicenseStatus.Active);
+
+                var licenceCutoff = today.AddDays(
+                    LicenseController.ExpiringWindowDays);
+
+                model.LicencesDueSoon = await _context.Licenses
+                    .CountAsync(l =>
+                        l.Status == LicenseStatus.Active &&
+                        l.ExpiryDate <= licenceCutoff);
+
                 var since = today.AddDays(-30);
 
                 model.AuditEntries30Days = await _context.AuditLogs
@@ -1393,6 +1404,204 @@ namespace HrPortal.Controllers
         }
 
         [Authorize(Roles = Roles.AdminOnly)]
+        public async Task<IActionResult> Licences(
+            ReportFilter filter,
+            string? export)
+        {
+            var today = DateTime.Today;
+            var soon = today.AddDays(LicenseController.ExpiringWindowDays);
+
+            var query = _context.Licenses
+                .AsNoTracking()
+                .Include(l => l.Vendor)
+                .Include(l => l.AssignedToEmployee)
+                .Include(l => l.Renewals)
+                .AsQueryable();
+
+            if (!filter.IncludeInactive)
+                query = query.Where(l => l.Status == LicenseStatus.Active);
+
+            if (filter.LicenceType.HasValue)
+                query = query.Where(l => l.Type == filter.LicenceType.Value);
+
+            if (filter.VendorId.HasValue)
+                query = query.Where(l => l.VendorId == filter.VendorId.Value);
+
+            query = filter.Show switch
+            {
+                "expired" => query.Where(l =>
+                    l.Status == LicenseStatus.Active &&
+                    l.ExpiryDate < today),
+
+                "expiring" => query.Where(l =>
+                    l.Status == LicenseStatus.Active &&
+                    l.ExpiryDate >= today &&
+                    l.ExpiryDate <= soon),
+
+                "autorenew" => query.Where(l => l.AutoRenews),
+
+                _ => query
+            };
+
+            var rows = await query
+                .OrderBy(l => l.ExpiryDate)
+                .Select(l => new LicenseReportRow
+                {
+                    Name = l.Name,
+                    Type = l.Type,
+                    Status = l.Status,
+                    Reference = l.Reference,
+                    Vendor = l.Vendor != null ? l.Vendor.Name : string.Empty,
+                    HeldBy = l.AssignedToEmployee != null
+                        ? l.AssignedToEmployee.FirstName + " " +
+                          l.AssignedToEmployee.LastName
+                        : string.Empty,
+                    Seats = l.Seats,
+                    StartDate = l.StartDate,
+                    ExpiryDate = l.ExpiryDate,
+                    Cost = l.Cost,
+                    AutoRenews = l.AutoRenews,
+                    Renewals = l.Renewals.Count,
+                    LastRenewedOn = l.Renewals
+                        .OrderByDescending(r => r.RenewedOn)
+                        .Select(r => (DateTime?)r.RenewedOn)
+                        .FirstOrDefault(),
+                    DaysToExpiry = EF.Functions.DateDiffDay(
+                        today, l.ExpiryDate)
+                })
+                .ToListAsync();
+
+            if (export == "csv")
+            {
+                return Csv(
+                    "licences",
+                    new[]
+                    {
+                        "Licence", "Type", "Status", "Reference", "Vendor",
+                        "Held by", "Seats", "Started", "Expires",
+                        "Days to expiry", "Cost", "Auto renews",
+                        "Renewals", "Last renewed"
+                    },
+                    rows.Select(r => new string?[]
+                    {
+                        r.Name,
+                        r.Type.ToString(),
+                        r.Status.ToString(),
+                        r.Reference,
+                        r.Vendor,
+                        r.HeldBy,
+                        r.Seats?.ToString(),
+                        D(r.StartDate),
+                        r.ExpiryDate.ToString("yyyy-MM-dd"),
+                        r.DaysToExpiry.ToString(),
+                        r.Cost?.ToString("0.00"),
+                        r.AutoRenews ? "Yes" : "No",
+                        r.Renewals.ToString(),
+                        D(r.LastRenewedOn)
+                    }));
+            }
+
+            var live = rows
+                .Where(r => r.Status == LicenseStatus.Active)
+                .ToList();
+
+            var expired = live.Count(r => r.DaysToExpiry < 0);
+
+            var expiring = live.Count(r =>
+                r.DaysToExpiry >= 0 &&
+                r.DaysToExpiry <= LicenseController.ExpiringWindowDays);
+
+            var model = new ReportViewModel<LicenseReportRow>
+            {
+                Title = "Licences and renewals",
+                Description =
+                    "What expires when, what it costs and who supplies it.",
+                Action = nameof(Licences),
+                Filter = filter,
+                Rows = rows,
+                Coverage = Slice(filter, soon),
+                Stats =
+                {
+                    new ReportStat("Licences", rows.Count.ToString()),
+                    new ReportStat(
+                        "Lapsed",
+                        expired.ToString(),
+                        expired == 0 ? "none overdue" : "past the renewal date"),
+                    new ReportStat(
+                        "Expiring soon",
+                        expiring.ToString(),
+                        $"within {LicenseController.ExpiringWindowDays} days"),
+                    new ReportStat(
+                        "Annual cost",
+                        live.Sum(r => r.Cost ?? 0m).ToString("N2"),
+                        "across live licences")
+                }
+            };
+
+            var byType = new ReportBreakdown("By type", "licences");
+
+            foreach (var g in rows
+                .GroupBy(r => r.Type)
+                .OrderByDescending(g => g.Count()))
+            {
+                byType.Add(g.Key.ToString(), g.Count());
+            }
+
+            var byVendor = new ReportBreakdown("Cost by vendor", "");
+
+            foreach (var g in live
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.Vendor)
+                    ? "Not on the register"
+                    : r.Vendor)
+                .OrderByDescending(g => g.Sum(r => r.Cost ?? 0m))
+                .Take(8))
+            {
+                byVendor.Add(g.Key, g.Sum(r => r.Cost ?? 0m));
+            }
+
+            var byWindow = new ReportBreakdown("Renewal window", "licences")
+                .Add("Lapsed", expired, "critical")
+                .Add(
+                    $"Next {LicenseController.ExpiringWindowDays} days",
+                    expiring,
+                    "warning")
+                .Add(
+                    "Later this year",
+                    live.Count(r =>
+                        r.DaysToExpiry > LicenseController.ExpiringWindowDays &&
+                        r.DaysToExpiry <= 365))
+                .Add(
+                    "Beyond a year",
+                    live.Count(r => r.DaysToExpiry > 365),
+                    "good");
+
+            model.Breakdowns.AddRange(
+                new[] { byWindow, byType, byVendor }
+                    .Where(b => b.Total > 0));
+
+            await LoadLookups();
+
+            return View(model);
+        }
+
+        /// <summary>
+        /// Describes the licence slice in words, so an exported or
+        /// printed copy says what it was showing.
+        /// </summary>
+        private static string Slice(ReportFilter filter, DateTime soon) =>
+            filter.Show switch
+            {
+                "expired" => "Live licences already past their expiry date",
+                "expiring" =>
+                    "Live licences expiring on or before " +
+                    soon.ToString("d MMM yyyy"),
+                "autorenew" => "Licences set to renew automatically",
+                _ => filter.IncludeInactive
+                    ? "All licences, cancelled ones included"
+                    : "Live licences"
+            };
+
+        [Authorize(Roles = Roles.AdminOnly)]
         public async Task<IActionResult> AuditTrail(
             ReportFilter filter,
             string? export)
@@ -1597,6 +1806,11 @@ namespace HrPortal.Controllers
             ViewBag.Categories = await _context.DocumentCategories
                 .OrderBy(c => c.Name)
                 .Select(c => new SelectListItem(c.Name, c.Id.ToString()))
+                .ToListAsync();
+
+            ViewBag.Vendors = await _context.Vendors
+                .OrderBy(v => v.Name)
+                .Select(v => new SelectListItem(v.Name, v.Id.ToString()))
                 .ToListAsync();
 
             ViewBag.VendorCategories = await _context.Vendors

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 
 namespace HrPortal.Services
@@ -42,14 +43,25 @@ namespace HrPortal.Services
         {
             var text = value ?? string.Empty;
 
+            // A plain negative number is data, not a formula, and
+            // prefixing it would land in the spreadsheet as text and
+            // stop the column sorting or totalling.
             if (text.Length > 0 &&
                 (text[0] == '=' || text[0] == '+' ||
-                 text[0] == '-' || text[0] == '@'))
+                 text[0] == '-' || text[0] == '@') &&
+                !IsPlainNumber(text))
             {
                 text = "'" + text;
             }
 
             return "\"" + text.Replace("\"", "\"\"") + "\"";
         }
+
+        private static bool IsPlainNumber(string text) =>
+            decimal.TryParse(
+                text,
+                NumberStyles.Number,
+                CultureInfo.InvariantCulture,
+                out _);
     }
 }

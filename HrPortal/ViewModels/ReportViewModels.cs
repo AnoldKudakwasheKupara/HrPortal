@@ -51,6 +51,22 @@ namespace HrPortal.ViewModels
         [Display(Name = "Action")]
         public string? AuditAction { get; set; }
 
+        [Display(Name = "Vendor")]
+        public int? VendorId { get; set; }
+
+        // Spelled the British way the portal uses, which also keeps it
+        // clear of the LicenseType enum name.
+        [Display(Name = "Type")]
+        public LicenseType? LicenceType { get; set; }
+
+        /// <summary>
+        /// A named slice a report defines for itself, such as
+        /// "expiring" or "overdue". Keeps one-off toggles out of this
+        /// shared shape.
+        /// </summary>
+        [Display(Name = "Show")]
+        public string? Show { get; set; }
+
         [Display(Name = "Include inactive")]
         public bool IncludeInactive { get; set; }
     }
@@ -276,6 +292,29 @@ namespace HrPortal.ViewModels
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
         public bool IsActive { get; set; }
+    }
+
+    public class LicenseReportRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public LicenseType Type { get; set; }
+        public LicenseStatus Status { get; set; }
+        public string? Reference { get; set; }
+        public string Vendor { get; set; } = string.Empty;
+        public string HeldBy { get; set; } = string.Empty;
+        public int? Seats { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public decimal? Cost { get; set; }
+        public bool AutoRenews { get; set; }
+        public int Renewals { get; set; }
+        public DateTime? LastRenewedOn { get; set; }
+
+        /// <summary>
+        /// Negative once it has lapsed, so one field sorts and reads
+        /// for both cases.
+        /// </summary>
+        public int DaysToExpiry { get; set; }
     }
 
     public class AuditReportRow

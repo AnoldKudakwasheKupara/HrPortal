@@ -1,0 +1,226 @@
+@using HrPortal.Controllers
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.LicenseReportRow>
+
+@{
+    ViewData["Title"] = Model.Title;
+
+    var vendors = ViewBag.Vendors as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    string Window(int days) => days < 0
+        ? $"{-days} day{(days == -1 ? "" : "s")} ago"
+        : $"{days} day{(days == 1 ? "" : "s")}";
+}
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count, Model.Coverage, Model.GeneratedAt))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportBreakdowns" model="Model.Breakdowns" />
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label">Show</label>
+                    <select name="Show" class="form-select">
+                        <option value="">Everything</option>
+                        <option value="expired"
+                                selected="@(Model.Filter.Show == "expired")">
+                            Lapsed only
+                        </option>
+                        <option value="expiring"
+                                selected="@(Model.Filter.Show == "expiring")">
+                            Expiring soon
+                        </option>
+                        <option value="autorenew"
+                                selected="@(Model.Filter.Show == "autorenew")">
+                            Automatic renewals
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="LicenceType" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var t in Enum.GetValues<LicenseType>())
+                        {
+                            <option value="@t"
+                                    selected="@(Model.Filter.LicenceType == t)">
+                                @t
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Vendor</label>
+                    <select name="VendorId" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var v in vendors)
+                        {
+                            <option value="@v.Value"
+                                    selected="@(Model.Filter.VendorId?.ToString() == v.Value)">
+                                @v.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-check mt-4">
+                        <input name="IncludeInactive" value="true"
+                               type="checkbox" class="form-check-input"
+                               checked="@Model.Filter.IncludeInactive" />
+                        <label class="form-check-label">
+                            Include cancelled
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Apply
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Licence</th>
+                            <th>Type</th>
+                            <th>Vendor</th>
+                            <th>Held by</th>
+                            <th class="num">Seats</th>
+                            <th>Expires</th>
+                            <th>Window</th>
+                            <th class="num">Cost</th>
+                            <th class="num">Renewals</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No licences match this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@r.Name</strong>
+                                    @if (r.AutoRenews)
+                                    {
+                                        <span class="badge bg-light text-dark">Auto</span>
+                                    }
+                                    @if (r.Status == LicenseStatus.Cancelled)
+                                    {
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(r.Reference))
+                                    {
+                                        <div class="text-muted small">@r.Reference</div>
+                                    }
+                                </td>
+
+                                <td>@r.Type</td>
+
+                                <td>@(string.IsNullOrWhiteSpace(r.Vendor) ? "--" : r.Vendor)</td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(r.HeldBy)
+                                        ? "Company wide"
+                                        : r.HeldBy)
+                                </td>
+
+                                <td class="num">@(r.Seats?.ToString() ?? "--")</td>
+
+                                <td>@r.ExpiryDate.ToString("d MMM yyyy")</td>
+
+                                <td>
+                                    @if (r.Status == LicenseStatus.Cancelled)
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                    else if (r.DaysToExpiry < 0)
+                                    {
+                                        <span class="badge bg-danger">
+                                            @Window(r.DaysToExpiry)
+                                        </span>
+                                    }
+                                    else if (r.DaysToExpiry <= LicenseController.ExpiringWindowDays)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            @Window(r.DaysToExpiry)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            @Window(r.DaysToExpiry)
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="num">@(r.Cost?.ToString("N2") ?? "--")</td>
+
+                                <td class="num">
+                                    @r.Renewals
+                                    @if (r.LastRenewedOn != null)
+                                    {
+                                        <div class="text-muted small">
+                                            @r.LastRenewedOn.Value.ToString("MMM yyyy")
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                    @if (Model.Rows.Any())
+                    {
+                        <tfoot>
+                            <tr>
+                                <th colspan="7" class="text-end">
+                                    Total cost shown
+                                </th>
+                                <th class="num">
+                                    @Model.Rows.Sum(r => r.Cost ?? 0m).ToString("N2")
+                                </th>
+                                <th class="num">
+                                    @Model.Rows.Sum(r => r.Renewals)
+                                </th>
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

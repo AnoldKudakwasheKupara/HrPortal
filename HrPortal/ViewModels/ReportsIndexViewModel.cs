@@ -54,6 +54,10 @@ namespace HrPortal.ViewModels
 
         public int AssetsNeedingAttention { get; set; }
 
+        public int Licences { get; set; }
+
+        public int LicencesDueSoon { get; set; }
+
         public int AuditEntries30Days { get; set; }
 
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
