@@ -64,6 +64,10 @@ namespace HrPortal.ViewModels
 
         public decimal RequisitionsApprovedValue { get; set; }
 
+        public int ItActivity30Days { get; set; }
+
+        public int ItActivityOutstanding { get; set; }
+
         public int MaintenanceOpen { get; set; }
 
         public int MaintenanceOverdue { get; set; }

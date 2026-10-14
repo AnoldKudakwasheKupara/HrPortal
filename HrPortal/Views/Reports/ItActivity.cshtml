@@ -1,0 +1,207 @@
+@using HrPortal.Entities
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.ReportViewModel<HrPortal.ViewModels.ItActivityReportRow>
+
+@{
+    ViewData["Title"] = Model.Title;
+
+    var employees = ViewBag.Employees as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    string Label(ItActivityStatus s) => s switch
+    {
+        ItActivityStatus.InProgress => "In progress",
+        _ => s.ToString()
+    };
+}
+
+<div class="container-fluid">
+
+    <partial name="_ReportHead"
+             model="@((Model.Title, Model.Description, Model.Action, Model.Rows.Count, Model.Coverage, Model.GeneratedAt))" />
+
+    <partial name="_ReportStats" model="Model.Stats" />
+
+    <partial name="_ReportBreakdowns" model="Model.Breakdowns" />
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input type="date" name="From" class="form-control"
+                           value="@Model.Filter.From?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input type="date" name="To" class="form-control"
+                           value="@Model.Filter.To?.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Show</label>
+                    <select name="Show" class="form-select">
+                        <option value="">Everything</option>
+                        <option value="open"
+                                selected="@(Model.Filter.Show == "open")">
+                            Still outstanding
+                        </option>
+                        <option value="notable"
+                                selected="@(Model.Filter.Show == "notable")">
+                            Flagged notable
+                        </option>
+                        <option value="hardware"
+                                selected="@(Model.Filter.Show == "hardware")">
+                            Hardware only
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select name="ActivityCategory" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var c in Enum.GetValues<ItActivityCategory>())
+                        {
+                            <option value="@c"
+                                    selected="@(Model.Filter.ActivityCategory == c)">
+                                @c
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="ActivityStatus" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var s in Enum.GetValues<ItActivityStatus>())
+                        {
+                            <option value="@s"
+                                    selected="@(Model.Filter.ActivityStatus == s)">
+                                @Label(s)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Raised by</label>
+                    <select name="EmployeeId" class="form-select">
+                        <option value="">Anyone</option>
+                        @foreach (var e in employees)
+                        {
+                            <option value="@e.Value"
+                                    selected="@(Model.Filter.EmployeeId?.ToString() == e.Value)">
+                                @e.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-secondary">
+                        Apply
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>What came up</th>
+                            <th>Raised by</th>
+                            <th>Machine</th>
+                            <th>Status</th>
+                            <th class="num">Days</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Nothing logged matches this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var r in Model.Rows)
+                        {
+                            <tr>
+                                <td>@r.LoggedOn.ToString("ddd d MMM")</td>
+
+                                <td>@r.Category</td>
+
+                                <td>
+                                    <strong>@r.Summary</strong>
+                                    @if (r.IsNotable)
+                                    {
+                                        <span class="badge bg-info">Notable</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(r.ActionTaken))
+                                    {
+                                        <div class="text-muted small">
+                                            @r.ActionTaken
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(r.RaisedBy)
+                                        ? "--"
+                                        : r.RaisedBy)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(r.Asset)
+                                        ? "--"
+                                        : r.Asset)
+                                </td>
+
+                                <td>
+                                    @switch (r.Status)
+                                    {
+                                        case ItActivityStatus.Resolved:
+                                            <span class="badge bg-success">Resolved</span>
+                                            break;
+                                        case ItActivityStatus.InProgress:
+                                            <span class="badge bg-warning text-dark">
+                                                In progress
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">Open</span>
+                                            break;
+                                    }
+                                </td>
+
+                                <td class="num">
+                                    @(r.DaysToResolve?.ToString() ?? "--")
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

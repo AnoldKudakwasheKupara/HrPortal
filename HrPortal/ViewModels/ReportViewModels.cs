@@ -70,6 +70,12 @@ namespace HrPortal.ViewModels
         [Display(Name = "Status")]
         public RequisitionStatus? RequisitionStatus { get; set; }
 
+        [Display(Name = "Category")]
+        public ItActivityCategory? ActivityCategory { get; set; }
+
+        [Display(Name = "Status")]
+        public ItActivityStatus? ActivityStatus { get; set; }
+
         [Display(Name = "Include inactive")]
         public bool IncludeInactive { get; set; }
     }
@@ -366,6 +372,26 @@ namespace HrPortal.ViewModels
         /// that have been decided.
         /// </summary>
         public double? TurnaroundDays { get; set; }
+    }
+
+    public class ItActivityReportRow
+    {
+        public DateTime LoggedOn { get; set; }
+        public ItActivityCategory Category { get; set; }
+        public ItActivityStatus Status { get; set; }
+        public string Summary { get; set; } = string.Empty;
+        public string? ActionTaken { get; set; }
+        public string RaisedBy { get; set; } = string.Empty;
+        public string Asset { get; set; } = string.Empty;
+        public bool IsNotable { get; set; }
+        public DateTime? ResolvedOn { get; set; }
+        public string? LoggedBy { get; set; }
+
+        /// <summary>
+        /// Days from being logged to being resolved, for the ones that
+        /// have been closed.
+        /// </summary>
+        public int? DaysToResolve { get; set; }
     }
 
     public class AuditReportRow
