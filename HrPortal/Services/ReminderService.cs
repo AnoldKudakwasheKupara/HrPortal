@@ -64,6 +64,8 @@ namespace HrPortal.Services
         public const string ContractEnding = "Contract ending";
         public const string LeaveWaiting = "Leave awaiting a decision";
         public const string RequisitionWaiting = "Requisition awaiting a decision";
+        public const string MaintenanceDue = "Maintenance due";
+        public const string TrainingDue = "Training due";
 
         public async Task<ReminderRun> RunAsync()
         {
@@ -91,6 +93,14 @@ namespace HrPortal.Services
             run.Add(
                 RequisitionWaiting,
                 await RemindStaleRequisitionsAsync(today));
+
+            run.Add(
+                MaintenanceDue,
+                await RemindDueMaintenanceAsync(today, horizon));
+
+            run.Add(
+                TrainingDue,
+                await RemindDueTrainingAsync(today, horizon));
 
             await _context.SaveChangesAsync();
 
@@ -253,6 +263,116 @@ namespace HrPortal.Services
 
                     sent++;
                 }
+            }
+
+            return sent;
+        }
+
+        private async Task<int> RemindDueMaintenanceAsync(
+            DateTime today,
+            DateTime horizon)
+        {
+            var jobs = await _context.AssetMaintenances
+                .AsNoTracking()
+                .Include(m => m.Asset)
+                .Where(m =>
+                    m.Status == MaintenanceStatus.Scheduled &&
+                    m.ScheduledFor <= horizon)
+                .OrderBy(m => m.ScheduledFor)
+                .ToListAsync();
+
+            if (jobs.Count == 0)
+                return 0;
+
+            var recipients = await EmployeeIdsInRoleAsync(Roles.Administrator);
+
+            var sent = 0;
+
+            foreach (var job in jobs)
+            {
+                var days = (job.ScheduledFor.Date - today).Days;
+
+                var when = days switch
+                {
+                    < 0 => $"was due {-days} day{Plural(-days)} ago",
+                    0 => "is due today",
+                    _ => $"is due in {days} day{Plural(days)}"
+                };
+
+                foreach (var employeeId in recipients)
+                {
+                    if (!await ShouldSendAsync(
+                            MaintenanceDue,
+                            job.Id.ToString(),
+                            employeeId,
+                            today))
+                    {
+                        continue;
+                    }
+
+                    _notifications.Notify(
+                        employeeId,
+                        $"Maintenance {(days < 0 ? "overdue" : "due")}",
+                        $"{Humanise(job.Type)} on {job.Asset.DeviceModel} " +
+                        $"{when} ({job.ScheduledFor:d MMM yyyy}).",
+                        $"/AssetMaintenance");
+
+                    sent++;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// Training goes to the person who has to do it, not to HR.
+        /// Nobody else can complete it for them.
+        /// </summary>
+        private async Task<int> RemindDueTrainingAsync(
+            DateTime today,
+            DateTime horizon)
+        {
+            var assignments = await _context.TrainingAssignments
+                .AsNoTracking()
+                .Include(a => a.TrainingCourse)
+                .Where(a =>
+                    !a.IsCompleted &&
+                    a.DueDate != null &&
+                    a.DueDate <= horizon &&
+                    a.Employee.IsActive)
+                .OrderBy(a => a.DueDate)
+                .ToListAsync();
+
+            var sent = 0;
+
+            foreach (var assignment in assignments)
+            {
+                var days = (assignment.DueDate!.Value.Date - today).Days;
+
+                var when = days switch
+                {
+                    < 0 => $"was due {-days} day{Plural(-days)} ago",
+                    0 => "is due today",
+                    _ => $"is due in {days} day{Plural(days)}"
+                };
+
+                if (!await ShouldSendAsync(
+                        TrainingDue,
+                        assignment.Id.ToString(),
+                        assignment.EmployeeId,
+                        today))
+                {
+                    continue;
+                }
+
+                _notifications.Notify(
+                    assignment.EmployeeId,
+                    $"Training {(days < 0 ? "overdue" : "due")}",
+                    $"{assignment.TrainingCourse.Title} {when} " +
+                    $"({assignment.DueDate:d MMM yyyy}).",
+                    "/MyTraining");
+
+                sent++;
             }
 
             return sent;
