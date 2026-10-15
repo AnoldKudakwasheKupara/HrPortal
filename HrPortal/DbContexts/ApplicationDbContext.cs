@@ -84,6 +84,26 @@ namespace HrPortal.DbContexts
                 entity.Property(e => e.LeavingReason)
                     .HasMaxLength(500);
 
+                entity.Property(e => e.Gender)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.MaritalStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.Address).HasMaxLength(400);
+
+                entity.Property(e => e.EmergencyContactName)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.EmergencyContactPhone)
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.EmergencyContactRelationship)
+                    .HasMaxLength(100);
+
+
                 // Looked up when listing contracts that are running out.
                 entity.HasIndex(e => e.ContractEndDate);
 

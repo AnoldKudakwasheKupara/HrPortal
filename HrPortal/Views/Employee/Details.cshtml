@@ -180,4 +180,71 @@
 
     </div>
 
+    <div class="card shadow-sm mt-3">
+
+        <div class="card-header">Personal details</div>
+
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Date of Birth</span>
+                    <div class="field-value">
+                        @(Model.DateOfBirth?.ToString("d MMM yyyy") ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Gender</span>
+                    <div class="field-value">@Html.DisplayFor(m => m.Gender)</div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <span class="field-label">Marital Status</span>
+                    <div class="field-value">@Html.DisplayFor(m => m.MaritalStatus)</div>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <span class="field-label">Home Address</span>
+                    <div class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.Address)
+                            ? "Not recorded"
+                            : Model.Address)
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">Emergency Contact</span>
+                    <div class="field-value">
+                        @if (string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+                        {
+                            <span class="text-muted">Not recorded</span>
+                        }
+                        else
+                        {
+                            @Model.EmergencyContactName
+                            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactRelationship))
+                            {
+                                <span class="text-muted">
+                                    (@Model.EmergencyContactRelationship)
+                                </span>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">Emergency Contact Phone</span>
+                    <div class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.EmergencyContactPhone)
+                            ? "Not recorded"
+                            : Model.EmergencyContactPhone)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
 </div>

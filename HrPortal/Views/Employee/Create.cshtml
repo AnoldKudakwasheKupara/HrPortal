@@ -209,6 +209,58 @@
                 </div>
 
 
+                <div class="section-heading">Personal details</div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Gender" class="form-label"></label>
+                        <select asp-for="Gender" class="form-select"
+                                asp-items="Html.GetEnumSelectList<HrPortal.Entities.Gender>()">
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="MaritalStatus" class="form-label"></label>
+                        <select asp-for="MaritalStatus" class="form-select"
+                                asp-items="Html.GetEnumSelectList<HrPortal.Entities.MaritalStatus>()">
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label asp-for="Address" class="form-label"></label>
+                        <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="EmergencyContactName" class="form-label"></label>
+                        <input asp-for="EmergencyContactName" class="form-control" />
+                        <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="EmergencyContactPhone" class="form-label"></label>
+                        <input asp-for="EmergencyContactPhone" class="form-control" />
+                        <span asp-validation-for="EmergencyContactPhone" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="EmergencyContactRelationship" class="form-label"></label>
+                        <input asp-for="EmergencyContactRelationship" class="form-control"
+                               placeholder="Spouse, parent, sibling" />
+                        <span asp-validation-for="EmergencyContactRelationship" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+
                 <hr class="my-4" />
 
                 <h5>Login Account</h5>

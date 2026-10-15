@@ -107,6 +107,29 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
+            if (model.DateOfBirth.HasValue)
+            {
+                if (model.DateOfBirth.Value.Date >= DateTime.Today)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.DateOfBirth),
+                        "The date of birth must be in the past.");
+                }
+                else if (model.DateOfBirth.Value.Date > model.DateJoined.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.DateOfBirth),
+                        "They cannot have been born after they started.");
+                }
+            }
+
+
+            if (!ModelState.IsValid)
+            {
+                await LoadDepartments();
+                return View(model);
+            }
+
 
             var emailExists =
                 await _context.Employees
@@ -131,6 +154,14 @@ namespace HrPortal.Controllers
                 JobTitle = model.JobTitle?.Trim(),
                 PhoneNumber = model.PhoneNumber,
                 NationalId = model.NationalId,
+                DateOfBirth = model.DateOfBirth,
+                Gender = model.Gender,
+                MaritalStatus = model.MaritalStatus,
+                Address = model.Address?.Trim(),
+                EmergencyContactName = model.EmergencyContactName?.Trim(),
+                EmergencyContactPhone = model.EmergencyContactPhone?.Trim(),
+                EmergencyContactRelationship =
+                    model.EmergencyContactRelationship?.Trim(),
                 DateJoined = model.DateJoined,
                 EmploymentType = model.EmploymentType,
                 ContractEndDate = model.ContractEndDate,
@@ -253,6 +284,14 @@ namespace HrPortal.Controllers
                 JobTitle = employee.JobTitle,
                 PhoneNumber = employee.PhoneNumber,
                 NationalId = employee.NationalId,
+                DateOfBirth = employee.DateOfBirth,
+                Gender = employee.Gender,
+                MaritalStatus = employee.MaritalStatus,
+                Address = employee.Address,
+                EmergencyContactName = employee.EmergencyContactName,
+                EmergencyContactPhone = employee.EmergencyContactPhone,
+                EmergencyContactRelationship =
+                    employee.EmergencyContactRelationship,
                 DateJoined = employee.DateJoined,
                 EmploymentType = employee.EmploymentType,
                 ContractEndDate = employee.ContractEndDate,
@@ -283,6 +322,24 @@ namespace HrPortal.Controllers
                     nameof(model.ContractEndDate),
                     "The contract cannot end on or before the start date.");
             }
+
+            if (model.DateOfBirth.HasValue)
+            {
+                if (model.DateOfBirth.Value.Date >= DateTime.Today)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.DateOfBirth),
+                        "The date of birth must be in the past.");
+                }
+                else if (model.DateOfBirth.Value.Date > model.DateJoined.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.DateOfBirth),
+                        "They cannot have been born after they started.");
+                }
+            }
+
+
 
             if (!model.IsActive)
             {
@@ -325,6 +382,16 @@ namespace HrPortal.Controllers
             employee.JobTitle = model.JobTitle?.Trim();
             employee.PhoneNumber = model.PhoneNumber;
             employee.NationalId = model.NationalId;
+            employee.DateOfBirth = model.DateOfBirth;
+            employee.Gender = model.Gender;
+            employee.MaritalStatus = model.MaritalStatus;
+            employee.Address = model.Address?.Trim();
+            employee.EmergencyContactName =
+                model.EmergencyContactName?.Trim();
+            employee.EmergencyContactPhone =
+                model.EmergencyContactPhone?.Trim();
+            employee.EmergencyContactRelationship =
+                model.EmergencyContactRelationship?.Trim();
             employee.DateJoined = model.DateJoined;
             employee.EmploymentType = model.EmploymentType;
             employee.ContractEndDate = model.ContractEndDate;

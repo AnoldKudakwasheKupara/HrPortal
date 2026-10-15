@@ -21,6 +21,27 @@ namespace HrPortal.Entities
 
         public string? NationalId { get; set; }
 
+        public DateTime? DateOfBirth { get; set; }
+
+        public Gender Gender { get; set; } = Gender.Unspecified;
+
+        public MaritalStatus MaritalStatus { get; set; }
+            = MaritalStatus.Unspecified;
+
+        public string? Address { get; set; }
+
+        /// <summary>
+        /// Who to call if something happens at work. Held on the
+        /// employee record rather than a separate table, since there
+        /// is only ever one and it is read, not reported on.
+        /// </summary>
+        public string? EmergencyContactName { get; set; }
+
+        public string? EmergencyContactPhone { get; set; }
+
+        public string? EmergencyContactRelationship { get; set; }
+
+
         public DateTime DateJoined { get; set; }
 
         public EmploymentType EmploymentType { get; set; }

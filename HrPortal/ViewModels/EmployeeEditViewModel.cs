@@ -33,6 +33,33 @@ namespace HrPortal.ViewModels
         [Display(Name = "National ID")]
         public string? NationalId { get; set; }
 
+        [Display(Name = "Date of Birth")]
+        [DataType(DataType.Date)]
+        public DateTime? DateOfBirth { get; set; }
+
+        [Display(Name = "Gender")]
+        public Gender Gender { get; set; } = Gender.Unspecified;
+
+        [Display(Name = "Marital Status")]
+        public MaritalStatus MaritalStatus { get; set; }
+            = MaritalStatus.Unspecified;
+
+        [Display(Name = "Home Address")]
+        [StringLength(400)]
+        public string? Address { get; set; }
+
+        [Display(Name = "Emergency Contact")]
+        [StringLength(200)]
+        public string? EmergencyContactName { get; set; }
+
+        [Display(Name = "Emergency Contact Phone")]
+        [StringLength(50)]
+        public string? EmergencyContactPhone { get; set; }
+
+        [Display(Name = "Relationship")]
+        [StringLength(100)]
+        public string? EmergencyContactRelationship { get; set; }
+
         [Required]
         [Display(Name = "Date Joined")]
         [DataType(DataType.Date)]
