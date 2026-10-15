@@ -350,9 +350,15 @@ namespace HrPortal.Services
                 "Cancelled.");
         }
 
+        /// <summary>
+        /// Working days between two dates, excluding weekends and any
+        /// public holidays passed in. Callers that have a database to
+        /// hand should use CountWorkingDaysAsync, which loads them.
+        /// </summary>
         public static decimal CountWorkingDays(
             DateTime startDate,
-            DateTime endDate)
+            DateTime endDate,
+            IReadOnlySet<DateTime>? holidays = null)
         {
             var days = 0;
 
@@ -360,15 +366,51 @@ namespace HrPortal.Services
                  date <= endDate.Date;
                  date = date.AddDays(1))
             {
-                if (date.DayOfWeek != DayOfWeek.Saturday &&
-                    date.DayOfWeek != DayOfWeek.Sunday)
+                if (date.DayOfWeek == DayOfWeek.Saturday ||
+                    date.DayOfWeek == DayOfWeek.Sunday)
                 {
-                    days++;
+                    continue;
                 }
+
+                // A holiday falling on a weekday is not a day of leave.
+                if (holidays != null && holidays.Contains(date))
+                    continue;
+
+                days++;
             }
 
             return days;
         }
+
+        /// <summary>
+        /// Working days between two dates with the holiday calendar
+        /// applied.
+        /// </summary>
+        public async Task<decimal> CountWorkingDaysAsync(
+            DateTime startDate,
+            DateTime endDate)
+        {
+            var holidays = await HolidaysBetweenAsync(startDate, endDate);
+
+            return CountWorkingDays(startDate, endDate, holidays);
+        }
+
+        public async Task<IReadOnlySet<DateTime>> HolidaysBetweenAsync(
+            DateTime startDate,
+            DateTime endDate)
+        {
+            var from = startDate.Date;
+            var to = endDate.Date;
+
+            var dates = await _context.PublicHolidays
+                .AsNoTracking()
+                .Where(h => h.Date >= from && h.Date <= to)
+                .Select(h => h.Date)
+                .ToListAsync();
+
+            return dates.Select(d => d.Date).ToHashSet();
+        }
+
 
         public async Task<string> GenerateRequestNumberAsync()
         {

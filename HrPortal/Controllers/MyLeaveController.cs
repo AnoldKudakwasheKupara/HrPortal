@@ -311,16 +311,20 @@ namespace HrPortal.Controllers
                 return 0;
             }
 
-            var numberOfDays =
-                LeaveWorkflowService.CountWorkingDays(
-                    model.StartDate,
-                    model.EndDate);
+            // Counts weekdays less any public holiday in the range, so
+            // a break over a holiday does not cost the employee a day
+            // they were entitled to keep.
+            var numberOfDays = await _workflow.CountWorkingDaysAsync(
+                model.StartDate,
+                model.EndDate);
+
 
             if (numberOfDays == 0)
             {
                 ModelState.AddModelError(
                     nameof(model.EndDate),
-                    "That range contains no working days.");
+                    "That range has no working days in it, once " +
+                    "weekends and public holidays are taken out.");
 
                 return 0;
             }

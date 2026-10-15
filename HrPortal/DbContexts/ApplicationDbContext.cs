@@ -33,6 +33,7 @@ namespace HrPortal.DbContexts
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
+        public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
         public DbSet<RequisitionLine> RequisitionLines { get; set; }
         public DbSet<RequisitionHistory> RequisitionHistories { get; set; }
@@ -462,6 +463,22 @@ namespace HrPortal.DbContexts
                     .HasForeignKey(r => r.LicenseId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            builder.Entity<PublicHoliday>(entity =>
+            {
+                entity.HasKey(h => h.Id);
+
+                entity.Property(h => h.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(h => h.Notes).HasMaxLength(500);
+
+                // One holiday per date. Two names for the same day
+                // would double-count it out of a leave request.
+                entity.HasIndex(h => h.Date).IsUnique();
+            });
+
 
             builder.Entity<Requisition>(entity =>
             {
