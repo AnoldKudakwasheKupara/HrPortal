@@ -74,6 +74,9 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(e => e.Email)
                     .IsUnique();
 
+                entity.Property(e => e.JobTitle)
+                    .HasMaxLength(150);
+
                 entity.Property(e => e.NationalId)
                     .HasMaxLength(50);
 

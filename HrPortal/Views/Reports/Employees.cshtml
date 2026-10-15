@@ -22,6 +22,7 @@
                         <tr>
                             <th>Number</th>
                             <th>Name</th>
+                            <th>Job title</th>
                             <th>Department</th>
                             <th>Email</th>
                             <th>Joined</th>
@@ -44,6 +45,7 @@
                             <tr>
                                 <td>@r.EmployeeNumber</td>
                                 <td><strong>@r.Name</strong></td>
+                                <td>@(string.IsNullOrWhiteSpace(r.JobTitle) ? "--" : r.JobTitle)</td>
                                 <td>@r.Department</td>
                                 <td>@r.Email</td>
                                 <td>@r.DateJoined.ToString("d MMM yyyy")</td>

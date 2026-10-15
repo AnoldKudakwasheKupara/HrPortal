@@ -14,6 +14,9 @@ namespace HrPortal.Entities
 
         public string Email { get; set; } = string.Empty;
 
+        /// <summary>What they do, as it appears on the contract.</summary>
+        public string? JobTitle { get; set; }
+
         public string? PhoneNumber { get; set; }
 
         public string? NationalId { get; set; }

@@ -70,6 +70,12 @@
                                     @employee.FirstName
                                     @employee.LastName
                                 </strong>
+                                @if (!string.IsNullOrWhiteSpace(employee.JobTitle))
+                                {
+                                    <div class="text-muted small">
+                                        @employee.JobTitle
+                                    </div>
+                                }
                             </td>
 
                             <td>

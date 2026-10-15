@@ -118,6 +118,22 @@
 
                     <div class="col-md-6 mb-3">
 
+                        <label asp-for="JobTitle"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="JobTitle"
+                               class="form-control"
+                               placeholder="IT Support Officer" />
+
+                        <span asp-validation-for="JobTitle"
+                              class="text-danger"></span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
                         <label asp-for="PhoneNumber"
                                class="form-label">
                         </label>

@@ -116,6 +116,7 @@ namespace HrPortal.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
+                JobTitle = model.JobTitle?.Trim(),
                 PhoneNumber = model.PhoneNumber,
                 NationalId = model.NationalId,
                 DateJoined = model.DateJoined,
@@ -235,6 +236,7 @@ namespace HrPortal.Controllers
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
                 Email = employee.Email,
+                JobTitle = employee.JobTitle,
                 PhoneNumber = employee.PhoneNumber,
                 NationalId = employee.NationalId,
                 DateJoined = employee.DateJoined,
@@ -273,6 +275,7 @@ namespace HrPortal.Controllers
             employee.FirstName = model.FirstName;
             employee.LastName = model.LastName;
             employee.Email = model.Email;
+            employee.JobTitle = model.JobTitle?.Trim();
             employee.PhoneNumber = model.PhoneNumber;
             employee.NationalId = model.NationalId;
             employee.DateJoined = model.DateJoined;

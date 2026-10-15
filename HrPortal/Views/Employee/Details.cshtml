@@ -70,6 +70,15 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
+                    <span class="field-label">Job Title</span>
+                    <div class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.JobTitle)
+                            ? "Not recorded"
+                            : Model.JobTitle)
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
                     <span class="field-label">Email</span>
                     <div class="field-value">@Model.Email</div>
                 </div>
