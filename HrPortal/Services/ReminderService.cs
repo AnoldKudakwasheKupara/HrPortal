@@ -62,6 +62,8 @@ namespace HrPortal.Services
         public const string LicenceExpiry = "Licence expiry";
         public const string DocumentExpiry = "Document expiry";
         public const string ContractEnding = "Contract ending";
+        public const string LeaveWaiting = "Leave awaiting a decision";
+        public const string RequisitionWaiting = "Requisition awaiting a decision";
 
         public async Task<ReminderRun> RunAsync()
         {
@@ -81,6 +83,14 @@ namespace HrPortal.Services
             run.Add(
                 ContractEnding,
                 await RemindEndingContractsAsync(today, horizon));
+
+            run.Add(
+                LeaveWaiting,
+                await RemindStaleLeaveAsync(today));
+
+            run.Add(
+                RequisitionWaiting,
+                await RemindStaleRequisitionsAsync(today));
 
             await _context.SaveChangesAsync();
 
@@ -243,6 +253,155 @@ namespace HrPortal.Services
 
                     sent++;
                 }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// Leave sitting with an approver for longer than it should.
+        /// The request itself notified them when it arrived; this is
+        /// the nudge when nothing happened afterwards.
+        /// </summary>
+        private async Task<int> RemindStaleLeaveAsync(DateTime today)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-_options.StaleApprovalDays);
+
+            var pending = await _context.LeaveRequests
+                .AsNoTracking()
+                .Where(r =>
+                    r.Status == LeaveRequestStatus.Submitted ||
+                    r.Status == LeaveRequestStatus.HRReview ||
+                    r.Status == LeaveRequestStatus.HRApproved ||
+                    r.Status == LeaveRequestStatus.MDReview)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.RequestNumber,
+                    r.Status,
+                    r.SubmittedAt,
+                    Employee = r.Employee.FirstName + " " + r.Employee.LastName,
+                    LastAction = r.History
+                        .Max(h => (DateTime?)h.ActionDate)
+                })
+                .ToListAsync();
+
+            var sent = 0;
+
+            foreach (var request in pending)
+            {
+                // Measured from whatever last happened to it, not from
+                // submission, or a request that cleared HR this morning
+                // would look stale to the MD straight away.
+                var waitingSince = request.LastAction ?? request.SubmittedAt;
+
+                if (waitingSince > cutoff)
+                    continue;
+
+                var withMd =
+                    LeaveWorkflowService.IsAwaitingMd(request.Status);
+
+                var approver = await _notifications.GetApproverEmployeeId(
+                    withMd ? ApprovalRole.MD : ApprovalRole.HROfficer);
+
+                if (approver == null)
+                    continue;
+
+                if (!await ShouldSendAsync(
+                        LeaveWaiting,
+                        request.Id.ToString(),
+                        approver.Value,
+                        today))
+                {
+                    continue;
+                }
+
+                var days = (int)(DateTime.UtcNow - waitingSince).TotalDays;
+
+                _notifications.Notify(
+                    approver.Value,
+                    $"Leave waiting {days} day{Plural(days)}",
+                    $"{request.RequestNumber} from {request.Employee} has " +
+                    $"been waiting {days} day{Plural(days)} for your " +
+                    "decision.",
+                    withMd
+                        ? "/LeaveApproval/FinalApproval"
+                        : "/LeaveApproval");
+
+                sent++;
+            }
+
+            return sent;
+        }
+
+        private async Task<int> RemindStaleRequisitionsAsync(DateTime today)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-_options.StaleApprovalDays);
+
+            var pending = await _context.Requisitions
+                .AsNoTracking()
+                .Where(r =>
+                    r.Status == RequisitionStatus.Submitted ||
+                    r.Status == RequisitionStatus.ReviewApproved)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.RequisitionNumber,
+                    r.Status,
+                    r.SubmittedAt,
+                    r.EstimatedTotal,
+                    Employee = r.Employee.FirstName + " " + r.Employee.LastName,
+                    LastAction = r.History
+                        .Max(h => (DateTime?)h.ActionDate)
+                })
+                .ToListAsync();
+
+            var sent = 0;
+
+            foreach (var requisition in pending)
+            {
+                var waitingSince =
+                    requisition.LastAction
+                    ?? requisition.SubmittedAt
+                    ?? DateTime.UtcNow;
+
+                if (waitingSince > cutoff)
+                    continue;
+
+                var withMd = requisition.Status ==
+                    RequisitionStatus.ReviewApproved;
+
+                var approver = await _notifications.GetApproverEmployeeId(
+                    withMd
+                        ? ApprovalRole.MD
+                        : ApprovalRole.RequisitionReviewer);
+
+                if (approver == null)
+                    continue;
+
+                if (!await ShouldSendAsync(
+                        RequisitionWaiting,
+                        requisition.Id.ToString(),
+                        approver.Value,
+                        today))
+                {
+                    continue;
+                }
+
+                var days = (int)(DateTime.UtcNow - waitingSince).TotalDays;
+
+                _notifications.Notify(
+                    approver.Value,
+                    $"Requisition waiting {days} day{Plural(days)}",
+                    $"{requisition.RequisitionNumber} from " +
+                    $"{requisition.Employee} " +
+                    $"({requisition.EstimatedTotal:N2}) has been waiting " +
+                    $"{days} day{Plural(days)} for your decision.",
+                    withMd
+                        ? "/RequisitionApproval/FinalApproval"
+                        : "/RequisitionApproval");
+
+                sent++;
             }
 
             return sent;
