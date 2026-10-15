@@ -571,7 +571,8 @@ namespace HrPortal.Controllers
                     "This employee cannot be deleted because their " +
                     "record is referenced elsewhere: " +
                     string.Join("; ", blockers) +
-                    ". Mark them inactive instead.";
+                    ". Mark them as having left instead, on the edit " +
+                    "page, which keeps their file.";
 
                 return RedirectToAction(nameof(Index));
             }
@@ -652,6 +653,18 @@ namespace HrPortal.Controllers
                 await _context.ApprovalConfigurations
                     .CountAsync(a => a.EmployeeId == employeeId),
                 "approval role assignment(s)");
+
+            // Their own file. Deleting the employee used to take the
+            // documents and the files on disk with them, so a contract
+            // or a disciplinary record disappeared the moment somebody
+            // tidied up a leaver. Employment records normally have to
+            // be kept for years after someone goes, so this blocks the
+            // delete and points at marking them as having left, which
+            // now records the date.
+            Add(
+                await _context.EmployeeDocuments
+                    .CountAsync(d => d.EmployeeId == employeeId),
+                "document(s) held on their file");
 
             return blockers;
         }
