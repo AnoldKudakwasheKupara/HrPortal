@@ -1,0 +1,136 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<HrPortal.ViewModels.DirectoryEntryViewModel>
+
+@{
+    ViewData["Title"] = "Staff Directory";
+
+    var departments = ViewBag.Departments as List<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    var search = ViewBag.Search as string;
+    var departmentFilter = ViewBag.DepartmentFilter as int?;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Staff Directory</h2>
+            <p class="text-muted mb-0">
+                Who works here and how to reach them. Work contact
+                details only.
+            </p>
+        </div>
+
+        <span class="badge bg-light text-dark align-self-start">
+            @ViewBag.TotalActive on the books
+        </span>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-5">
+                    <label class="form-label">Search</label>
+                    <input name="search" class="form-control"
+                           value="@search"
+                           placeholder="Name, job title or email" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Department</label>
+                    <select name="departmentId" class="form-select">
+                        <option value="">All departments</option>
+                        @foreach (var d in departments)
+                        {
+                            <option value="@d.Value"
+                                    selected="@(departmentFilter?.ToString() == d.Value)">
+                                @d.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Search
+                    </button>
+                </div>
+
+                <div class="col-md-1">
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        Clear
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Job title</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Nobody matches that search.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td><strong>@p.Name</strong></td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(p.JobTitle)
+                                        ? "--"
+                                        : p.JobTitle)
+                                </td>
+
+                                <td>@p.Department</td>
+
+                                <td>
+                                    <a href="mailto:@p.Email">@p.Email</a>
+                                </td>
+
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(p.PhoneNumber))
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="tel:@p.PhoneNumber">@p.PhoneNumber</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
