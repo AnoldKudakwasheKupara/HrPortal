@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 # Uploaded files are user data, not source
 HrPortal/wwwroot/uploads/
+
+HrPortal/App_Data/

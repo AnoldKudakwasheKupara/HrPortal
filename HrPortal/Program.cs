@@ -157,6 +157,17 @@ using (var scope = app.Services.CreateScope())
         await DbSeeder.BackfillEmployeeRoleAsync(
             userManager,
             db);
+
+        // Uploads used to live inside the web root, where static file
+        // serving handed them out with no sign-in. Anything still
+        // there is moved out on the way up.
+        var storage = services.GetRequiredService<FileStorageService>();
+
+        storage.MoveLegacyUploads(
+            services
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Uploads"));
+
     }
     catch (SqlException ex)
     {

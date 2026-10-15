@@ -9,6 +9,16 @@
             _environment = environment;
         }
 
+        /// <summary>
+        /// Where uploads live: outside the web root, so static file
+        /// serving cannot hand them out. Everything reaches them
+        /// through a controller action that checks who is asking.
+        /// </summary>
+        public string UploadRoot => Path.Combine(
+            _environment.ContentRootPath,
+            "App_Data",
+            "uploads");
+
         public static readonly string[] AllowedExtensions =
         {
             ".pdf",
@@ -81,10 +91,7 @@
 
             var fileName = $"{Guid.NewGuid():N}{extension}";
 
-            var folderPath = Path.Combine(
-                _environment.WebRootPath,
-                "uploads",
-                folder);
+            var folderPath = Path.Combine(UploadRoot, folder);
 
             Directory.CreateDirectory(folderPath);
 
@@ -102,18 +109,9 @@
 
         public void Delete(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-                return;
+            var fullPath = ResolveExistingPath(filePath);
 
-            var relativePath = filePath
-                .TrimStart('/')
-                .Replace('/', Path.DirectorySeparatorChar);
-
-            var fullPath = Path.Combine(
-                _environment.WebRootPath,
-                relativePath);
-
-            if (File.Exists(fullPath))
+            if (fullPath != null)
                 File.Delete(fullPath);
         }
 
@@ -122,15 +120,119 @@
             if (string.IsNullOrWhiteSpace(filePath))
                 return null;
 
-            var relativePath = filePath
+            // The stored path is a key of the form
+            // /uploads/<folder>/<file>, kept as it was so no existing
+            // record has to be rewritten. Only the root it resolves
+            // against has moved.
+            var relative = filePath
                 .TrimStart('/')
                 .Replace('/', Path.DirectorySeparatorChar);
 
-            var fullPath = Path.Combine(
-                _environment.WebRootPath,
-                relativePath);
+            const string prefix = "uploads";
+
+            if (relative.StartsWith(
+                    prefix + Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                relative = relative[(prefix.Length + 1)..];
+            }
+
+            var fullPath = Path.GetFullPath(
+                Path.Combine(UploadRoot, relative));
+
+            // A stored path should never climb out of the upload root,
+            // but checking costs nothing and a crafted value would
+            // otherwise reach the rest of the disk.
+            if (!fullPath.StartsWith(
+                    Path.GetFullPath(UploadRoot),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
 
             return File.Exists(fullPath) ? fullPath : null;
+        }
+
+        /// <summary>
+        /// Moves anything left under wwwroot/uploads into the new root.
+        ///
+        /// Files used to be written inside the web root, where static
+        /// file serving handed them to anyone with the URL and no
+        /// sign-in at all. Leaving them there would keep that hole open
+        /// for every document uploaded before this change, so they are
+        /// moved once at startup and the old folder removed.
+        /// </summary>
+        public int MoveLegacyUploads(ILogger logger)
+        {
+            var legacyRoot = Path.Combine(
+                _environment.WebRootPath ?? string.Empty,
+                "uploads");
+
+            if (string.IsNullOrEmpty(_environment.WebRootPath) ||
+                !Directory.Exists(legacyRoot))
+            {
+                return 0;
+            }
+
+            var moved = 0;
+
+            foreach (var source in Directory.EnumerateFiles(
+                         legacyRoot,
+                         "*",
+                         SearchOption.AllDirectories))
+            {
+                var relative = Path.GetRelativePath(legacyRoot, source);
+                var destination = Path.Combine(UploadRoot, relative);
+
+                try
+                {
+                    Directory.CreateDirectory(
+                        Path.GetDirectoryName(destination)!);
+
+                    if (File.Exists(destination))
+                    {
+                        File.Delete(source);
+                    }
+                    else
+                    {
+                        File.Move(source, destination);
+                        moved++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Could not move {File} out of the web root. It " +
+                        "stays publicly reachable until it is moved.",
+                        source);
+                }
+            }
+
+            try
+            {
+                if (!Directory.EnumerateFileSystemEntries(legacyRoot).Any())
+                    Directory.Delete(legacyRoot, true);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Moved the uploads but could not remove {Folder}.",
+                    legacyRoot);
+            }
+
+            if (moved > 0)
+            {
+                logger.LogWarning(
+                    "Moved {Count} uploaded file(s) out of the web root " +
+                    "into {Root}. They are no longer served without a " +
+                    "sign-in.",
+                    moved,
+                    UploadRoot);
+            }
+
+            return moved;
         }
     }
 }
