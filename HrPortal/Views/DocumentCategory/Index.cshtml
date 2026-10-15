@@ -66,6 +66,12 @@
                                 <strong>
                                     @category.Name
                                 </strong>
+                                @if (category.IsRestricted)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        HR only
+                                    </span>
+                                }
                             </td>
 
                             <td>

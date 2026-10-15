@@ -75,6 +75,7 @@ namespace HrPortal.Controllers
             {
                 Name = name,
                 Description = model.Description?.Trim(),
+                IsRestricted = model.IsRestricted,
                 IsActive = true
             };
 
@@ -104,6 +105,7 @@ namespace HrPortal.Controllers
                 Id = category.Id,
                 Name = category.Name,
                 Description = category.Description,
+                IsRestricted = category.IsRestricted,
                 IsActive = category.IsActive
             };
 
@@ -146,6 +148,7 @@ namespace HrPortal.Controllers
 
             category.Name = name;
             category.Description = model.Description?.Trim();
+            category.IsRestricted = model.IsRestricted;
             category.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync();

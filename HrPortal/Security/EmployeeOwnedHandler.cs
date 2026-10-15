@@ -1,7 +1,9 @@
-﻿using HrPortal.Entities;
+﻿using HrPortal.DbContexts;
+using HrPortal.Entities;
 using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Security
 {
@@ -11,10 +13,14 @@ namespace HrPortal.Security
             IEmployeeOwned>
     {
         private readonly CurrentUserService _currentUser;
+        private readonly ApplicationDbContext _context;
 
-        public EmployeeOwnedHandler(CurrentUserService currentUser)
+        public EmployeeOwnedHandler(
+            CurrentUserService currentUser,
+            ApplicationDbContext context)
         {
             _currentUser = currentUser;
+            _context = context;
         }
 
         protected override async Task HandleRequirementAsync(
@@ -28,6 +34,16 @@ namespace HrPortal.Security
                 return;
             }
 
+            // Owning the record is normally enough. A document in a
+            // restricted category is the exception: it is HR's record
+            // about the employee, not the employee's own, so ownership
+            // grants nothing.
+            if (resource is EmployeeDocument document &&
+                await IsRestrictedAsync(document))
+            {
+                return;
+            }
+
             var employeeId = await _currentUser.GetEmployeeIdAsync();
 
             if (employeeId != null &&
@@ -35,6 +51,23 @@ namespace HrPortal.Security
             {
                 context.Succeed(requirement);
             }
+        }
+
+        /// <summary>
+        /// Read from the database rather than the resource's navigation
+        /// property, which a caller may not have loaded. Guessing from
+        /// a null navigation would fail open.
+        /// </summary>
+        private async Task<bool> IsRestrictedAsync(EmployeeDocument document)
+        {
+            if (document.DocumentCategory != null)
+                return document.DocumentCategory.IsRestricted;
+
+            return await _context.EmployeeDocuments
+                .AsNoTracking()
+                .Where(d => d.Id == document.Id)
+                .Select(d => d.DocumentCategory.IsRestricted)
+                .FirstOrDefaultAsync();
         }
 
         private static bool ElevatedRoleMay(

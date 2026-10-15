@@ -12,5 +12,9 @@ namespace HrPortal.ViewModels
         [Display(Name = "Description")]
         [StringLength(500)]
         public string? Description { get; set; }
+
+        [Display(Name = "HR only")]
+        public bool IsRestricted { get; set; }
+
     }
 }

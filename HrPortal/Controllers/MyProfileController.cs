@@ -40,9 +40,14 @@ namespace HrPortal.Controllers
             {
                 Employee = employee,
 
+                // Restricted categories are HR's record of the
+                // employee rather than the employee's own, so they
+                // are not listed here.
                 Documents = await _context.EmployeeDocuments
                     .Include(d => d.DocumentCategory)
-                    .Where(d => d.EmployeeId == employee.Id)
+                    .Where(d =>
+                        d.EmployeeId == employee.Id &&
+                        !d.DocumentCategory.IsRestricted)
                     .OrderByDescending(d => d.UploadedAt)
                     .ToListAsync(),
 
