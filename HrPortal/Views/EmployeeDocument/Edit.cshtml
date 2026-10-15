@@ -119,6 +119,28 @@
 
                 <div class="mb-4">
 
+                    <label asp-for="ExpiryDate"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="ExpiryDate"
+                           class="form-control"
+                           type="date" />
+
+                    <div class="form-text">
+                        For documents that stop being valid, such
+                        as a contract, a work permit or a
+                        certificate. Leave blank otherwise.
+                    </div>
+
+                    <span asp-validation-for="ExpiryDate"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+                <div class="mb-4">
+
                     <label asp-for="Description"
                            class="form-label">
                     </label>

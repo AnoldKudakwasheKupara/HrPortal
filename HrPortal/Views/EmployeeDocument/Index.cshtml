@@ -115,6 +115,7 @@
                             <th>File</th>
                             <th>Employee</th>
                             <th>Category</th>
+                            <th>Expires</th>
                             <th>Uploaded</th>
                             <th>Uploaded By</th>
                             <th class="col-actions">Actions</th>
@@ -140,6 +141,34 @@
 
                             <td>
                                 @document.DocumentCategory.Name
+                            </td>
+
+                            <td>
+                                @if (document.ExpiryDate == null)
+                                {
+                                    <span class="text-muted">--</span>
+                                }
+                                else
+                                {
+                                    var days =
+                                        (document.ExpiryDate.Value.Date
+                                            - DateTime.Today).Days;
+
+                                    <span class="@(days < 0
+                                        ? "badge bg-danger"
+                                        : days <= 30
+                                            ? "badge bg-warning text-dark"
+                                            : "")">
+                                        @document.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                    </span>
+
+                                    @if (days < 0)
+                                    {
+                                        <div class="text-muted small">
+                                            expired
+                                        </div>
+                                    }
+                                }
                             </td>
 
                             <td>

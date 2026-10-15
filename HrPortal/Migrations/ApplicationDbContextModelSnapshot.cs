@@ -471,6 +471,9 @@ namespace HrPortal.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(255)

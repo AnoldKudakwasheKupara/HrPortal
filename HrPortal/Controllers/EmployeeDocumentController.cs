@@ -204,6 +204,7 @@ namespace HrPortal.Controllers
                     Path.GetFileName(model.File!.FileName),
                 FilePath = filePath,
                 Description = model.Description?.Trim(),
+                ExpiryDate = model.ExpiryDate,
                 UploadedAt = DateTime.UtcNow,
                 UploadedByEmployeeId = await GetCurrentEmployeeId(),
                 UploadedByName = await GetCurrentUserName()
@@ -245,7 +246,8 @@ namespace HrPortal.Controllers
                 EmployeeId = document.EmployeeId,
                 DocumentCategoryId = document.DocumentCategoryId,
                 CurrentFileName = document.OriginalFileName,
-                Description = document.Description
+                Description = document.Description,
+                ExpiryDate = document.ExpiryDate
             };
 
             await LoadLookups();
@@ -307,6 +309,7 @@ namespace HrPortal.Controllers
             document.EmployeeId = model.EmployeeId;
             document.DocumentCategoryId = model.DocumentCategoryId;
             document.Description = model.Description?.Trim();
+            document.ExpiryDate = model.ExpiryDate;
 
             await _context.SaveChangesAsync();
 

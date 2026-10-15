@@ -20,6 +20,10 @@ namespace HrPortal.ViewModels
         [Display(Name = "Replace File")]
         public IFormFile? File { get; set; }
 
+        [Display(Name = "Expires On")]
+        [DataType(DataType.Date)]
+        public DateTime? ExpiryDate { get; set; }
+
         [Display(Name = "Description")]
         [StringLength(1000)]
         public string? Description { get; set; }

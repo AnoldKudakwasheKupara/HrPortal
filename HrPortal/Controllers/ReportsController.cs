@@ -1102,6 +1102,7 @@ namespace HrPortal.Controllers
                 Category = d.DocumentCategory.Name,
                 FileName = d.OriginalFileName,
                 UploadedAt = d.UploadedAt,
+                ExpiryDate = d.ExpiryDate,
                 UploadedBy = !string.IsNullOrWhiteSpace(d.UploadedByName)
                     ? d.UploadedByName!
                     : d.UploadedByEmployee != null
@@ -1117,12 +1118,12 @@ namespace HrPortal.Controllers
                     new[]
                     {
                         "Employee", "Department", "Category", "File",
-                        "Uploaded", "Uploaded by"
+                        "Expires", "Uploaded", "Uploaded by"
                     },
                     rows.Select(r => new string?[]
                     {
                         r.Employee, r.Department, r.Category, r.FileName,
-                        D(r.UploadedAt), r.UploadedBy
+                        D(r.ExpiryDate), D(r.UploadedAt), r.UploadedBy
                     }));
             }
 
@@ -1166,6 +1167,33 @@ namespace HrPortal.Controllers
                 byCategory.Add(g.Key, g.Count());
             }
 
+            var today = DateTime.Today;
+
+            var expiring = new ReportBreakdown("Expiry", "documents")
+                .Add(
+                    "Expired",
+                    rows.Count(r =>
+                        r.ExpiryDate != null &&
+                        r.ExpiryDate.Value.Date < today),
+                    "critical")
+                .Add(
+                    "Within 30 days",
+                    rows.Count(r =>
+                        r.ExpiryDate != null &&
+                        r.ExpiryDate.Value.Date >= today &&
+                        r.ExpiryDate.Value.Date <= today.AddDays(30)),
+                    "warning")
+                .Add(
+                    "Later",
+                    rows.Count(r =>
+                        r.ExpiryDate != null &&
+                        r.ExpiryDate.Value.Date > today.AddDays(30)),
+                    "good")
+                .Add(
+                    "No expiry recorded",
+                    rows.Count(r => r.ExpiryDate == null));
+
+
             var byDept = new ReportBreakdown("By department", "documents");
 
             foreach (var g in rows
@@ -1176,7 +1204,7 @@ namespace HrPortal.Controllers
             }
 
             model.Breakdowns.AddRange(
-                new[] { byCategory, byDept }
+                new[] { byCategory, byDept, expiring }
                     .Where(b => b.Items.Count > 0));
 
             await LoadLookups();
