@@ -1,0 +1,135 @@
+@using HrPortal.Services
+@model object
+
+@{
+    ViewData["Title"] = "Reminders";
+
+    var options = (ReminderOptions)ViewBag.Options;
+    var lastRunAt = ViewBag.LastRunAt as DateTime?;
+    var lastRunCount = (int)ViewBag.LastRunCount;
+    var recent = ViewBag.Recent as List<HrPortal.Entities.ReminderLog>
+        ?? new List<HrPortal.Entities.ReminderLog>();
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Reminders</h2>
+            <p class="text-muted mb-0">
+                The one part of the portal that acts on its own. It runs
+                once a day and warns about things that would otherwise
+                pass unnoticed.
+            </p>
+        </div>
+
+        <form asp-action="RunNow" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary">Run Now</button>
+        </form>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (!options.Enabled)
+    {
+        <div class="alert alert-warning">
+            Reminders are turned off in configuration, so the daily run
+            does not happen. Running by hand still works.
+        </div>
+    }
+
+    <div class="report-stats">
+
+        <div class="report-stat @(lastRunAt == null ? "is-warning" : "is-good")">
+            <span class="report-stat-label">Last run</span>
+            <span class="report-stat-value" style="font-size:1.25rem">
+                @(lastRunAt?.ToString("d MMM HH:mm") ?? "Not yet")
+            </span>
+            <span class="report-stat-note">
+                @(lastRunAt == null
+                    ? $"Due at {options.RunAtHour:00}:00"
+                    : $"{lastRunCount} sent")
+            </span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Runs at</span>
+            <span class="report-stat-value" style="font-size:1.25rem">
+                @($"{options.RunAtHour:00}:00")
+            </span>
+            <span class="report-stat-note">Every day</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Warns ahead</span>
+            <span class="report-stat-value">@options.ExpiryWindowDays</span>
+            <span class="report-stat-note">days before expiry</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Repeats after</span>
+            <span class="report-stat-value">@options.RepeatEveryDays</span>
+            <span class="report-stat-note">days, per person per thing</span>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Recently sent</span>
+            <span class="text-muted small">@ViewBag.TotalSent in total</span>
+        </div>
+
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Sent</th>
+                            <th>About</th>
+                            <th>To</th>
+                            <th>Reference</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (recent.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                Nothing has needed a reminder yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var entry in recent)
+                        {
+                            <tr>
+                                <td>@entry.LastSentOn.ToString("d MMM yyyy")</td>
+                                <td>@entry.Kind</td>
+                                <td>
+                                    @(entry.Employee.FirstName + " " +
+                                      entry.Employee.LastName)
+                                </td>
+                                <td class="text-muted">@entry.ReferenceKey</td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>

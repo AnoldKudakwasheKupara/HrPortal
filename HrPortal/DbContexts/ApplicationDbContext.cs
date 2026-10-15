@@ -34,6 +34,7 @@ namespace HrPortal.DbContexts
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
+        public DbSet<ReminderLog> ReminderLogs { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
         public DbSet<RequisitionLine> RequisitionLines { get; set; }
         public DbSet<RequisitionHistory> RequisitionHistories { get; set; }
@@ -462,6 +463,33 @@ namespace HrPortal.DbContexts
                     .WithMany(l => l.Renewals)
                     .HasForeignKey(r => r.LicenseId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ReminderLog>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Kind)
+                    .IsRequired()
+                    .HasMaxLength(60);
+
+                entity.Property(r => r.ReferenceKey)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasOne(r => r.Employee)
+                    .WithMany()
+                    .HasForeignKey(r => r.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // One row per person per thing per kind, which
+                // is what makes the repeat check a lookup.
+                entity.HasIndex(r => new
+                {
+                    r.Kind,
+                    r.ReferenceKey,
+                    r.EmployeeId
+                }).IsUnique();
             });
 
             builder.Entity<PublicHoliday>(entity =>

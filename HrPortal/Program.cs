@@ -98,6 +98,12 @@ builder.Services.Configure<LeaveOptions>(
 
 builder.Services.AddSingleton<EmailService>();
 
+builder.Services.AddScoped<ReminderService>();
+builder.Services.AddHostedService<ReminderHostedService>();
+
+builder.Services.Configure<ReminderOptions>(
+    builder.Configuration.GetSection(ReminderOptions.Section));
+
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.Section));
 builder.Services.AddSingleton<WeeklyReportPdfService>();
