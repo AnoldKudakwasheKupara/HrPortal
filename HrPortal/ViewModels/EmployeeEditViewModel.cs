@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
@@ -41,6 +42,24 @@ namespace HrPortal.ViewModels
         [Display(Name = "Department")]
         public int DepartmentId { get; set; }
 
+        [Required]
+        [Display(Name = "Employment Type")]
+        public EmploymentType EmploymentType { get; set; }
+
+        [Display(Name = "Contract Ends")]
+        [DataType(DataType.Date)]
+        public DateTime? ContractEndDate { get; set; }
+
+        [Display(Name = "Still Employed")]
+
         public bool IsActive { get; set; }
+
+        [Display(Name = "Left On")]
+        [DataType(DataType.Date)]
+        public DateTime? EndDate { get; set; }
+
+        [Display(Name = "Reason For Leaving")]
+        [StringLength(500)]
+        public string? LeavingReason { get; set; }
     }
 }

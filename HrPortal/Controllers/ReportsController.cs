@@ -949,6 +949,9 @@ namespace HrPortal.Controllers
                     EmployeeNumber = e.EmployeeNumber,
                     Name = e.FirstName + " " + e.LastName,
                     JobTitle = e.JobTitle,
+                    EmploymentType = e.EmploymentType,
+                    ContractEndDate = e.ContractEndDate,
+                    EndDate = e.EndDate,
                     Department = e.Department?.Name ?? "--",
                     Email = e.Email,
                     DateJoined = e.DateJoined,
@@ -967,14 +970,15 @@ namespace HrPortal.Controllers
                     new[]
                     {
                         "Employee number", "Name", "Job title", "Department",
-                        "Email",
+                        "Email", "Employment type", "Contract ends", "Left on",
                         "Date joined", "Years of service", "Active",
                         "Has login", "Roles"
                     },
                     rows.Select(r => new string?[]
                     {
                         r.EmployeeNumber, r.Name, r.JobTitle, r.Department,
-                        r.Email,
+                        r.Email, r.EmploymentType.ToString(), D(r.ContractEndDate),
+                        D(r.EndDate),
                         D(r.DateJoined), r.YearsOfService.ToString(),
                         r.IsActive ? "Yes" : "No",
                         r.HasLogin ? "Yes" : "No", r.Roles

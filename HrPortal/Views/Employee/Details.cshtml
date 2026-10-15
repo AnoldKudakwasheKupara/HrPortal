@@ -70,6 +70,44 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
+                    <span class="field-label">Employment</span>
+                    <div class="field-value">
+                        @Html.DisplayFor(m => m.EmploymentType)
+                        @if (Model.ContractEndDate != null)
+                        {
+                            <span class="text-muted">
+                                &mdash; ends
+                                @Model.ContractEndDate.Value.ToString("d MMM yyyy")
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">Status</span>
+                    <div class="field-value">
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success">Employed</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">
+                                Left@(Model.EndDate != null
+                                    ? " " + Model.EndDate.Value.ToString("d MMM yyyy")
+                                    : "")
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(Model.LeavingReason))
+                            {
+                                <div class="text-muted small">
+                                    @Model.LeavingReason
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
                     <span class="field-label">Job Title</span>
                     <div class="field-value">
                         @(string.IsNullOrWhiteSpace(Model.JobTitle)

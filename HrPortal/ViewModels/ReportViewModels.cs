@@ -264,6 +264,9 @@ namespace HrPortal.ViewModels
         public string Department { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public DateTime DateJoined { get; set; }
+        public EmploymentType EmploymentType { get; set; }
+        public DateTime? ContractEndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public int YearsOfService { get; set; }
         public bool IsActive { get; set; }
         public bool HasLogin { get; set; }

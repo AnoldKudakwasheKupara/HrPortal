@@ -168,6 +168,44 @@
 
                     </div>
 
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="EmploymentType"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="EmploymentType"
+                                class="form-select"
+                                asp-items="Html.GetEnumSelectList<HrPortal.Entities.EmploymentType>()">
+                        </select>
+
+                        <span asp-validation-for="EmploymentType"
+                              class="text-danger"></span>
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="ContractEndDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="ContractEndDate"
+                               class="form-control"
+                               type="date" />
+
+                        <div class="form-text">
+                            Only for fixed term, probation or an
+                            internship. Leave blank for permanent staff.
+                        </div>
+
+                        <span asp-validation-for="ContractEndDate"
+                              class="text-danger"></span>
+
+                    </div>
+
                 </div>
 
 

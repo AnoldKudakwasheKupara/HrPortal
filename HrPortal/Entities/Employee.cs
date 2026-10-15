@@ -23,6 +23,26 @@ namespace HrPortal.Entities
 
         public DateTime DateJoined { get; set; }
 
+        public EmploymentType EmploymentType { get; set; }
+            = EmploymentType.Permanent;
+
+        /// <summary>
+        /// When a fixed-term, probation or internship engagement is due
+        /// to end. Null for permanent staff and for anyone whose
+        /// engagement has no agreed end.
+        /// </summary>
+        public DateTime? ContractEndDate { get; set; }
+
+        /// <summary>
+        /// The day they actually left. Set when they are marked no
+        /// longer employed, so a departure is dated rather than just
+        /// switched off.
+        /// </summary>
+        public DateTime? EndDate { get; set; }
+
+        public string? LeavingReason { get; set; }
+
+
         public int DepartmentId { get; set; }
 
         public int? UserId { get; set; }

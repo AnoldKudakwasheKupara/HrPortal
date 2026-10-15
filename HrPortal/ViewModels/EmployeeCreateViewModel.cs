@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
@@ -34,6 +35,16 @@ namespace HrPortal.ViewModels
         [Display(Name = "Date Joined")]
         [DataType(DataType.Date)]
         public DateTime DateJoined { get; set; } = DateTime.Today;
+
+        [Required]
+        [Display(Name = "Employment Type")]
+        public EmploymentType EmploymentType { get; set; }
+            = EmploymentType.Permanent;
+
+        [Display(Name = "Contract Ends")]
+        [DataType(DataType.Date)]
+        public DateTime? ContractEndDate { get; set; }
+
 
         [Required]
         [Display(Name = "Department")]

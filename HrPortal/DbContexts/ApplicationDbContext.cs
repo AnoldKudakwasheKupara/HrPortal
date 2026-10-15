@@ -77,6 +77,17 @@ namespace HrPortal.DbContexts
                 entity.Property(e => e.JobTitle)
                     .HasMaxLength(150);
 
+                entity.Property(e => e.EmploymentType)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.LeavingReason)
+                    .HasMaxLength(500);
+
+                // Looked up when listing contracts that are running out.
+                entity.HasIndex(e => e.ContractEndDate);
+
+
                 entity.Property(e => e.NationalId)
                     .HasMaxLength(50);
 

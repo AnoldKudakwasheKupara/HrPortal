@@ -23,6 +23,7 @@
                             <th>Number</th>
                             <th>Name</th>
                             <th>Job title</th>
+                            <th>Employment</th>
                             <th>Department</th>
                             <th>Email</th>
                             <th>Joined</th>
@@ -46,6 +47,16 @@
                                 <td>@r.EmployeeNumber</td>
                                 <td><strong>@r.Name</strong></td>
                                 <td>@(string.IsNullOrWhiteSpace(r.JobTitle) ? "--" : r.JobTitle)</td>
+                                <td>
+                                    @Html.DisplayFor(m => r.EmploymentType)
+                                    @if (r.ContractEndDate != null)
+                                    {
+                                        <div class="text-muted small">
+                                            ends @r.ContractEndDate.Value.ToString("d MMM yyyy")
+                                        </div>
+                                    }
+                                </td>
+
                                 <td>@r.Department</td>
                                 <td>@r.Email</td>
                                 <td>@r.DateJoined.ToString("d MMM yyyy")</td>

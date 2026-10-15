@@ -96,6 +96,18 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
+            if (model.ContractEndDate.HasValue &&
+                model.ContractEndDate.Value.Date <= model.DateJoined.Date)
+            {
+                ModelState.AddModelError(
+                    nameof(model.ContractEndDate),
+                    "The contract cannot end on or before the start date.");
+
+                await LoadDepartments();
+                return View(model);
+            }
+
+
             var emailExists =
                 await _context.Employees
                     .AnyAsync(e => e.Email == model.Email);
@@ -120,6 +132,8 @@ namespace HrPortal.Controllers
                 PhoneNumber = model.PhoneNumber,
                 NationalId = model.NationalId,
                 DateJoined = model.DateJoined,
+                EmploymentType = model.EmploymentType,
+                ContractEndDate = model.ContractEndDate,
                 DepartmentId = model.DepartmentId,
                 IsActive = true
             };
@@ -240,8 +254,12 @@ namespace HrPortal.Controllers
                 PhoneNumber = employee.PhoneNumber,
                 NationalId = employee.NationalId,
                 DateJoined = employee.DateJoined,
+                EmploymentType = employee.EmploymentType,
+                ContractEndDate = employee.ContractEndDate,
                 DepartmentId = employee.DepartmentId,
-                IsActive = employee.IsActive
+                IsActive = employee.IsActive,
+                EndDate = employee.EndDate,
+                LeavingReason = employee.LeavingReason
             };
 
             await LoadDepartments();
@@ -258,11 +276,40 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
+            if (model.ContractEndDate.HasValue &&
+                model.ContractEndDate.Value.Date <= model.DateJoined.Date)
+            {
+                ModelState.AddModelError(
+                    nameof(model.ContractEndDate),
+                    "The contract cannot end on or before the start date.");
+            }
+
+            if (!model.IsActive)
+            {
+                // Switching someone off without a date loses when they
+                // actually left, which is the thing anyone looking back
+                // will want to know.
+                if (model.EndDate == null)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.EndDate),
+                        "Give the date they left before marking them no " +
+                        "longer employed.");
+                }
+                else if (model.EndDate.Value.Date < model.DateJoined.Date)
+                {
+                    ModelState.AddModelError(
+                        nameof(model.EndDate),
+                        "They cannot have left before they started.");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadDepartments();
                 return View(model);
             }
+
 
             var employee = await _context.Employees
                 .Include(e => e.User)
@@ -279,8 +326,19 @@ namespace HrPortal.Controllers
             employee.PhoneNumber = model.PhoneNumber;
             employee.NationalId = model.NationalId;
             employee.DateJoined = model.DateJoined;
+            employee.EmploymentType = model.EmploymentType;
+            employee.ContractEndDate = model.ContractEndDate;
             employee.DepartmentId = model.DepartmentId;
             employee.IsActive = model.IsActive;
+
+            // A departure has to be dated, and somebody still employed
+            // must not carry a leaving date.
+            employee.EndDate = model.IsActive ? null : model.EndDate;
+
+            employee.LeavingReason = model.IsActive
+                ? null
+                : model.LeavingReason?.Trim();
+
 
             if (employee.User != null)
             {
