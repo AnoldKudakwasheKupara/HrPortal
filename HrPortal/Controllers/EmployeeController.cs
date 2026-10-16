@@ -36,6 +36,7 @@ namespace HrPortal.Controllers
         {
             var employees = await _context.Employees
                 .Include(e => e.Department)
+                .Include(e => e.Position)
                 .Include(e => e.User)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
@@ -51,6 +52,7 @@ namespace HrPortal.Controllers
 
             var employee = await _context.Employees
                 .Include(e => e.Department)
+                .Include(e => e.Position)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -63,6 +65,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Create()
         {
             await LoadDepartments();
+            await LoadPositions();
 
             return View(new EmployeeCreateViewModel
             {
@@ -78,6 +81,8 @@ namespace HrPortal.Controllers
             if (!ModelState.IsValid)
             {
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -93,6 +98,8 @@ namespace HrPortal.Controllers
                     "This employee number already exists.");
 
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -104,6 +111,8 @@ namespace HrPortal.Controllers
                     "The contract cannot end on or before the start date.");
 
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -127,6 +136,8 @@ namespace HrPortal.Controllers
             if (!ModelState.IsValid)
             {
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -142,6 +153,8 @@ namespace HrPortal.Controllers
                     "An employee with this email already exists.");
 
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -151,7 +164,7 @@ namespace HrPortal.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
-                JobTitle = model.JobTitle?.Trim(),
+                PositionId = model.PositionId,
                 PhoneNumber = model.PhoneNumber,
                 NationalId = model.NationalId,
                 DateOfBirth = model.DateOfBirth,
@@ -186,6 +199,8 @@ namespace HrPortal.Controllers
                     await _context.SaveChangesAsync();
 
                     await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                     return View(model);
                 }
 
@@ -216,6 +231,8 @@ namespace HrPortal.Controllers
                     await _context.SaveChangesAsync();
 
                     await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                     return View(model);
                 }
 
@@ -244,6 +261,8 @@ namespace HrPortal.Controllers
                     await _context.SaveChangesAsync();
 
                     await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                     return View(model);
                 }
             }
@@ -281,7 +300,7 @@ namespace HrPortal.Controllers
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
                 Email = employee.Email,
-                JobTitle = employee.JobTitle,
+                PositionId = employee.PositionId,
                 PhoneNumber = employee.PhoneNumber,
                 NationalId = employee.NationalId,
                 DateOfBirth = employee.DateOfBirth,
@@ -302,6 +321,7 @@ namespace HrPortal.Controllers
             };
 
             await LoadDepartments();
+            await LoadPositions();
 
             return View(model);
         }
@@ -364,6 +384,8 @@ namespace HrPortal.Controllers
             if (!ModelState.IsValid)
             {
                 await LoadDepartments();
+                await LoadPositions();
+            await LoadPositions();
                 return View(model);
             }
 
@@ -379,7 +401,7 @@ namespace HrPortal.Controllers
             employee.FirstName = model.FirstName;
             employee.LastName = model.LastName;
             employee.Email = model.Email;
-            employee.JobTitle = model.JobTitle?.Trim();
+            employee.PositionId = model.PositionId;
             employee.PhoneNumber = model.PhoneNumber;
             employee.NationalId = model.NationalId;
             employee.DateOfBirth = model.DateOfBirth;
@@ -538,6 +560,7 @@ namespace HrPortal.Controllers
 
             var employee = await _context.Employees
                 .Include(e => e.Department)
+                .Include(e => e.Position)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -701,6 +724,17 @@ namespace HrPortal.Controllers
 
             return removals;
         }
+
+        private async Task LoadPositions()
+        {
+            ViewBag.Positions = await _context.Positions
+                .AsNoTracking()
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Title)
+                .Select(p => new SelectListItem(p.Title, p.Id.ToString()))
+                .ToListAsync();
+        }
+
 
         private async Task LoadDepartments()
         {

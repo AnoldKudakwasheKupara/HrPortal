@@ -1,0 +1,89 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.PositionViewModel
+
+@{
+    ViewData["Title"] = "Edit Position";
+
+    var departments = ViewBag.Departments as List<SelectListItem>
+        ?? new List<SelectListItem>();
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Edit Position</h2>
+        <p class="text-muted">
+            Renaming the post renames it everywhere it is shown, including
+            on the people who hold it.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control"
+                               placeholder="Accounts Clerk" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="DepartmentId" class="form-label"></label>
+                        <select asp-for="DepartmentId" class="form-select">
+                            <option value="">-- None --</option>
+                            @foreach (var d in departments)
+                            {
+                                <option value="@d.Value"
+                                        selected="@(Model.DepartmentId?.ToString() == d.Value)">
+                                    @d.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Establishment" class="form-label"></label>
+                        <input asp-for="Establishment" class="form-control"
+                               type="number" min="0" />
+                        <div class="form-text">
+                            Leave blank if there is no fixed number.
+                        </div>
+                        <span asp-validation-for="Establishment" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label">
+                        In use
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Save Changes
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

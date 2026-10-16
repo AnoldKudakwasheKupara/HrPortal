@@ -33,6 +33,7 @@ namespace HrPortal.DbContexts
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
+        public DbSet<Position> Positions { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<ReminderLog> ReminderLogs { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
@@ -76,9 +77,6 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(e => e.Email)
                     .IsUnique();
 
-                entity.Property(e => e.JobTitle)
-                    .HasMaxLength(150);
-
                 entity.Property(e => e.EmploymentType)
                     .HasConversion<string>()
                     .HasMaxLength(20);
@@ -112,6 +110,14 @@ namespace HrPortal.DbContexts
 
                 entity.Property(e => e.NationalId)
                     .HasMaxLength(50);
+
+                // Retiring a post must not take the people who held
+                // it with it.
+                entity.HasOne(e => e.Position)
+                    .WithMany(p => p.Employees)
+                    .HasForeignKey(e => e.PositionId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
 
                 entity.HasOne(e => e.Department)
                     .WithMany(d => d.Employees)
@@ -491,6 +497,25 @@ namespace HrPortal.DbContexts
                     r.EmployeeId
                 }).IsUnique();
             });
+
+            builder.Entity<Position>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.Title)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(p => p.Description).HasMaxLength(500);
+
+                entity.HasOne(p => p.Department)
+                    .WithMany()
+                    .HasForeignKey(p => p.DepartmentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(p => p.Title).IsUnique();
+            });
+
 
             builder.Entity<PublicHoliday>(entity =>
             {

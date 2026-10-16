@@ -406,10 +406,6 @@ namespace HrPortal.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<string>("JobTitle")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -431,6 +427,9 @@ namespace HrPortal.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PositionId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
@@ -445,6 +444,8 @@ namespace HrPortal.Migrations
 
                     b.HasIndex("EmployeeNumber")
                         .IsUnique();
+
+                    b.HasIndex("PositionId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -885,6 +886,45 @@ namespace HrPortal.Migrations
                     b.HasIndex("EmployeeId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Position", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("Establishment")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("Title")
+                        .IsUnique();
+
+                    b.ToTable("Positions");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.PublicHoliday", b =>
@@ -1676,12 +1716,19 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("HrPortal.Entities.Position", "Position")
+                        .WithMany("Employees")
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HrPortal.Data.ApplicationUser", "User")
                         .WithOne("Employee")
                         .HasForeignKey("HrPortal.Entities.Employee", "UserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Department");
+
+                    b.Navigation("Position");
 
                     b.Navigation("User");
                 });
@@ -1823,6 +1870,16 @@ namespace HrPortal.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Position", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.ReminderLog", b =>
@@ -2074,6 +2131,11 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.License", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Position", b =>
+                {
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Requisition", b =>

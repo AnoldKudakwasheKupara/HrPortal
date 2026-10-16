@@ -1,4 +1,5 @@
-﻿using HrPortal.Data;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using HrPortal.Data;
 
 namespace HrPortal.Entities
 {
@@ -14,8 +15,15 @@ namespace HrPortal.Entities
 
         public string Email { get; set; } = string.Empty;
 
-        /// <summary>What they do, as it appears on the contract.</summary>
-        public string? JobTitle { get; set; }
+        public int? PositionId { get; set; }
+
+        /// <summary>
+        /// The post they hold, read through for display. It used
+        /// to be free text on the employee, which let the same
+        /// job be spelled three different ways.
+        /// </summary>
+        [NotMapped]
+        public string? JobTitle => Position?.Title;
 
         public string? PhoneNumber { get; set; }
 
@@ -71,6 +79,8 @@ namespace HrPortal.Entities
         public bool IsActive { get; set; } = true;
 
         public Department Department { get; set; } = null!;
+
+        public Position? Position { get; set; }
 
         public ApplicationUser? User { get; set; }
 

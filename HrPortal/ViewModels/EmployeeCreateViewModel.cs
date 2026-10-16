@@ -21,9 +21,8 @@ namespace HrPortal.ViewModels
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
-        [Display(Name = "Job Title")]
-        [StringLength(150)]
-        public string? JobTitle { get; set; }
+        [Display(Name = "Position")]
+        public int? PositionId { get; set; }
 
         [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
