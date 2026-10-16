@@ -1,0 +1,121 @@
+@model IEnumerable<HrPortal.ViewModels.RepositoryFolderViewModel>
+
+@{
+    ViewData["Title"] = "Repository Folders";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Repository Folders</h2>
+            <p class="text-muted mb-0">
+                A folder decides who can see everything inside it.
+            </p>
+        </div>
+
+        <div class="page-head-actions">
+            <a asp-action="Create" class="btn btn-primary">Add Folder</a>
+            <a asp-controller="Repository" asp-action="Index"
+               class="btn btn-secondary">Back to Repository</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Folder</th>
+                            <th>Who can see it</th>
+                            <th class="num">Documents</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                No folders yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var folder in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@folder.Name</strong>
+                                    @if (!string.IsNullOrWhiteSpace(folder.Description))
+                                    {
+                                        <div class="text-muted small">
+                                            @folder.Description
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @switch (folder.Audience)
+                                    {
+                                        case HrPortal.Entities.DocumentAudience.Everyone:
+                                            <span class="badge bg-success">Everyone</span>
+                                            break;
+                                        case HrPortal.Entities.DocumentAudience.Managers:
+                                            <span class="badge bg-info">Managers only</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-warning text-dark">
+                                                HR and administrators
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+
+                                <td class="num">@folder.DocumentCount</td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit" asp-route-id="@folder.Id">
+                                            Edit
+                                        </a>
+                                        <form asp-action="Delete"
+                                              asp-route-id="@folder.Id"
+                                              method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@folder.Id" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

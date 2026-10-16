@@ -36,6 +36,8 @@ namespace HrPortal.DbContexts
         public DbSet<Position> Positions { get; set; }
         public DbSet<Certification> Certifications { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
+        public DbSet<RepositoryFolder> RepositoryFolders { get; set; }
+        public DbSet<RepositoryDocument> RepositoryDocuments { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<ReminderLog> ReminderLogs { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
@@ -499,6 +501,59 @@ namespace HrPortal.DbContexts
                     r.EmployeeId
                 }).IsUnique();
             });
+
+            builder.Entity<RepositoryFolder>(entity =>
+            {
+                entity.HasKey(f => f.Id);
+
+                entity.Property(f => f.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(f => f.Description).HasMaxLength(500);
+
+                entity.Property(f => f.Audience)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.HasIndex(f => f.Name).IsUnique();
+            });
+
+            builder.Entity<RepositoryDocument>(entity =>
+            {
+                entity.HasKey(d => d.Id);
+
+                entity.Property(d => d.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(d => d.Description).HasMaxLength(1000);
+
+                entity.Property(d => d.FileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(d => d.OriginalFileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(d => d.FilePath)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(d => d.UploadedByName).HasMaxLength(200);
+
+                // A folder holding documents cannot be deleted, so
+                // restrict rather than cascade: losing a folder must
+                // not silently take the files with it.
+                entity.HasOne(d => d.Folder)
+                    .WithMany(f => f.Documents)
+                    .HasForeignKey(d => d.RepositoryFolderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(d => d.RepositoryFolderId);
+            });
+
 
             builder.Entity<AppSetting>(entity =>
             {

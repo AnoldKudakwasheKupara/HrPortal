@@ -1075,6 +1075,97 @@ namespace HrPortal.Migrations
                     b.ToTable("ReminderLogs");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<int>("RepositoryFolderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RepositoryFolderId");
+
+                    b.ToTable("RepositoryDocuments");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RepositoryFolder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("RepositoryFolders");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Requisition", b =>
                 {
                     b.Property<int>("Id")
@@ -1994,6 +2085,17 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>
+                {
+                    b.HasOne("HrPortal.Entities.RepositoryFolder", "Folder")
+                        .WithMany("Documents")
+                        .HasForeignKey("RepositoryFolderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Folder");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Requisition", b =>
                 {
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
@@ -2237,6 +2339,11 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.Position", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RepositoryFolder", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Requisition", b =>

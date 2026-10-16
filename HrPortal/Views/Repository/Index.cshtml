@@ -1,0 +1,236 @@
+@using HrPortal.Services
+@using HrPortal.ViewModels
+@model IEnumerable<HrPortal.Entities.RepositoryDocument>
+
+@{
+    ViewData["Title"] = "Document Repository";
+
+    var folders = ViewBag.Folders as List<RepositoryFolderViewModel>
+        ?? new List<RepositoryFolderViewModel>();
+    var folderFilter = ViewBag.FolderFilter as int?;
+    var search = ViewBag.Search as string;
+    var canCurate = (bool)ViewBag.CanCurate;
+    var today = DateTime.Today;
+
+    string Size(long bytes) => bytes switch
+    {
+        >= 1048576 => $"{bytes / 1048576d:0.#} MB",
+        >= 1024 => $"{bytes / 1024d:0} KB",
+        _ => $"{bytes} bytes"
+    };
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Document Repository</h2>
+            <p class="text-muted mb-0">
+                The organisation's shared documents: forms, templates,
+                handbooks and procedures.
+            </p>
+        </div>
+
+        @if (canCurate)
+        {
+            <div class="page-head-actions">
+                <a asp-action="Upload" asp-route-folderId="@folderFilter"
+                   class="btn btn-primary">Add Document</a>
+                <a asp-controller="RepositoryFolder" asp-action="Index"
+                   class="btn btn-outline-secondary">Folders</a>
+            </div>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!folders.Any())
+    {
+        <div class="alert alert-info">
+            There is nothing in the repository yet.
+            @if (canCurate)
+            {
+                <text>Create a folder first, then add documents to it.</text>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-3">
+            @foreach (var folder in folders)
+            {
+                <div class="col-6 col-lg-3">
+                    <a class="stat-tile @(folderFilter == folder.Id ? "is-action" : "")"
+                       asp-action="Index" asp-route-folderId="@folder.Id">
+
+                        <i class="fas fa-folder stat-icon" aria-hidden="true"></i>
+
+                        <span class="stat-label">@folder.Name</span>
+
+                        <span class="stat-value">@folder.DocumentCount</span>
+
+                        <div class="stat-note">
+                            @Html.DisplayFor(m => folder.Audience)
+                        </div>
+
+                    </a>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-5">
+                    <label class="form-label">Search</label>
+                    <input name="search" class="form-control" value="@search"
+                           placeholder="Title, file name or description" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Folder</label>
+                    <select name="folderId" class="form-select">
+                        <option value="">All folders</option>
+                        @foreach (var folder in folders)
+                        {
+                            <option value="@folder.Id"
+                                    selected="@(folderFilter == folder.Id)">
+                                @folder.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Search
+                    </button>
+                </div>
+
+                <div class="col-md-1">
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        Clear
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Folder</th>
+                            <th>Size</th>
+                            <th>Added</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Nothing here matches.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var document in Model)
+                        {
+                            var stale = document.ExpiryDate != null &&
+                                        document.ExpiryDate.Value.Date < today;
+
+                            <tr>
+                                <td>
+                                    <strong>@document.Title</strong>
+                                    @if (stale)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Out of date
+                                        </span>
+                                    }
+                                    <div class="text-muted small">
+                                        @document.OriginalFileName
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(document.Description))
+                                    {
+                                        <div class="text-muted small">
+                                            @document.Description
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>@document.Folder.Name</td>
+
+                                <td>@Size(document.FileSizeBytes)</td>
+
+                                <td>
+                                    @document.UploadedAt.ToLocalTime()
+                                        .ToString("d MMM yyyy")
+                                    <div class="text-muted small">
+                                        @(document.UploadedByName ?? "--")
+                                    </div>
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        @if (FileStorageService.CanPreview(document.OriginalFileName))
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               asp-action="Preview" asp-route-id="@document.Id"
+                                               target="_blank">
+                                                Preview
+                                            </a>
+                                        }
+
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Download" asp-route-id="@document.Id">
+                                            Download
+                                        </a>
+
+                                        @if (canCurate)
+                                        {
+                                            <form asp-action="Delete"
+                                                  asp-route-id="@document.Id"
+                                                  method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@document.Id" />
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger">
+                                                    Remove
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

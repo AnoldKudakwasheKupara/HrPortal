@@ -1,0 +1,69 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.RepositoryFolderEditViewModel
+
+@{ ViewData["Title"] = "Edit Folder"; }
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Edit Folder</h2>
+        <p class="text-muted">
+            Changing the audience changes who can see every document
+            already in this folder, not just new ones.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Audience" class="form-label"></label>
+                        <select asp-for="Audience" class="form-select"
+                                asp-items="Html.GetEnumSelectList<DocumentAudience>()">
+                        </select>
+                        <span asp-validation-for="Audience" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label">
+                        In use
+                    </label>
+                    <div class="form-text">
+                        Taking a folder out of use hides it and
+                        everything in it, without deleting anything.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
