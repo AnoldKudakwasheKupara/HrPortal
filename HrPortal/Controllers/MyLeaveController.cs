@@ -28,7 +28,7 @@ namespace HrPortal.Controllers
             LeaveBalanceService balances,
             CurrentUserService currentUser,
             IAuthorizationService authorization,
-            IOptions<LeaveOptions> leaveOptions)
+            IOptionsSnapshot<LeaveOptions> leaveOptions)
         {
             _context = context;
             _workflow = workflow;

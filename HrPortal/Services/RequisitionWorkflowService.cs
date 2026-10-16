@@ -27,7 +27,7 @@ namespace HrPortal.Services
             ApplicationDbContext context,
             NotificationService notifications,
             AuditService audit,
-            IOptions<RequisitionOptions> options)
+            IOptionsSnapshot<RequisitionOptions> options)
         {
             _context = context;
             _notifications = notifications;

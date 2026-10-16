@@ -49,7 +49,7 @@ namespace HrPortal.Services
             ApplicationDbContext context,
             NotificationService notifications,
             UserManager<ApplicationUser> userManager,
-            IOptions<ReminderOptions> options,
+            IOptionsSnapshot<ReminderOptions> options,
             ILogger<ReminderService> logger)
         {
             _context = context;

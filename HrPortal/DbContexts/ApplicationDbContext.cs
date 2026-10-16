@@ -35,6 +35,7 @@ namespace HrPortal.DbContexts
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
         public DbSet<Position> Positions { get; set; }
         public DbSet<Certification> Certifications { get; set; }
+        public DbSet<AppSetting> AppSettings { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<ReminderLog> ReminderLogs { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
@@ -498,6 +499,21 @@ namespace HrPortal.DbContexts
                     r.EmployeeId
                 }).IsUnique();
             });
+
+            builder.Entity<AppSetting>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+
+                entity.Property(s => s.Key)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(s => s.Value).HasMaxLength(1000);
+                entity.Property(s => s.UpdatedBy).HasMaxLength(200);
+
+                entity.HasIndex(s => s.Key).IsUnique();
+            });
+
 
             builder.Entity<Certification>(entity =>
             {

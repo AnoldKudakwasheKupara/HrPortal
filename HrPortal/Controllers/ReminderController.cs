@@ -24,7 +24,7 @@ namespace HrPortal.Controllers
         public ReminderController(
             ApplicationDbContext context,
             ReminderService reminders,
-            IOptions<ReminderOptions> options,
+            IOptionsSnapshot<ReminderOptions> options,
             AuditService audit)
         {
             _context = context;

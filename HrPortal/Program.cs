@@ -27,6 +27,12 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "environment variable.");
 }
 
+// Settings saved on the Settings page live in the database and layer
+// over appsettings.json, so everything that reads them through
+// IOptions keeps working and nothing downstream knows the difference.
+builder.Configuration.AddDatabaseSettings(connectionString);
+
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         connectionString,

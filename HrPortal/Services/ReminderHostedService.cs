@@ -13,16 +13,19 @@ namespace HrPortal.Services
     public class ReminderHostedService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ReminderOptions _options;
+        // A monitor rather than a snapshot: this is a singleton, so it
+        // has to re-read the value each time instead of capturing it
+        // once at startup.
+        private readonly IOptionsMonitor<ReminderOptions> _options;
         private readonly ILogger<ReminderHostedService> _logger;
 
         public ReminderHostedService(
             IServiceScopeFactory scopeFactory,
-            IOptions<ReminderOptions> options,
+            IOptionsMonitor<ReminderOptions> options,
             ILogger<ReminderHostedService> logger)
         {
             _scopeFactory = scopeFactory;
-            _options = options.Value;
+            _options = options;
             _logger = logger;
         }
 
@@ -36,7 +39,7 @@ namespace HrPortal.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (!_options.Enabled)
+            if (!_options.CurrentValue.Enabled)
             {
                 _logger.LogInformation(
                     "Reminders are turned off, so nothing will be sent.");
@@ -103,7 +106,7 @@ namespace HrPortal.Services
         /// </summary>
         internal TimeSpan UntilNextRun(DateTime now)
         {
-            var hour = Math.Clamp(_options.RunAtHour, 0, 23);
+            var hour = Math.Clamp(_options.CurrentValue.RunAtHour, 0, 23);
 
             var next = now.Date.AddHours(hour);
 
