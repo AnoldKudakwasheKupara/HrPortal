@@ -1,0 +1,223 @@
+@using HrPortal.Controllers
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<HrPortal.Entities.Certification>
+
+@{
+    ViewData["Title"] = "Certifications";
+
+    var show = ViewBag.Show as string;
+    var employees = ViewBag.Employees as List<SelectListItem>
+        ?? new List<SelectListItem>();
+    var employeeFilter = ViewBag.EmployeeFilter as int?;
+    var today = DateTime.Today;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Certifications</h2>
+            <p class="text-muted mb-0">
+                Qualifications people hold, and when they stop being
+                valid.
+            </p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">Record Certification</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="report-stats">
+
+        <div class="report-stat">
+            <span class="report-stat-label">Recorded</span>
+            <span class="report-stat-value">@ViewBag.Total</span>
+            <span class="report-stat-note">Across all staff</span>
+        </div>
+
+        <a class="report-stat @(((int)ViewBag.Expired) > 0 ? "is-critical" : "")"
+           asp-action="Index" asp-route-show="expired">
+            <span class="report-stat-label">Lapsed</span>
+            <span class="report-stat-value">@ViewBag.Expired</span>
+            <span class="report-stat-note">Past their expiry</span>
+        </a>
+
+        <a class="report-stat @(((int)ViewBag.Expiring) > 0 ? "is-warning" : "")"
+           asp-action="Index" asp-route-show="expiring">
+            <span class="report-stat-label">Expiring soon</span>
+            <span class="report-stat-value">@ViewBag.Expiring</span>
+            <span class="report-stat-note">
+                Within @CertificationController.ExpiringWindowDays days
+            </span>
+        </a>
+
+        <div class="report-stat">
+            <span class="report-stat-label">Do not expire</span>
+            <span class="report-stat-value">@ViewBag.NeverExpires</span>
+            <span class="report-stat-note">No expiry recorded</span>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label">Show</label>
+                    <select name="show" class="form-select">
+                        <option value="">Everything</option>
+                        <option value="current" selected="@(show == "current")">
+                            Current only
+                        </option>
+                        <option value="expiring" selected="@(show == "expiring")">
+                            Expiring soon
+                        </option>
+                        <option value="expired" selected="@(show == "expired")">
+                            Lapsed
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Employee</label>
+                    <select name="employeeId" class="form-select">
+                        <option value="">Everyone</option>
+                        @foreach (var e in employees)
+                        {
+                            <option value="@e.Value"
+                                    selected="@(employeeFilter?.ToString() == e.Value)">
+                                @e.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Certification</th>
+                            <th>Held by</th>
+                            <th>Issued by</th>
+                            <th>Issued</th>
+                            <th>Expires</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Nothing matches this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var c in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@c.Name</strong>
+                                    @if (c.TrainingCourse != null)
+                                    {
+                                        <div class="text-muted small">
+                                            from @c.TrainingCourse.Title
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(c.Reference))
+                                    {
+                                        <div class="text-muted small">
+                                            @c.Reference
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(c.Employee.FirstName + " " +
+                                      c.Employee.LastName)
+                                </td>
+
+                                <td>@(string.IsNullOrWhiteSpace(c.IssuedBy) ? "--" : c.IssuedBy)</td>
+
+                                <td>@c.IssuedOn.ToString("d MMM yyyy")</td>
+
+                                <td>
+                                    @if (c.ExpiryDate == null)
+                                    {
+                                        <span class="text-muted">
+                                            Does not expire
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        var days = (c.ExpiryDate.Value.Date - today).Days;
+
+                                        <span class="@(days < 0
+                                            ? "badge bg-danger"
+                                            : days <= CertificationController.ExpiringWindowDays
+                                                ? "badge bg-warning text-dark"
+                                                : "")">
+                                            @c.ExpiryDate.Value.ToString("d MMM yyyy")
+                                        </span>
+
+                                        @if (days < 0)
+                                        {
+                                            <div class="text-muted small">
+                                                lapsed @(-days) day(s) ago
+                                            </div>
+                                        }
+                                    }
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Edit" asp-route-id="@c.Id">
+                                            Edit
+                                        </a>
+                                        <form asp-action="Delete"
+                                              asp-route-id="@c.Id"
+                                              method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

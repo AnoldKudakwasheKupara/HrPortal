@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model HrPortal.ViewModels.CertificationViewModel
+
+@{
+    ViewData["Title"] = "Record Certification";
+
+    var employees = ViewBag.Employees as List<SelectListItem>
+        ?? new List<SelectListItem>();
+    var courses = ViewBag.Courses as List<SelectListItem>
+        ?? new List<SelectListItem>();
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Record Certification</h2>
+        <p class="text-muted">
+            A qualification somebody holds. Give it an expiry date and
+            the daily reminder run will warn before it lapses.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EmployeeId" class="form-label"></label>
+                        <select asp-for="EmployeeId" class="form-select">
+                            <option value="">-- Select --</option>
+                            @foreach (var e in employees)
+                            {
+                                <option value="@e.Value"
+                                        selected="@(Model.EmployeeId.ToString() == e.Value)">
+                                    @e.Text
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control"
+                               placeholder="First Aid at Work" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="IssuedBy" class="form-label"></label>
+                        <input asp-for="IssuedBy" class="form-control"
+                               placeholder="St John Ambulance" />
+                        <span asp-validation-for="IssuedBy" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Reference" class="form-label"></label>
+                        <input asp-for="Reference" class="form-control"
+                               placeholder="Certificate number" />
+                        <span asp-validation-for="Reference" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="IssuedOn" class="form-label"></label>
+                        <input asp-for="IssuedOn" class="form-control" type="date" />
+                        <span asp-validation-for="IssuedOn" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ExpiryDate" class="form-label"></label>
+                        <input asp-for="ExpiryDate" class="form-control" type="date" />
+                        <div class="form-text">
+                            Leave blank if it does not lapse.
+                        </div>
+                        <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="TrainingCourseId" class="form-label"></label>
+                        <select asp-for="TrainingCourseId" class="form-select">
+                            <option value="">-- Not from a course --</option>
+                            @foreach (var c in courses)
+                            {
+                                <option value="@c.Value"
+                                        selected="@(Model.TrainingCourseId?.ToString() == c.Value)">
+                                    @c.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

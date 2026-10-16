@@ -34,6 +34,7 @@ namespace HrPortal.DbContexts
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
         public DbSet<Position> Positions { get; set; }
+        public DbSet<Certification> Certifications { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<ReminderLog> ReminderLogs { get; set; }
         public DbSet<Requisition> Requisitions { get; set; }
@@ -497,6 +498,34 @@ namespace HrPortal.DbContexts
                     r.EmployeeId
                 }).IsUnique();
             });
+
+            builder.Entity<Certification>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+
+                entity.Property(c => c.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(c => c.IssuedBy).HasMaxLength(200);
+                entity.Property(c => c.Reference).HasMaxLength(100);
+                entity.Property(c => c.Notes).HasMaxLength(500);
+
+                entity.HasOne(c => c.Employee)
+                    .WithMany()
+                    .HasForeignKey(c => c.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Retiring a course must not erase the qualifications
+                // people earned from it.
+                entity.HasOne(c => c.TrainingCourse)
+                    .WithMany()
+                    .HasForeignKey(c => c.TrainingCourseId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(c => c.ExpiryDate);
+            });
+
 
             builder.Entity<Position>(entity =>
             {

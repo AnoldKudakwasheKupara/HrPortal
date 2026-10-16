@@ -66,6 +66,7 @@ namespace HrPortal.Services
         public const string RequisitionWaiting = "Requisition awaiting a decision";
         public const string MaintenanceDue = "Maintenance due";
         public const string TrainingDue = "Training due";
+        public const string CertificationExpiry = "Certification expiry";
 
         public async Task<ReminderRun> RunAsync()
         {
@@ -101,6 +102,10 @@ namespace HrPortal.Services
             run.Add(
                 TrainingDue,
                 await RemindDueTrainingAsync(today, horizon));
+
+            run.Add(
+                CertificationExpiry,
+                await RemindExpiringCertificationsAsync(today, horizon));
 
             await _context.SaveChangesAsync();
 
@@ -260,6 +265,76 @@ namespace HrPortal.Services
                         $"{Humanise(employee.EmploymentType)} contract {due} " +
                         $"({employee.ContractEndDate:d MMM yyyy}).",
                         $"/Employee/Details/{employee.Id}");
+
+                    sent++;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// A lapsing qualification is told to both the person who holds
+        /// it and to HR: the holder has to renew it, and HR has to know
+        /// whether the organisation still has cover.
+        /// </summary>
+        private async Task<int> RemindExpiringCertificationsAsync(
+            DateTime today,
+            DateTime horizon)
+        {
+            var certifications = await _context.Certifications
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                .Where(c =>
+                    c.ExpiryDate != null &&
+                    c.ExpiryDate <= horizon &&
+                    c.Employee.IsActive)
+                .OrderBy(c => c.ExpiryDate)
+                .ToListAsync();
+
+            if (certifications.Count == 0)
+                return 0;
+
+            var hr = await EmployeeIdsInRoleAsync(Roles.HrOfficer);
+
+            var sent = 0;
+
+            foreach (var certification in certifications)
+            {
+                var due = Due(today, certification.ExpiryDate!.Value);
+
+                var who =
+                    $"{certification.Employee.FirstName} " +
+                    $"{certification.Employee.LastName}";
+
+                var recipients = hr
+                    .Append(certification.EmployeeId)
+                    .Distinct();
+
+                foreach (var employeeId in recipients)
+                {
+                    if (!await ShouldSendAsync(
+                            CertificationExpiry,
+                            certification.Id.ToString(),
+                            employeeId,
+                            today))
+                    {
+                        continue;
+                    }
+
+                    var mine = employeeId == certification.EmployeeId;
+
+                    _notifications.Notify(
+                        employeeId,
+                        $"Certification {due}",
+                        mine
+                            ? $"Your {certification.Name} {due} " +
+                              $"({certification.ExpiryDate:d MMM yyyy})."
+                            : $"{who}'s {certification.Name} {due} " +
+                              $"({certification.ExpiryDate:d MMM yyyy}).",
+                        mine
+                            ? "/MyProfile"
+                            : $"/Certification?employeeId={certification.EmployeeId}");
 
                     sent++;
                 }
