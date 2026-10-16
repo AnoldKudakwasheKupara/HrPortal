@@ -1,0 +1,180 @@
+@model IEnumerable<HrPortal.ViewModels.PolicyListViewModel>
+
+@{
+    ViewData["Title"] = "Policy Hub";
+
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    var categoryFilter = ViewBag.CategoryFilter as string;
+    var search = ViewBag.Search as string;
+    var canManage = (bool)ViewBag.CanManage;
+    var outstanding = (int)ViewBag.Outstanding;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Policy Hub</h2>
+            <p class="text-muted mb-0">
+                The policies in force, which version each is, and
+                whether you have confirmed you have read them.
+            </p>
+        </div>
+
+        @if (canManage)
+        {
+            <div class="page-head-actions">
+                <a asp-action="Create" class="btn btn-primary">New Policy</a>
+                <a asp-action="Manage" class="btn btn-outline-secondary">
+                    Manage
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (outstanding > 0)
+    {
+        <div class="alert alert-warning">
+            <strong>@outstanding policy(s) still need your
+            acknowledgement.</strong>
+            Open each one, read it, and confirm at the bottom.
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-5">
+                    <label class="form-label">Search</label>
+                    <input name="search" class="form-control" value="@search"
+                           placeholder="Title, reference or summary" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All categories</option>
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c" selected="@(categoryFilter == c)">
+                                @c
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Search
+                    </button>
+                </div>
+
+                <div class="col-md-1">
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        Clear
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Policy</th>
+                            <th>Category</th>
+                            <th>Version</th>
+                            <th>In force since</th>
+                            <th>You</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No policies are in force that apply to you.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@p.Title</strong>
+                                    @if (!string.IsNullOrWhiteSpace(p.Reference))
+                                    {
+                                        <div class="text-muted small">
+                                            @p.Reference
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>@(string.IsNullOrWhiteSpace(p.Category) ? "--" : p.Category)</td>
+
+                                <td>@p.Version</td>
+
+                                <td>@p.EffectiveDate.ToString("d MMM yyyy")</td>
+
+                                <td>
+                                    @if (!p.RequiresAcknowledgement)
+                                    {
+                                        <span class="text-muted">
+                                            Not required
+                                        </span>
+                                    }
+                                    else if (p.Acknowledged)
+                                    {
+                                        <span class="badge bg-success">
+                                            Acknowledged
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Not yet read
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Details" asp-route-id="@p.Id">
+                                            Open
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -971,6 +971,125 @@ namespace HrPortal.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Policy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("Owner")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("RequiresAcknowledgement")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReviewDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("SupersedesPolicyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewDate");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SupersedesPolicyId");
+
+                    b.ToTable("Policies");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.PolicyAcknowledgement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PolicyId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PolicyId", "EmployeeId")
+                        .IsUnique();
+
+                    b.ToTable("PolicyAcknowledgements");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Position", b =>
                 {
                     b.Property<int>("Id")
@@ -2064,6 +2183,35 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Policy", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Policy", "Supersedes")
+                        .WithMany()
+                        .HasForeignKey("SupersedesPolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Supersedes");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.PolicyAcknowledgement", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Policy", "Policy")
+                        .WithMany("Acknowledgements")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Policy");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Position", b =>
                 {
                     b.HasOne("HrPortal.Entities.Department", "Department")
@@ -2334,6 +2482,11 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.License", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.Policy", b =>
+                {
+                    b.Navigation("Acknowledgements");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Position", b =>

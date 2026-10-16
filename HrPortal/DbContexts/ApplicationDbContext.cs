@@ -36,6 +36,8 @@ namespace HrPortal.DbContexts
         public DbSet<Position> Positions { get; set; }
         public DbSet<Certification> Certifications { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
+        public DbSet<Policy> Policies { get; set; }
+        public DbSet<PolicyAcknowledgement> PolicyAcknowledgements { get; set; }
         public DbSet<RepositoryFolder> RepositoryFolders { get; set; }
         public DbSet<RepositoryDocument> RepositoryDocuments { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
@@ -501,6 +503,75 @@ namespace HrPortal.DbContexts
                     r.EmployeeId
                 }).IsUnique();
             });
+
+            builder.Entity<Policy>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(p => p.Version)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(p => p.Reference).HasMaxLength(50);
+                entity.Property(p => p.Category).HasMaxLength(100);
+                entity.Property(p => p.Owner).HasMaxLength(200);
+                entity.Property(p => p.Summary).HasMaxLength(1000);
+                entity.Property(p => p.CreatedByName).HasMaxLength(200);
+
+                entity.Property(p => p.FileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(p => p.OriginalFileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(p => p.FilePath)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(p => p.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(p => p.Audience)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                // The version it replaced is part of the history and
+                // must survive, so this never cascades.
+                entity.HasOne(p => p.Supersedes)
+                    .WithMany()
+                    .HasForeignKey(p => p.SupersedesPolicyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(p => p.Status);
+                entity.HasIndex(p => p.ReviewDate);
+            });
+
+            builder.Entity<PolicyAcknowledgement>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+
+                entity.HasOne(a => a.Policy)
+                    .WithMany(p => p.Acknowledgements)
+                    .HasForeignKey(a => a.PolicyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(a => a.Employee)
+                    .WithMany()
+                    .HasForeignKey(a => a.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // One acknowledgement per person per policy version.
+                entity.HasIndex(a => new { a.PolicyId, a.EmployeeId })
+                    .IsUnique();
+            });
+
 
             builder.Entity<RepositoryFolder>(entity =>
             {

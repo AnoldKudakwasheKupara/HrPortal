@@ -1,0 +1,139 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.PolicyEditViewModel
+
+@{
+    ViewData["Title"] = Model.SupersedesPolicyId == null
+        ? "New Policy"
+        : "Reissue Policy";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>@ViewData["Title"]</h2>
+        <p class="text-muted">
+            @if (Model.SupersedesPolicyId == null)
+            {
+                <text>
+                    It is saved as a draft. Nobody sees it until it is
+                    published.
+                </text>
+            }
+            else
+            {
+                <text>
+                    A new version. Publishing it marks the old one as
+                    replaced, and everyone is asked to acknowledge the
+                    new one.
+                </text>
+            }
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="SupersedesPolicyId" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control"
+                               placeholder="Information Security Policy" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Reference" class="form-label"></label>
+                        <input asp-for="Reference" class="form-control"
+                               placeholder="POL-004" />
+                        <span asp-validation-for="Reference" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Version" class="form-label"></label>
+                        <input asp-for="Version" class="form-control" />
+                        <span asp-validation-for="Version" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Category" class="form-label"></label>
+                        <input asp-for="Category" class="form-control"
+                               placeholder="IT, HR, Finance" />
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Owner" class="form-label"></label>
+                        <input asp-for="Owner" class="form-control"
+                               placeholder="Who keeps it current" />
+                        <span asp-validation-for="Owner" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Audience" class="form-label"></label>
+                        <select asp-for="Audience" class="form-select"
+                                asp-items="Html.GetEnumSelectList<DocumentAudience>()">
+                        </select>
+                        <span asp-validation-for="Audience" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="EffectiveDate" class="form-label"></label>
+                        <input asp-for="EffectiveDate" class="form-control" type="date" />
+                        <span asp-validation-for="EffectiveDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ReviewDate" class="form-label"></label>
+                        <input asp-for="ReviewDate" class="form-control" type="date" />
+                        <div class="form-text">
+                            The reminder run warns before this passes.
+                        </div>
+                        <span asp-validation-for="ReviewDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="File" class="form-label"></label>
+                        <input asp-for="File" class="form-control" type="file" />
+                        <span asp-validation-for="File" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Summary" class="form-label"></label>
+                    <textarea asp-for="Summary" class="form-control" rows="3"
+                              placeholder="What it covers, in a sentence or two"></textarea>
+                    <span asp-validation-for="Summary" class="text-danger"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="RequiresAcknowledgement" class="form-check-input" />
+                    <label asp-for="RequiresAcknowledgement" class="form-check-label">
+                        Staff must confirm they have read it
+                    </label>
+                    <div class="form-text">
+                        Worth reserving for the ones that matter. Asking
+                        for everything teaches people to click through
+                        without reading.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Save as Draft
+                    </button>
+                    <a asp-action="Manage" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

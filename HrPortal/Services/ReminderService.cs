@@ -67,6 +67,8 @@ namespace HrPortal.Services
         public const string MaintenanceDue = "Maintenance due";
         public const string TrainingDue = "Training due";
         public const string CertificationExpiry = "Certification expiry";
+        public const string PolicyReview = "Policy review due";
+        public const string PolicyUnread = "Policy not acknowledged";
 
         public async Task<ReminderRun> RunAsync()
         {
@@ -106,6 +108,14 @@ namespace HrPortal.Services
             run.Add(
                 CertificationExpiry,
                 await RemindExpiringCertificationsAsync(today, horizon));
+
+            run.Add(
+                PolicyReview,
+                await RemindPolicyReviewsAsync(today, horizon));
+
+            run.Add(
+                PolicyUnread,
+                await RemindUnacknowledgedPoliciesAsync(today));
 
             await _context.SaveChangesAsync();
 
@@ -271,6 +281,176 @@ namespace HrPortal.Services
             }
 
             return sent;
+        }
+
+        /// <summary>
+        /// Policies coming up for review. A policy nobody revisits
+        /// stops describing how the organisation actually works, and
+        /// the review date is the only thing that catches that.
+        /// </summary>
+        private async Task<int> RemindPolicyReviewsAsync(
+            DateTime today,
+            DateTime horizon)
+        {
+            var policies = await _context.Policies
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PolicyStatus.Active &&
+                    p.ReviewDate != null &&
+                    p.ReviewDate <= horizon)
+                .OrderBy(p => p.ReviewDate)
+                .ToListAsync();
+
+            if (policies.Count == 0)
+                return 0;
+
+            var recipients = await EmployeeIdsInRoleAsync(Roles.HrOfficer);
+
+            var sent = 0;
+
+            foreach (var policy in policies)
+            {
+                var days = (policy.ReviewDate!.Value.Date - today).Days;
+
+                var when = days switch
+                {
+                    < 0 => $"was due for review {-days} day{Plural(-days)} ago",
+                    0 => "is due for review today",
+                    _ => $"is due for review in {days} day{Plural(days)}"
+                };
+
+                foreach (var employeeId in recipients)
+                {
+                    if (!await ShouldSendAsync(
+                            PolicyReview,
+                            policy.Id.ToString(),
+                            employeeId,
+                            today))
+                    {
+                        continue;
+                    }
+
+                    _notifications.Notify(
+                        employeeId,
+                        $"Policy {(days < 0 ? "overdue for review" : "review due")}",
+                        $"{policy.Title} version {policy.Version} {when} " +
+                        $"({policy.ReviewDate:d MMM yyyy}).",
+                        $"/Policy/Details/{policy.Id}");
+
+                    sent++;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// People who have not yet acknowledged a policy that asks for
+        /// it. A policy hub that records who has read what is only
+        /// useful if somebody chases the ones who have not.
+        /// </summary>
+        private async Task<int> RemindUnacknowledgedPoliciesAsync(DateTime today)
+        {
+            var policies = await _context.Policies
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PolicyStatus.Active &&
+                    p.RequiresAcknowledgement &&
+                    p.EffectiveDate <= today)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Title,
+                    p.Version,
+                    p.Audience,
+                    Acknowledged = p.Acknowledgements
+                        .Select(a => a.EmployeeId)
+                        .ToList()
+                })
+                .ToListAsync();
+
+            if (policies.Count == 0)
+                return 0;
+
+            var staff = await _context.Employees
+                .AsNoTracking()
+                .Where(e => e.IsActive && e.UserId != null)
+                .Select(e => new { e.Id, e.UserId })
+                .ToListAsync();
+
+            var sent = 0;
+
+            foreach (var policy in policies)
+            {
+                // Only chase the people the policy actually applies to,
+                // which for a restricted one is a narrower group than
+                // everybody on the payroll.
+                var audienceIds = await AudienceEmployeeIdsAsync(policy.Audience);
+
+                foreach (var employee in staff)
+                {
+                    if (policy.Acknowledged.Contains(employee.Id))
+                        continue;
+
+                    if (!audienceIds.Contains(employee.Id))
+                        continue;
+
+                    if (!await ShouldSendAsync(
+                            PolicyUnread,
+                            policy.Id.ToString(),
+                            employee.Id,
+                            today))
+                    {
+                        continue;
+                    }
+
+                    _notifications.Notify(
+                        employee.Id,
+                        "Policy to read",
+                        $"{policy.Title} version {policy.Version} is in " +
+                        "force and you have not yet confirmed you have " +
+                        "read it.",
+                        $"/Policy/Details/{policy.Id}");
+
+                    sent++;
+                }
+            }
+
+            return sent;
+        }
+
+        /// <summary>
+        /// The employees an audience covers. Everyone means everyone;
+        /// the narrower ones resolve through the roles that can see
+        /// them.
+        /// </summary>
+        private async Task<HashSet<int>> AudienceEmployeeIdsAsync(
+            DocumentAudience audience)
+        {
+            if (audience == DocumentAudience.Everyone)
+            {
+                var all = await _context.Employees
+                    .AsNoTracking()
+                    .Where(e => e.IsActive)
+                    .Select(e => e.Id)
+                    .ToListAsync();
+
+                return all.ToHashSet();
+            }
+
+            var roles = audience == DocumentAudience.Managers
+                ? new[] { Roles.Administrator, Roles.HrOfficer, Roles.Md }
+                : new[] { Roles.Administrator, Roles.HrOfficer };
+
+            var ids = new HashSet<int>();
+
+            foreach (var role in roles)
+            {
+                foreach (var id in await EmployeeIdsInRoleAsync(role))
+                    ids.Add(id);
+            }
+
+            return ids;
         }
 
         /// <summary>

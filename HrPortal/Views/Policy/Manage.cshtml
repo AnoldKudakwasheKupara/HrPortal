@@ -1,0 +1,200 @@
+@using HrPortal.Entities
+@model IEnumerable<HrPortal.ViewModels.PolicyListViewModel>
+
+@{
+    ViewData["Title"] = "Manage Policies";
+
+    var statusFilter = ViewBag.StatusFilter as PolicyStatus?;
+    var activeStaff = (int)ViewBag.ActiveStaff;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Manage Policies</h2>
+            <p class="text-muted mb-0">
+                Every policy at every stage, including the drafts and
+                the ones that have been replaced.
+            </p>
+        </div>
+
+        <div class="page-head-actions">
+            <a asp-action="Create" class="btn btn-primary">New Policy</a>
+            <a asp-action="Index" class="btn btn-secondary">Policy Hub</a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All</option>
+                        @foreach (var s in Enum.GetValues<PolicyStatus>())
+                        {
+                            <option value="@s" selected="@(statusFilter == s)">
+                                @s
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body is-table">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Policy</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Review by</th>
+                            <th>Read by</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No policies match this filter.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var p in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@p.Title</strong>
+                                    <div class="text-muted small">
+                                        @(string.IsNullOrWhiteSpace(p.Category)
+                                            ? "Uncategorised"
+                                            : p.Category)
+                                    </div>
+                                </td>
+
+                                <td>@p.Version</td>
+
+                                <td>
+                                    @switch (p.Status)
+                                    {
+                                        case PolicyStatus.Active:
+                                            <span class="badge bg-success">In force</span>
+                                            break;
+                                        case PolicyStatus.Draft:
+                                            <span class="badge bg-secondary">Draft</span>
+                                            break;
+                                        case PolicyStatus.Superseded:
+                                            <span class="badge bg-info">Replaced</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-danger">Withdrawn</span>
+                                            break;
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (p.ReviewDate == null)
+                                    {
+                                        <span class="text-muted">--</span>
+                                    }
+                                    else if (p.IsOverdueForReview)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            @p.ReviewDate.Value.ToString("d MMM yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @p.ReviewDate.Value.ToString("d MMM yyyy")
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!p.RequiresAcknowledgement)
+                                    {
+                                        <span class="text-muted">Not required</span>
+                                    }
+                                    else
+                                    {
+                                        @p.AcknowledgedCount<text> of </text>@activeStaff
+                                    }
+                                </td>
+
+                                <td class="col-actions">
+                                    <div class="table-actions">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Details" asp-route-id="@p.Id">
+                                            Open
+                                        </a>
+
+                                        @if (p.Status == PolicyStatus.Draft)
+                                        {
+                                            <form asp-action="Publish" asp-route-id="@p.Id"
+                                                  method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-success">
+                                                    Publish
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (p.Status == PolicyStatus.Active)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               asp-action="Create" asp-route-supersedes="@p.Id">
+                                                Reissue
+                                            </a>
+
+                                            <form asp-action="Withdraw" asp-route-id="@p.Id"
+                                                  method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger">
+                                                    Withdraw
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
