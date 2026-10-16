@@ -375,6 +375,13 @@ namespace HrPortal.Controllers
                 new[] { byStatus, byDepartment, byType }
                     .Where(b => b.Items.Count > 0));
 
+            model.Trends.Add(MonthlyTrend(
+                "Days booked by month",
+                rows.Select(r => (r.StartDate, r.Days)),
+                "days",
+                "0.##"));
+
+
             await LoadLookups();
 
             return View(model);
@@ -1712,6 +1719,12 @@ namespace HrPortal.Controllers
                 new[] { byCategory, byStatus, byRaiser, byMachine }
                     .Where(b => b.Total > 0));
 
+            model.Trends.Add(MonthlyTrend(
+                "Entries logged by month",
+                rows.Select(r => (r.LoggedOn, 1m)),
+                "entries"));
+
+
             await LoadLookups();
 
             return View(model);
@@ -1955,6 +1968,15 @@ namespace HrPortal.Controllers
             model.Breakdowns.AddRange(
                 new[] { byStatus, byDepartment, byRoute, byRequester }
                     .Where(b => b.Total > 0));
+
+            model.Trends.Add(MonthlyTrend(
+                "Approved value by month",
+                approved
+                    .Where(r => r.CompletedAt != null)
+                    .Select(r => (r.CompletedAt!.Value, r.EstimatedTotal)),
+                "approved",
+                "N2"));
+
 
             await LoadLookups();
 
@@ -2522,6 +2544,46 @@ namespace HrPortal.Controllers
         /// Says in words what the date filter currently covers, so a
         /// printed report is not ambiguous about its period.
         /// </summary>
+        /// <summary>
+        /// Buckets dated values into the last twelve months,
+        /// including the months where nothing happened: a gap is
+        /// part of the shape and dropping it would flatter the
+        /// trend.
+        /// </summary>
+        private static ReportTrend MonthlyTrend(
+            string title,
+            IEnumerable<(DateTime When, decimal Value)> values,
+            string unit = "",
+            string format = "N0")
+        {
+            var trend = new ReportTrend(title, unit, format);
+
+            var start = new DateTime(
+                DateTime.Today.Year,
+                DateTime.Today.Month,
+                1).AddMonths(-11);
+
+            var buckets = values
+                .Where(v => v.When.Date >= start)
+                .GroupBy(v => new { v.When.Year, v.When.Month })
+                .ToDictionary(
+                    g => (g.Key.Year, g.Key.Month),
+                    g => g.Sum(v => v.Value));
+
+            for (var i = 0; i < 12; i++)
+            {
+                var month = start.AddMonths(i);
+
+                buckets.TryGetValue(
+                    (month.Year, month.Month),
+                    out var value);
+
+                trend.Add(month.ToString("MMM"), value);
+            }
+
+            return trend;
+        }
+
         private static string Period(ReportFilter filter)
         {
             if (filter.From.HasValue && filter.To.HasValue)

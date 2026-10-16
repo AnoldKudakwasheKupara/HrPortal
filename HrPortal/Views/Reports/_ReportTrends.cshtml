@@ -1,0 +1,92 @@
+@model List<HrPortal.ViewModels.ReportTrend>
+
+@{
+    // Drawn as inline SVG rather than with a charting library: it needs
+    // no script, prints as part of the page, and takes its colours from
+    // the same tokens as everything else, so it follows dark mode.
+    // Nothing to show is better than twelve empty columns, which read
+    // as a finding rather than as an absence of data.
+    var charts = (Model ?? new List<HrPortal.ViewModels.ReportTrend>())
+        .Where(t => t.Points.Count > 1 && t.Total > 0)
+        .ToList();
+}
+
+@if (charts.Any())
+{
+    <div class="row g-3 mb-3">
+
+        @foreach (var trend in charts)
+        {
+            var max = trend.Max <= 0 ? 1m : trend.Max;
+            var count = trend.Points.Count;
+
+            // A fixed viewBox scaled to the container: the chart keeps
+            // its shape at any width without measuring anything.
+            var width = 100m;
+            var height = 34m;
+            var slot = width / count;
+            var barWidth = slot * 0.62m;
+
+            <div class="col-12 col-xl-6">
+                <div class="card shadow-sm h-100">
+
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>@trend.Title</span>
+                        <span class="text-muted small">
+                            @trend.Total.ToString(trend.Format) @trend.Unit
+                        </span>
+                    </div>
+
+                    <div class="card-body">
+
+                        <svg class="report-trend"
+                             viewBox="0 0 @width.ToString("0.##") @height.ToString("0.##")"
+                             preserveAspectRatio="none"
+                             role="img"
+                             aria-label="@trend.Title over time">
+
+                            @for (var i = 0; i < count; i++)
+                            {
+                                var point = trend.Points[i];
+                                var barHeight = height * (point.Value / max);
+
+                                if (barHeight < 0.4m && point.Value > 0)
+                                {
+                                    // Keep a visible sliver, so a small
+                                    // non-zero period does not read as
+                                    // nothing at all.
+                                    barHeight = 0.4m;
+                                }
+
+                                var x = (slot * i) + ((slot - barWidth) / 2);
+                                var y = height - barHeight;
+
+                                <rect x="@x.ToString("0.###")"
+                                      y="@y.ToString("0.###")"
+                                      width="@barWidth.ToString("0.###")"
+                                      height="@barHeight.ToString("0.###")"
+                                      rx="0.3">
+                                    <title>@point.Label: @point.Value.ToString(trend.Format) @trend.Unit</title>
+                                </rect>
+                            }
+
+                        </svg>
+
+                        <div class="report-trend-labels">
+                            @foreach (var point in trend.Points)
+                            {
+                                <span>
+                                    <strong>@point.Value.ToString(trend.Format)</strong>
+                                    @point.Label
+                                </span>
+                            }
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        }
+
+    </div>
+}

@@ -150,6 +150,56 @@ namespace HrPortal.ViewModels
         public string? Tone { get; }
     }
 
+    /// <summary>
+    /// A measure over time, drawn as a small column chart beside the
+    /// table. The breakdowns answer "how is this distributed"; this
+    /// answers "is it going up or down", which a table of rows
+    /// cannot.
+    /// </summary>
+    public class ReportTrend
+    {
+        public ReportTrend(string title, string unit = "", string format = "N0")
+        {
+            Title = title;
+            Unit = unit;
+            Format = format;
+        }
+
+        public string Title { get; }
+
+        public string Unit { get; }
+
+        /// <summary>Numeric format for the value labels.</summary>
+        public string Format { get; }
+
+        public List<ReportTrendPoint> Points { get; } = new();
+
+        public decimal Max =>
+            Points.Count == 0 ? 0 : Points.Max(p => p.Value);
+
+        public decimal Total => Points.Sum(p => p.Value);
+
+        public ReportTrend Add(string label, decimal value)
+        {
+            Points.Add(new ReportTrendPoint(label, value));
+            return this;
+        }
+    }
+
+    public class ReportTrendPoint
+    {
+        public ReportTrendPoint(string label, decimal value)
+        {
+            Label = label;
+            Value = value;
+        }
+
+        public string Label { get; }
+
+        public decimal Value { get; }
+    }
+
+
     public class ReportColumnTotal
     {
         public ReportColumnTotal(int columnIndex, string value)
@@ -176,6 +226,8 @@ namespace HrPortal.ViewModels
         public string Coverage { get; set; } = string.Empty;
 
         public List<ReportBreakdown> Breakdowns { get; set; } = new();
+
+        public List<ReportTrend> Trends { get; set; } = new();
 
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
 
