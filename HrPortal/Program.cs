@@ -100,6 +100,7 @@ builder.Services.AddScoped<TrainingReportService>();
 builder.Services.AddScoped<PeopleReportService>();
 builder.Services.AddScoped<AssetReportService>();
 builder.Services.AddScoped<OperationsReportService>();
+builder.Services.AddScoped<ReportsOverviewService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
