@@ -140,12 +140,53 @@ namespace HrPortal.Services
                 || status == LeaveRequestStatus.ReturnedToEmployee;
         }
 
+        public static bool CanAct(
+            LeaveRequestAction action,
+            LeaveRequestStatus status) => action switch
+            {
+                LeaveRequestAction.Submitted or
+                LeaveRequestAction.Resubmitted =>
+                    IsWithEmployee(status),
+
+                LeaveRequestAction.ApprovedByHR or
+                LeaveRequestAction.RejectedByHR or
+                LeaveRequestAction.ReturnedByHR =>
+                    IsAwaitingHr(status),
+
+                LeaveRequestAction.ApprovedByMD or
+                LeaveRequestAction.RejectedByMD =>
+                    IsAwaitingMd(status),
+
+                LeaveRequestAction.Cancelled =>
+                    !IsFinal(status),
+
+                _ => false
+            };
+
+        private static void EnsureCanAct(
+            LeaveRequestAction action,
+            LeaveRequest request)
+        {
+            if (CanAct(action, request.Status))
+                return;
+
+            throw new InvalidOperationException(
+                $"{request.RequestNumber} is {request.Status}, so the " +
+                $"action {action} is not allowed from here.");
+        }
+
         public async Task SubmitAsync(
             LeaveRequest request,
             int actedByEmployeeId,
             string? comment,
             bool isResubmission)
         {
+            EnsureCanAct(
+                isResubmission
+                    ? LeaveRequestAction.Resubmitted
+                    : LeaveRequestAction.Submitted,
+                request);
+
             var previous = request.Status;
 
             var hrApproverId = await _notifications
@@ -211,6 +252,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.ApprovedByHR, request);
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.HRApproved;
@@ -250,6 +293,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.RejectedByHR, request);
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.HRRejected;
@@ -284,6 +329,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.ReturnedByHR, request);
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.ReturnedToEmployee;
@@ -318,6 +365,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.ApprovedByMD, request);
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.Approved;
@@ -354,6 +403,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.RejectedByMD, request);
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.Rejected;
@@ -389,6 +440,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(LeaveRequestAction.Cancelled, request);
+
             var previous = request.Status;
 
             if (LeaveBalanceService.HoldsPendingDays(previous))

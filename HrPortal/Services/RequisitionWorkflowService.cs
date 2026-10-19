@@ -45,6 +45,42 @@ namespace HrPortal.Services
             status == RequisitionStatus.ReviewRejected ||
             status == RequisitionStatus.Cancelled;
 
+        public static bool CanAct(
+            RequisitionAction action,
+            RequisitionStatus status) => action switch
+            {
+                RequisitionAction.Submitted or
+                RequisitionAction.Resubmitted =>
+                    IsWithRequester(status),
+
+                RequisitionAction.ApprovedByReviewer or
+                RequisitionAction.RejectedByReviewer or
+                RequisitionAction.ReturnedByReviewer =>
+                    IsAwaitingReview(status),
+
+                RequisitionAction.ApprovedByMD or
+                RequisitionAction.RejectedByMD =>
+                    IsAwaitingMd(status),
+
+                RequisitionAction.Cancelled =>
+                    !IsFinal(status),
+
+                _ => false
+            };
+
+        private static void EnsureCanAct(
+            RequisitionAction action,
+            Requisition requisition)
+        {
+            if (CanAct(action, requisition.Status))
+                return;
+
+            throw new InvalidOperationException(
+                $"{requisition.RequisitionNumber} is " +
+                $"{requisition.Status}, so the action {action} is not " +
+                "allowed from here.");
+        }
+
         public static decimal TotalOf(Requisition requisition) =>
             requisition.Lines.Sum(l => l.Quantity * (l.EstimatedUnitCost ?? 0m));
 
@@ -54,6 +90,12 @@ namespace HrPortal.Services
             string? comment,
             bool isResubmission)
         {
+            EnsureCanAct(
+                isResubmission
+                    ? RequisitionAction.Resubmitted
+                    : RequisitionAction.Submitted,
+                requisition);
+
             var previous = requisition.Status;
 
             requisition.EstimatedTotal = TotalOf(requisition);
@@ -134,6 +176,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.ApprovedByReviewer, requisition);
+
             var previous = requisition.Status;
 
             if (requisition.RequiresMdApproval)
@@ -218,6 +262,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.RejectedByReviewer, requisition);
+
             var previous = requisition.Status;
 
             requisition.Status = RequisitionStatus.ReviewRejected;
@@ -251,6 +297,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.ReturnedByReviewer, requisition);
+
             var previous = requisition.Status;
 
             requisition.Status = RequisitionStatus.ReturnedToRequester;
@@ -283,6 +331,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.ApprovedByMD, requisition);
+
             var previous = requisition.Status;
 
             requisition.Status = RequisitionStatus.Approved;
@@ -325,6 +375,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.RejectedByMD, requisition);
+
             var previous = requisition.Status;
 
             requisition.Status = RequisitionStatus.Rejected;
@@ -364,6 +416,8 @@ namespace HrPortal.Services
             int actedByEmployeeId,
             string? comment)
         {
+            EnsureCanAct(RequisitionAction.Cancelled, requisition);
+
             var previous = requisition.Status;
 
             requisition.Status = RequisitionStatus.Cancelled;
