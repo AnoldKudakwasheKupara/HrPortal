@@ -1,6 +1,7 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -89,10 +90,12 @@ namespace HrPortal.Services
             {
                 using var scope = _scopeFactory.CreateScope();
 
-                var email = scope.ServiceProvider
-                    .GetRequiredService<EmailService>();
+                var channels = scope.ServiceProvider
+                    .GetServices<INotificationChannel>()
+                    .Where(c => c.IsEnabled)
+                    .ToList();
 
-                if (!email.IsEnabled)
+                if (channels.Count == 0)
                     return;
 
                 var context = scope.ServiceProvider
@@ -114,24 +117,47 @@ namespace HrPortal.Services
                     })
                     .ToDictionaryAsync(emp => emp.Id);
 
+                var outbound = new List<OutboundNotification>();
+
                 foreach (var item in batch)
                 {
                     if (!recipients.TryGetValue(item.EmployeeId, out var to))
                         continue;
 
-                    await email.SendAsync(
+                    outbound.Add(new OutboundNotification(
+                        item.EmployeeId,
                         to.Email,
                         to.Name,
                         item.Title,
                         item.Message,
-                        item.Link);
+                        item.Link));
+                }
+
+                if (outbound.Count == 0)
+                    return;
+
+                foreach (var channel in channels)
+                {
+                    try
+                    {
+                        await channel.DeliverAsync(outbound);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "The {Channel} channel could not deliver " +
+                            "{Count} notification(s).",
+                            channel.Name,
+                            outbound.Count);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Could not deliver {Count} notification email(s).",
+                    "Could not deliver {Count} notification(s).",
                     batch.Count);
             }
         }

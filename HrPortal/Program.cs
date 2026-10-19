@@ -3,6 +3,7 @@ using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.Services.Reporting;
+using HrPortal.Services.Notifications;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -114,6 +115,8 @@ builder.Services.Configure<LeaveOptions>(
     builder.Configuration.GetSection(LeaveOptions.Section));
 
 builder.Services.AddSingleton<EmailService>();
+
+builder.Services.AddScoped<INotificationChannel, EmailNotificationChannel>();
 
 builder.Services.AddScoped<ReminderService>();
 builder.Services.AddHostedService<ReminderHostedService>();
