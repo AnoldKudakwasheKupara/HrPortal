@@ -34,6 +34,7 @@ namespace HrPortal.Controllers
         {
             var query = await _scope.VisibleToAsync(
                 _context.TrainingAssignments
+                    .AsNoTracking()
                     .Include(a => a.TrainingCourse)
                     .Include(a => a.Employee)
                     .Include(a => a.Feedback),

@@ -23,6 +23,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var configurations = await _context.ApprovalConfigurations
+                .AsNoTracking()
                 .Include(a => a.Employee)
                     .ThenInclude(e => e.Department)
                 .OrderBy(a => a.Role)

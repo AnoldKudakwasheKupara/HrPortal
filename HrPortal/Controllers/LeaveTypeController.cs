@@ -21,6 +21,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var leaveTypes = await _context.LeaveTypes
+                .AsNoTracking()
                 .Include(l => l.LeaveRequests)
                 .OrderBy(l => l.Name)
                 .ToListAsync();

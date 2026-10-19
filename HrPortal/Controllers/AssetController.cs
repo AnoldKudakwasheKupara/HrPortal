@@ -31,6 +31,7 @@ namespace HrPortal.Controllers
             string? company)
         {
             var query = _context.Assets
+                .AsNoTracking()
                 .Include(a => a.AssignedToEmployee)
                 .AsQueryable();
 

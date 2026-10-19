@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
             var soon = today.AddDays(ExpiringWindowDays);
 
             var query = _context.Licenses
+                .AsNoTracking()
                 .Include(l => l.Vendor)
                 .Include(l => l.AssignedToEmployee)
                 .AsQueryable();

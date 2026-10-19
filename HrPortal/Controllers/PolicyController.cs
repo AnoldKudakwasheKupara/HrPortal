@@ -162,10 +162,8 @@ namespace HrPortal.Controllers
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-
-            return File(
-                bytes,
+            return PhysicalFile(
+                fullPath,
                 contentType ?? "application/octet-stream",
                 policy.OriginalFileName);
         }
@@ -191,13 +189,11 @@ namespace HrPortal.Controllers
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-
             Response.Headers.ContentDisposition =
                 "inline; filename=\"" +
                 Path.GetFileName(policy.OriginalFileName) + "\"";
 
-            return File(bytes, contentType ?? "application/octet-stream");
+            return PhysicalFile(fullPath, contentType ?? "application/octet-stream");
         }
 
         [HttpPost]

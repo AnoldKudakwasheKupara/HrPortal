@@ -307,6 +307,10 @@ namespace HrPortal.Migrations
 
                     b.HasIndex("EmployeeId");
 
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("EntityName", "Timestamp");
+
                     b.ToTable("AuditLogs");
                 });
 
@@ -966,7 +970,9 @@ namespace HrPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId");
+                    b.HasIndex("EmployeeId", "CreatedAt");
+
+                    b.HasIndex("EmployeeId", "IsRead");
 
                     b.ToTable("Notifications");
                 });

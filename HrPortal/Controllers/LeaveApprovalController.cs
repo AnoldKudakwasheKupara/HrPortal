@@ -30,6 +30,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var requests = await _context.LeaveRequests
+                .AsNoTracking()
                 .Include(r => r.Employee)
                 .Include(r => r.LeaveType)
                 .Where(r =>

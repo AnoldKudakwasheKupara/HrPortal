@@ -1,7 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using HrPortal.Data
 @inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
 
 <!DOCTYPE html>
 <html lang="en">
@@ -61,9 +60,10 @@
 
                 @if (SignInManager.IsSignedIn(User))
                 {
-                    var currentUser = await UserManager.GetUserAsync(User);
-
-                    var displayName = currentUser?.FullName
+                    var displayName =
+                        User.FindFirst(
+                            ApplicationUserClaimsPrincipalFactory
+                                .FullNameClaim)?.Value
                         ?? User.Identity?.Name
                         ?? "User";
 

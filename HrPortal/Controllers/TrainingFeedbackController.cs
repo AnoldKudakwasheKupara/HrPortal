@@ -23,6 +23,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var feedback = await _context.TrainingFeedbacks
+                .AsNoTracking()
                 .Include(f => f.TrainingAssignment)
                     .ThenInclude(a => a.TrainingCourse)
                 .Include(f => f.TrainingAssignment)

@@ -5,8 +5,11 @@ using HrPortal.Services;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,7 +56,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders()
-    .AddSignInManager<EmployeeSignInManager>();
+    .AddSignInManager<EmployeeSignInManager>()
+    .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
@@ -114,6 +118,27 @@ builder.Services.Configure<WeeklyReportBranding>(
 builder.Services.AddScoped<
     IAuthorizationHandler,
     EmployeeOwnedHandler>();
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes
+        .Concat(new[] { "image/svg+xml" });
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
 
 builder.Services.AddControllersWithViews();
 
@@ -200,7 +225,22 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.UseResponseCompression();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var oneWeek = TimeSpan.FromDays(7);
+
+        ctx.Context.Response.GetTypedHeaders().CacheControl =
+            new CacheControlHeaderValue
+            {
+                Public = true,
+                MaxAge = oneWeek
+            };
+    }
+});
 
 app.UseRouting();
 

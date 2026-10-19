@@ -27,6 +27,7 @@ namespace HrPortal.Controllers
             int page = 1)
         {
             var query = _context.AuditLogs
+                .AsNoTracking()
                 .Include(a => a.Employee)
                 .AsQueryable();
 

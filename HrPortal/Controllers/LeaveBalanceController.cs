@@ -29,6 +29,7 @@ namespace HrPortal.Controllers
 
             var visible = await _scope.VisibleToAsync(
                 _context.LeaveBalances
+                    .AsNoTracking()
                     .Include(b => b.Employee)
                     .Include(b => b.LeaveType),
                 User);

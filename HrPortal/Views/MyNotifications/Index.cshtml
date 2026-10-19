@@ -163,6 +163,40 @@
 
             </div>
 
+            @if ((int)ViewBag.TotalPages > 1)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center">
+
+                    <span class="text-muted">
+                        Page @ViewBag.Page of @ViewBag.TotalPages
+                        (@ViewBag.TotalCount notifications)
+                    </span>
+
+                    <div>
+
+                        @if ((int)ViewBag.Page > 1)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Index"
+                               asp-route-page="@((int)ViewBag.Page - 1)">
+                                Previous
+                            </a>
+                        }
+
+                        @if ((int)ViewBag.Page < (int)ViewBag.TotalPages)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Index"
+                               asp-route-page="@((int)ViewBag.Page + 1)">
+                                Next
+                            </a>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
         </div>
 
     </div>

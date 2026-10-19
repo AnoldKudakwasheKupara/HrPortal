@@ -28,6 +28,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var courses = await _context.TrainingCourses
+                .AsNoTracking()
                 .Include(c => c.CreatedByEmployee)
                 .Include(c => c.Assignments)
                 .Include(c => c.Materials)

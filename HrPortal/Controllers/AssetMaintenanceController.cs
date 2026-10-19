@@ -33,6 +33,7 @@ namespace HrPortal.Controllers
             var today = DateTime.Today;
 
             var query = _context.AssetMaintenances
+                .AsNoTracking()
                 .Include(m => m.Asset).ThenInclude(a => a.AssignedToEmployee)
                 .Include(m => m.Vendor)
                 .AsQueryable();

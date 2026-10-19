@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index(int? courseId)
         {
             var query = _context.TrainingMaterials
+                .AsNoTracking()
                 .Include(m => m.TrainingCourse)
                 .Include(m => m.UploadedByEmployee)
                 .AsQueryable();
@@ -97,10 +98,8 @@ namespace HrPortal.Controllers
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-
-            return File(
-                bytes,
+            return PhysicalFile(
+                fullPath,
                 contentType ?? "application/octet-stream",
                 material.OriginalFileName);
         }

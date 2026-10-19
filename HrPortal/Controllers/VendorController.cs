@@ -28,7 +28,7 @@ namespace HrPortal.Controllers
             string? category,
             bool? active)
         {
-            var query = _context.Vendors.AsQueryable();
+            var query = _context.Vendors.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {

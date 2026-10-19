@@ -37,6 +37,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var reports = await _context.WeeklyReports
+                .AsNoTracking()
                 .Include(r => r.Sections)
                 .Include(r => r.Priorities)
                 .OrderByDescending(r => r.PeriodStart)

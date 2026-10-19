@@ -1,4 +1,5 @@
 ﻿using HrPortal.Data;
+using HrPortal.DbContexts;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using HrPortal.Services;
@@ -14,36 +15,47 @@ namespace HrPortal.Controllers
     {
         private readonly RoleManager<IdentityRole<int>> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
 
         public RoleController(
             RoleManager<IdentityRole<int>> roleManager,
             UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context,
             AuditService audit)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _context = context;
             _audit = audit;
         }
 
         public async Task<IActionResult> Index()
         {
-            var roles = await _roleManager.Roles
+            var counts = await _context.UserRoles
+                .AsNoTracking()
+                .GroupBy(ur => ur.RoleId)
+                .Select(g => new
+                {
+                    RoleId = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.RoleId, x => x.Count);
+
+            var model = await _roleManager.Roles
+                .AsNoTracking()
                 .OrderBy(r => r.Name)
+                .Select(r => new RoleEditViewModel
+                {
+                    Id = r.Id,
+                    Name = r.Name ?? string.Empty
+                })
                 .ToListAsync();
 
-            var model = new List<RoleEditViewModel>();
-
-            foreach (var role in roles)
+            foreach (var row in model)
             {
-                var users = await _userManager.GetUsersInRoleAsync(role.Name!);
-
-                model.Add(new RoleEditViewModel
-                {
-                    Id = role.Id,
-                    Name = role.Name ?? string.Empty,
-                    UserCount = users.Count
-                });
+                row.UserCount =
+                    counts.TryGetValue(row.Id, out var count) ? count : 0;
             }
 
             return View(model);

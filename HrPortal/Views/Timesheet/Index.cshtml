@@ -51,7 +51,7 @@
 
         <div class="report-stat">
             <span class="report-stat-label">Entries</span>
-            <span class="report-stat-value">@Model.Entries.Count</span>
+            <span class="report-stat-value">@Model.TotalEntries</span>
             <span class="report-stat-note">Pieces of work recorded</span>
         </div>
 
@@ -253,9 +253,9 @@
                                 </td>
 
                                 <td>
-                                    @e.Employee.FirstName @e.Employee.LastName
+                                    @e.EmployeeName
                                     <div class="text-muted small">
-                                        @e.Employee.Department.Name
+                                        @e.DepartmentName
                                     </div>
                                 </td>
 
@@ -274,12 +274,12 @@
                                 </td>
 
                                 <td>
-                                    @if (e.Asset != null)
+                                    @if (e.AssetModel != null)
                                     {
-                                        @e.Asset.DeviceModel
-                                        @if (!string.IsNullOrWhiteSpace(e.Asset.SerialNumber))
+                                        @e.AssetModel
+                                        @if (!string.IsNullOrWhiteSpace(e.AssetSerialNumber))
                                         {
-                                            <div class="text-muted small">@e.Asset.SerialNumber</div>
+                                            <div class="text-muted small">@e.AssetSerialNumber</div>
                                         }
                                     }
                                     else
@@ -320,6 +320,53 @@
 
                 </table>
             </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center">
+
+                    <span class="text-muted">
+                        Page @Model.Page of @Model.TotalPages
+                        (@Model.TotalEntries entries)
+                    </span>
+
+                    <div>
+
+                        @if (Model.Page > 1)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Index"
+                               asp-route-page="@(Model.Page - 1)"
+                               asp-route-employeeId="@Model.EmployeeId"
+                               asp-route-category="@Model.Category"
+                               asp-route-from="@Model.From.ToString("yyyy-MM-dd")"
+                               asp-route-to="@Model.To.ToString("yyyy-MM-dd")">
+
+                                Previous
+
+                            </a>
+                        }
+
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Index"
+                               asp-route-page="@(Model.Page + 1)"
+                               asp-route-employeeId="@Model.EmployeeId"
+                               asp-route-category="@Model.Category"
+                               asp-route-from="@Model.From.ToString("yyyy-MM-dd")"
+                               asp-route-to="@Model.To.ToString("yyyy-MM-dd")">
+
+                                Next
+
+                            </a>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
         </div>
     </div>
 

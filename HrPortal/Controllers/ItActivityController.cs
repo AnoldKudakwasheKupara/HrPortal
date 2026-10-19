@@ -43,6 +43,7 @@ namespace HrPortal.Controllers
             var end = to ?? start.AddDays(6);
 
             var query = _context.ItActivities
+                .AsNoTracking()
                 .Include(a => a.RaisedByEmployee)
                 .Include(a => a.Asset)
                 .Where(a => a.LoggedOn >= start && a.LoggedOn <= end);

@@ -30,6 +30,7 @@ namespace HrPortal.Controllers
         {
             var query = await _scope.VisibleToAsync(
                 _context.LeaveRequests
+                    .AsNoTracking()
                     .Include(r => r.Employee)
                     .Include(r => r.LeaveType),
                 User);

@@ -9,6 +9,8 @@ namespace HrPortal.Controllers
     [Authorize]
     public class MyNotificationsController : Controller
     {
+        private const int PageSize = 30;
+
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
 
@@ -20,18 +22,37 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
 
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var notifications = await _context.Notifications
+            var mine = _context.Notifications
                 .AsNoTracking()
-                .Where(n => n.EmployeeId == employeeId.Value)
+                .Where(n => n.EmployeeId == employeeId.Value);
+
+            var totalCount = await mine.CountAsync();
+
+            var totalPages =
+                (int)Math.Ceiling(totalCount / (double)PageSize);
+
+            if (page < 1)
+                page = 1;
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var notifications = await mine
                 .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
                 .ToListAsync();
+
+            ViewBag.Page = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalCount = totalCount;
 
             return View(notifications);
         }

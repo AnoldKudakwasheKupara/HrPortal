@@ -91,10 +91,8 @@ namespace HrPortal.Controllers
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-
-            return File(
-                bytes,
+            return PhysicalFile(
+                fullPath,
                 contentType ?? "application/octet-stream",
                 document.OriginalFileName);
         }

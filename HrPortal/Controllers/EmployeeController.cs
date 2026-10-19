@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var employees = await _context.Employees
+                .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Position)
                 .Include(e => e.User)

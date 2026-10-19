@@ -865,6 +865,18 @@ namespace HrPortal.DbContexts
                     .WithMany(e => e.Notifications)
                     .HasForeignKey(n => n.EmployeeId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(n => new
+                {
+                    n.EmployeeId,
+                    n.IsRead
+                });
+
+                entity.HasIndex(n => new
+                {
+                    n.EmployeeId,
+                    n.CreatedAt
+                });
             });
 
             builder.Entity<AuditLog>(entity =>
@@ -892,6 +904,14 @@ namespace HrPortal.DbContexts
                     .WithMany()
                     .HasForeignKey(a => a.EmployeeId)
                     .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(a => a.Timestamp);
+
+                entity.HasIndex(a => new
+                {
+                    a.EntityName,
+                    a.Timestamp
+                });
             });
 
             builder.Entity<ApprovalConfiguration>(entity =>

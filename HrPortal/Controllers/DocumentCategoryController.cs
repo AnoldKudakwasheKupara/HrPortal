@@ -21,6 +21,7 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Index()
         {
             var categories = await _context.DocumentCategories
+                .AsNoTracking()
                 .Include(c => c.Documents)
                 .OrderBy(c => c.Name)
                 .ToListAsync();

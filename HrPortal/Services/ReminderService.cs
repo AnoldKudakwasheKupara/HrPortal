@@ -33,6 +33,15 @@ namespace HrPortal.Services
         private readonly ReminderOptions _options;
         private readonly ILogger<ReminderService> _logger;
 
+        private Dictionary<(string Kind, string ReferenceKey, int EmployeeId),
+            ReminderLog> _sentLog = new();
+
+        private readonly Dictionary<string, List<int>> _roleEmployeeIds =
+            new();
+
+        private readonly Dictionary<DocumentAudience, HashSet<int>>
+            _audienceEmployeeIds = new();
+
         public ReminderService(
             ApplicationDbContext context,
             NotificationService notifications,
@@ -64,6 +73,11 @@ namespace HrPortal.Services
 
             var today = DateTime.Today;
             var horizon = today.AddDays(_options.ExpiryWindowDays);
+
+            await LoadSentLogAsync();
+
+            _roleEmployeeIds.Clear();
+            _audienceEmployeeIds.Clear();
 
             run.Add(
                 LicenceExpiry,
@@ -142,7 +156,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             LicenceExpiry,
                             licence.Id.ToString(),
                             employeeId,
@@ -196,7 +210,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             DocumentExpiry,
                             document.Id.ToString(),
                             employeeId,
@@ -245,7 +259,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             ContractEnding,
                             employee.Id.ToString(),
                             employeeId,
@@ -302,7 +316,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             PolicyReview,
                             policy.Id.ToString(),
                             employeeId,
@@ -368,7 +382,7 @@ namespace HrPortal.Services
                     if (!audienceIds.Contains(employee.Id))
                         continue;
 
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             PolicyUnread,
                             policy.Id.ToString(),
                             employee.Id,
@@ -393,6 +407,16 @@ namespace HrPortal.Services
         }
 
         private async Task<HashSet<int>> AudienceEmployeeIdsAsync(
+            DocumentAudience audience)
+        {
+            if (_audienceEmployeeIds.TryGetValue(audience, out var cached))
+                return cached;
+
+            return _audienceEmployeeIds[audience] =
+                await LoadAudienceEmployeeIdsAsync(audience);
+        }
+
+        private async Task<HashSet<int>> LoadAudienceEmployeeIdsAsync(
             DocumentAudience audience)
         {
             if (audience == DocumentAudience.Everyone)
@@ -456,7 +480,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             CertificationExpiry,
                             certification.Id.ToString(),
                             employeeId,
@@ -519,7 +543,7 @@ namespace HrPortal.Services
 
                 foreach (var employeeId in recipients)
                 {
-                    if (!await ShouldSendAsync(
+                    if (!ShouldSend(
                             MaintenanceDue,
                             job.Id.ToString(),
                             employeeId,
@@ -570,7 +594,7 @@ namespace HrPortal.Services
                     _ => $"is due in {days} day{Plural(days)}"
                 };
 
-                if (!await ShouldSendAsync(
+                if (!ShouldSend(
                         TrainingDue,
                         assignment.Id.ToString(),
                         assignment.EmployeeId,
@@ -633,7 +657,7 @@ namespace HrPortal.Services
                 if (approver == null)
                     continue;
 
-                if (!await ShouldSendAsync(
+                if (!ShouldSend(
                         LeaveWaiting,
                         request.Id.ToString(),
                         approver.Value,
@@ -705,7 +729,7 @@ namespace HrPortal.Services
                 if (approver == null)
                     continue;
 
-                if (!await ShouldSendAsync(
+                if (!ShouldSend(
                         RequisitionWaiting,
                         requisition.Id.ToString(),
                         approver.Value,
@@ -758,27 +782,35 @@ namespace HrPortal.Services
             return spaced.ToLowerInvariant();
         }
 
-        private async Task<bool> ShouldSendAsync(
+        private async Task LoadSentLogAsync()
+        {
+            var logs = await _context.ReminderLogs.ToListAsync();
+
+            _sentLog = logs.ToDictionary(
+                r => (r.Kind, r.ReferenceKey, r.EmployeeId));
+        }
+
+        private bool ShouldSend(
             string kind,
             string referenceKey,
             int employeeId,
             DateTime today)
         {
-            var existing = await _context.ReminderLogs
-                .FirstOrDefaultAsync(r =>
-                    r.Kind == kind &&
-                    r.ReferenceKey == referenceKey &&
-                    r.EmployeeId == employeeId);
+            var key = (kind, referenceKey, employeeId);
 
-            if (existing == null)
+            if (!_sentLog.TryGetValue(key, out var existing))
             {
-                _context.ReminderLogs.Add(new ReminderLog
+                var added = new ReminderLog
                 {
                     Kind = kind,
                     ReferenceKey = referenceKey,
                     EmployeeId = employeeId,
                     LastSentOn = today
-                });
+                };
+
+                _context.ReminderLogs.Add(added);
+
+                _sentLog[key] = added;
 
                 return true;
             }
@@ -795,6 +827,15 @@ namespace HrPortal.Services
         }
 
         private async Task<List<int>> EmployeeIdsInRoleAsync(string role)
+        {
+            if (_roleEmployeeIds.TryGetValue(role, out var cached))
+                return cached;
+
+            return _roleEmployeeIds[role] =
+                await LoadEmployeeIdsInRoleAsync(role);
+        }
+
+        private async Task<List<int>> LoadEmployeeIdsInRoleAsync(string role)
         {
             var users = await _userManager.GetUsersInRoleAsync(role);
 

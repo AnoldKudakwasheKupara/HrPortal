@@ -16,14 +16,10 @@ namespace HrPortal.Controllers
     public class ReportsController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ReportsController(
-            ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+        public ReportsController(ApplicationDbContext context)
         {
             _context = context;
-            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -896,7 +892,6 @@ namespace HrPortal.Controllers
             var query = _context.Employees
                 .Include(e => e.Department)
                 .Include(e => e.Position)
-                .Include(e => e.User)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -917,13 +912,42 @@ namespace HrPortal.Controllers
                 .ThenBy(e => e.FirstName)
                 .ToListAsync();
 
+            var userIds = employees
+                .Where(e => e.UserId != null)
+                .Select(e => e.UserId!.Value)
+                .ToList();
+
+            var roleRows = await (
+                    from userRole in _context.UserRoles
+                    join role in _context.Roles
+                        on userRole.RoleId equals role.Id
+                    where userIds.Contains(userRole.UserId)
+                    select new
+                    {
+                        userRole.UserId,
+                        role.Name
+                    })
+                .AsNoTracking()
+                .ToListAsync();
+
+            var rolesByUser = roleRows
+                .GroupBy(r => r.UserId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .Select(r => r.Name ?? string.Empty)
+                        .OrderBy(n => n)
+                        .ToList());
+
             var rows = new List<EmployeeReportRow>();
 
             foreach (var e in employees)
             {
-                var roles = e.User != null
-                    ? await _userManager.GetRolesAsync(e.User)
-                    : new List<string>();
+                var roles =
+                    e.UserId != null &&
+                    rolesByUser.TryGetValue(e.UserId.Value, out var found)
+                        ? found
+                        : new List<string>();
 
                 rows.Add(new EmployeeReportRow
                 {
