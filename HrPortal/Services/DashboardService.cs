@@ -384,7 +384,7 @@ namespace HrPortal.Services
                         l.Status == LicenseStatus.Active &&
                         l.ExpiryDate >= today &&
                         l.ExpiryDate <= today.AddDays(
-                            LicenseController.ExpiringWindowDays)),
+                            ExpiryWindows.LicenceDays)),
 
                 ActivitiesThisWeek = await _context.ItActivities
                     .CountAsync(a => a.LoggedOn >= weekStart),

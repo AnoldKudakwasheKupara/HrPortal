@@ -13,7 +13,7 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.HrOnly)]
     public class CertificationController : Controller
     {
-        public const int ExpiringWindowDays = 60;
+        public const int ExpiringWindowDays = ExpiryWindows.CertificationDays;
 
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
