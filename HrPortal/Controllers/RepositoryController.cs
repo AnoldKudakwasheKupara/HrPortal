@@ -20,18 +20,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
         private readonly AuditService _audit;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
 
         public RepositoryController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             AuditService audit,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
             _fileStorage = fileStorage;
             _audit = audit;
-            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         public async Task<IActionResult> Index(int? folderId, string? search)
@@ -188,7 +188,7 @@ namespace HrPortal.Controllers
                 FileSizeBytes = model.File.Length,
                 ExpiryDate = model.ExpiryDate,
                 UploadedAt = DateTime.UtcNow,
-                UploadedByName = await CurrentUserNameAsync()
+                UploadedByName = await _currentUser.GetDisplayNameAsync()
             };
 
             _context.RepositoryDocuments.Add(document);
@@ -267,13 +267,6 @@ namespace HrPortal.Controllers
                 .Where(f => f.IsActive)
                 .OrderBy(f => f.Name)
                 .ToListAsync();
-        }
-
-        private async Task<string?> CurrentUserNameAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
     }
 }

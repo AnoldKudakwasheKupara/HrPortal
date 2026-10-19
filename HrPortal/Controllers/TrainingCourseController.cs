@@ -3,6 +3,7 @@ using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,14 +16,14 @@ namespace HrPortal.Controllers
     public class TrainingCourseController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
 
         public TrainingCourseController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
-            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         public async Task<IActionResult> Index()
@@ -63,7 +64,7 @@ namespace HrPortal.Controllers
             return View(new TrainingCourseCreateViewModel
             {
                 CreatedByEmployeeId =
-                    await GetCurrentEmployeeId() ?? 0
+                    await _currentUser.GetEmployeeIdAsync() ?? 0
             });
         }
 
@@ -252,19 +253,6 @@ namespace HrPortal.Controllers
                     employees,
                     "Id",
                     "FullName");
-        }
-
-        private async Task<int?> GetCurrentEmployeeId()
-        {
-            var userId = _userManager.GetUserId(User);
-
-            if (!int.TryParse(userId, out var parsedUserId))
-                return null;
-
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.UserId == parsedUserId);
-
-            return employee?.Id;
         }
     }
 }

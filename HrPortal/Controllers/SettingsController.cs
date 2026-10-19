@@ -17,7 +17,7 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
         private readonly IOptionsSnapshot<RequisitionOptions> _requisitions;
         private readonly IOptionsSnapshot<LeaveOptions> _leave;
         private readonly IOptionsSnapshot<ReminderOptions> _reminders;
@@ -25,14 +25,14 @@ namespace HrPortal.Controllers
         public SettingsController(
             ApplicationDbContext context,
             AuditService audit,
-            UserManager<ApplicationUser> userManager,
+            CurrentUserService currentUser,
             IOptionsSnapshot<RequisitionOptions> requisitions,
             IOptionsSnapshot<LeaveOptions> leave,
             IOptionsSnapshot<ReminderOptions> reminders)
         {
             _context = context;
             _audit = audit;
-            _userManager = userManager;
+            _currentUser = currentUser;
             _requisitions = requisitions;
             _leave = leave;
             _reminders = reminders;
@@ -55,7 +55,7 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            var by = await CurrentUserNameAsync();
+            var by = await _currentUser.GetDisplayNameAsync();
 
             var changes = new List<string>();
 
@@ -227,13 +227,6 @@ namespace HrPortal.Controllers
                 .AsNoTracking()
                 .OrderBy(s => s.Key)
                 .ToListAsync();
-        }
-
-        private async Task<string?> CurrentUserNameAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
     }
 }

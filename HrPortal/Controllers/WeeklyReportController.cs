@@ -18,20 +18,20 @@ namespace HrPortal.Controllers
         private readonly WeeklyReportBuilder _builder;
         private readonly WeeklyReportPdfService _pdf;
         private readonly AuditService _audit;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
 
         public WeeklyReportController(
             ApplicationDbContext context,
             WeeklyReportBuilder builder,
             WeeklyReportPdfService pdf,
             AuditService audit,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
             _builder = builder;
             _pdf = pdf;
             _audit = audit;
-            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         public async Task<IActionResult> Index()
@@ -72,7 +72,7 @@ namespace HrPortal.Controllers
             {
                 PeriodStart = start,
                 PeriodEnd = start.AddDays(4),
-                PreparedBy = await GetCurrentUserName() ?? string.Empty
+                PreparedBy = await _currentUser.GetDisplayNameAsync() ?? string.Empty
             });
         }
 
@@ -445,13 +445,6 @@ namespace HrPortal.Controllers
                 .Count(d => d <= DateTime.Today);
 
             return Math.Max(0, elapsed - logged);
-        }
-
-        private async Task<string?> GetCurrentUserName()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
     }
 }

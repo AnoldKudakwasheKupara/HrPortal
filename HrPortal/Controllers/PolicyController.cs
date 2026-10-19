@@ -21,20 +21,17 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
-        private readonly UserManager<ApplicationUser> _userManager;
 
         public PolicyController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             AuditService audit,
-            CurrentUserService currentUser,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
             _fileStorage = fileStorage;
             _audit = audit;
             _currentUser = currentUser;
-            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index(string? category, string? search)
@@ -360,7 +357,7 @@ namespace HrPortal.Controllers
                 FilePath = filePath,
                 SupersedesPolicyId = model.SupersedesPolicyId,
                 CreatedAt = DateTime.UtcNow,
-                CreatedByName = await CurrentUserNameAsync()
+                CreatedByName = await _currentUser.GetDisplayNameAsync()
             };
 
             _context.Policies.Add(policy);
@@ -508,13 +505,6 @@ namespace HrPortal.Controllers
                 return null;
 
             return policy;
-        }
-
-        private async Task<string?> CurrentUserNameAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
     }
 }

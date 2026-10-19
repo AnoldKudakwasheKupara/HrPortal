@@ -17,16 +17,16 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
 
         public ItActivityController(
             ApplicationDbContext context,
             AuditService audit,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
             _audit = audit;
-            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         public async Task<IActionResult> Index(
@@ -127,7 +127,7 @@ namespace HrPortal.Controllers
                     ? model.ResolvedOn ?? model.LoggedOn
                     : null,
                 IsNotable = model.IsNotable,
-                LoggedBy = await GetCurrentUserName(),
+                LoggedBy = await _currentUser.GetDisplayNameAsync(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -333,13 +333,6 @@ namespace HrPortal.Controllers
                     a.DeviceModel + " (" + a.SerialNumber + ")",
                     a.Id.ToString()))
                 .ToListAsync();
-        }
-
-        private async Task<string?> GetCurrentUserName()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
         }
     }
 }

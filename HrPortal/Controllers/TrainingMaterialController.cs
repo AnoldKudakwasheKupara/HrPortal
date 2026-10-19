@@ -20,16 +20,16 @@ namespace HrPortal.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
 
         public TrainingMaterialController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
-            UserManager<ApplicationUser> userManager)
+            CurrentUserService currentUser)
         {
             _context = context;
             _fileStorage = fileStorage;
-            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         public async Task<IActionResult> Index(int? courseId)
@@ -113,7 +113,7 @@ namespace HrPortal.Controllers
             {
                 TrainingCourseId = courseId ?? 0,
                 UploadedByEmployeeId =
-                    await GetCurrentEmployeeId() ?? 0
+                    await _currentUser.GetEmployeeIdAsync() ?? 0
             });
         }
 
@@ -321,19 +321,6 @@ namespace HrPortal.Controllers
                     employees,
                     "Id",
                     "FullName");
-        }
-
-        private async Task<int?> GetCurrentEmployeeId()
-        {
-            var userId = _userManager.GetUserId(User);
-
-            if (!int.TryParse(userId, out var parsedUserId))
-                return null;
-
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.UserId == parsedUserId);
-
-            return employee?.Id;
         }
     }
 }

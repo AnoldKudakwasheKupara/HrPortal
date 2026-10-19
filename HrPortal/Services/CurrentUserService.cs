@@ -1,4 +1,5 @@
-﻿using HrPortal.DbContexts;
+﻿using HrPortal.Data;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,6 +16,9 @@ namespace HrPortal.Services
 
         private int? _employeeId;
         private bool _employeeIdLoaded;
+
+        private string? _displayName;
+        private bool _displayNameLoaded;
 
         public CurrentUserService(
             ApplicationDbContext context,
@@ -85,6 +89,44 @@ namespace HrPortal.Services
             _employeeIdLoaded = true;
 
             return _employeeId;
+        }
+
+        public async Task<string?> GetDisplayNameAsync()
+        {
+            if (_displayNameLoaded)
+                return _displayName;
+
+            _displayNameLoaded = true;
+
+            var principal = _httpContextAccessor.HttpContext?.User;
+
+            var claimed = principal
+                ?.FindFirst(ApplicationUserClaimsPrincipalFactory
+                    .FullNameClaim)
+                ?.Value;
+
+            if (!string.IsNullOrWhiteSpace(claimed))
+                return _displayName = claimed;
+
+            var userId = GetUserId();
+
+            if (userId == null)
+                return _displayName = principal?.Identity?.Name;
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId.Value)
+                .Select(u => new
+                {
+                    u.FullName,
+                    u.Email
+                })
+                .FirstOrDefaultAsync();
+
+            return _displayName =
+                user?.FullName
+                ?? user?.Email
+                ?? principal?.Identity?.Name;
         }
     }
 }

@@ -20,20 +20,20 @@ namespace HrPortal.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CurrentUserService _currentUser;
         private readonly AuditService _audit;
         private readonly RecordScope _scope;
 
         public EmployeeDocumentController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
-            UserManager<ApplicationUser> userManager,
+            CurrentUserService currentUser,
             AuditService audit,
             RecordScope scope)
         {
             _context = context;
             _fileStorage = fileStorage;
-            _userManager = userManager;
+            _currentUser = currentUser;
             _audit = audit;
             _scope = scope;
         }
@@ -203,8 +203,8 @@ namespace HrPortal.Controllers
                 Description = model.Description?.Trim(),
                 ExpiryDate = model.ExpiryDate,
                 UploadedAt = DateTime.UtcNow,
-                UploadedByEmployeeId = await GetCurrentEmployeeId(),
-                UploadedByName = await GetCurrentUserName()
+                UploadedByEmployeeId = await _currentUser.GetEmployeeIdAsync(),
+                UploadedByName = await _currentUser.GetDisplayNameAsync()
             };
 
             _context.EmployeeDocuments.Add(document);
@@ -296,9 +296,9 @@ namespace HrPortal.Controllers
                 document.FilePath = filePath;
                 document.UploadedAt = DateTime.UtcNow;
                 document.UploadedByEmployeeId =
-                    await GetCurrentEmployeeId();
+                    await _currentUser.GetEmployeeIdAsync();
                 document.UploadedByName =
-                    await GetCurrentUserName();
+                    await _currentUser.GetDisplayNameAsync();
 
                 _fileStorage.Delete(oldFilePath);
             }
@@ -393,26 +393,6 @@ namespace HrPortal.Controllers
                     categories,
                     "Id",
                     "Name");
-        }
-
-        private async Task<string?> GetCurrentUserName()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            return user?.FullName ?? user?.Email ?? User.Identity?.Name;
-        }
-
-        private async Task<int?> GetCurrentEmployeeId()
-        {
-            var userId = _userManager.GetUserId(User);
-
-            if (!int.TryParse(userId, out var parsedUserId))
-                return null;
-
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.UserId == parsedUserId);
-
-            return employee?.Id;
         }
     }
 }
