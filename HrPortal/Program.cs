@@ -89,6 +89,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<LeaveBalanceService>();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<WorkingCalendar>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();

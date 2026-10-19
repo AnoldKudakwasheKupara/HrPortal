@@ -12,19 +12,22 @@ namespace HrPortal.Services
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
         private readonly LeaveOptions _options;
+        private readonly WorkingCalendar _calendar;
 
         public LeaveWorkflowService(
             ApplicationDbContext context,
             LeaveBalanceService balances,
             NotificationService notifications,
             AuditService audit,
-            IOptionsSnapshot<LeaveOptions> options)
+            IOptionsSnapshot<LeaveOptions> options,
+            WorkingCalendar calendar)
         {
             _context = context;
             _balances = balances;
             _notifications = notifications;
             _audit = audit;
             _options = options.Value;
+            _calendar = calendar;
         }
 
         public async Task<LeaveValidationResult> ValidateRequestAsync(
@@ -62,7 +65,7 @@ namespace HrPortal.Services
                 return result;
             }
 
-            result.NumberOfDays = await CountWorkingDaysAsync(
+            result.NumberOfDays = await _calendar.CountWorkingDaysAsync(
                 startDate,
                 endDate);
 
@@ -427,57 +430,6 @@ namespace HrPortal.Services
                 nameof(LeaveRequest),
                 request.RequestNumber,
                 "Cancelled.");
-        }
-
-        public static decimal CountWorkingDays(
-            DateTime startDate,
-            DateTime endDate,
-            IReadOnlySet<DateTime>? holidays = null)
-        {
-            var days = 0;
-
-            for (var date = startDate.Date;
-                 date <= endDate.Date;
-                 date = date.AddDays(1))
-            {
-                if (date.DayOfWeek == DayOfWeek.Saturday ||
-                    date.DayOfWeek == DayOfWeek.Sunday)
-                {
-                    continue;
-                }
-
-                if (holidays != null && holidays.Contains(date))
-                    continue;
-
-                days++;
-            }
-
-            return days;
-        }
-
-        public async Task<decimal> CountWorkingDaysAsync(
-            DateTime startDate,
-            DateTime endDate)
-        {
-            var holidays = await HolidaysBetweenAsync(startDate, endDate);
-
-            return CountWorkingDays(startDate, endDate, holidays);
-        }
-
-        public async Task<IReadOnlySet<DateTime>> HolidaysBetweenAsync(
-            DateTime startDate,
-            DateTime endDate)
-        {
-            var from = startDate.Date;
-            var to = endDate.Date;
-
-            var dates = await _context.PublicHolidays
-                .AsNoTracking()
-                .Where(h => h.Date >= from && h.Date <= to)
-                .Select(h => h.Date)
-                .ToListAsync();
-
-            return dates.Select(d => d.Date).ToHashSet();
         }
 
         public async Task<string> GenerateRequestNumberAsync()
