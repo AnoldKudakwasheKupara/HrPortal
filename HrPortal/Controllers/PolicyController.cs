@@ -21,17 +21,20 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
+        private readonly PolicyService _policies;
 
         public PolicyController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             AuditService audit,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            PolicyService policies)
         {
             _context = context;
             _fileStorage = fileStorage;
             _audit = audit;
             _currentUser = currentUser;
+            _policies = policies;
         }
 
         public async Task<IActionResult> Index(string? category, string? search)
@@ -92,7 +95,7 @@ namespace HrPortal.Controllers
 
             ViewBag.CategoryFilter = category;
             ViewBag.Search = search;
-            ViewBag.CanManage = CanManage();
+            ViewBag.CanManage = PolicyService.CanManage(User);
 
             ViewBag.Outstanding = policies.Count(p =>
                 p.RequiresAcknowledgement && !p.Acknowledged);
@@ -102,7 +105,7 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Details(int? id)
         {
-            var policy = await Readable(id);
+            var policy = await _policies.ReadableAsync(id, User);
 
             if (policy == null)
                 return NotFound();
@@ -116,7 +119,7 @@ namespace HrPortal.Controllers
                     employeeId != null &&
                     policy.Acknowledgements
                         .Any(a => a.EmployeeId == employeeId),
-                CanManage = CanManage()
+                CanManage = PolicyService.CanManage(User)
             };
 
             if (model.CanManage)
@@ -143,7 +146,7 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Download(int? id)
         {
-            var policy = await Readable(id);
+            var policy = await _policies.ReadableAsync(id, User);
 
             if (policy == null)
                 return NotFound();
@@ -167,7 +170,7 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Read(int? id)
         {
-            var policy = await Readable(id);
+            var policy = await _policies.ReadableAsync(id, User);
 
             if (policy == null)
                 return NotFound();
@@ -197,60 +200,15 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Acknowledge(int id)
         {
-            var policy = await Readable(id);
+            var result = await _policies.AcknowledgeAsync(id, User);
 
-            if (policy == null)
+            if (!result.Found)
                 return NotFound();
 
-            if (policy.Status != PolicyStatus.Active)
-            {
-                TempData["Error"] =
-                    "That policy is not in force, so there is nothing " +
-                    "to acknowledge.";
-
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            var employeeId = await _currentUser.GetEmployeeIdAsync();
-
-            if (employeeId == null)
-            {
-                TempData["Error"] =
-                    "Your sign-in is not linked to an employee record, " +
-                    "so an acknowledgement cannot be recorded against it.";
-
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            var already = await _context.PolicyAcknowledgements
-                .AnyAsync(a =>
-                    a.PolicyId == id &&
-                    a.EmployeeId == employeeId.Value);
-
-            if (already)
-            {
-                TempData["Success"] = "You had already acknowledged this.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
-
-            _context.PolicyAcknowledgements.Add(new PolicyAcknowledgement
-            {
-                PolicyId = id,
-                EmployeeId = employeeId.Value,
-                AcknowledgedAt = DateTime.UtcNow
-            });
-
-            await _context.SaveChangesAsync();
-
-            await _audit.LogAsync(
-                AuditService.Created,
-                nameof(PolicyAcknowledgement),
-                id.ToString(),
-                $"{policy.Title} version {policy.Version} acknowledged.");
-
-            TempData["Success"] =
-                $"Thank you. Your reading of {policy.Title} " +
-                $"version {policy.Version} has been recorded.";
+            if (result.Succeeded)
+                TempData["Success"] = result.Message;
+            else
+                TempData["Error"] = result.Message;
 
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -314,7 +272,7 @@ namespace HrPortal.Controllers
                     model.RequiresAcknowledgement =
                         previous.RequiresAcknowledgement;
                     model.SupersedesPolicyId = previous.Id;
-                    model.Version = NextVersion(previous.Version);
+                    model.Version = PolicyService.NextVersion(previous.Version);
                 }
             }
 
@@ -331,7 +289,16 @@ namespace HrPortal.Controllers
             if (fileError != null)
                 ModelState.AddModelError(nameof(model.File), fileError);
 
-            Validate(model);
+            var dateError = PolicyService.ValidateDates(
+                model.EffectiveDate,
+                model.ReviewDate);
+
+            if (dateError != null)
+            {
+                ModelState.AddModelError(
+                    PolicyService.ReviewDateField,
+                    dateError);
+            }
 
             if (!ModelState.IsValid)
                 return View(model);
@@ -382,50 +349,15 @@ namespace HrPortal.Controllers
         [Authorize(Roles = AudienceRules.Curators)]
         public async Task<IActionResult> Publish(int id)
         {
-            var policy = await _context.Policies.FindAsync(id);
+            var result = await _policies.PublishAsync(id);
 
-            if (policy == null)
+            if (!result.Found)
                 return NotFound();
 
-            if (policy.Status == PolicyStatus.Active)
-            {
-                TempData["Error"] = "That policy is already in force.";
-                return RedirectToAction(nameof(Manage));
-            }
-
-            policy.Status = PolicyStatus.Active;
-            policy.PublishedAt = DateTime.UtcNow;
-
-            var replaced = string.Empty;
-
-            if (policy.SupersedesPolicyId.HasValue)
-            {
-                var previous = await _context.Policies
-                    .FindAsync(policy.SupersedesPolicyId.Value);
-
-                if (previous != null &&
-                    previous.Status == PolicyStatus.Active)
-                {
-                    previous.Status = PolicyStatus.Superseded;
-
-                    replaced =
-                        $" It replaces version {previous.Version}, which " +
-                        "is now marked as replaced.";
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            await _audit.LogAsync(
-                AuditService.Updated,
-                nameof(Policy),
-                policy.Id.ToString(),
-                $"{policy.Title} version {policy.Version} published." +
-                replaced);
-
-            TempData["Success"] =
-                $"{policy.Title} version {policy.Version} is now in " +
-                "force." + replaced;
+            if (result.Succeeded)
+                TempData["Success"] = result.Message;
+            else
+                TempData["Error"] = result.Message;
 
             return RedirectToAction(nameof(Manage));
         }
@@ -435,76 +367,14 @@ namespace HrPortal.Controllers
         [Authorize(Roles = AudienceRules.Curators)]
         public async Task<IActionResult> Withdraw(int id)
         {
-            var policy = await _context.Policies.FindAsync(id);
+            var result = await _policies.WithdrawAsync(id);
 
-            if (policy == null)
+            if (!result.Found)
                 return NotFound();
 
-            policy.Status = PolicyStatus.Withdrawn;
-
-            await _context.SaveChangesAsync();
-
-            await _audit.LogAsync(
-                AuditService.Updated,
-                nameof(Policy),
-                policy.Id.ToString(),
-                $"{policy.Title} version {policy.Version} withdrawn.");
-
-            TempData["Success"] = "Policy withdrawn.";
+            TempData["Success"] = result.Message;
 
             return RedirectToAction(nameof(Manage));
-        }
-
-        private void Validate(PolicyEditViewModel model)
-        {
-            if (model.ReviewDate.HasValue &&
-                model.ReviewDate.Value.Date <= model.EffectiveDate.Date)
-            {
-                ModelState.AddModelError(
-                    nameof(model.ReviewDate),
-                    "The review date must be after the date it takes " +
-                    "effect.");
-            }
-        }
-
-        private static string NextVersion(string version)
-        {
-            var parts = version.Split('.');
-
-            if (int.TryParse(parts[0], out var major))
-            {
-                return parts.Length > 1
-                    ? $"{major + 1}.0"
-                    : (major + 1).ToString();
-            }
-
-            return version;
-        }
-
-        private bool CanManage() =>
-            User.IsInRole(Roles.Administrator) || User.IsInRole(Roles.HrOfficer);
-
-        private async Task<Policy?> Readable(int? id)
-        {
-            if (id == null)
-                return null;
-
-            var policy = await _context.Policies
-                .AsNoTracking()
-                .Include(p => p.Supersedes)
-                .Include(p => p.Acknowledgements)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (policy == null)
-                return null;
-
-            if (!AudienceRules.CanSee(User, policy.Audience))
-                return null;
-
-            if (policy.Status != PolicyStatus.Active && !CanManage())
-                return null;
-
-            return policy;
         }
     }
 }
