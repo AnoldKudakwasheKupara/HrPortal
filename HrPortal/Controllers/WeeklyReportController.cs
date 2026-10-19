@@ -51,9 +51,9 @@ namespace HrPortal.Controllers
 
             var lastPeriod = reports.FirstOrDefault()?.PeriodStart;
 
-            ViewBag.NextPeriodStart = NextPeriodStart(lastPeriod);
+            ViewBag.NextPeriodStart = WeeklyReportBuilder.NextPeriodStart(lastPeriod);
 
-            ViewBag.UnloggedDays = await UnloggedDaysAsync(
+            ViewBag.UnloggedDays = await _builder.UnloggedDaysAsync(
                 (DateTime)ViewBag.NextPeriodStart);
 
             return View(reports);
@@ -66,7 +66,7 @@ namespace HrPortal.Controllers
                 .Select(r => (DateTime?)r.PeriodStart)
                 .FirstOrDefaultAsync();
 
-            var start = NextPeriodStart(lastPeriod);
+            var start = WeeklyReportBuilder.NextPeriodStart(lastPeriod);
 
             return View(new WeeklyReportCreateViewModel
             {
@@ -196,10 +196,10 @@ namespace HrPortal.Controllers
                 section.Heading = posted.Heading.Trim();
                 section.Workstream = posted.Workstream?.Trim();
                 section.WorkstreamStatus = posted.WorkstreamStatus;
-                section.Body = Normalise(posted.Body);
+                section.Body = WeeklyReportBuilder.NormaliseBody(posted.Body);
             }
 
-            await ReplacePrioritiesAsync(report, model.PrioritiesText);
+            await _builder.ReplacePrioritiesAsync(report, model.PrioritiesText);
 
             await _context.SaveChangesAsync();
 
@@ -386,65 +386,5 @@ namespace HrPortal.Controllers
                         .OrderBy(p => p.Order)
                         .Select(p => p.Text))
             };
-
-        private async Task ReplacePrioritiesAsync(
-            WeeklyReport report,
-            string? text)
-        {
-            var lines = WeeklyReportPdfService.Lines(text);
-
-            var previousTexts = await _context.WeeklyReportPriorities
-                .Where(p => p.Report.PeriodStart < report.PeriodStart)
-                .Select(p => p.Text)
-                .ToListAsync();
-
-            _context.WeeklyReportPriorities.RemoveRange(report.Priorities);
-
-            report.Priorities = lines
-                .Select((line, index) => new WeeklyReportPriority
-                {
-                    WeeklyReportId = report.Id,
-                    Order = index + 1,
-                    Text = line,
-                    CarriedForward = previousTexts.Contains(line)
-                })
-                .ToList();
-        }
-
-        private static string? Normalise(string? body)
-        {
-            var lines = WeeklyReportPdfService.Lines(body);
-
-            return lines.Any() ? string.Join("\n", lines) : null;
-        }
-
-        private static DateTime NextPeriodStart(DateTime? lastPeriodStart)
-        {
-            if (lastPeriodStart.HasValue)
-                return lastPeriodStart.Value.AddDays(7);
-
-            var today = DateTime.Today;
-
-            return today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
-        }
-
-        private async Task<int> UnloggedDaysAsync(DateTime periodStart)
-        {
-            var periodEnd = periodStart.AddDays(4);
-
-            var logged = await _context.ItActivities
-                .Where(a =>
-                    a.LoggedOn >= periodStart &&
-                    a.LoggedOn <= periodEnd)
-                .Select(a => a.LoggedOn.Date)
-                .Distinct()
-                .CountAsync();
-
-            var elapsed = Enumerable.Range(0, 5)
-                .Select(offset => periodStart.AddDays(offset))
-                .Count(d => d <= DateTime.Today);
-
-            return Math.Max(0, elapsed - logged);
-        }
     }
 }

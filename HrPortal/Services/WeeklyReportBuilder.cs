@@ -193,5 +193,64 @@ namespace HrPortal.Services
                 _ => string.Join(", ", items.Take(items.Count - 1)) +
                      " and " + items[^1]
             };
+        public static DateTime NextPeriodStart(DateTime? lastPeriodStart)
+        {
+            if (lastPeriodStart.HasValue)
+                return lastPeriodStart.Value.AddDays(7);
+
+            var today = DateTime.Today;
+
+            return today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+        }
+
+        public static string? NormaliseBody(string? body)
+        {
+            var lines = WeeklyReportPdfService.Lines(body);
+
+            return lines.Any() ? string.Join("\n", lines) : null;
+        }
+
+        public async Task<int> UnloggedDaysAsync(DateTime periodStart)
+        {
+            var periodEnd = periodStart.AddDays(4);
+
+            var logged = await _context.ItActivities
+                .Where(a =>
+                    a.LoggedOn >= periodStart &&
+                    a.LoggedOn <= periodEnd)
+                .Select(a => a.LoggedOn.Date)
+                .Distinct()
+                .CountAsync();
+
+            var elapsed = Enumerable.Range(0, 5)
+                .Select(offset => periodStart.AddDays(offset))
+                .Count(d => d <= DateTime.Today);
+
+            return Math.Max(0, elapsed - logged);
+        }
+
+        public async Task ReplacePrioritiesAsync(
+            WeeklyReport report,
+            string? text)
+        {
+            var lines = WeeklyReportPdfService.Lines(text);
+
+            var previousTexts = await _context.WeeklyReportPriorities
+                .Where(p => p.Report.PeriodStart < report.PeriodStart)
+                .Select(p => p.Text)
+                .ToListAsync();
+
+            _context.WeeklyReportPriorities.RemoveRange(report.Priorities);
+
+            report.Priorities = lines
+                .Select((line, index) => new WeeklyReportPriority
+                {
+                    WeeklyReportId = report.Id,
+                    Order = index + 1,
+                    Text = line,
+                    CarriedForward = previousTexts.Contains(line)
+                })
+                .ToList();
+        }
     }
 }
