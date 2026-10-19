@@ -16,17 +16,20 @@ namespace HrPortal.Controllers
     public class EmployeeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly EmployeeRecordService _records;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly AuditService _audit;
         private readonly FileStorageService _fileStorage;
 
         public EmployeeController(
             ApplicationDbContext context,
+            EmployeeRecordService records,
             UserManager<ApplicationUser> userManager,
             AuditService audit,
             FileStorageService fileStorage)
         {
             _context = context;
+            _records = records;
             _userManager = userManager;
             _audit = audit;
             _fileStorage = fileStorage;
@@ -557,8 +560,8 @@ namespace HrPortal.Controllers
             if (employee == null)
                 return NotFound();
 
-            ViewBag.Blockers = await GetDeleteBlockers(employee.Id);
-            ViewBag.Removals = await GetDeleteRemovals(employee.Id);
+            ViewBag.Blockers = await _records.DeleteBlockersAsync(employee.Id);
+            ViewBag.Removals = await _records.DeleteRemovalsAsync(employee.Id);
 
             return View(employee);
         }
@@ -576,7 +579,7 @@ namespace HrPortal.Controllers
             if (employee == null)
                 return NotFound();
 
-            var blockers = await GetDeleteBlockers(id);
+            var blockers = await _records.DeleteBlockersAsync(id);
 
             if (blockers.Count > 0)
             {
@@ -625,87 +628,6 @@ namespace HrPortal.Controllers
                 "Employee deleted successfully.";
 
             return RedirectToAction(nameof(Index));
-        }
-
-        private async Task<List<string>> GetDeleteBlockers(int employeeId)
-        {
-            var blockers = new List<string>();
-
-            void Add(int count, string label)
-            {
-                if (count > 0)
-                    blockers.Add($"{count} {label}");
-            }
-
-            Add(
-                await _context.LeaveRequests
-                    .CountAsync(r => r.EmployeeId == employeeId),
-                "leave request(s)");
-
-            Add(
-                await _context.LeaveRequestHistories
-                    .CountAsync(h => h.ActionedByEmployeeId == employeeId),
-                "leave approval action(s)");
-
-            Add(
-                await _context.TrainingCourses
-                    .CountAsync(c => c.CreatedByEmployeeId == employeeId),
-                "training course(s) they created");
-
-            Add(
-                await _context.TrainingMaterials
-                    .CountAsync(m => m.UploadedByEmployeeId == employeeId),
-                "training material(s) they uploaded");
-
-            Add(
-                await _context.EmployeeDocuments
-                    .CountAsync(d => d.UploadedByEmployeeId == employeeId),
-                "document(s) they uploaded for others");
-
-            Add(
-                await _context.ApprovalConfigurations
-                    .CountAsync(a => a.EmployeeId == employeeId),
-                "approval role assignment(s)");
-
-            Add(
-                await _context.EmployeeDocuments
-                    .CountAsync(d => d.EmployeeId == employeeId),
-                "document(s) held on their file");
-
-            return blockers;
-        }
-
-        private async Task<List<string>> GetDeleteRemovals(int employeeId)
-        {
-            var removals = new List<string>();
-
-            void Add(int count, string label)
-            {
-                if (count > 0)
-                    removals.Add($"{count} {label}");
-            }
-
-            Add(
-                await _context.LeaveBalances
-                    .CountAsync(b => b.EmployeeId == employeeId),
-                "leave balance(s)");
-
-            Add(
-                await _context.TrainingAssignments
-                    .CountAsync(a => a.EmployeeId == employeeId),
-                "training assignment(s)");
-
-            Add(
-                await _context.EmployeeDocuments
-                    .CountAsync(d => d.EmployeeId == employeeId),
-                "document(s) held on file");
-
-            Add(
-                await _context.Notifications
-                    .CountAsync(n => n.EmployeeId == employeeId),
-                "notification(s)");
-
-            return removals;
         }
 
         private async Task LoadPositions()

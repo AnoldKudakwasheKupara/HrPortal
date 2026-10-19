@@ -93,6 +93,7 @@ builder.Services.AddScoped<WorkingCalendar>();
 builder.Services.AddScoped<TimesheetRegisterService>();
 builder.Services.AddScoped<TimesheetEntryValidator>();
 builder.Services.AddScoped<PolicyService>();
+builder.Services.AddScoped<EmployeeRecordService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
