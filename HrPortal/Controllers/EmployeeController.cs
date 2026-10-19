@@ -68,8 +68,7 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Create()
         {
-            await LoadDepartments();
-            await LoadPositions();
+            await LoadLookups();
 
             return View(new EmployeeCreateViewModel
             {
@@ -84,63 +83,25 @@ namespace HrPortal.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                 return View(model);
             }
 
-            var employeeNumberExists =
-                await _context.Employees
-                    .AnyAsync(e =>
-                        e.EmployeeNumber == model.EmployeeNumber);
-
-            if (employeeNumberExists)
+            foreach (var error in await _records.ValidateAsync(
+                model.EmployeeNumber,
+                model.DateJoined,
+                model.DateOfBirth,
+                model.ContractEndDate,
+                null,
+                true,
+                null))
             {
-                ModelState.AddModelError(
-                    "EmployeeNumber",
-                    "This employee number already exists.");
-
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
-                return View(model);
-            }
-
-            if (model.ContractEndDate.HasValue &&
-                model.ContractEndDate.Value.Date <= model.DateJoined.Date)
-            {
-                ModelState.AddModelError(
-                    nameof(model.ContractEndDate),
-                    "The contract cannot end on or before the start date.");
-
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
-                return View(model);
-            }
-
-            if (model.DateOfBirth.HasValue)
-            {
-                if (model.DateOfBirth.Value.Date >= DateTime.Today)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.DateOfBirth),
-                        "The date of birth must be in the past.");
-                }
-                else if (model.DateOfBirth.Value.Date > model.DateJoined.Date)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.DateOfBirth),
-                        "They cannot have been born after they started.");
-                }
+                ModelState.AddModelError(error.Field, error.Message);
             }
 
             if (!ModelState.IsValid)
             {
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                 return View(model);
             }
 
@@ -154,9 +115,7 @@ namespace HrPortal.Controllers
                     "Email",
                     "An employee with this email already exists.");
 
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                 return View(model);
             }
 
@@ -200,9 +159,7 @@ namespace HrPortal.Controllers
                     _context.Employees.Remove(employee);
                     await _context.SaveChangesAsync();
 
-                    await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                     return View(model);
                 }
 
@@ -232,9 +189,7 @@ namespace HrPortal.Controllers
                     _context.Employees.Remove(employee);
                     await _context.SaveChangesAsync();
 
-                    await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                     return View(model);
                 }
 
@@ -262,9 +217,7 @@ namespace HrPortal.Controllers
                     _context.Employees.Remove(employee);
                     await _context.SaveChangesAsync();
 
-                    await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                     return View(model);
                 }
             }
@@ -322,8 +275,7 @@ namespace HrPortal.Controllers
                 LeavingReason = employee.LeavingReason
             };
 
-            await LoadDepartments();
-            await LoadPositions();
+            await LoadLookups();
 
             return View(model);
         }
@@ -337,52 +289,21 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            if (model.ContractEndDate.HasValue &&
-                model.ContractEndDate.Value.Date <= model.DateJoined.Date)
+            foreach (var error in await _records.ValidateAsync(
+                model.EmployeeNumber,
+                model.DateJoined,
+                model.DateOfBirth,
+                model.ContractEndDate,
+                model.EndDate,
+                model.IsActive,
+                id))
             {
-                ModelState.AddModelError(
-                    nameof(model.ContractEndDate),
-                    "The contract cannot end on or before the start date.");
-            }
-
-            if (model.DateOfBirth.HasValue)
-            {
-                if (model.DateOfBirth.Value.Date >= DateTime.Today)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.DateOfBirth),
-                        "The date of birth must be in the past.");
-                }
-                else if (model.DateOfBirth.Value.Date > model.DateJoined.Date)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.DateOfBirth),
-                        "They cannot have been born after they started.");
-                }
-            }
-
-            if (!model.IsActive)
-            {
-                if (model.EndDate == null)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.EndDate),
-                        "Give the date they left before marking them no " +
-                        "longer employed.");
-                }
-                else if (model.EndDate.Value.Date < model.DateJoined.Date)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.EndDate),
-                        "They cannot have left before they started.");
-                }
+                ModelState.AddModelError(error.Field, error.Message);
             }
 
             if (!ModelState.IsValid)
             {
-                await LoadDepartments();
-                await LoadPositions();
-            await LoadPositions();
+                await LoadLookups();
                 return View(model);
             }
 
@@ -628,6 +549,12 @@ namespace HrPortal.Controllers
                 "Employee deleted successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task LoadLookups()
+        {
+            await LoadDepartments();
+            await LoadPositions();
         }
 
         private async Task LoadPositions()

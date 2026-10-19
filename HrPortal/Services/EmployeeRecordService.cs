@@ -92,5 +92,79 @@ namespace HrPortal.Services
 
             return removals;
         }
+        public const string EmployeeNumberField = "EmployeeNumber";
+        public const string ContractEndField = "ContractEndDate";
+        public const string DateOfBirthField = "DateOfBirth";
+        public const string EndDateField = "EndDate";
+
+        public async Task<List<EmployeeRuleError>> ValidateAsync(
+            string employeeNumber,
+            DateTime dateJoined,
+            DateTime? dateOfBirth,
+            DateTime? contractEndDate,
+            DateTime? endDate,
+            bool isActive,
+            int? existingEmployeeId)
+        {
+            var errors = new List<EmployeeRuleError>();
+
+            var numberTaken = await _context.Employees
+                .AnyAsync(e =>
+                    e.EmployeeNumber == employeeNumber &&
+                    (existingEmployeeId == null ||
+                     e.Id != existingEmployeeId.Value));
+
+            if (numberTaken)
+            {
+                errors.Add(new EmployeeRuleError(
+                    EmployeeNumberField,
+                    "This employee number already exists."));
+            }
+
+            if (contractEndDate.HasValue &&
+                contractEndDate.Value.Date <= dateJoined.Date)
+            {
+                errors.Add(new EmployeeRuleError(
+                    ContractEndField,
+                    "The contract cannot end on or before the start date."));
+            }
+
+            if (dateOfBirth.HasValue)
+            {
+                if (dateOfBirth.Value.Date >= DateTime.Today)
+                {
+                    errors.Add(new EmployeeRuleError(
+                        DateOfBirthField,
+                        "The date of birth must be in the past."));
+                }
+                else if (dateOfBirth.Value.Date > dateJoined.Date)
+                {
+                    errors.Add(new EmployeeRuleError(
+                        DateOfBirthField,
+                        "They cannot have been born after they started."));
+                }
+            }
+
+            if (!isActive)
+            {
+                if (endDate == null)
+                {
+                    errors.Add(new EmployeeRuleError(
+                        EndDateField,
+                        "Give the date they left before marking them no " +
+                        "longer employed."));
+                }
+                else if (endDate.Value.Date < dateJoined.Date)
+                {
+                    errors.Add(new EmployeeRuleError(
+                        EndDateField,
+                        "They cannot have left before they started."));
+                }
+            }
+
+            return errors;
+        }
     }
+
+    public record EmployeeRuleError(string Field, string Message);
 }
