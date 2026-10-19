@@ -14,20 +14,22 @@ namespace HrPortal.Controllers
     [Authorize]
     public class MyTimesheetController : Controller
     {
-        private const int MinutesInDay = 24 * 60;
 
         private readonly ApplicationDbContext _context;
+        private readonly TimesheetEntryValidator _validator;
         private readonly TimesheetAccessService _access;
         private readonly AuditService _audit;
         private readonly IAuthorizationService _authorization;
 
         public MyTimesheetController(
             ApplicationDbContext context,
+            TimesheetEntryValidator validator,
             TimesheetAccessService access,
             AuditService audit,
             IAuthorizationService authorization)
         {
             _context = context;
+            _validator = validator;
             _access = access;
             _audit = audit;
             _authorization = authorization;
@@ -126,7 +128,20 @@ namespace HrPortal.Controllers
 
             var employeeId = access.EmployeeId!.Value;
 
-            var minutes = await ValidateAsync(model, employeeId, null);
+            var validation = await _validator.ValidateAsync(
+                employeeId,
+                model.WorkDate,
+                model.AssetId,
+                model.StartTime,
+                model.EndTime,
+                model.Hours,
+                null,
+                !ModelState.IsValid);
+
+            var minutes = validation.Minutes;
+
+            foreach (var error in validation.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
 
             if (!ModelState.IsValid)
             {
@@ -219,10 +234,20 @@ namespace HrPortal.Controllers
             if (entry == null)
                 return NotFound();
 
-            var minutes = await ValidateAsync(
-                model,
+            var validation = await _validator.ValidateAsync(
                 access.EmployeeId!.Value,
-                id);
+                model.WorkDate,
+                model.AssetId,
+                model.StartTime,
+                model.EndTime,
+                model.Hours,
+                id,
+                !ModelState.IsValid);
+
+            var minutes = validation.Minutes;
+
+            foreach (var error in validation.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
 
             if (!ModelState.IsValid)
             {
@@ -283,91 +308,6 @@ namespace HrPortal.Controllers
             TempData["Success"] = "Entry removed.";
 
             return RedirectToWeek(entry.WorkDate);
-        }
-
-        private async Task<int> ValidateAsync(
-            TimesheetEntryViewModel model,
-            int employeeId,
-            int? excludeId)
-        {
-            if (model.WorkDate.Date > DateTime.Today)
-            {
-                ModelState.AddModelError(
-                    nameof(model.WorkDate),
-                    "You cannot log work for a future date.");
-            }
-
-            if (model.AssetId.HasValue &&
-                !await _context.Assets.AnyAsync(a => a.Id == model.AssetId.Value))
-            {
-                ModelState.AddModelError(
-                    nameof(model.AssetId),
-                    "Choose an asset from the register.");
-            }
-
-            var minutes = 0;
-
-            if (model.StartTime.HasValue != model.EndTime.HasValue)
-            {
-                ModelState.AddModelError(
-                    model.StartTime.HasValue
-                        ? nameof(model.EndTime)
-                        : nameof(model.StartTime),
-                    "Give both a start and a finish time, or neither.");
-            }
-            else if (model.StartTime.HasValue && model.EndTime.HasValue)
-            {
-                if (model.EndTime.Value <= model.StartTime.Value)
-                {
-                    ModelState.AddModelError(
-                        nameof(model.EndTime),
-                        "The finish time must be after the start time.");
-                }
-                else
-                {
-                    var span = model.EndTime.Value - model.StartTime.Value;
-
-                    minutes = (int)Math.Round(span.TotalMinutes);
-                }
-            }
-            else if (model.Hours.HasValue)
-            {
-                minutes = (int)Math.Round(model.Hours.Value * 60);
-            }
-            else
-            {
-                ModelState.AddModelError(
-                    nameof(model.Hours),
-                    "Give the hours spent, or a start and finish time.");
-            }
-
-            if (minutes <= 0 && ModelState.IsValid)
-            {
-                ModelState.AddModelError(
-                    nameof(model.Hours),
-                    "The time spent must be more than zero.");
-            }
-
-            if (minutes > 0)
-            {
-                var alreadyLogged = await _context.TimesheetEntries
-                    .Where(t =>
-                        t.EmployeeId == employeeId &&
-                        t.WorkDate == model.WorkDate.Date &&
-                        (excludeId == null || t.Id != excludeId.Value))
-                    .SumAsync(t => (int?)t.DurationMinutes) ?? 0;
-
-                if (alreadyLogged + minutes > MinutesInDay)
-                {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        $"That takes {model.WorkDate:d MMM} past 24 hours: " +
-                        $"{TimesheetEntry.FormatDuration(alreadyLogged)} is " +
-                        "already logged for that day.");
-                }
-            }
-
-            return minutes;
         }
 
         private async Task<(TimesheetAccess Access, IActionResult? Blocked)>
