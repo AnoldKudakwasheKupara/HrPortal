@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -456,5 +457,42 @@ namespace HrPortal.Services
                     ActionDate = DateTime.UtcNow
                 });
         }
+
+        public static List<RequisitionLineViewModel> UsableLines(
+            RequisitionEditViewModel model) =>
+            model.Lines
+                .Where(l => !l.Remove && !l.IsEmpty)
+                .ToList();
+
+        public static List<string> ValidateLines(
+            List<RequisitionLineViewModel> lines)
+        {
+            var errors = new List<string>();
+
+            if (!lines.Any())
+                errors.Add("Add at least one item to the requisition.");
+
+            if (lines.Any(l => string.IsNullOrWhiteSpace(l.Description)))
+            {
+                errors.Add(
+                    "Every line with a cost against it also needs a " +
+                    "description of what is wanted.");
+            }
+
+            if (lines.Any(l => l.Quantity <= 0))
+                errors.Add("Every line needs a quantity of more than zero.");
+
+            return errors;
+        }
+
+        public static RequisitionLine ToLine(RequisitionLineViewModel line) =>
+            new()
+            {
+                Description = line.Description!.Trim(),
+                Quantity = line.Quantity,
+                UnitOfMeasure = line.UnitOfMeasure?.Trim(),
+                EstimatedUnitCost = line.EstimatedUnitCost,
+                Notes = line.Notes?.Trim()
+            };
     }
 }

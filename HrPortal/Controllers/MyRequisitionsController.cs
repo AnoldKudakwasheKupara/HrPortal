@@ -107,9 +107,10 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var lines = Usable(model);
+            var lines = RequisitionWorkflowService.UsableLines(model);
 
-            ValidateLines(lines);
+            foreach (var error in RequisitionWorkflowService.ValidateLines(lines))
+                ModelState.AddModelError(string.Empty, error);
 
             if (!ModelState.IsValid)
             {
@@ -128,7 +129,7 @@ namespace HrPortal.Controllers
                 NeededBy = model.NeededBy,
                 VendorId = model.VendorId,
                 CreatedAt = DateTime.UtcNow,
-                Lines = lines.Select(ToLine).ToList()
+                Lines = lines.Select(RequisitionWorkflowService.ToLine).ToList()
             };
 
             requisition.EstimatedTotal =
@@ -211,9 +212,10 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            var lines = Usable(model);
+            var lines = RequisitionWorkflowService.UsableLines(model);
 
-            ValidateLines(lines);
+            foreach (var error in RequisitionWorkflowService.ValidateLines(lines))
+                ModelState.AddModelError(string.Empty, error);
 
             if (!ModelState.IsValid)
             {
@@ -228,7 +230,7 @@ namespace HrPortal.Controllers
 
             _context.RequisitionLines.RemoveRange(requisition.Lines);
 
-            requisition.Lines = lines.Select(ToLine).ToList();
+            requisition.Lines = lines.Select(RequisitionWorkflowService.ToLine).ToList();
 
             requisition.EstimatedTotal =
                 RequisitionWorkflowService.TotalOf(requisition);
@@ -333,47 +335,6 @@ namespace HrPortal.Controllers
                     r.Id == id &&
                     r.EmployeeId == employeeId.Value);
         }
-
-        private static List<RequisitionLineViewModel> Usable(
-            RequisitionEditViewModel model) =>
-            model.Lines
-                .Where(l => !l.Remove && !l.IsEmpty)
-                .ToList();
-
-        private void ValidateLines(List<RequisitionLineViewModel> lines)
-        {
-            if (!lines.Any())
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "Add at least one item to the requisition.");
-            }
-
-            if (lines.Any(l => string.IsNullOrWhiteSpace(l.Description)))
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "Every line with a cost against it also needs a " +
-                    "description of what is wanted.");
-            }
-
-            if (lines.Any(l => l.Quantity <= 0))
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "Every line needs a quantity of more than zero.");
-            }
-        }
-
-        private static RequisitionLine ToLine(RequisitionLineViewModel l) =>
-            new()
-            {
-                Description = l.Description!.Trim(),
-                Quantity = l.Quantity,
-                UnitOfMeasure = l.UnitOfMeasure?.Trim(),
-                EstimatedUnitCost = l.EstimatedUnitCost,
-                Notes = l.Notes?.Trim()
-            };
 
         private static RequisitionEditViewModel ToEditModel(
             Requisition requisition)
