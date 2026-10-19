@@ -39,10 +39,6 @@ namespace HrPortal.ViewModels
         [StringLength(8000)]
         public string? Body { get; set; }
 
-        /// <summary>
-        /// What the same section said the week before, shown beside
-        /// the box as context. Never posted back.
-        /// </summary>
         public string? PreviousBody { get; set; }
     }
 
@@ -72,9 +68,6 @@ namespace HrPortal.ViewModels
         public List<WeeklyReportSectionEditViewModel> Sections { get; set; }
             = new();
 
-        /// <summary>
-        /// Priorities for the next period, one per line.
-        /// </summary>
         [Display(Name = "Priorities for the next reporting period")]
         public string? PrioritiesText { get; set; }
     }

@@ -47,7 +47,6 @@
         </div>
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -57,7 +56,6 @@
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
-
 
     <div class="row g-3">
 
@@ -165,14 +163,12 @@
 
     </div>
 
-
     <div class="card shadow-sm mt-3">
         <div class="card-header">Items</div>
         <div class="card-body is-table">
             <partial name="_RequisitionLines" model="Model" />
         </div>
     </div>
-
 
     <div class="card shadow-sm mt-3">
 
@@ -225,7 +221,6 @@
         </div>
 
     </div>
-
 
     @if (canWithdraw)
     {

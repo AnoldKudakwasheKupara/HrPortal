@@ -1,21 +1,4 @@
-﻿/* ==========================================================
-   HR Portal bridge
-
-   Component structure follows the IT Service Management
-   System; the palette is Intellego's, sampled from
-   intellego-ic.com. The tokens live in app-core.css and the
-   shell in app-shell.css.
-
-   This file maps the class names this app's views already use
-   onto that design, so the two match without rewriting every
-   view.
-
-   Light only: the design it derives from has no dark mode.
-   ========================================================== */
-
-:root {
-    /* The names this app's markup already refers to, pointed at
-       the ITSM palette. */
+﻿:root {
     --surface:        var(--bg-card);
     --surface-sunken: var(--gray-50);
     --plane:          var(--bg-main);
@@ -46,20 +29,11 @@
     --shadow:     var(--shadow-md);
 }
 
-
-/* The shell stylesheet sets this too, but the signed-out
-   layout does not load the shell, and it should still be
-   Inter. */
 body {
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-main);
     color: var(--text-primary);
 }
-
-
-/* ==========================================================
-   Page header
-   ========================================================== */
 
 .page-head,
 .page-head-simple {
@@ -98,14 +72,6 @@ body {
     gap: .5rem;
     flex-shrink: 0;
 }
-
-
-/* ==========================================================
-   Cards and tables
-
-   Mapped onto .data-card and .data-table so existing markup
-   picks up the source system's treatment.
-   ========================================================== */
 
 .card {
     background: var(--bg-card);
@@ -184,14 +150,6 @@ body {
     text-align: right;
 }
 
-/* Action column.
-
-   The header is labelled and left-aligned like every other header,
-   and the row's actions sit next to each other rather than behind a
-   dropdown. Shrinking the column to its content keeps the buttons
-   starting at the same x on every row, so they read as a column
-   rather than a ragged edge. */
-
 .table th.col-actions,
 .table td.col-actions {
     width: 1%;
@@ -206,26 +164,15 @@ body {
     gap: 0.4rem;
 }
 
-/* A row can carry three or four actions, so they are tighter than a
-   standalone button to keep wide tables inside the card. */
 .table-actions .btn {
     padding: 0.35rem 0.6rem;
     font-size: 0.75rem;
 }
 
-/* Delete and status changes are posted, so a form wraps the button;
-   it must not break the row of buttons. */
 .table-actions form {
     display: inline-flex;
     margin: 0;
 }
-
-
-/* ==========================================================
-   Buttons
-
-   The primary action takes the source system's gradient CTA.
-   ========================================================== */
 
 .btn {
     border-radius: var(--radius-sm);
@@ -243,8 +190,6 @@ body {
     font-size: 0.8rem;
 }
 
-/* The site puts its calls to action in olive gold against
-   teal chrome, so the primary action does the same here. */
 .btn-primary,
 .btn-success {
     background: linear-gradient(135deg,
@@ -295,13 +240,6 @@ body {
     color: #fff;
 }
 
-
-/* ==========================================================
-   Badges
-
-   Mapped onto .status-badge and its colour variants.
-   ========================================================== */
-
 .badge {
     display: inline-flex;
     align-items: center;
@@ -344,11 +282,6 @@ body {
     color: var(--gray-500) !important;
     border: 1px solid var(--gray-300);
 }
-
-
-/* ==========================================================
-   Forms
-   ========================================================== */
 
 .form-label {
     font-weight: 600;
@@ -434,11 +367,6 @@ body {
     margin-top: 0.3rem;
 }
 
-
-/* ==========================================================
-   Alerts
-   ========================================================== */
-
 .alert {
     border-radius: var(--radius-sm);
     border: 1px solid transparent;
@@ -464,10 +392,6 @@ body {
     color: #b45309;
 }
 
-/* A deliberate departure from the source system, which maps
-   --info to the brand red. That is fine for a status chip but
-   makes a plain informational notice read as an error, so
-   these stay neutral. */
 .alert-info,
 .alert-secondary {
     background: var(--gray-50);
@@ -475,16 +399,6 @@ body {
     color: var(--gray-600);
 }
 
-
-/* ==========================================================
-   Dashboard
-
-   The tiles take the source system's .stat-card treatment.
-   ========================================================== */
-
-/* The tile is a column so the note can be pushed to the bottom: in a
-   row of tiles the labels and notes then line up with each other
-   instead of the shorter tiles trailing empty space. */
 .stat-tile {
     position: relative;
     background: var(--bg-card);
@@ -557,8 +471,6 @@ a.stat-tile:hover .stat-icon {
     padding-top: 0.5rem;
 }
 
-/* State reads from a coloured left edge plus the words in the
-   note, so it never rests on colour alone. */
 .stat-tile.is-action   { border-left: 3px solid var(--primary); }
 .stat-tile.is-good     { border-left: 3px solid var(--success); }
 .stat-tile.is-warning  { border-left: 3px solid var(--warning); }
@@ -655,8 +567,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-500);
 }
 
-/* A leading icon gives each row an anchor on the left, so a short
-   trailing element no longer floats alone across the card. */
 .row-list .row-icon {
     flex: 0 0 34px;
     width: 34px;
@@ -691,11 +601,6 @@ a.stat-tile:hover .stat-icon {
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 1.25rem 1.5rem;
 }
-
-
-/* ==========================================================
-   Signed-out pages
-   ========================================================== */
 
 .auth-body {
     background: var(--bg-main);
@@ -791,18 +696,6 @@ a.stat-tile:hover .stat-icon {
 .auth-card h3 { font-size: 1rem; }
 .auth-card hr { border-color: var(--border-light); }
 
-
-/* ==========================================================
-   Sidebar legibility on the teal ground
-
-   The design this derives from ran its sidebar on near-black
-   charcoal, where muted slate text was legible. Intellego's
-   deep teal is a lighter ground, so the inherited colours fell
-   to 3.9:1 for a nav link and 2.1:1 for a section heading,
-   both short of the 4.5:1 floor. Lifted a couple of steps,
-   which measures 6.9:1 and 5.1:1.
-   ========================================================== */
-
 .sidebar .nav-item {
     color: #cbd5e1;
 }
@@ -810,13 +703,6 @@ a.stat-tile:hover .stat-icon {
 .sidebar .nav-group {
     color: #a7c4bf;
 }
-
-/* ==========================================================
-   Account pages
-
-   The signed-in user's own account screens, which sit inside
-   the app shell rather than Identity's own layout.
-   ========================================================== */
 
 .account-identity {
     display: flex;
@@ -843,8 +729,6 @@ a.stat-tile:hover .stat-icon {
     margin-left: .25rem;
 }
 
-/* Two to a row on anything desktop-sized, one on a phone, so the
-   tiles stay even rather than leaving a stranded last item. */
 .settings-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -930,14 +814,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-300);
     transition: var(--transition-smooth);
 }
-
-/* ==========================================================
-   Record detail
-
-   Label and value pairs read as a list with a leading icon,
-   rather than a flat grid of text that gives the eye nothing
-   to follow.
-   ========================================================== */
 
 .detail-badges {
     display: flex;
@@ -1028,13 +904,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-500);
 }
 
-/* ==========================================================
-   Reports
-
-   A compact figure strip above each report, denser than the
-   dashboard tiles because a report shows more of them.
-   ========================================================== */
-
 .report-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1074,8 +943,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-400);
 }
 
-/* Report hub cards: a link that also states where the figure stands,
-   so the landing page is worth reading on its own. */
 .report-card {
     display: flex;
     align-items: flex-start;
@@ -1157,7 +1024,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-300);
 }
 
-/* Context chips under a report title. */
 .report-meta {
     display: flex;
     flex-wrap: wrap;
@@ -1178,9 +1044,6 @@ a.stat-tile:hover .stat-icon {
 
 .report-chip i { font-size: .7rem; }
 
-/* Ranked bars for a report's secondary breakdowns. */
-/* Report trend charts: inline SVG, so they take the same colour
-   tokens as everything else and print with the page. */
 .report-trend {
     width: 100%;
     height: 7rem;
@@ -1217,7 +1080,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--text, inherit);
     font-size: .78rem;
 }
-
 
 .breakdown {
     list-style: none;

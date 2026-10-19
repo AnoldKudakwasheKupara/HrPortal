@@ -1,8 +1,5 @@
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// A row of the position register, with how many people hold it.
-    /// </summary>
     public class PositionListViewModel
     {
         public int Id { get; set; }
@@ -17,10 +14,6 @@ namespace HrPortal.ViewModels
 
         public bool IsActive { get; set; }
 
-        /// <summary>
-        /// Only meaningful where a budgeted number has been set. A post
-        /// with no establishment is never reported as having vacancies.
-        /// </summary>
         public int Vacancies =>
             Establishment == null
                 ? 0

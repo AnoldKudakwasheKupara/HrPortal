@@ -7,12 +7,6 @@ namespace HrPortal.ViewModels
     {
         public int Id { get; set; }
 
-        // Nullable on purpose. The form carries blank spare rows, and
-        // a spare the requester never touched must not fail
-        // validation -- and a non-nullable string would pick up an
-        // implicit Required from model binding even without the
-        // attribute. The controller checks the rows that were
-        // actually filled in.
         [Display(Name = "Item or service")]
         [StringLength(300)]
         public string? Description { get; set; }
@@ -32,9 +26,6 @@ namespace HrPortal.ViewModels
         [StringLength(500)]
         public string? Notes { get; set; }
 
-        /// <summary>
-        /// Ticked on an existing line to drop it on the next save.
-        /// </summary>
         public bool Remove { get; set; }
 
         public bool IsEmpty =>

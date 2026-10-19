@@ -2,17 +2,6 @@ using Microsoft.Data.SqlClient;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Lets settings live in the database while still arriving through
-    /// the normal configuration pipeline.
-    ///
-    /// Everything that reads a setting does so through IOptions against
-    /// a configuration section. Rather than rewrite all of that to ask
-    /// a service, the database is added as another configuration
-    /// source, layered over appsettings.json. A value in the database
-    /// wins; anything not set there falls back to the file, so a fresh
-    /// clone behaves exactly as before.
-    /// </summary>
     public class DatabaseConfigurationSource : IConfigurationSource
     {
         private readonly string _connectionString;
@@ -32,10 +21,6 @@ namespace HrPortal.Services
     {
         private readonly string _connectionString;
 
-        /// <summary>
-        /// The live providers, so saving a setting can tell them to
-        /// re-read. Without this a change would need a restart.
-        /// </summary>
         private static readonly List<DatabaseConfigurationProvider> Instances
             = new();
 
@@ -61,11 +46,6 @@ namespace HrPortal.Services
                 using var connection = new SqlConnection(_connectionString);
                 connection.Open();
 
-                // Queried directly rather than through EF: this runs
-                // while the application is still being built, before
-                // any DbContext has been registered. It also has to
-                // survive the table not existing yet, on a first run
-                // before migrations have been applied.
                 using var command = connection.CreateCommand();
 
                 command.CommandText =
@@ -85,20 +65,11 @@ namespace HrPortal.Services
             }
             catch (SqlException)
             {
-                // No database yet, or it cannot be reached. The file
-                // settings still apply, and startup reports the
-                // connection problem on its own.
             }
 
             Data = data;
         }
 
-        /// <summary>
-        /// Re-reads every live provider and tells anything watching
-        /// that configuration has changed, so IOptionsSnapshot and
-        /// IOptionsMonitor consumers see the new value without a
-        /// restart.
-        /// </summary>
         public static void ReloadAll()
         {
             List<DatabaseConfigurationProvider> providers;

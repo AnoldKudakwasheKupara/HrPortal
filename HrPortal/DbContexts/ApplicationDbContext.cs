@@ -109,21 +109,15 @@ namespace HrPortal.DbContexts
                 entity.Property(e => e.EmergencyContactRelationship)
                     .HasMaxLength(100);
 
-
-                // Looked up when listing contracts that are running out.
                 entity.HasIndex(e => e.ContractEndDate);
-
 
                 entity.Property(e => e.NationalId)
                     .HasMaxLength(50);
 
-                // Retiring a post must not take the people who held
-                // it with it.
                 entity.HasOne(e => e.Position)
                     .WithMany(p => p.Employees)
                     .HasForeignKey(e => e.PositionId)
                     .OnDelete(DeleteBehavior.SetNull);
-
 
                 entity.HasOne(e => e.Department)
                     .WithMany(d => d.Employees)
@@ -413,14 +407,11 @@ namespace HrPortal.DbContexts
 
                 entity.Property(m => m.Cost).HasPrecision(12, 2);
 
-                // Maintenance belongs to the machine, so it goes when
-                // the machine goes.
                 entity.HasOne(m => m.Asset)
                     .WithMany()
                     .HasForeignKey(m => m.AssetId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Removing a vendor must not erase the service history.
                 entity.HasOne(m => m.Vendor)
                     .WithMany()
                     .HasForeignKey(m => m.VendorId)
@@ -449,8 +440,6 @@ namespace HrPortal.DbContexts
                 entity.Property(l => l.Notes).HasMaxLength(1000);
                 entity.Property(l => l.Cost).HasPrecision(12, 2);
 
-                // Losing a vendor or a seat holder must not take the
-                // licence with it.
                 entity.HasOne(l => l.Vendor)
                     .WithMany()
                     .HasForeignKey(l => l.VendorId)
@@ -494,8 +483,6 @@ namespace HrPortal.DbContexts
                     .HasForeignKey(r => r.EmployeeId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // One row per person per thing per kind, which
-                // is what makes the repeat check a lookup.
                 entity.HasIndex(r => new
                 {
                     r.Kind,
@@ -542,8 +529,6 @@ namespace HrPortal.DbContexts
                     .HasConversion<string>()
                     .HasMaxLength(30);
 
-                // The version it replaced is part of the history and
-                // must survive, so this never cascades.
                 entity.HasOne(p => p.Supersedes)
                     .WithMany()
                     .HasForeignKey(p => p.SupersedesPolicyId)
@@ -567,11 +552,9 @@ namespace HrPortal.DbContexts
                     .HasForeignKey(a => a.EmployeeId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // One acknowledgement per person per policy version.
                 entity.HasIndex(a => new { a.PolicyId, a.EmployeeId })
                     .IsUnique();
             });
-
 
             builder.Entity<RepositoryFolder>(entity =>
             {
@@ -614,9 +597,6 @@ namespace HrPortal.DbContexts
 
                 entity.Property(d => d.UploadedByName).HasMaxLength(200);
 
-                // A folder holding documents cannot be deleted, so
-                // restrict rather than cascade: losing a folder must
-                // not silently take the files with it.
                 entity.HasOne(d => d.Folder)
                     .WithMany(f => f.Documents)
                     .HasForeignKey(d => d.RepositoryFolderId)
@@ -624,7 +604,6 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(d => d.RepositoryFolderId);
             });
-
 
             builder.Entity<AppSetting>(entity =>
             {
@@ -639,7 +618,6 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(s => s.Key).IsUnique();
             });
-
 
             builder.Entity<Certification>(entity =>
             {
@@ -658,8 +636,6 @@ namespace HrPortal.DbContexts
                     .HasForeignKey(c => c.EmployeeId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Retiring a course must not erase the qualifications
-                // people earned from it.
                 entity.HasOne(c => c.TrainingCourse)
                     .WithMany()
                     .HasForeignKey(c => c.TrainingCourseId)
@@ -667,7 +643,6 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(c => c.ExpiryDate);
             });
-
 
             builder.Entity<Position>(entity =>
             {
@@ -687,7 +662,6 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(p => p.Title).IsUnique();
             });
 
-
             builder.Entity<PublicHoliday>(entity =>
             {
                 entity.HasKey(h => h.Id);
@@ -698,11 +672,8 @@ namespace HrPortal.DbContexts
 
                 entity.Property(h => h.Notes).HasMaxLength(500);
 
-                // One holiday per date. Two names for the same day
-                // would double-count it out of a leave request.
                 entity.HasIndex(h => h.Date).IsUnique();
             });
-
 
             builder.Entity<Requisition>(entity =>
             {
@@ -723,8 +694,6 @@ namespace HrPortal.DbContexts
                 entity.Property(r => r.Justification).HasMaxLength(2000);
                 entity.Property(r => r.EstimatedTotal).HasPrecision(14, 2);
 
-                // The requisition is part of the approval record, so
-                // it outlives the requester leaving.
                 entity.HasOne(r => r.Employee)
                     .WithMany()
                     .HasForeignKey(r => r.EmployeeId)
@@ -784,7 +753,6 @@ namespace HrPortal.DbContexts
                     .HasForeignKey(h => h.RequisitionId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Who approved what must survive the approver leaving.
                 entity.HasOne(h => h.ActionedByEmployee)
                     .WithMany()
                     .HasForeignKey(h => h.ActionedByEmployeeId)
@@ -811,8 +779,6 @@ namespace HrPortal.DbContexts
                 entity.Property(a => a.RaisedByOther).HasMaxLength(200);
                 entity.Property(a => a.LoggedBy).HasMaxLength(200);
 
-                // Removing a person or retiring a machine must not
-                // erase the record of the work done.
                 entity.HasOne(a => a.RaisedByEmployee)
                     .WithMany()
                     .HasForeignKey(a => a.RaisedByEmployeeId)
@@ -841,7 +807,6 @@ namespace HrPortal.DbContexts
 
                 entity.Property(r => r.ExecutiveOverview).HasMaxLength(4000);
 
-                // One report per reporting period.
                 entity.HasIndex(r => r.PeriodStart).IsUnique();
             });
 
@@ -1019,14 +984,11 @@ namespace HrPortal.DbContexts
                 entity.Property(t => t.Details).HasMaxLength(2000);
                 entity.Property(t => t.Reference).HasMaxLength(100);
 
-                // The timesheet is the employee's own record and goes
-                // with them.
                 entity.HasOne(t => t.Employee)
                     .WithMany()
                     .HasForeignKey(t => t.EmployeeId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Retiring a machine must not erase the work done on it.
                 entity.HasOne(t => t.Asset)
                     .WithMany()
                     .HasForeignKey(t => t.AssetId)

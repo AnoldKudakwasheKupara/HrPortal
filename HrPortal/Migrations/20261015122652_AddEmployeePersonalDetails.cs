@@ -49,8 +49,6 @@ namespace HrPortal.Migrations
                 type: "nvarchar(20)",
                 maxLength: 20,
                 nullable: false,
-                // Stored as the enum name, so existing rows need a
-                // real value: an empty string would not map back.
                 defaultValue: "Unspecified");
 
             migrationBuilder.AddColumn<string>(
@@ -59,8 +57,6 @@ namespace HrPortal.Migrations
                 type: "nvarchar(20)",
                 maxLength: 20,
                 nullable: false,
-                // Stored as the enum name, so existing rows need a
-                // real value: an empty string would not map back.
                 defaultValue: "Unspecified");
         }
 

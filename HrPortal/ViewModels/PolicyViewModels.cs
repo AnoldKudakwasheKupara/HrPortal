@@ -25,7 +25,6 @@ namespace HrPortal.ViewModels
 
         public bool RequiresAcknowledgement { get; set; }
 
-        /// <summary>Whether the person looking has acknowledged it.</summary>
         public bool Acknowledged { get; set; }
 
         public int AcknowledgedCount { get; set; }
@@ -42,10 +41,6 @@ namespace HrPortal.ViewModels
 
         public bool CanManage { get; set; }
 
-        /// <summary>
-        /// Active staff who have not acknowledged it. Only filled in
-        /// for the people who maintain policies.
-        /// </summary>
         public List<string> Outstanding { get; set; } = new();
 
         public int ActiveStaff { get; set; }

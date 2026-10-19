@@ -10,18 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// Licences, subscriptions and certificates that expire, and the
-    /// record of each renewal.
-    ///
-    /// Expired and expiring are worked out from the expiry date rather
-    /// than stored, so the register cannot drift out of step with the
-    /// calendar.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class LicenseController : Controller
     {
-        /// <summary>How far ahead counts as "expiring soon".</summary>
         public const int ExpiringWindowDays = 60;
 
         private readonly ApplicationDbContext _context;
@@ -270,9 +261,6 @@ namespace HrPortal.Controllers
                 Name = license.Name,
                 CurrentExpiry = license.ExpiryDate,
 
-                // A year on from whichever is later: the old expiry if
-                // it is still ahead, otherwise today, so a lapsed
-                // licence does not renew into the past.
                 NewExpiry = (license.ExpiryDate > DateTime.Today
                         ? license.ExpiryDate
                         : DateTime.Today)
@@ -328,7 +316,6 @@ namespace HrPortal.Controllers
             if (model.Cost.HasValue)
                 license.Cost = model.Cost;
 
-            // Renewing brings a cancelled licence back into use.
             license.Status = LicenseStatus.Active;
 
             await _context.SaveChangesAsync();

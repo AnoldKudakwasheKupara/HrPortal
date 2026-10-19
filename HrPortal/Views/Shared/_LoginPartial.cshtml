@@ -3,17 +3,12 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-@*  No text-dark here: the colour comes from the nav-link token
-    so it follows the light and dark themes.                   *@
-
 <ul class="navbar-nav align-items-center">
 
     @if (SignInManager.IsSignedIn(User))
     {
         var currentUser = await UserManager.GetUserAsync(User);
 
-        @*  Hidden on narrow screens so the page title is not
-            squeezed out; Sign out stays reachable.            *@
         <li class="nav-item d-none d-md-block">
             <a class="nav-link"
                asp-area="Identity"

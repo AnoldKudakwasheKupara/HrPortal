@@ -1,9 +1,5 @@
 @inject SignInManager<ApplicationUser> SignInManager
 
-@*  The app shell replaces Identity's own Manage layout, so this is
-    the only route to the rest of the account pages. Two to a row, so
-    an even number of settings never leaves a stranded tile.     *@
-
 @{
     var hasExternalLogins =
         (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();

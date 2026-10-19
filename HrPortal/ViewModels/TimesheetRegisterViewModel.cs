@@ -2,10 +2,6 @@ using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// The administrator's view across everyone's timesheets for a
-    /// date range.
-    /// </summary>
     public class TimesheetRegisterViewModel
     {
         public DateTime From { get; set; }

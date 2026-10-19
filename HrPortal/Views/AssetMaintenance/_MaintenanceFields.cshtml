@@ -133,10 +133,6 @@
     <span asp-validation-for="Notes" class="text-danger"></span>
 </div>
 
-@*  Narrowing happens in the browser from data already on the page:
-    no round trip, and the form still works if the script does not
-    run because every asset is in the list to begin with.      *@
-
 <script>
 (function () {
     var employee = document.getElementById('maintenance-employee');
@@ -144,7 +140,6 @@
 
     if (!employee || !asset) return;
 
-    // Keep the full list so narrowing is always reversible.
     var all = Array.prototype.slice
         .call(asset.options)
         .map(function (o) {
@@ -179,7 +174,6 @@
             : '-- Select Asset --';
         asset.insertBefore(placeholder, asset.firstChild);
 
-        // Hold the chosen machine if it survived the narrowing.
         asset.value =
             Array.prototype.some.call(asset.options, function (o) {
                 return o.value === current;

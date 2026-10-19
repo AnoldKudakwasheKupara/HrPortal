@@ -1,11 +1,5 @@
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// A request to buy goods or services. Review comes first; the
-    /// Managing Director sees it only when the estimated total reaches
-    /// the configured threshold, or when the requester is the reviewer
-    /// and so cannot approve it.
-    /// </summary>
     public class Requisition
     {
         public int Id { get; set; }
@@ -23,24 +17,10 @@ namespace HrPortal.Entities
 
         public DateTime? NeededBy { get; set; }
 
-        /// <summary>
-        /// A suggested supplier from the vendor register. Not binding
-        /// on whoever ends up placing the order.
-        /// </summary>
         public int? VendorId { get; set; }
 
-        /// <summary>
-        /// Written down when the requisition is submitted, so a later
-        /// change to the threshold cannot reroute something already in
-        /// flight.
-        /// </summary>
         public bool RequiresMdApproval { get; set; }
 
-        /// <summary>
-        /// The estimated total at the moment of submission. The lines
-        /// remain the detail; this is what the approval decision and
-        /// the threshold were based on.
-        /// </summary>
         public decimal EstimatedTotal { get; set; }
 
         public DateTime CreatedAt { get; set; }

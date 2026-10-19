@@ -3,14 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Whether the signed-in person keeps a timesheet.
-    ///
-    /// Timesheets are switched on per department (the IT department,
-    /// typically), so this looks at the employee record behind the
-    /// sign-in and the department it sits in. The answer is cached
-    /// for the request because the sidebar asks on every page.
-    /// </summary>
     public class TimesheetAccessService
     {
         private readonly ApplicationDbContext _context;

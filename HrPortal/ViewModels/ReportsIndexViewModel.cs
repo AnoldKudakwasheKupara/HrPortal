@@ -1,9 +1,5 @@
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// Headline figures for the reports hub, so the landing page says
-    /// something rather than being a list of links.
-    /// </summary>
     public class ReportsIndexViewModel
     {
         public bool ShowLeave { get; set; }
@@ -18,10 +14,6 @@ namespace HrPortal.ViewModels
 
         public bool ShowSystem { get; set; }
 
-        /// <summary>
-        /// Requisitions are seen by the reviewer and the MD, which is
-        /// a different pair of roles from the system reports.
-        /// </summary>
         public bool ShowProcurement { get; set; }
 
         public int LeaveRequests { get; set; }

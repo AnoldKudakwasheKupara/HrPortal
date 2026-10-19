@@ -1,9 +1,5 @@
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// One renewal of a licence, kept so the history of what was paid
-    /// and when survives the next renewal overwriting the dates.
-    /// </summary>
     public class LicenseRenewal
     {
         public int Id { get; set; }

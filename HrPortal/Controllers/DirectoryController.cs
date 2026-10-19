@@ -7,16 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The staff directory: who works here, what they do and how to
-    /// reach them at work. Open to anyone signed in, which is the whole
-    /// point of it.
-    ///
-    /// It carries work contact details only. Date of birth, home
-    /// address, national ID, emergency contacts and anything about
-    /// someone's employment terms stay on the employee record, which is
-    /// HR and administrator only.
-    /// </summary>
     [Authorize]
     public class DirectoryController : Controller
     {

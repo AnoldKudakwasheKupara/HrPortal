@@ -3,11 +3,6 @@ using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// One filter shape shared by every report. Each report binds only
-    /// the fields it offers, so the query string stays consistent and
-    /// a filter means the same thing wherever it appears.
-    /// </summary>
     public class ReportFilter
     {
         [DataType(DataType.Date)]
@@ -45,25 +40,15 @@ namespace HrPortal.ViewModels
         [Display(Name = "Condition")]
         public AssetCondition? Condition { get; set; }
 
-        // Not named "Action": that collides with the MVC route value
-        // of the same name and the filter would bind to the action
-        // being executed instead of the audit action chosen.
         [Display(Name = "Action")]
         public string? AuditAction { get; set; }
 
         [Display(Name = "Vendor")]
         public int? VendorId { get; set; }
 
-        // Spelled the British way the portal uses, which also keeps it
-        // clear of the LicenseType enum name.
         [Display(Name = "Type")]
         public LicenseType? LicenceType { get; set; }
 
-        /// <summary>
-        /// A named slice a report defines for itself, such as
-        /// "expiring" or "overdue". Keeps one-off toggles out of this
-        /// shared shape.
-        /// </summary>
         [Display(Name = "Show")]
         public string? Show { get; set; }
 
@@ -96,11 +81,6 @@ namespace HrPortal.ViewModels
         public string? Note { get; }
     }
 
-    /// <summary>
-    /// A secondary cut of the same data, shown as a short ranked list
-    /// beside the table so a report answers "how is this distributed"
-    /// as well as "what are the rows".
-    /// </summary>
     public class ReportBreakdown
     {
         public ReportBreakdown(string title, string unit = "")
@@ -146,16 +126,9 @@ namespace HrPortal.ViewModels
 
         public decimal Value { get; }
 
-        /// <summary>good, warning or critical; null for the default.</summary>
         public string? Tone { get; }
     }
 
-    /// <summary>
-    /// A measure over time, drawn as a small column chart beside the
-    /// table. The breakdowns answer "how is this distributed"; this
-    /// answers "is it going up or down", which a table of rows
-    /// cannot.
-    /// </summary>
     public class ReportTrend
     {
         public ReportTrend(string title, string unit = "", string format = "N0")
@@ -169,7 +142,6 @@ namespace HrPortal.ViewModels
 
         public string Unit { get; }
 
-        /// <summary>Numeric format for the value labels.</summary>
         public string Format { get; }
 
         public List<ReportTrendPoint> Points { get; } = new();
@@ -199,7 +171,6 @@ namespace HrPortal.ViewModels
         public decimal Value { get; }
     }
 
-
     public class ReportColumnTotal
     {
         public ReportColumnTotal(int columnIndex, string value)
@@ -219,10 +190,6 @@ namespace HrPortal.ViewModels
 
         public string Description { get; set; } = string.Empty;
 
-        /// <summary>
-        /// What the filter currently covers, written out so a printed
-        /// or exported report says what it is showing.
-        /// </summary>
         public string Coverage { get; set; } = string.Empty;
 
         public List<ReportBreakdown> Breakdowns { get; set; } = new();
@@ -231,10 +198,6 @@ namespace HrPortal.ViewModels
 
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
 
-        /// <summary>
-        /// The action to post the filter form back to, and to export
-        /// from. Keeps the shared filter partial generic.
-        /// </summary>
         public string Action { get; set; } = string.Empty;
 
         public ReportFilter Filter { get; set; } = new();
@@ -376,10 +339,6 @@ namespace HrPortal.ViewModels
         public int Renewals { get; set; }
         public DateTime? LastRenewedOn { get; set; }
 
-        /// <summary>
-        /// Negative once it has lapsed, so one field sorts and reads
-        /// for both cases.
-        /// </summary>
         public int DaysToExpiry { get; set; }
     }
 
@@ -396,15 +355,8 @@ namespace HrPortal.ViewModels
         public decimal? Cost { get; set; }
         public string? Notes { get; set; }
 
-        /// <summary>
-        /// Scheduled, still open and already past its date.
-        /// </summary>
         public bool IsOverdue { get; set; }
 
-        /// <summary>
-        /// Days from the scheduled date to completion, for work that
-        /// has been finished.
-        /// </summary>
         public int? DaysToComplete { get; set; }
     }
 
@@ -424,10 +376,6 @@ namespace HrPortal.ViewModels
         public DateTime? SubmittedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
 
-        /// <summary>
-        /// Days from submission to the final decision, for the ones
-        /// that have been decided.
-        /// </summary>
         public double? TurnaroundDays { get; set; }
     }
 
@@ -444,10 +392,6 @@ namespace HrPortal.ViewModels
         public DateTime? ResolvedOn { get; set; }
         public string? LoggedBy { get; set; }
 
-        /// <summary>
-        /// Days from being logged to being resolved, for the ones that
-        /// have been closed.
-        /// </summary>
         public int? DaysToResolve { get; set; }
     }
 

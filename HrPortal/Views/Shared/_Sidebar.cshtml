@@ -1,8 +1,4 @@
-﻿@*  Navigation, in the IT Service Management System's sidebar
-    idiom: .nav-group headings with .nav-item links and Font
-    Awesome icons, active state on the controller.           *@
-
-@inject HrPortal.Services.TimesheetAccessService TimesheetAccess
+﻿@inject HrPortal.Services.TimesheetAccessService TimesheetAccess
 
 @{
     var ctrl = ViewContext.RouteData.Values["controller"] as string;
@@ -23,8 +19,6 @@
     var isHr = User.IsInRole("HR Officer");
     var isMd = User.IsInRole("MD");
 
-    // Only departments that keep timesheets (IT, typically) see the
-    // link, so everyone else's menu stays uncluttered.
     var keepsTimesheet = (await TimesheetAccess.GetAsync()).Enabled;
 }
 
@@ -36,7 +30,6 @@
        asp-controller="Home" asp-action="Index">
         <i class="fas fa-chart-line"></i> Dashboard
     </a>
-
 
     <a class="nav-item @On("Directory")"
        asp-controller="Directory" asp-action="Index">
@@ -60,8 +53,6 @@
         <i class="fas fa-id-badge"></i> My Profile
     </a>
 
-    @*  The MD is the last approver, so there is nobody to approve
-        their leave. They do not raise requests.                 *@
     @if (!isMd)
     {
         <a class="nav-item @On("MyLeave")"
@@ -98,7 +89,6 @@
         <i class="fas fa-bell"></i> Notifications
     </a>
 
-
     @if (isHr || isMd || isAdmin)
     {
         <div class="nav-group">Insight</div>
@@ -108,7 +98,6 @@
             <i class="fas fa-chart-column"></i> Reports
         </a>
     }
-
 
     @if (isHr || isMd || isAdmin)
     {
@@ -155,7 +144,6 @@
         }
     }
 
-
     @if (isHr || isAdmin)
     {
         <div class="nav-group">People</div>
@@ -174,14 +162,9 @@
         }
     }
 
-
     @if (isHr || isMd)
     {
         <div class="nav-group">Leave</div>
-
-        @*  The MD approves leave, so they can read the whole
-            register, not only what is sitting in their own
-            queue. The rest of this group is HR's housekeeping. *@
 
         <a class="nav-item @On("LeaveRequest")"
            asp-controller="LeaveRequest" asp-action="Index">
@@ -204,10 +187,8 @@
                asp-controller="PublicHoliday" asp-action="Index">
                 <i class="fas fa-calendar-check"></i> Public Holidays
             </a>
-
         }
     }
-
 
     @if (isHr)
     {
@@ -237,9 +218,7 @@
            asp-controller="Certification" asp-action="Index">
             <i class="fas fa-award"></i> Certifications
         </a>
-
     }
-
 
     @if (isAdmin)
     {
@@ -314,7 +293,6 @@
            asp-controller="Settings" asp-action="Index">
             <i class="fas fa-sliders"></i> Settings
         </a>
-
 
         <a class="nav-item @On("AuditLog")"
            asp-controller="AuditLog" asp-action="Index">

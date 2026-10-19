@@ -281,10 +281,6 @@ namespace HrPortal.Controllers
             int employeeId,
             int? excludeRequestId)
         {
-            // All leave here is raised by the employee, so refusing
-            // every past date would make it impossible to record sick
-            // leave after returning. A short grace window is allowed
-            // and anything older has to go through HR.
             var earliest = DateTime.Today.AddDays(
                 -_leaveOptions.BackdateGraceDays);
 
@@ -311,13 +307,9 @@ namespace HrPortal.Controllers
                 return 0;
             }
 
-            // Counts weekdays less any public holiday in the range, so
-            // a break over a holiday does not cost the employee a day
-            // they were entitled to keep.
             var numberOfDays = await _workflow.CountWorkingDaysAsync(
                 model.StartDate,
                 model.EndDate);
-
 
             if (numberOfDays == 0)
             {

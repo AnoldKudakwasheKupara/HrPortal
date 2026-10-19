@@ -183,8 +183,6 @@ namespace HrPortal.Controllers
             if (asset == null)
                 return NotFound();
 
-            // Only stamp the assignment date when the holder changes,
-            // so an edit to the notes does not rewrite the history.
             if (asset.AssignedToEmployeeId != model.AssignedToEmployeeId)
             {
                 asset.AssignedOn = model.AssignedToEmployeeId == null

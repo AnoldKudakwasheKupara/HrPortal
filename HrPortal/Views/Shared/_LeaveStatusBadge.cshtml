@@ -1,10 +1,6 @@
 ﻿@using HrPortal.Entities
 @model LeaveRequestStatus
 
-@*  One place for how a leave status looks and reads, so the
-    same state never appears with two different words. The
-    colour is always paired with the word, never alone.       *@
-
 @switch (Model)
 {
     case LeaveRequestStatus.Approved:

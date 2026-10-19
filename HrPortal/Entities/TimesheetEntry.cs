@@ -3,14 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// One piece of work logged by a member of staff whose department
-    /// keeps timesheets: what was done, for how long, and on what.
-    ///
-    /// Time is stored as whole minutes. Start and end are optional,
-    /// for people who clock a job rather than estimate it; when both
-    /// are given the duration is derived from them.
-    /// </summary>
     public class TimesheetEntry : IEmployeeOwned
     {
         public int Id { get; set; }
@@ -27,16 +19,12 @@ namespace HrPortal.Entities
 
         public WorkCategory Category { get; set; }
 
-        /// <summary>A one-line summary of the task.</summary>
         public string Title { get; set; } = string.Empty;
 
-        /// <summary>What was done, found, or left outstanding.</summary>
         public string? Details { get; set; }
 
-        /// <summary>A ticket, request or job number, if there is one.</summary>
         public string? Reference { get; set; }
 
-        /// <summary>The machine on the register the work was on, if any.</summary>
         public int? AssetId { get; set; }
 
         public DateTime CreatedAt { get; set; }
@@ -50,7 +38,6 @@ namespace HrPortal.Entities
         [NotMapped]
         public decimal Hours => DurationMinutes / 60m;
 
-        /// <summary>Renders minutes as 2h 15m, 45m, 3h and so on.</summary>
         public static string FormatDuration(int minutes)
         {
             var hours = minutes / 60;

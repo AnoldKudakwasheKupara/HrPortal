@@ -15,7 +15,6 @@ namespace HrPortal.Migrations
     [Migration("20261010070152_AddTimesheets")]
     partial class AddTimesheets
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

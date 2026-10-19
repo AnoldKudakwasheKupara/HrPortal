@@ -20,7 +20,6 @@ namespace HrPortal.ViewModels
 
         public int EntriesThisMonth { get; set; }
 
-        /// <summary>Minutes per day of the shown week, Monday first.</summary>
         public Dictionary<DateTime, int> DailyMinutes { get; set; } = new();
 
         public int DaysLoggedThisWeek =>

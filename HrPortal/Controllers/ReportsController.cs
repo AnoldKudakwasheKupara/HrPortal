@@ -12,15 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// Reporting across leave, training, people, documents, assets and
-    /// the audit trail.
-    ///
-    /// Every report is restricted to the roles that may already see the
-    /// records behind it, so reporting cannot be used as a way around
-    /// the boundaries the rest of the portal enforces. The administrator
-    /// therefore gets the system reports, not the HR ones.
-    /// </summary>
     [Authorize(Roles = Roles.AnyManager)]
     public class ReportsController : Controller
     {
@@ -55,8 +46,6 @@ namespace HrPortal.Controllers
                 ShowProcurement = isAdmin || isMd
             };
 
-            // Each figure is only queried for the roles that may see
-            // the report it belongs to.
             if (model.ShowLeave)
             {
                 model.LeaveRequests = await _context.LeaveRequests
@@ -211,11 +200,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // LEAVE
-        // ============================================================
 
         [Authorize(Roles = Roles.HrOrMd)]
         public async Task<IActionResult> LeaveRequests(
@@ -380,7 +364,6 @@ namespace HrPortal.Controllers
                 rows.Select(r => (r.StartDate, r.Days)),
                 "days",
                 "0.##"));
-
 
             await LoadLookups();
 
@@ -623,11 +606,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // TRAINING
-        // ============================================================
 
         [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Training(
@@ -907,11 +885,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // PEOPLE
-        // ============================================================
 
         [Authorize(Roles = Roles.AdminOrHr)]
         public async Task<IActionResult> Employees(
@@ -1201,7 +1174,6 @@ namespace HrPortal.Controllers
                     "No expiry recorded",
                     rows.Count(r => r.ExpiryDate == null));
 
-
             var byDept = new ReportBreakdown("By department", "documents");
 
             foreach (var g in rows
@@ -1219,11 +1191,6 @@ namespace HrPortal.Controllers
 
             return View(model);
         }
-
-
-        // ============================================================
-        // SYSTEM
-        // ============================================================
 
         [Authorize(Roles = Roles.AdminOnly)]
         public async Task<IActionResult> Assets(
@@ -1482,8 +1449,6 @@ namespace HrPortal.Controllers
             ReportFilter filter,
             string? export)
         {
-            // Defaults to the last 30 days, since the log is read far
-            // more often for "what happened recently" than for all time.
             filter.From ??= DateTime.Today.AddDays(-30);
 
             var query = _context.ItActivities
@@ -1590,8 +1555,6 @@ namespace HrPortal.Controllers
                 .Select(r => (double)r.DaysToResolve!.Value)
                 .ToList();
 
-            // Working days with nothing logged against them, which is
-            // usually a gap in the record rather than a quiet day.
             var from = filter.From!.Value.Date;
             var to = (filter.To ?? DateTime.Today).Date;
 
@@ -1723,7 +1686,6 @@ namespace HrPortal.Controllers
                 "Entries logged by month",
                 rows.Select(r => (r.LoggedOn, 1m)),
                 "entries"));
-
 
             await LoadLookups();
 
@@ -1976,7 +1938,6 @@ namespace HrPortal.Controllers
                     .Select(r => (r.CompletedAt!.Value, r.EstimatedTotal)),
                 "approved",
                 "N2"));
-
 
             await LoadLookups();
 
@@ -2373,10 +2334,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-        /// <summary>
-        /// Describes the licence slice in words, so an exported or
-        /// printed copy says what it was showing.
-        /// </summary>
         private static string Slice(ReportFilter filter, DateTime soon) =>
             filter.Show switch
             {
@@ -2524,11 +2481,6 @@ namespace HrPortal.Controllers
             return View(model);
         }
 
-
-        // ============================================================
-        // HELPERS
-        // ============================================================
-
         private FileContentResult Csv(
             string name,
             IReadOnlyList<string> headers,
@@ -2540,16 +2492,6 @@ namespace HrPortal.Controllers
                 CsvExportService.FileName(name));
         }
 
-        /// <summary>
-        /// Says in words what the date filter currently covers, so a
-        /// printed report is not ambiguous about its period.
-        /// </summary>
-        /// <summary>
-        /// Buckets dated values into the last twelve months,
-        /// including the months where nothing happened: a gap is
-        /// part of the shape and dropping it would flatter the
-        /// trend.
-        /// </summary>
         private static ReportTrend MonthlyTrend(
             string title,
             IEnumerable<(DateTime When, decimal Value)> values,

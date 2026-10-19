@@ -18,10 +18,6 @@ namespace HrPortal.Entities
 
         public Requisition Requisition { get; set; } = null!;
 
-        /// <summary>
-        /// Quantity times unit cost, or zero where no cost has been
-        /// estimated yet.
-        /// </summary>
         public decimal LineTotal =>
             Quantity * (EstimatedUnitCost ?? 0m);
     }

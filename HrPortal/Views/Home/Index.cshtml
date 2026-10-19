@@ -23,7 +23,6 @@
 
     </div>
 
-
     @if (!Model.HasEmployeeRecord)
     {
         <div class="alert alert-info">
@@ -37,10 +36,6 @@
 
         </div>
     }
-
-
-    @*  The MD and HR queues come first: they are the things
-        waiting on somebody, and everything else is reference. *@
 
     @if (Model.Md != null && Model.Md.AwaitingFinalApproval > 0)
     {
@@ -77,7 +72,6 @@
 
         </div>
     }
-
 
     @if (Model.Mine != null)
     {
@@ -116,7 +110,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile @(Model.Mine.RequestsInProgress > 0 ? "is-action" : "")"
@@ -140,7 +133,6 @@
 
             </div>
             }
-
 
             <div class="col-6 col-lg-3">
 
@@ -174,7 +166,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -195,7 +186,6 @@
                 </a>
 
             </div>
-
 
             @if (Model.Mine.KeepsTimesheet)
             {
@@ -224,7 +214,6 @@
             </div>
             }
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile @(Model.Mine.UnreadNotifications > 0 ? "is-action" : "")"
@@ -248,7 +237,6 @@
 
             </div>
 
-
             @if (Model.ShowsOwnLeave)
             {
             <div class="col-6 col-lg-3">
@@ -271,7 +259,6 @@
                 </div>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -300,7 +287,6 @@
 
         </div>
     }
-
 
     @if (Model.Mine != null)
     {
@@ -367,7 +353,6 @@
 
             </div>
             }
-
 
             <div class="@(Model.ShowsOwnLeave ? "col-lg-6" : "col-12")">
 
@@ -438,7 +423,6 @@
         </div>
     }
 
-
     @if (Model.Hr != null)
     {
         <div class="section-heading">HR</div>
@@ -466,7 +450,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -483,7 +466,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -508,7 +490,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -525,7 +506,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -547,7 +527,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -572,7 +551,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile is-good"
@@ -594,7 +572,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -619,9 +596,7 @@
 
             </div>
 
-
         </div>
-
 
         <div class="row g-3 mt-1">
 
@@ -690,7 +665,6 @@
             </div>
 
         </div>
-
 
         <div class="row g-3 mt-1">
 
@@ -763,7 +737,6 @@
         </div>
     }
 
-
     @if (Model.Md != null)
     {
         <div class="section-heading">Managing Director</div>
@@ -817,7 +790,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <div class="stat-tile">
@@ -837,7 +809,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <div class="stat-tile is-good">
@@ -856,7 +827,6 @@
                 </div>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -881,7 +851,6 @@
 
         </div>
     }
-
 
     @if (Model.Md != null && Model.Md.ApprovalQueue.Any())
     {
@@ -938,7 +907,6 @@
         </div>
     }
 
-
     @if (Model.Md != null && Model.Md.StartingSoon.Any())
     {
         <div class="card mt-3">
@@ -994,7 +962,6 @@
         </div>
     }
 
-
     @if (Model.Admin != null)
     {
         <div class="section-heading">System</div>
@@ -1048,7 +1015,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -1065,7 +1031,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -1087,7 +1052,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -1112,7 +1076,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -1131,7 +1094,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -1155,7 +1117,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -1256,7 +1217,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -1283,7 +1243,6 @@
 
             </div>
 
-
             <div class="col-6 col-lg-3">
 
                 <a class="stat-tile"
@@ -1302,7 +1261,6 @@
                 </a>
 
             </div>
-
 
             <div class="col-6 col-lg-3">
 
@@ -1329,7 +1287,6 @@
 
         </div>
     }
-
 
     @if (Model.Admin != null)
     {

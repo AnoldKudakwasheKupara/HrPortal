@@ -2,10 +2,6 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model (HrPortal.ViewModels.ReportFilter Filter, string[] Show)
 
-@*  One filter bar for every report. The caller lists which filters
-    its report offers, so the markup and the query string keys stay
-    identical wherever a filter appears.                        *@
-
 @{
     var f = Model.Filter;
     var show = Model.Show;

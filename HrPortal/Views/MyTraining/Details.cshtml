@@ -24,14 +24,12 @@
 
     </div>
 
-
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger">
             @TempData["Error"]
         </div>
     }
-
 
     <div class="card shadow-sm mb-4">
 
@@ -46,7 +44,6 @@
                     <p class="field-value">@(Model.TrainingCourse.Trainer ?? "Not set")</p>
 
                 </div>
-
 
                 <div class="col-md-4">
 
@@ -65,7 +62,6 @@
 
                 </div>
 
-
                 <div class="col-md-4">
 
                     <span class="field-label">Due</span>
@@ -83,7 +79,6 @@
 
                 </div>
 
-
                 <div class="col-12">
 
                     <span class="field-label">Description</span>
@@ -100,7 +95,6 @@
         </div>
 
     </div>
-
 
     <div class="card shadow-sm mb-4">
 
@@ -153,7 +147,6 @@
         </div>
 
     </div>
-
 
     <div class="card shadow-sm">
 

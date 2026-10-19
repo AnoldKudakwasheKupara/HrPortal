@@ -365,9 +365,6 @@ namespace HrPortal.Controllers
                         continue;
                     }
 
-                    // Employee is the baseline role: every account keeps
-                    // it, so the personal pages never lose their footing
-                    // when somebody is also given HR or MD.
                     if (string.Equals(
                         roleName,
                         Roles.Employee,

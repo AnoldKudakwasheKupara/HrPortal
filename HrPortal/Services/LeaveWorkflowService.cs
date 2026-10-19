@@ -57,9 +57,6 @@ namespace HrPortal.Services
         {
             var previous = request.Status;
 
-            // Nobody reviews their own leave. When the request belongs
-            // to the HR Officer the HR stage is skipped and it goes
-            // straight to the MD.
             var hrApproverId = await _notifications
                 .GetApproverEmployeeId(ApprovalRole.HROfficer);
 
@@ -316,8 +313,6 @@ namespace HrPortal.Services
                 previous,
                 comment);
 
-            // Whoever was holding the request has to be told it has
-            // gone away, or it sits in their queue until they open it.
             if (IsAwaitingHr(previous))
             {
                 await _notifications.NotifyApproverAsync(
@@ -337,10 +332,6 @@ namespace HrPortal.Services
                     "/LeaveApproval/FinalApproval");
             }
 
-            // A draft or a returned request has not reached anyone, so
-            // there is nobody to tell. An approved one cannot be
-            // cancelled at all, since IsFinal blocks it.
-
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
@@ -350,11 +341,6 @@ namespace HrPortal.Services
                 "Cancelled.");
         }
 
-        /// <summary>
-        /// Working days between two dates, excluding weekends and any
-        /// public holidays passed in. Callers that have a database to
-        /// hand should use CountWorkingDaysAsync, which loads them.
-        /// </summary>
         public static decimal CountWorkingDays(
             DateTime startDate,
             DateTime endDate,
@@ -372,7 +358,6 @@ namespace HrPortal.Services
                     continue;
                 }
 
-                // A holiday falling on a weekday is not a day of leave.
                 if (holidays != null && holidays.Contains(date))
                     continue;
 
@@ -382,10 +367,6 @@ namespace HrPortal.Services
             return days;
         }
 
-        /// <summary>
-        /// Working days between two dates with the holiday calendar
-        /// applied.
-        /// </summary>
         public async Task<decimal> CountWorkingDaysAsync(
             DateTime startDate,
             DateTime endDate)
@@ -410,7 +391,6 @@ namespace HrPortal.Services
 
             return dates.Select(d => d.Date).ToHashSet();
         }
-
 
         public async Task<string> GenerateRequestNumberAsync()
         {

@@ -20,11 +20,6 @@ namespace HrPortal.Entities
 
         public DateTime UploadedAt { get; set; }
 
-        /// <summary>
-        /// When the document stops being valid, for the ones
-        /// that do: a contract, a work permit, a certificate.
-        /// Null for anything that does not expire.
-        /// </summary>
         public DateTime? ExpiryDate { get; set; }
 
         public int? UploadedByEmployeeId { get; set; }

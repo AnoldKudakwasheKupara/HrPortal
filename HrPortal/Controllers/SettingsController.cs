@@ -12,13 +12,6 @@ using Microsoft.Extensions.Options;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The settings an administrator can change without a deployment.
-    ///
-    /// They are written as configuration keys, so everything that reads
-    /// them through IOptions keeps working unchanged, and the database
-    /// simply layers over appsettings.json.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class SettingsController : Controller
     {
@@ -116,9 +109,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Tell the configuration pipeline to re-read, so the new
-            // values are in force on the next request rather than after
-            // the next restart.
             DatabaseConfigurationProvider.ReloadAll();
 
             if (changes.Count > 0)
@@ -194,11 +184,6 @@ namespace HrPortal.Controllers
             };
         }
 
-        /// <summary>
-        /// Writes a setting, or removes the override when the value
-        /// matches nothing worth storing. Records what changed so the
-        /// audit entry says more than "settings updated".
-        /// </summary>
         private async Task SetAsync(
             string key,
             string value,

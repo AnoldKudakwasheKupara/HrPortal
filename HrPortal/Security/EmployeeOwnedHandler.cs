@@ -34,10 +34,6 @@ namespace HrPortal.Security
                 return;
             }
 
-            // Owning the record is normally enough. A document in a
-            // restricted category is the exception: it is HR's record
-            // about the employee, not the employee's own, so ownership
-            // grants nothing.
             if (resource is EmployeeDocument document &&
                 await IsRestrictedAsync(document))
             {
@@ -53,11 +49,6 @@ namespace HrPortal.Security
             }
         }
 
-        /// <summary>
-        /// Read from the database rather than the resource's navigation
-        /// property, which a caller may not have loaded. Guessing from
-        /// a null navigation would fail open.
-        /// </summary>
         private async Task<bool> IsRestrictedAsync(EmployeeDocument document)
         {
             if (document.DocumentCategory != null)
@@ -91,9 +82,6 @@ namespace HrPortal.Security
 
                 Notification => false,
 
-                // Timesheets are the owner's own record. The
-                // administrator reads them through the register, not
-                // through this handler.
                 TimesheetEntry => false,
 
                 _ => false

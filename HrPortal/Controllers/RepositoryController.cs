@@ -12,15 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The organisation's shared documents: forms, templates,
-    /// handbooks, procedures. Anything that belongs to the company
-    /// rather than to a person, which is what separates this from an
-    /// employee's file.
-    ///
-    /// Everyone signed in can browse; what they see depends on the
-    /// folder's audience. Only HR and administrators put things in.
-    /// </summary>
     [Authorize]
     public class RepositoryController : Controller
     {
@@ -96,10 +87,6 @@ namespace HrPortal.Controllers
             return View(rows);
         }
 
-        /// <summary>
-        /// Files live outside the web root, so every read comes through
-        /// here and the folder's audience is checked first.
-        /// </summary>
         public async Task<IActionResult> Download(int? id)
         {
             var document = await Readable(id);
@@ -256,12 +243,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index), new { folderId });
         }
 
-        /// <summary>
-        /// Loads a document only if this user's roles cover the
-        /// audience of the folder it sits in. Returning null rather
-        /// than a refusal means a document somebody may not see is
-        /// indistinguishable from one that does not exist.
-        /// </summary>
         private async Task<RepositoryDocument?> Readable(int? id)
         {
             if (id == null)

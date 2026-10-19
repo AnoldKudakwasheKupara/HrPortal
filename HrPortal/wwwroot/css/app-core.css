@@ -1,41 +1,16 @@
-﻿/* ==========================================================
-   Core design tokens and shared components.
-
-   Structure taken from the IT Service Management System's
-   stylesheet; the palette has been swapped from that system's
-   crimson to Intellego's own colours, sampled from
-   intellego-ic.com:
-
-       deep teal   #10675d   brand surfaces, primary actions
-       darker teal #056459   hover and pressed
-       bright teal #018080   links, active navigation, accents
-       olive gold  #7e6e1e   the site's call-to-action pills
-       warm paper  #eceae5   panel tint
-       ink         #3f4245   body text
-
-   ========================================================== */
-
-:root {
+﻿:root {
     --primary: #10675d;
     --primary-dark: #056459;
     --primary-light: #e2efed;
     --primary-glow: rgba(16, 103, 93,0.25);
 
-    /* Pale tint used *behind* --primary-coloured text (badges, hover states).
-       Deliberately separate from --primary-light: individual pages redefine
-       --primary-light in their own :root block, which leaks into the shared
-       sidebar/topbar and would leave primary-on-primary text unreadable. */
     --primary-surface: #e2efed;
 
-    /* The site's bright teal, used for links and the active
-       navigation item, and the olive gold of its hero buttons,
-       which this app uses for the primary action. */
     --brand-teal: #018080;
     --accent-gold: #7e6e1e;
     --accent-gold-dark: #635616;
     --paper: #eceae5;
 
-    /* Semantic colors */
     --success: #2c9e6e;
     --success-light: #e6f5e9;
     --warning: #f5b042;
@@ -44,7 +19,6 @@
     --danger-light: #fff5f5;
     --info: #018080;
 
-    /* Neutral / gray scale (slate) */
     --gray-50: #f8fafc;
     --gray-100: #f1f5f9;
     --gray-200: #e2e8f0;
@@ -65,8 +39,7 @@
     --bg-main: #f1f5f9;
     --bg-card: #ffffff;
     --border-light: #e2e8f0;
-    /* Layered shadows tinted toward the slate scale rather than pure black —
-       neutral black over a cool grey canvas reads as grubby at low opacity. */
+    
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
     --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.06), 0 12px 24px -8px rgba(16, 24, 40, 0.10);
     --shadow-lg: 0 8px 16px -4px rgba(16, 24, 40, 0.08), 0 20px 40px -12px rgba(16, 24, 40, 0.14);
@@ -80,12 +53,6 @@
 html { font-size: 14px; }
 @media (min-width: 768px) { html { font-size: 16px; } }
 
-/* ============================================================
-   Accessibility
-   ============================================================ */
-
-/* Visible keyboard-focus ring for all interactive elements.
-   (Mouse users don't see it thanks to :focus-visible.) */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -94,12 +61,8 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
     outline: 3px solid var(--primary);
     outline-offset: 2px;
-    /* No border-radius override here: forcing 4px squared off the ring on
-       pill buttons and round avatars. The outline follows the element's own
-       radius when we leave it alone. */
 }
 
-/* Screen-reader-only content. */
 .sr-only {
     position: absolute !important;
     width: 1px; height: 1px;
@@ -109,7 +72,6 @@ textarea:focus-visible,
     white-space: nowrap; border: 0;
 }
 
-/* Skip-to-content link — appears on keyboard focus. */
 .skip-link {
     position: absolute;
     left: 1rem;
@@ -125,7 +87,6 @@ textarea:focus-visible,
 }
 .skip-link:focus { top: 0; color: #fff; }
 
-/* Respect users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -135,15 +96,6 @@ textarea:focus-visible,
     }
 }
 
-/* ============================================================
-   Shared page components
-   Canonical look for list/detail pages (card, header bar, table,
-   title, back button). Historically every view redefined these
-   in its own <style> block; those local blocks load AFTER this
-   file and still win, so existing pages are unchanged. Pages that
-   DON'T define them (e.g. Employee File Management) now inherit the
-   standard look instead of rendering unstyled.
-   ============================================================ */
 .page-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -232,8 +184,6 @@ textarea:focus-visible,
     transform: translateX(-2px);
 }
 
-/* Primary call-to-action button — the gradient "create/new" button used
-   in page headers across the app. Self-contained (does not need .btn). */
 .btn-create {
     background: linear-gradient(100deg, var(--primary-dark), var(--primary));
     color: #fff;
@@ -261,15 +211,6 @@ textarea:focus-visible,
     font-size: 0.875rem;
 }
 
-/* ---- Statistics cards (Ticket-dashboard style) ----
-   Almost every index page shows exactly four of these. The track
-   minimum has to be small enough that four fit across the content
-   column, or the fourth card wraps onto a row of its own: at 240px
-   only three tracks fit a 1366-wide laptop (~1020px of content), so
-   every one of those pages laid out 3 + 1. 200px fits four from
-   ~900px of content upward. auto-fit collapses the spare tracks, so
-   pages showing two or three cards still stretch them across the
-   full width rather than leaving a hole. */
 .stats-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -303,7 +244,6 @@ textarea:focus-visible,
 .stat-info h3 { font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--gray-800); }
 .stat-info p { margin: 0; color: var(--gray-500); font-size: 0.875rem; }
 
-/* ---- Filters card ---- */
 .filters-card {
     background: #fff;
     border-radius: 1rem;
@@ -394,7 +334,6 @@ textarea:focus-visible,
 }
 .btn-clear-filters:hover { background: var(--gray-50); border-color: var(--gray-300); color: var(--gray-700); }
 
-/* ---- Status / label badges (Ticket-dashboard style) ---- */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -411,7 +350,6 @@ textarea:focus-visible,
 .badge-blue  { background: #e8f3f1; color: var(--primary-dark); border: 1px solid #c3ded9; }
 .badge-gray  { background: var(--gray-100); color: var(--gray-500); border: 1px solid var(--gray-300); }
 
-/* ---- Row avatar + chips ---- */
 .list-avatar {
     width: 32px;
     height: 32px;
@@ -435,7 +373,6 @@ textarea:focus-visible,
 .chip-muted { color: var(--gray-400); font-size: 0.72rem; font-style: italic; }
 .date-cell { color: var(--gray-500); font-size: 0.875rem; white-space: nowrap; }
 
-/* ---- Table action buttons ---- */
 .action-buttons { display: flex; gap: 0.5rem; align-items: center; }
 .action-btn {
     width: 32px;
@@ -462,24 +399,14 @@ textarea:focus-visible,
 .btn-approve { background: var(--gray-100); color: var(--success); }
 .btn-approve:hover { background: var(--success); color: #fff; transform: translateY(-2px); }
 
-/* ---- Empty state ---- */
 .empty-state { text-align: center; padding: 3rem; color: var(--gray-500); }
 .empty-state i { font-size: 4rem; color: var(--gray-300); margin-bottom: 1rem; }
 .empty-state h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--gray-600); }
 .empty-state p { margin-bottom: 1.5rem; }
 
-/* ============================================================
-   Small shared utilities
-   ============================================================ */
 .text-muted-2 { color: var(--gray-500); }
 .cursor-pointer { cursor: pointer; }
 
-/* ============================================================
-   Bootstrap primary → Axis brand red
-   Bootstrap's own CSS ships the default #0d6efd blue for links,
-   buttons and pagination. site.css loads after it, so these
-   overrides win and keep those components on-brand.
-   ============================================================ */
 :root {
     --bs-primary: #10675d;
     --bs-primary-rgb: 16, 103, 93;
@@ -518,18 +445,6 @@ textarea:focus-visible,
 .form-select:focus { border-color: #4e9c92; box-shadow: 0 0 0 0.25rem rgba(16, 103, 93, 0.25); }
 .form-switch .form-check-input:checked { background-color: #10675d; border-color: #10675d; }
 
-/* ============================================================
-   SHARED PAGE SHELL
-   ------------------------------------------------------------
-   Gives every page the same "hero" header the Service Catalogue
-   established, without touching each view: pages already wrap
-   their heading in .page-container > .page-header, and most of
-   them only set margin-bottom there, so these rules supply the
-   visual treatment. The descendant selectors below deliberately
-   carry higher specificity than the single-class rules in each
-   page's own <style> block, so the hero text stays legible.
-   ============================================================ */
-
 .page-container > .page-header {
     background: linear-gradient(120deg, #0f4c81, var(--primary-dark));
     color: #fff;
@@ -538,8 +453,6 @@ textarea:focus-visible,
     box-shadow: var(--shadow-sm);
 }
 
-/* Headings and supporting copy sit on the gradient, so force light text
-   over the per-page .page-title { color: var(--gray-800) } declarations. */
 .page-container > .page-header .page-title,
 .page-container > .page-header h1,
 .page-container > .page-header h2 {
@@ -556,7 +469,6 @@ textarea:focus-visible,
     color: rgba(255, 255, 255, .78) !important;
 }
 
-/* Header controls: translucent on the gradient rather than brand-on-brand. */
 .page-container > .page-header .btn-back {
     background: rgba(255, 255, 255, .14);
     border-color: rgba(255, 255, 255, .28);
@@ -587,7 +499,6 @@ textarea:focus-visible,
         filter: none;
     }
 
-/* Pills/badges shown next to the title (e.g. unread counts). */
 .page-container > .page-header .unread-pill {
     background: rgba(255, 255, 255, .22);
     color: #fff;

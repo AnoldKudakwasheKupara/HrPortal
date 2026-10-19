@@ -35,7 +35,6 @@
         </div>
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -53,7 +52,6 @@
             skipped review and came straight to the Managing Director.
         </div>
     }
-
 
     <div class="row g-3">
 
@@ -181,14 +179,12 @@
 
     </div>
 
-
     <div class="card shadow-sm mt-3">
         <div class="card-header">Items</div>
         <div class="card-body is-table">
             <partial name="_RequisitionLines" model="r" />
         </div>
     </div>
-
 
     @if (Model.CanReview)
     {
@@ -313,7 +309,6 @@
         </div>
     }
 
-
     <div class="card shadow-sm mt-3 mb-4">
 
         <div class="card-header">History</div>
@@ -370,8 +365,6 @@
 
 @section Scripts {
     <script>
-        // Carries whatever is in the comment box into whichever
-        // decision button is pressed.
         document.querySelectorAll('form.js-carry').forEach(function (form) {
             form.addEventListener('submit', function () {
                 var box = document.getElementById('comment');

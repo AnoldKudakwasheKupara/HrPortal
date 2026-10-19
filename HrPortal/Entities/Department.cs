@@ -10,10 +10,6 @@
 
         public bool IsActive { get; set; } = true;
 
-        /// <summary>
-        /// Whether staff in this department log what they work on and
-        /// how long it takes. Meant for service teams such as IT.
-        /// </summary>
         public bool TracksTimesheets { get; set; }
 
         public ICollection<Employee> Employees { get; set; }

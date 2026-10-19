@@ -10,8 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// QuestPDF Community licence: free for organisations under the
-// revenue threshold set out in its licensing terms.
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var connectionString =
@@ -27,11 +25,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "environment variable.");
 }
 
-// Settings saved on the Settings page live in the database and layer
-// over appsettings.json, so everything that reads them through
-// IOptions keeps working and nothing downstream knows the difference.
 builder.Configuration.AddDatabaseSettings(connectionString);
-
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
@@ -117,7 +111,6 @@ builder.Services.AddSingleton<WeeklyReportPdfService>();
 builder.Services.Configure<WeeklyReportBranding>(
     builder.Configuration.GetSection(WeeklyReportBranding.Section));
 
-
 builder.Services.AddScoped<
     IAuthorizationHandler,
     EmployeeOwnedHandler>();
@@ -170,16 +163,12 @@ using (var scope = app.Services.CreateScope())
             userManager,
             db);
 
-        // Uploads used to live inside the web root, where static file
-        // serving handed them out with no sign-in. Anything still
-        // there is moved out on the way up.
         var storage = services.GetRequiredService<FileStorageService>();
 
         storage.MoveLegacyUploads(
             services
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("Uploads"));
-
     }
     catch (SqlException ex)
     {

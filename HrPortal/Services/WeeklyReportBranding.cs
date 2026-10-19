@@ -1,10 +1,5 @@
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// The wording on the cover, header and footer of the weekly
-    /// report, kept in configuration so the document can be issued
-    /// under a different name without a rebuild.
-    /// </summary>
     public class WeeklyReportBranding
     {
         public const string Section = "WeeklyReport";

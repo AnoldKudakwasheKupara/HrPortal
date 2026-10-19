@@ -2,10 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// The basis someone is employed on. Separate from whether they are
-    /// currently employed, which stays on IsActive.
-    /// </summary>
     public enum EmploymentType
     {
         [Display(Name = "Permanent")]

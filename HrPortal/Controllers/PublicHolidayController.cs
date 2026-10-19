@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The holiday calendar leave is counted against. HR keeps it,
-    /// since it is the same people who set leave types and balances.
-    /// </summary>
     [Authorize(Roles = Roles.HrOnly)]
     public class PublicHolidayController : Controller
     {
@@ -46,8 +42,6 @@ namespace HrPortal.Controllers
                 .OrderByDescending(y => y)
                 .ToListAsync();
 
-            // Only weekday holidays take a day off a leave request; one
-            // that falls at a weekend costs nobody anything.
             ViewBag.OnWeekdays = holidays.Count(h =>
                 h.Date.DayOfWeek != DayOfWeek.Saturday &&
                 h.Date.DayOfWeek != DayOfWeek.Sunday);
@@ -184,14 +178,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index), new { year });
         }
 
-        /// <summary>
-        /// Copies a year's holidays into the next one on the same month
-        /// and day, because most of them are fixed dates: Christmas is
-        /// always the 25th whatever weekday it lands on. The ones that
-        /// move, Easter and anything pinned to the second Monday of a
-        /// month among them, are corrected afterwards by hand, which is
-        /// what the message says.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CopyToNextYear(int year)
@@ -225,7 +211,6 @@ namespace HrPortal.Controllers
             {
                 var from = holiday.Date.Date;
 
-                // 29 February has no counterpart in a common year.
                 if (from.Month == 2 && from.Day == 29 &&
                     !DateTime.IsLeapYear(target))
                 {

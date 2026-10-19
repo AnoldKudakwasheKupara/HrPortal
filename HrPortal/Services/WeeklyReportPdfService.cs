@@ -6,11 +6,6 @@ using QuestPDF.Infrastructure;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Renders a weekly report to PDF in the department's established
-    /// layout: title block, numbered sections with their workstream
-    /// status, bullet lists, and the priorities for the next period.
-    /// </summary>
     public class WeeklyReportPdfService
     {
         private readonly WeeklyReportBranding _branding;
@@ -27,9 +22,6 @@ namespace HrPortal.Services
 
         public byte[] Render(WeeklyReport report)
         {
-            // The report is dated by the period it covers, not by the
-            // day it happened to be issued, so a late or reopened
-            // report still reads as that week's report.
             var issued = report.PeriodEnd;
 
             var sections = report.Sections
@@ -49,9 +41,6 @@ namespace HrPortal.Services
                     page.DefaultTextStyle(t => t
                         .FontSize(10)
                         .FontColor(Ink)
-                        // Bundled with QuestPDF, so the document
-                        // renders the same on any machine the portal
-                        // happens to be running on.
                         .FontFamily("Lato"));
 
                     page.Header().Element(e => Header(e, issued));
@@ -138,8 +127,6 @@ namespace HrPortal.Services
                     if (string.IsNullOrWhiteSpace(section.Body) &&
                         string.IsNullOrWhiteSpace(section.Workstream))
                     {
-                        // An untouched section is left out rather than
-                        // printed empty.
                         continue;
                     }
 
@@ -310,10 +297,6 @@ namespace HrPortal.Services
                 .Where(l => l.Length > 0)
                 .ToList();
 
-        /// <summary>
-        /// The printable form of a workstream status, or null when the
-        /// section is a plain list with no status against it.
-        /// </summary>
         public static string? StatusLabel(WorkstreamStatus status) => status switch
         {
             WorkstreamStatus.None => null,

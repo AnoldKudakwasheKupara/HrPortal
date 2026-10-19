@@ -8,11 +8,6 @@ using Microsoft.Extensions.Options;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// Shows whether the daily reminder run is working, and lets it be
-    /// run on the spot. A background job nobody can see is a background
-    /// job nobody trusts.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class ReminderController : Controller
     {

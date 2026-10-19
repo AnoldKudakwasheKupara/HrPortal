@@ -11,11 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The weekly IT status report. A draft is scaffolded from the
-    /// activity log and the previous week's priorities; the author
-    /// then writes the overview and the specifics and issues the PDF.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class WeeklyReportController : Controller
     {
@@ -234,11 +229,6 @@ namespace HrPortal.Controllers
             return View(report);
         }
 
-        /// <summary>
-        /// Streams the report as a PDF. Drafts are watermarked by
-        /// nothing more than their file name, so it stays obvious
-        /// which version left the building.
-        /// </summary>
         public async Task<IActionResult> Pdf(int? id)
         {
             if (id == null)
@@ -396,11 +386,6 @@ namespace HrPortal.Controllers
                         .Select(p => p.Text))
             };
 
-        /// <summary>
-        /// Priorities are edited as one box, one per line, so they are
-        /// rewritten wholesale. A line that also appeared on the
-        /// previous report keeps its carried-forward marking.
-        /// </summary>
         private async Task ReplacePrioritiesAsync(
             WeeklyReport report,
             string? text)
@@ -432,10 +417,6 @@ namespace HrPortal.Controllers
             return lines.Any() ? string.Join("\n", lines) : null;
         }
 
-        /// <summary>
-        /// The Monday after the last report's period, or the Monday of
-        /// the current week when there is no history.
-        /// </summary>
         private static DateTime NextPeriodStart(DateTime? lastPeriodStart)
         {
             if (lastPeriodStart.HasValue)
@@ -446,10 +427,6 @@ namespace HrPortal.Controllers
             return today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
         }
 
-        /// <summary>
-        /// Working days in the coming period with nothing logged
-        /// against them, so the gap is visible before a draft is cut.
-        /// </summary>
         private async Task<int> UnloggedDaysAsync(DateTime periodStart)
         {
             var periodEnd = periodStart.AddDays(4);

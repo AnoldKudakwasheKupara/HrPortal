@@ -69,8 +69,6 @@ public class IndexModel : PageModel
 
         Roles = await _userManager.GetRolesAsync(user);
 
-        // Administrative accounts have no employee record, so the
-        // employment panel is simply left out for them.
         Employee = await _currentUser.GetEmployeeAsync();
 
         Input = new InputModel

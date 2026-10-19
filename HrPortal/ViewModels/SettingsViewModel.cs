@@ -2,12 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// The settings worth changing without a deployment. Mail settings
-    /// are deliberately absent: they include a password, and a password
-    /// in a database table that any administrator can read is worse
-    /// than one in a protected configuration file.
-    /// </summary>
     public class SettingsViewModel
     {
         [Display(Name = "MD approval threshold")]

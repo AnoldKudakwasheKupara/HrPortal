@@ -37,7 +37,6 @@ namespace HrPortal.ViewModels
 
         public int MyAssets { get; set; }
 
-        /// <summary>Set when the employee's department keeps timesheets.</summary>
         public bool KeepsTimesheet { get; set; }
 
         public int TimesheetMinutesThisWeek { get; set; }

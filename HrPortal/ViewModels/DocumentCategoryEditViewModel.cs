@@ -18,7 +18,6 @@ namespace HrPortal.ViewModels
         [Display(Name = "HR only")]
         public bool IsRestricted { get; set; }
 
-
         [Display(Name = "Active")]
         public bool IsActive { get; set; }
     }

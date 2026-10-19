@@ -18,9 +18,6 @@ namespace HrPortal.Entities
 
         public long FileSizeBytes { get; set; }
 
-        /// <summary>
-        /// When the document stops being current, for the ones that do.
-        /// </summary>
         public DateTime? ExpiryDate { get; set; }
 
         public DateTime UploadedAt { get; set; }

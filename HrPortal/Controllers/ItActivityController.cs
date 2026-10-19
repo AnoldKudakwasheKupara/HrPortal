@@ -12,11 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The IT activity log: requests, incidents and tasks recorded as
-    /// they happen. This is the record the weekly status report is
-    /// assembled from, so it is worth logging the same day.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class ItActivityController : Controller
     {
@@ -40,8 +35,6 @@ namespace HrPortal.Controllers
             ItActivityCategory? category,
             ItActivityStatus? status)
         {
-            // Defaults to the current working week, which is the span
-            // the weekly report covers.
             var today = DateTime.Today;
 
             var start = from ?? today.AddDays(
@@ -149,8 +142,6 @@ namespace HrPortal.Controllers
 
             TempData["Success"] = "Activity logged.";
 
-            // Logging is usually several at a time, so come straight
-            // back to a fresh form rather than the list.
             if (Request.Form["saveAndNew"] == "true")
                 return RedirectToAction(nameof(Create));
 
@@ -240,10 +231,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Closes an activity from the list without opening the form,
-        /// which is the common case at the end of a day.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Resolve(int id)

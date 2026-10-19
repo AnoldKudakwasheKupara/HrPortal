@@ -132,7 +132,6 @@ namespace HrPortal.Controllers
                 }
             }
 
-
             if (!ModelState.IsValid)
             {
                 await LoadDepartments();
@@ -140,7 +139,6 @@ namespace HrPortal.Controllers
             await LoadPositions();
                 return View(model);
             }
-
 
             var emailExists =
                 await _context.Employees
@@ -359,13 +357,8 @@ namespace HrPortal.Controllers
                 }
             }
 
-
-
             if (!model.IsActive)
             {
-                // Switching someone off without a date loses when they
-                // actually left, which is the thing anyone looking back
-                // will want to know.
                 if (model.EndDate == null)
                 {
                     ModelState.AddModelError(
@@ -388,7 +381,6 @@ namespace HrPortal.Controllers
             await LoadPositions();
                 return View(model);
             }
-
 
             var employee = await _context.Employees
                 .Include(e => e.User)
@@ -420,14 +412,11 @@ namespace HrPortal.Controllers
             employee.DepartmentId = model.DepartmentId;
             employee.IsActive = model.IsActive;
 
-            // A departure has to be dated, and somebody still employed
-            // must not carry a leaving date.
             employee.EndDate = model.IsActive ? null : model.EndDate;
 
             employee.LeavingReason = model.IsActive
                 ? null
                 : model.LeavingReason?.Trim();
-
 
             if (employee.User != null)
             {
@@ -677,13 +666,6 @@ namespace HrPortal.Controllers
                     .CountAsync(a => a.EmployeeId == employeeId),
                 "approval role assignment(s)");
 
-            // Their own file. Deleting the employee used to take the
-            // documents and the files on disk with them, so a contract
-            // or a disciplinary record disappeared the moment somebody
-            // tidied up a leaver. Employment records normally have to
-            // be kept for years after someone goes, so this blocks the
-            // delete and points at marking them as having left, which
-            // now records the date.
             Add(
                 await _context.EmployeeDocuments
                     .CountAsync(d => d.EmployeeId == employeeId),
@@ -734,7 +716,6 @@ namespace HrPortal.Controllers
                 .Select(p => new SelectListItem(p.Title, p.Id.ToString()))
                 .ToListAsync();
         }
-
 
         private async Task LoadDepartments()
         {

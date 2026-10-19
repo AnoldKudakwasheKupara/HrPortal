@@ -10,13 +10,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// Qualifications people hold, and when they lapse.
-    /// </summary>
     [Authorize(Roles = Roles.HrOnly)]
     public class CertificationController : Controller
     {
-        /// <summary>How far ahead counts as expiring soon.</summary>
         public const int ExpiringWindowDays = 60;
 
         private readonly ApplicationDbContext _context;

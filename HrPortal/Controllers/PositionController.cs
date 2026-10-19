@@ -10,10 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The register of posts. HR keeps it, since it is HR who decide
-    /// what the establishment is and who sits in it.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOrHr)]
     public class PositionController : Controller
     {
@@ -184,8 +180,6 @@ namespace HrPortal.Controllers
             if (position == null)
                 return NotFound();
 
-            // Somebody holds it, so removing it would quietly blank
-            // their job title. Retiring keeps the history.
             if (position.Employees.Count > 0)
             {
                 TempData["Error"] =

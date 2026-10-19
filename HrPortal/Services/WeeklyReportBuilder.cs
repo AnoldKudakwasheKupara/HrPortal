@@ -4,15 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Scaffolds a weekly report draft: the standing section
-    /// structure, the numbers drawn from the activity log, and last
-    /// week's priorities brought forward.
-    ///
-    /// Everything it writes is a starting point the author then
-    /// edits. Nothing here is recomputed afterwards, so a report says
-    /// what it said on the day it was issued.
-    /// </summary>
     public class WeeklyReportBuilder
     {
         private readonly ApplicationDbContext _context;
@@ -22,10 +13,6 @@ namespace HrPortal.Services
             _context = context;
         }
 
-        /// <summary>
-        /// The standing structure of the report. Headings are editable
-        /// afterwards; this is only what a new draft starts with.
-        /// </summary>
         private static readonly (int Order, string Heading)[] Template =
         {
             (1, "Network & Infrastructure"),
@@ -35,9 +22,6 @@ namespace HrPortal.Services
             (5, "General IT Support")
         };
 
-        /// <summary>
-        /// Which section each kind of activity is reported under.
-        /// </summary>
         private static int SectionFor(ItActivityCategory category) => category switch
         {
             ItActivityCategory.Network => 1,
@@ -87,9 +71,6 @@ namespace HrPortal.Services
                     Order = order,
                     Heading = heading,
 
-                    // The workstream and its status usually run across
-                    // several weeks, so they are worth carrying. The
-                    // text is not, because it describes last week.
                     Workstream = carried?.Workstream,
                     WorkstreamStatus =
                         carried?.WorkstreamStatus ?? WorkstreamStatus.None,
@@ -142,9 +123,6 @@ namespace HrPortal.Services
 
             if (order == 3)
             {
-                // The one section that is worth a sentence even when
-                // there is nothing to report, because "nothing broke"
-                // is itself the finding.
                 if (!mine.Any())
                 {
                     lines.Add(
@@ -191,7 +169,6 @@ namespace HrPortal.Services
                 }
             }
 
-            // Anything flagged notable is named rather than only counted.
             foreach (var notable in mine.Where(a => a.IsNotable))
             {
                 var line = notable.Summary.TrimEnd('.');

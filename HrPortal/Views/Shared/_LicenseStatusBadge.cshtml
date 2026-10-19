@@ -1,9 +1,6 @@
 @using HrPortal.Entities
 @model License
 
-@*  Expired and expiring are not stored: they are worked out from the
-    expiry date, in one place.                                   *@
-
 @{
     var today = DateTime.Today;
     var days = (Model.ExpiryDate.Date - today).Days;

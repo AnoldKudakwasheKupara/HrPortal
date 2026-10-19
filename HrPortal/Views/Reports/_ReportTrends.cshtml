@@ -1,11 +1,6 @@
 @model List<HrPortal.ViewModels.ReportTrend>
 
 @{
-    // Drawn as inline SVG rather than with a charting library: it needs
-    // no script, prints as part of the page, and takes its colours from
-    // the same tokens as everything else, so it follows dark mode.
-    // Nothing to show is better than twelve empty columns, which read
-    // as a finding rather than as an absence of data.
     var charts = (Model ?? new List<HrPortal.ViewModels.ReportTrend>())
         .Where(t => t.Points.Count > 1 && t.Total > 0)
         .ToList();
@@ -20,8 +15,6 @@
             var max = trend.Max <= 0 ? 1m : trend.Max;
             var count = trend.Points.Count;
 
-            // A fixed viewBox scaled to the container: the chart keeps
-            // its shape at any width without measuring anything.
             var width = 100m;
             var height = 34m;
             var slot = width / count;
@@ -52,9 +45,6 @@
 
                                 if (barHeight < 0.4m && point.Value > 0)
                                 {
-                                    // Keep a visible sliver, so a small
-                                    // non-zero period does not read as
-                                    // nothing at all.
                                     barHeight = 0.4m;
                                 }
 

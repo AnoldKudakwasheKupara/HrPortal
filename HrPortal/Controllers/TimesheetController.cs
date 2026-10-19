@@ -10,11 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The timesheet register: everything logged by staff in the
-    /// departments that keep timesheets, for the administrator to read
-    /// and export. Entries are written only by their owners.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class TimesheetController : Controller
     {
@@ -51,8 +46,6 @@ namespace HrPortal.Controllers
                 People = entries.Select(t => t.EmployeeId).Distinct().Count(),
                 WorkingDays = CountWorkingDays(start, end),
 
-                // Grouped by id, not by the Employee object: the query
-                // is untracked, so each row carries its own instance.
                 ByPerson = entries
                     .GroupBy(t => t.EmployeeId)
                     .Select(g => new TimesheetPersonSummary
@@ -162,10 +155,6 @@ namespace HrPortal.Controllers
             return query;
         }
 
-        /// <summary>
-        /// Defaults to the current month so far. An inverted range is
-        /// put the right way round rather than rejected.
-        /// </summary>
         private static (DateTime Start, DateTime End) Range(
             DateTime? from,
             DateTime? to)
@@ -194,10 +183,6 @@ namespace HrPortal.Controllers
             return count;
         }
 
-        /// <summary>
-        /// Everyone who keeps a timesheet now, plus anyone who has
-        /// logged work before (they may since have moved department).
-        /// </summary>
         private async Task LoadEmployees()
         {
             var employees = await _context.Employees

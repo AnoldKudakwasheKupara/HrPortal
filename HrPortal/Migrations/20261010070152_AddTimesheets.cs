@@ -5,10 +5,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace HrPortal.Migrations
 {
-    /// <inheritdoc />
     public partial class AddTimesheets : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<bool>(
@@ -18,9 +16,6 @@ namespace HrPortal.Migrations
                 nullable: false,
                 defaultValue: false);
 
-            // Timesheets exist for the IT department, so switch them on
-            // for a department that is plainly IT. Anything else is a
-            // tick box on the department for the administrator.
             migrationBuilder.Sql(@"
                 UPDATE [Departments]
                 SET [TracksTimesheets] = 1
@@ -85,7 +80,6 @@ namespace HrPortal.Migrations
                 column: "WorkDate");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

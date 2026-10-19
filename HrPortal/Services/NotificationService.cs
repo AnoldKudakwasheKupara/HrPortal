@@ -5,15 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Writes the in-app notifications, and sends the matching emails.
-    ///
-    /// An email is only sent once the notification it copies has been
-    /// committed, so nobody is told about an approval that was rolled
-    /// back. Sending happens on a background task in its own scope, so
-    /// a slow or unreachable mail server does not hold up the request
-    /// that caused it.
-    /// </summary>
     public class NotificationService
     {
         private readonly ApplicationDbContext _context;
@@ -31,8 +22,6 @@ namespace HrPortal.Services
             _scopeFactory = scopeFactory;
             _logger = logger;
 
-            // Flush when the work that produced the notification is
-            // safely saved, not before.
             _context.SavedChanges += OnSavedChanges;
         }
 
@@ -91,9 +80,6 @@ namespace HrPortal.Services
             var batch = _pending.ToList();
             _pending.Clear();
 
-            // Deliberately not awaited. The notification is already
-            // committed and the email is a copy of it, so the caller
-            // should not wait on a mail server, nor fail if it is down.
             _ = DeliverAsync(batch);
         }
 

@@ -6,7 +6,6 @@ namespace HrPortal.Entities
 
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>What this vendor supplies us with.</summary>
         public string ProductOrService { get; set; } = string.Empty;
 
         public string? Category { get; set; }

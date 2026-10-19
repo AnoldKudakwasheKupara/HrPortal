@@ -1,12 +1,5 @@
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// A record that somebody confirmed they have read a policy.
-    ///
-    /// Tied to the policy rather than the title, so a new version
-    /// starts with nobody having acknowledged it: that is the point of
-    /// reissuing one.
-    /// </summary>
     public class PolicyAcknowledgement
     {
         public int Id { get; set; }

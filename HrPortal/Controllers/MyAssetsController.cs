@@ -6,13 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The equipment issued to the signed-in employee.
-    ///
-    /// Read only, and scoped to their own employee record, so one
-    /// employee cannot see what anyone else is holding. The register
-    /// itself belongs to the administrator.
-    /// </summary>
     [Authorize]
     public class MyAssetsController : Controller
     {

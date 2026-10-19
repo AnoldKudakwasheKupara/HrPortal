@@ -71,12 +71,6 @@ namespace HrPortal.Data
             }
         }
 
-        /// <summary>
-        /// The administrator is the IT person, so they get an employee
-        /// record in the IT department (created if there is none), which
-        /// puts them on the timesheet like the rest of the team. Runs on
-        /// every start and only fills what is missing.
-        /// </summary>
         public static async Task SeedAdministratorEmployeeAsync(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context)
@@ -115,8 +109,6 @@ namespace HrPortal.Data
                 return;
             }
 
-            // A record already exists: make sure it is linked to the
-            // sign-in and sitting in IT, without touching anything else.
             var changed = false;
 
             if (employee.UserId == null)
@@ -201,12 +193,6 @@ namespace HrPortal.Data
             return number;
         }
 
-        /// <summary>
-        /// Employee is the baseline role, so any account that predates
-        /// that rule, or lost the role some other way, is given it back
-        /// on startup. The administrator picks it up too, now that they
-        /// have an employee record.
-        /// </summary>
         public static async Task BackfillEmployeeRoleAsync(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context)

@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The suppliers the business buys products and services from,
-    /// and who to contact at each.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class VendorController : Controller
     {
@@ -240,11 +236,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Categories are free text but offered back as suggestions, so
-        /// the register settles on a consistent set without forcing a
-        /// lookup table on the administrator.
-        /// </summary>
         private async Task LoadCategories()
         {
             ViewBag.Categories = await _context.Vendors

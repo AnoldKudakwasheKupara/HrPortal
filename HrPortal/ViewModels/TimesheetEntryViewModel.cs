@@ -3,10 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// Used for both logging and editing an entry. Time can be given
-    /// as a start and end, or simply as a number of hours.
-    /// </summary>
     public class TimesheetEntryViewModel
     {
         public int Id { get; set; }

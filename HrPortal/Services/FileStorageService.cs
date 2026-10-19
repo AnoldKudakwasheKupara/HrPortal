@@ -9,11 +9,6 @@
             _environment = environment;
         }
 
-        /// <summary>
-        /// Where uploads live: outside the web root, so static file
-        /// serving cannot hand them out. Everything reaches them
-        /// through a controller action that checks who is asking.
-        /// </summary>
         public string UploadRoot => Path.Combine(
             _environment.ContentRootPath,
             "App_Data",
@@ -120,10 +115,6 @@
             if (string.IsNullOrWhiteSpace(filePath))
                 return null;
 
-            // The stored path is a key of the form
-            // /uploads/<folder>/<file>, kept as it was so no existing
-            // record has to be rewritten. Only the root it resolves
-            // against has moved.
             var relative = filePath
                 .TrimStart('/')
                 .Replace('/', Path.DirectorySeparatorChar);
@@ -140,9 +131,6 @@
             var fullPath = Path.GetFullPath(
                 Path.Combine(UploadRoot, relative));
 
-            // A stored path should never climb out of the upload root,
-            // but checking costs nothing and a crafted value would
-            // otherwise reach the rest of the disk.
             if (!fullPath.StartsWith(
                     Path.GetFullPath(UploadRoot),
                     StringComparison.OrdinalIgnoreCase))
@@ -153,15 +141,6 @@
             return File.Exists(fullPath) ? fullPath : null;
         }
 
-        /// <summary>
-        /// Moves anything left under wwwroot/uploads into the new root.
-        ///
-        /// Files used to be written inside the web root, where static
-        /// file serving handed them to anyone with the URL and no
-        /// sign-in at all. Leaving them there would keep that hole open
-        /// for every document uploaded before this change, so they are
-        /// moved once at startup and the old folder removed.
-        /// </summary>
         public int MoveLegacyUploads(ILogger logger)
         {
             var legacyRoot = Path.Combine(

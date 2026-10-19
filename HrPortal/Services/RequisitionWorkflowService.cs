@@ -5,17 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Moves a requisition through review and, where the amount calls
-    /// for it, final approval by the Managing Director.
-    ///
-    /// Two rules shape the routing. Nobody approves their own
-    /// requisition, so one raised by the configured reviewer skips
-    /// review and goes straight to the MD. And whether the MD is
-    /// involved at all is settled at submission from the estimated
-    /// total, then stored, so moving the threshold later cannot
-    /// reroute something already in flight.
-    /// </summary>
     public class RequisitionWorkflowService
     {
         private readonly ApplicationDbContext _context;
@@ -84,8 +73,6 @@ namespace HrPortal.Services
 
             if (isReviewersOwn && !isMdsOwn)
             {
-                // The reviewer cannot sign off their own request, so it
-                // goes to the MD whatever the amount.
                 requisition.Status = RequisitionStatus.ReviewApproved;
                 requisition.RequiresMdApproval = true;
             }
@@ -93,9 +80,6 @@ namespace HrPortal.Services
             {
                 requisition.Status = RequisitionStatus.Submitted;
 
-                // Equally, the MD cannot be the final approver on their
-                // own request, so review becomes the only approval
-                // however large the amount.
                 if (isMdsOwn)
                     requisition.RequiresMdApproval = false;
             }
@@ -144,10 +128,6 @@ namespace HrPortal.Services
                       $"{Money(requisition.EstimatedTotal)}.");
         }
 
-        /// <summary>
-        /// Review approval. Below the threshold this is the final
-        /// decision; at or above it the requisition goes to the MD.
-        /// </summary>
         public async Task ReviewApproveAsync(
             Requisition requisition,
             int actedByEmployeeId,
@@ -203,9 +183,6 @@ namespace HrPortal.Services
                 previous,
                 comment);
 
-            // Review is the final word either because the amount is
-            // under the threshold, or because the requester is the MD
-            // and so cannot approve it themselves. Say which.
             var underThreshold =
                 requisition.EstimatedTotal < _options.MdApprovalThreshold;
 
@@ -268,10 +245,6 @@ namespace HrPortal.Services
                 "Rejected at review.");
         }
 
-        /// <summary>
-        /// Sends it back for more detail or a corrected estimate,
-        /// rather than turning it down.
-        /// </summary>
         public async Task ReturnAsync(
             Requisition requisition,
             int actedByEmployeeId,
@@ -402,7 +375,6 @@ namespace HrPortal.Services
                 previous,
                 comment);
 
-            // Whoever was holding it needs to know it has gone away.
             if (IsAwaitingReview(previous))
             {
                 await _notifications.NotifyApproverAsync(

@@ -1,9 +1,6 @@
 @using HrPortal.Entities
 @model AssetMaintenance
 
-@*  Overdue is not a stored status: it is scheduled work whose date
-    has passed, so it is worked out here in one place.         *@
-
 @{
     var isOverdue =
         Model.Status == MaintenanceStatus.Scheduled &&

@@ -11,15 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The signed-in employee's own timesheet: what they worked on and
-    /// how long it took, logged a job at a time.
-    ///
-    /// Only staff in a department that keeps timesheets (the IT
-    /// department, typically) get here. Entries belong to the person
-    /// who logged them; nobody else edits them, and the administrator
-    /// reads them through the register.
-    /// </summary>
     [Authorize]
     public class MyTimesheetController : Controller
     {
@@ -294,11 +285,6 @@ namespace HrPortal.Controllers
             return RedirectToWeek(entry.WorkDate);
         }
 
-        /// <summary>
-        /// Works out the minutes for the entry and records any problem
-        /// in ModelState. Start and finish take precedence over hours
-        /// when both are given; either way a day cannot exceed 24 hours.
-        /// </summary>
         private async Task<int> ValidateAsync(
             TimesheetEntryViewModel model,
             int employeeId,
@@ -423,10 +409,6 @@ namespace HrPortal.Controllers
                 new { week = WeekStart(date).ToString("yyyy-MM-dd") });
         }
 
-        /// <summary>
-        /// IT staff work on other people's machines, so the whole
-        /// register is offered, labelled with who holds each one.
-        /// </summary>
         private async Task LoadAssets()
         {
             var assets = await _context.Assets
@@ -456,7 +438,6 @@ namespace HrPortal.Controllers
                 .ToList();
         }
 
-        /// <summary>Monday of the week containing the date.</summary>
         public static DateTime WeekStart(DateTime date)
         {
             var offset = ((int)date.DayOfWeek + 6) % 7;

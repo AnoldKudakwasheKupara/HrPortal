@@ -31,7 +31,6 @@
         </a>
     </div>
 
-
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -41,7 +40,6 @@
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
-
 
     <div class="report-stats">
 
@@ -72,7 +70,6 @@
         </div>
 
     </div>
-
 
     <div class="card shadow-sm mb-3">
         <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -114,7 +111,6 @@
         </div>
     </div>
 
-
     <div class="card shadow-sm">
         <div class="card-body is-table">
             <div class="table-responsive">
@@ -144,8 +140,6 @@
                             day.DayOfWeek == DayOfWeek.Saturday ||
                             day.DayOfWeek == DayOfWeek.Sunday;
 
-                        // Weekends only earn a row when something was
-                        // logged, except today, which always gets one.
                         if (isWeekend && entries.Count == 0 && day != today)
                             continue;
 

@@ -17,11 +17,6 @@ namespace HrPortal.Entities
 
         public int? PositionId { get; set; }
 
-        /// <summary>
-        /// The post they hold, read through for display. It used
-        /// to be free text on the employee, which let the same
-        /// job be spelled three different ways.
-        /// </summary>
         [NotMapped]
         public string? JobTitle => Position?.Title;
 
@@ -38,39 +33,22 @@ namespace HrPortal.Entities
 
         public string? Address { get; set; }
 
-        /// <summary>
-        /// Who to call if something happens at work. Held on the
-        /// employee record rather than a separate table, since there
-        /// is only ever one and it is read, not reported on.
-        /// </summary>
         public string? EmergencyContactName { get; set; }
 
         public string? EmergencyContactPhone { get; set; }
 
         public string? EmergencyContactRelationship { get; set; }
 
-
         public DateTime DateJoined { get; set; }
 
         public EmploymentType EmploymentType { get; set; }
             = EmploymentType.Permanent;
 
-        /// <summary>
-        /// When a fixed-term, probation or internship engagement is due
-        /// to end. Null for permanent staff and for anyone whose
-        /// engagement has no agreed end.
-        /// </summary>
         public DateTime? ContractEndDate { get; set; }
 
-        /// <summary>
-        /// The day they actually left. Set when they are marked no
-        /// longer employed, so a departure is dated rather than just
-        /// switched off.
-        /// </summary>
         public DateTime? EndDate { get; set; }
 
         public string? LeavingReason { get; set; }
-
 
         public int DepartmentId { get; set; }
 

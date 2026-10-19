@@ -1,8 +1,4 @@
 ﻿// Sidebar drawer, matching the IT Service Management System.
-//
-// The sidebar is a fixed rail on desktop and slides in over an
-// overlay on small screens. The markup calls these by name from
-// onclick attributes, so they have to be global.
 
 function toggleSidebar() {
     "use strict";
@@ -40,8 +36,6 @@ function closeSidebar() {
     document.body.style.overflow = "";
 }
 
-// Following a link inside the drawer should close it, otherwise
-// the new page loads behind an overlay on a phone.
 (function () {
     "use strict";
 

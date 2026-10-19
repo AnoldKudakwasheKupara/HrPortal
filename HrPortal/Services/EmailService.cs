@@ -6,14 +6,6 @@ using MimeKit.Text;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Sends the portal's notification emails.
-    ///
-    /// Nothing here is allowed to throw. An email is a copy of a
-    /// notification that has already been written to the database, so a
-    /// mail server being down must never fail the approval, the leave
-    /// request or whatever else produced it.
-    /// </summary>
     public class EmailService
     {
         private readonly EmailOptions _options;
@@ -113,11 +105,6 @@ namespace HrPortal.Services
             return message;
         }
 
-        /// <summary>
-        /// Turns a notification's portal-relative link into an absolute
-        /// one. Returns null when there is no base URL configured, so
-        /// the email simply carries no link rather than a broken one.
-        /// </summary>
         private string? AbsoluteLink(string? link)
         {
             if (string.IsNullOrWhiteSpace(link))

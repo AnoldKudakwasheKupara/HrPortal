@@ -63,10 +63,6 @@ namespace HrPortal.Migrations
                 principalColumn: "Id",
                 onDelete: ReferentialAction.SetNull);
 
-            // Job titles were free text on the employee. Every
-            // distinct one becomes a position, the employees are
-            // linked to it, and only then is the old column dropped.
-            // Doing it the other way round would lose them all.
             migrationBuilder.Sql(@"
                 INSERT INTO Positions (Title, IsActive, CreatedAt)
                 SELECT DISTINCT LTRIM(RTRIM(JobTitle)), 1, SYSUTCDATETIME()
@@ -92,8 +88,6 @@ namespace HrPortal.Migrations
                 name: "FK_Employees_Positions_PositionId",
                 table: "Employees");
 
-            // Put the titles back on the employee before the
-            // positions they came from are removed.
             migrationBuilder.Sql(@"
                 UPDATE e
                 SET e.JobTitle = p.Title

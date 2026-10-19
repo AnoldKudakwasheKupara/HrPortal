@@ -15,15 +15,8 @@ namespace HrPortal.Entities
 
         public DateTime? CompletedOn { get; set; }
 
-        /// <summary>
-        /// The vendor doing the work, when it is one on the register.
-        /// </summary>
         public int? VendorId { get; set; }
 
-        /// <summary>
-        /// Used when the work is done in house, or by someone who is
-        /// not on the vendor register.
-        /// </summary>
         public string? PerformedBy { get; set; }
 
         public decimal? Cost { get; set; }

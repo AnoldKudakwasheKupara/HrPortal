@@ -3,13 +3,6 @@ using System.Text;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// Builds the CSV behind every report export.
-    ///
-    /// Values are quoted and internal quotes doubled, and anything a
-    /// spreadsheet would treat as a formula is prefixed so an exported
-    /// note starting with "=" cannot execute when the file is opened.
-    /// </summary>
     public static class CsvExportService
     {
         public static byte[] Build(
@@ -27,8 +20,6 @@ namespace HrPortal.Services
                     string.Join(",", row.Select(Escape)));
             }
 
-            // The BOM keeps accented names readable when the file is
-            // opened in Excel.
             return Encoding.UTF8.GetPreamble()
                 .Concat(Encoding.UTF8.GetBytes(builder.ToString()))
                 .ToArray();
@@ -43,9 +34,6 @@ namespace HrPortal.Services
         {
             var text = value ?? string.Empty;
 
-            // A plain negative number is data, not a formula, and
-            // prefixing it would land in the spreadsheet as text and
-            // stop the column sorting or totalling.
             if (text.Length > 0 &&
                 (text[0] == '=' || text[0] == '+' ||
                  text[0] == '-' || text[0] == '@') &&

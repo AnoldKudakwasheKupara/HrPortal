@@ -402,8 +402,6 @@ namespace HrPortal.Controllers
                 ActivitiesOutstanding = await _context.ItActivities
                     .CountAsync(a => a.Status != ItActivityStatus.Resolved),
 
-                // Due once the working week is over and nothing has
-                // been drafted for it.
                 WeeklyReportDue =
                     today.DayOfWeek >= DayOfWeek.Friday &&
                     !await _context.WeeklyReports

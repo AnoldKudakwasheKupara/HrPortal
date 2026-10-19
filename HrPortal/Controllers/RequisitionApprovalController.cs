@@ -9,12 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The two approval queues. Review sits with the Administrator,
-    /// who already holds purchasing, the vendor register and the asset
-    /// register; final approval sits with the Managing Director and is
-    /// only reached when the amount calls for it.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOrMd)]
     public class RequisitionApprovalController : Controller
     {
@@ -61,9 +55,6 @@ namespace HrPortal.Controllers
             return View("Queue", requisitions);
         }
 
-        /// <summary>
-        /// Everything on the register, whatever stage it has reached.
-        /// </summary>
         public async Task<IActionResult> All(RequisitionStatus? status)
         {
             var query = _context.Requisitions

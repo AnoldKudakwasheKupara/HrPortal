@@ -12,13 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The policy hub: what the organisation's policies are, which
-    /// version is in force, and who has confirmed they have read them.
-    ///
-    /// Everyone signed in can read the policies that apply to them.
-    /// HR and administrators write, publish and replace them.
-    /// </summary>
     [Authorize]
     public class PolicyController : Controller
     {
@@ -44,10 +37,6 @@ namespace HrPortal.Controllers
             _userManager = userManager;
         }
 
-        /// <summary>
-        /// The hub. Shows the policies in force that this person may
-        /// see, and whether they still need to acknowledge each one.
-        /// </summary>
         public async Task<IActionResult> Index(string? category, string? search)
         {
             var audiences = AudienceRules.Visible(User);
@@ -135,9 +124,6 @@ namespace HrPortal.Controllers
 
             if (model.CanManage)
             {
-                // Who still has not read it is the question a policy
-                // owner actually asks, so answer it here rather than
-                // only counting the ones who have.
                 var acknowledgedIds = policy.Acknowledgements
                     .Select(a => a.EmployeeId)
                     .ToList();
@@ -276,10 +262,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // ============================================================
-        // WRITING AND PUBLISHING
-        // ============================================================
-
         [Authorize(Roles = AudienceRules.Curators)]
         public async Task<IActionResult> Manage(PolicyStatus? status)
         {
@@ -330,8 +312,6 @@ namespace HrPortal.Controllers
 
                 if (previous != null)
                 {
-                    // Reissuing: carry the detail across so only the
-                    // version, the file and the dates need attention.
                     model.Title = previous.Title;
                     model.Reference = previous.Reference;
                     model.Category = previous.Category;
@@ -404,11 +384,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Manage));
         }
 
-        /// <summary>
-        /// Puts a policy in force. If it replaces another, that one is
-        /// marked replaced in the same step, so two versions are never
-        /// both in force.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = AudienceRules.Curators)]
@@ -499,10 +474,6 @@ namespace HrPortal.Controllers
             }
         }
 
-        /// <summary>
-        /// Bumps 1.0 to 2.0, or 3 to 4. Anything else is left for the
-        /// author to set, since version schemes vary.
-        /// </summary>
         private static string NextVersion(string version)
         {
             var parts = version.Split('.');
@@ -537,9 +508,6 @@ namespace HrPortal.Controllers
             if (!AudienceRules.CanSee(User, policy.Audience))
                 return null;
 
-            // A draft is not a policy yet, and a withdrawn one is no
-            // longer one. Neither is anyone's business but the people
-            // who maintain them.
             if (policy.Status != PolicyStatus.Active && !CanManage())
                 return null;
 

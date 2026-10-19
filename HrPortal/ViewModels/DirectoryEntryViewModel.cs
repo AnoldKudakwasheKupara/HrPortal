@@ -1,9 +1,5 @@
 namespace HrPortal.ViewModels
 {
-    /// <summary>
-    /// One row of the staff directory. Only what a colleague needs to
-    /// find and contact someone at work.
-    /// </summary>
     public class DirectoryEntryViewModel
     {
         public string Name { get; set; } = string.Empty;

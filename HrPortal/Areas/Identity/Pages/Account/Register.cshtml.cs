@@ -92,8 +92,6 @@ public class RegisterModel : PageModel
             {
                 _logger.LogInformation("User created a new account with password.");
 
-                // Employee is the baseline role every account carries,
-                // so a new sign-up is never left with no role at all.
                 await _userManager.AddToRoleAsync(user, Roles.Employee);
 
                 var userId = await _userManager.GetUserIdAsync(user);

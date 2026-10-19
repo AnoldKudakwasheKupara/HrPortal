@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The requester's own requisitions. Anyone with a staff record
-    /// can raise one; nobody sees anyone else's here.
-    /// </summary>
     [Authorize]
     public class MyRequisitionsController : Controller
     {
@@ -303,9 +299,6 @@ namespace HrPortal.Controllers
             if (requisition == null)
                 return NotFound();
 
-            // Only an untouched draft can be removed outright. Anything
-            // that has been through an approver is withdrawn instead, so
-            // the record of it survives.
             if (requisition.Status != RequisitionStatus.Draft)
             {
                 TempData["Error"] =
@@ -341,10 +334,6 @@ namespace HrPortal.Controllers
                     r.EmployeeId == employeeId.Value);
         }
 
-        /// <summary>
-        /// Lines the requester actually filled in. Blank spare rows are
-        /// dropped rather than failing validation.
-        /// </summary>
         private static List<RequisitionLineViewModel> Usable(
             RequisitionEditViewModel model) =>
             model.Lines
@@ -412,8 +401,6 @@ namespace HrPortal.Controllers
                     .ToList()
             };
 
-            // A couple of spare rows so another item can be added
-            // without any scripting.
             model.Lines.Add(new RequisitionLineViewModel());
             model.Lines.Add(new RequisitionLineViewModel());
 

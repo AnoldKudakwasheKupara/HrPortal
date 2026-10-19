@@ -9,11 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The shelves of the document repository. Kept apart from the
-    /// browsing controller because creating one decides who can see
-    /// what, which is not something everyone with a login should do.
-    /// </summary>
     [Authorize(Roles = AudienceRules.Curators)]
     public class RepositoryFolderController : Controller
     {
@@ -132,8 +127,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Worth spelling out in the audit trail: widening a folder
-            // exposes everything already in it.
             var note = audienceWas == model.Audience
                 ? $"Folder {folder.Name} updated."
                 : $"Folder {folder.Name} moved from {audienceWas} to " +

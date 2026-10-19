@@ -71,7 +71,6 @@ namespace HrPortal.ViewModels
         [DataType(DataType.Date)]
         public DateTime? ContractEndDate { get; set; }
 
-
         [Required]
         [Display(Name = "Department")]
         public int DepartmentId { get; set; }

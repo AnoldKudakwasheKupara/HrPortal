@@ -8,10 +8,6 @@ using Microsoft.Extensions.Options;
 
 namespace HrPortal.Services
 {
-    /// <summary>
-    /// What a single reminder run did, so the run can be reported
-    /// rather than disappearing into the log.
-    /// </summary>
     public class ReminderRun
     {
         public Dictionary<string, int> Sent { get; } = new();
@@ -29,14 +25,6 @@ namespace HrPortal.Services
         }
     }
 
-    /// <summary>
-    /// Raises the reminders nobody would otherwise get.
-    ///
-    /// Every other notification in the portal is a reaction to somebody
-    /// doing something. These are the opposite: nothing happens, and
-    /// that is exactly the problem. A licence quietly expires, a
-    /// contract runs out, a request sits unapproved.
-    /// </summary>
     public class ReminderService
     {
         private readonly ApplicationDbContext _context;
@@ -144,8 +132,6 @@ namespace HrPortal.Services
             if (licences.Count == 0)
                 return 0;
 
-            // Licences sit with the administrator, who keeps the
-            // register and places the renewal.
             var recipients = await EmployeeIdsInRoleAsync(Roles.Administrator);
 
             var sent = 0;
@@ -283,11 +269,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// Policies coming up for review. A policy nobody revisits
-        /// stops describing how the organisation actually works, and
-        /// the review date is the only thing that catches that.
-        /// </summary>
         private async Task<int> RemindPolicyReviewsAsync(
             DateTime today,
             DateTime horizon)
@@ -344,11 +325,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// People who have not yet acknowledged a policy that asks for
-        /// it. A policy hub that records who has read what is only
-        /// useful if somebody chases the ones who have not.
-        /// </summary>
         private async Task<int> RemindUnacknowledgedPoliciesAsync(DateTime today)
         {
             var policies = await _context.Policies
@@ -382,9 +358,6 @@ namespace HrPortal.Services
 
             foreach (var policy in policies)
             {
-                // Only chase the people the policy actually applies to,
-                // which for a restricted one is a narrower group than
-                // everybody on the payroll.
                 var audienceIds = await AudienceEmployeeIdsAsync(policy.Audience);
 
                 foreach (var employee in staff)
@@ -419,11 +392,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// The employees an audience covers. Everyone means everyone;
-        /// the narrower ones resolve through the roles that can see
-        /// them.
-        /// </summary>
         private async Task<HashSet<int>> AudienceEmployeeIdsAsync(
             DocumentAudience audience)
         {
@@ -453,11 +421,6 @@ namespace HrPortal.Services
             return ids;
         }
 
-        /// <summary>
-        /// A lapsing qualification is told to both the person who holds
-        /// it and to HR: the holder has to renew it, and HR has to know
-        /// whether the organisation still has cover.
-        /// </summary>
         private async Task<int> RemindExpiringCertificationsAsync(
             DateTime today,
             DateTime horizon)
@@ -579,10 +542,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// Training goes to the person who has to do it, not to HR.
-        /// Nobody else can complete it for them.
-        /// </summary>
         private async Task<int> RemindDueTrainingAsync(
             DateTime today,
             DateTime horizon)
@@ -633,11 +592,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// Leave sitting with an approver for longer than it should.
-        /// The request itself notified them when it arrived; this is
-        /// the nudge when nothing happened afterwards.
-        /// </summary>
         private async Task<int> RemindStaleLeaveAsync(DateTime today)
         {
             var cutoff = DateTime.UtcNow.AddDays(-_options.StaleApprovalDays);
@@ -665,9 +619,6 @@ namespace HrPortal.Services
 
             foreach (var request in pending)
             {
-                // Measured from whatever last happened to it, not from
-                // submission, or a request that cleared HR this morning
-                // would look stale to the MD straight away.
                 var waitingSince = request.LastAction ?? request.SubmittedAt;
 
                 if (waitingSince > cutoff)
@@ -782,11 +733,6 @@ namespace HrPortal.Services
             return sent;
         }
 
-        /// <summary>
-        /// "expired 3 days ago", "expires today" or "expires in 12
-        /// days", so the title says the urgency rather than the reader
-        /// having to work it out from a date.
-        /// </summary>
         private static string Due(DateTime today, DateTime date)
         {
             var days = (date.Date - today).Days;
@@ -801,10 +747,6 @@ namespace HrPortal.Services
 
         private static string Plural(int count) => count == 1 ? "" : "s";
 
-        /// <summary>
-        /// Turns an enum name into something that reads as English in
-        /// the middle of a sentence, so FixedTerm becomes "fixed term".
-        /// </summary>
         private static string Humanise(Enum value)
         {
             var name = value.ToString();
@@ -816,11 +758,6 @@ namespace HrPortal.Services
             return spaced.ToLowerInvariant();
         }
 
-        /// <summary>
-        /// True when this reminder has not gone to this person about
-        /// this thing inside the repeat interval. Records the send so
-        /// the next run knows.
-        /// </summary>
         private async Task<bool> ShouldSendAsync(
             string kind,
             string referenceKey,
@@ -857,11 +794,6 @@ namespace HrPortal.Services
             return true;
         }
 
-        /// <summary>
-        /// The employees behind the accounts in a role. A role holder
-        /// with no employee record cannot be notified, since
-        /// notifications belong to an employee.
-        /// </summary>
         private async Task<List<int>> EmployeeIdsInRoleAsync(string role)
         {
             var users = await _userManager.GetUsersInRoleAsync(role);

@@ -10,10 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    /// <summary>
-    /// The service schedule for the machines on the asset register:
-    /// what is booked in, what is overdue and what has been done.
-    /// </summary>
     [Authorize(Roles = Roles.AdminOnly)]
     public class AssetMaintenanceController : Controller
     {
@@ -96,8 +92,6 @@ namespace HrPortal.Controllers
         {
             await LoadLookups();
 
-            // Arriving from an asset's own page: preselect its holder
-            // so the narrowed list already contains that machine.
             int? holder = assetId == null
                 ? null
                 : await _context.Assets
@@ -244,9 +238,6 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// The common case: the work got done today.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Complete(int id)
@@ -355,8 +346,6 @@ namespace HrPortal.Controllers
                 })
                 .ToList();
 
-            // Only people who actually hold something, so the picker
-            // never offers a name with no machines behind it.
             ViewBag.AssetHolders = assets
                 .Where(a => a.AssignedToEmployee != null)
                 .Select(a => a.AssignedToEmployee!)

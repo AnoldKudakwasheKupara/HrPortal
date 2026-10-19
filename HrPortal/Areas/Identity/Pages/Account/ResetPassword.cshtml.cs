@@ -42,7 +42,6 @@ public class ResetPasswordModel : PageModel
 
         [Required]
         public string Code { get; set; } = default!;
-
     }
 
     public IActionResult OnGet(string? code = null)

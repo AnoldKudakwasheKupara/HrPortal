@@ -21,9 +21,6 @@ namespace HrPortal.Migrations
                 type: "nvarchar(20)",
                 maxLength: 20,
                 nullable: false,
-                // Existing staff predate this column. The enum is
-                // stored as its name, so an empty string would not map
-                // back to a value and every read would throw.
                 defaultValue: "Permanent");
 
             migrationBuilder.AddColumn<DateTime>(

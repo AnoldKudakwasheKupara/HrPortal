@@ -1,10 +1,5 @@
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// One week's IT department status report. The sections and the
-    /// priorities carry the content; the numbers quoted inside them
-    /// are drawn from the activity log when the draft is opened.
-    /// </summary>
     public class WeeklyReport
     {
         public int Id { get; set; }

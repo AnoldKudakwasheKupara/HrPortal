@@ -2,11 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HrPortal.Entities
 {
-    /// <summary>
-    /// The standing vocabulary used against each workstream in the
-    /// weekly report, kept to a fixed set so the wording stays
-    /// consistent from one week to the next.
-    /// </summary>
     public enum WorkstreamStatus
     {
         [Display(Name = "None")]
