@@ -1,6 +1,7 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace HrPortal.Services
 {
@@ -10,17 +11,104 @@ namespace HrPortal.Services
         private readonly LeaveBalanceService _balances;
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
+        private readonly LeaveOptions _options;
 
         public LeaveWorkflowService(
             ApplicationDbContext context,
             LeaveBalanceService balances,
             NotificationService notifications,
-            AuditService audit)
+            AuditService audit,
+            IOptionsSnapshot<LeaveOptions> options)
         {
             _context = context;
             _balances = balances;
             _notifications = notifications;
             _audit = audit;
+            _options = options.Value;
+        }
+
+        public async Task<LeaveValidationResult> ValidateRequestAsync(
+            int employeeId,
+            int leaveTypeId,
+            DateTime startDate,
+            DateTime endDate,
+            int? excludeRequestId)
+        {
+            var result = new LeaveValidationResult();
+
+            var earliest = DateTime.Today.AddDays(
+                -_options.BackdateGraceDays);
+
+            if (startDate.Date < earliest)
+            {
+                result.Add(
+                    LeaveValidationResult.StartDateField,
+                    _options.BackdateGraceDays == 0
+                        ? "Leave cannot start before today."
+                        : $"Leave cannot start more than " +
+                          $"{_options.BackdateGraceDays} day(s) in " +
+                          "the past. Ask HR to record leave taken " +
+                          "earlier than that.");
+
+                return result;
+            }
+
+            if (endDate.Date < startDate.Date)
+            {
+                result.Add(
+                    LeaveValidationResult.EndDateField,
+                    "The end date cannot be before the start date.");
+
+                return result;
+            }
+
+            result.NumberOfDays = await CountWorkingDaysAsync(
+                startDate,
+                endDate);
+
+            if (result.NumberOfDays == 0)
+            {
+                result.Add(
+                    LeaveValidationResult.EndDateField,
+                    "That range has no working days in it, once " +
+                    "weekends and public holidays are taken out.");
+
+                return result;
+            }
+
+            var overlaps = await _context.LeaveRequests
+                .AnyAsync(r =>
+                    r.EmployeeId == employeeId &&
+                    (excludeRequestId == null ||
+                     r.Id != excludeRequestId.Value) &&
+                    r.Status != LeaveRequestStatus.Rejected &&
+                    r.Status != LeaveRequestStatus.HRRejected &&
+                    r.Status != LeaveRequestStatus.Cancelled &&
+                    r.StartDate <= endDate &&
+                    r.EndDate >= startDate);
+
+            if (overlaps)
+            {
+                result.Add(
+                    LeaveValidationResult.FormField,
+                    "You already have leave booked that overlaps " +
+                    "these dates.");
+
+                return result;
+            }
+
+            var balanceError =
+                await _balances.ValidateAgainstBalanceAsync(
+                    employeeId,
+                    leaveTypeId,
+                    startDate.Year,
+                    result.NumberOfDays,
+                    excludeRequestId);
+
+            if (balanceError != null)
+                result.Add(LeaveValidationResult.FormField, balanceError);
+
+            return result;
         }
 
         public static bool IsAwaitingHr(LeaveRequestStatus status)

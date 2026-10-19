@@ -17,25 +17,19 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly LeaveWorkflowService _workflow;
-        private readonly LeaveBalanceService _balances;
         private readonly CurrentUserService _currentUser;
         private readonly IAuthorizationService _authorization;
-        private readonly LeaveOptions _leaveOptions;
 
         public MyLeaveController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
-            LeaveBalanceService balances,
             CurrentUserService currentUser,
-            IAuthorizationService authorization,
-            IOptionsSnapshot<LeaveOptions> leaveOptions)
+            IAuthorizationService authorization)
         {
             _context = context;
             _workflow = workflow;
-            _balances = balances;
             _currentUser = currentUser;
             _authorization = authorization;
-            _leaveOptions = leaveOptions.Value;
         }
 
         public async Task<IActionResult> Index()
@@ -102,10 +96,17 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var numberOfDays = await ValidateRequest(
-                model,
+            var validation = await _workflow.ValidateRequestAsync(
                 employeeId.Value,
+                model.LeaveTypeId,
+                model.StartDate,
+                model.EndDate,
                 null);
+
+            var numberOfDays = validation.NumberOfDays;
+
+            foreach (var error in validation.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
 
             if (!ModelState.IsValid)
             {
@@ -210,10 +211,17 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            var numberOfDays = await ValidateRequest(
-                model,
+            var validation = await _workflow.ValidateRequestAsync(
                 employeeId.Value,
+                model.LeaveTypeId,
+                model.StartDate,
+                model.EndDate,
                 id);
+
+            var numberOfDays = validation.NumberOfDays;
+
+            foreach (var error in validation.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
 
             if (!ModelState.IsValid)
             {
@@ -274,90 +282,6 @@ namespace HrPortal.Controllers
                 "Leave request cancelled.";
 
             return RedirectToAction(nameof(Index));
-        }
-
-        private async Task<decimal> ValidateRequest(
-            MyLeaveRequestViewModel model,
-            int employeeId,
-            int? excludeRequestId)
-        {
-            var earliest = DateTime.Today.AddDays(
-                -_leaveOptions.BackdateGraceDays);
-
-            if (model.StartDate.Date < earliest)
-            {
-                ModelState.AddModelError(
-                    nameof(model.StartDate),
-                    _leaveOptions.BackdateGraceDays == 0
-                        ? "Leave cannot start before today."
-                        : $"Leave cannot start more than " +
-                          $"{_leaveOptions.BackdateGraceDays} day(s) in " +
-                          "the past. Ask HR to record leave taken " +
-                          "earlier than that.");
-
-                return 0;
-            }
-
-            if (model.EndDate.Date < model.StartDate.Date)
-            {
-                ModelState.AddModelError(
-                    nameof(model.EndDate),
-                    "The end date cannot be before the start date.");
-
-                return 0;
-            }
-
-            var numberOfDays = await _workflow.CountWorkingDaysAsync(
-                model.StartDate,
-                model.EndDate);
-
-            if (numberOfDays == 0)
-            {
-                ModelState.AddModelError(
-                    nameof(model.EndDate),
-                    "That range has no working days in it, once " +
-                    "weekends and public holidays are taken out.");
-
-                return 0;
-            }
-
-            var overlaps = await _context.LeaveRequests
-                .AnyAsync(r =>
-                    r.EmployeeId == employeeId &&
-                    (excludeRequestId == null ||
-                     r.Id != excludeRequestId.Value) &&
-                    r.Status != LeaveRequestStatus.Rejected &&
-                    r.Status != LeaveRequestStatus.HRRejected &&
-                    r.Status != LeaveRequestStatus.Cancelled &&
-                    r.StartDate <= model.EndDate &&
-                    r.EndDate >= model.StartDate);
-
-            if (overlaps)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "You already have leave booked that overlaps " +
-                    "these dates.");
-
-                return numberOfDays;
-            }
-
-            var balanceError =
-                await _balances.ValidateAgainstBalanceAsync(
-                    employeeId,
-                    model.LeaveTypeId,
-                    model.StartDate.Year,
-                    numberOfDays,
-                    excludeRequestId);
-
-            if (balanceError != null)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    balanceError);
-            }
-
-            return numberOfDays;
         }
 
         private async Task<LeaveRequest?> LoadAuthorizedRequest(
