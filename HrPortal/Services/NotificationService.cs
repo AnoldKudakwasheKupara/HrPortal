@@ -140,7 +140,19 @@ namespace HrPortal.Services
                 {
                     try
                     {
-                        await channel.DeliverAsync(outbound);
+                        var report = await channel.DeliverAsync(outbound);
+
+                        if (!report.AllDelivered)
+                        {
+                            _logger.LogWarning(
+                                "The {Channel} channel delivered " +
+                                "{Delivered} of {Total} notification(s); " +
+                                "{Failed} failed.",
+                                channel.Name,
+                                report.Delivered,
+                                outbound.Count,
+                                report.Failed);
+                        }
                     }
                     catch (Exception ex)
                     {

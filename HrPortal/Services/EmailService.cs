@@ -21,7 +21,7 @@ namespace HrPortal.Services
 
         public bool IsEnabled => _options.Enabled;
 
-        public async Task SendAsync(
+        public async Task<bool> SendAsync(
             string toAddress,
             string? toName,
             string subject,
@@ -30,7 +30,7 @@ namespace HrPortal.Services
             CancellationToken cancellationToken = default)
         {
             if (!_options.Enabled)
-                return;
+                return false;
 
             if (string.IsNullOrWhiteSpace(toAddress))
             {
@@ -38,7 +38,7 @@ namespace HrPortal.Services
                     "Skipping notification email with no recipient: {Subject}",
                     subject);
 
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(_options.FromAddress))
@@ -47,7 +47,7 @@ namespace HrPortal.Services
                     "Email is enabled but Email:FromAddress is not set, " +
                     "so nothing can be sent.");
 
-                return;
+                return false;
             }
 
             try
@@ -57,10 +57,12 @@ namespace HrPortal.Services
                 if (_options.Delivery == EmailDelivery.File)
                 {
                     await WriteToPickupAsync(message, cancellationToken);
-                    return;
+                    return true;
                 }
 
                 await SendOverSmtpAsync(message, cancellationToken);
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -70,6 +72,8 @@ namespace HrPortal.Services
                     "{Subject}",
                     toAddress,
                     subject);
+
+                return false;
             }
         }
 

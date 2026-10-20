@@ -6,9 +6,14 @@ namespace HrPortal.Services.Notifications
 
         bool IsEnabled { get; }
 
-        Task DeliverAsync(
+        Task<DeliveryReport> DeliverAsync(
             IReadOnlyList<OutboundNotification> batch,
             CancellationToken cancellationToken = default);
+    }
+
+    public record DeliveryReport(int Delivered, int Failed)
+    {
+        public bool AllDelivered => Failed == 0;
     }
 
     public record OutboundNotification(

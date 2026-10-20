@@ -13,20 +13,30 @@ namespace HrPortal.Services.Notifications
 
         public bool IsEnabled => _email.IsEnabled;
 
-        public async Task DeliverAsync(
+        public async Task<DeliveryReport> DeliverAsync(
             IReadOnlyList<OutboundNotification> batch,
             CancellationToken cancellationToken = default)
         {
+            var delivered = 0;
+            var failed = 0;
+
             foreach (var item in batch)
             {
-                await _email.SendAsync(
+                var sent = await _email.SendAsync(
                     item.EmailAddress,
                     item.DisplayName,
                     item.Title,
                     item.Message,
                     item.Link,
                     cancellationToken);
+
+                if (sent)
+                    delivered++;
+                else
+                    failed++;
             }
+
+            return new DeliveryReport(delivered, failed);
         }
     }
 }
