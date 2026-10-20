@@ -1,4 +1,4 @@
-﻿@model IEnumerable<HrPortal.Entities.EmployeeDocument>
+﻿@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.EmployeeDocument>
 
 @{
     ViewData["Title"] = "Employee Documents";
@@ -124,7 +124,7 @@
 
                     <tbody>
 
-                    @foreach (var document in Model)
+                    @foreach (var document in Model.Items)
                     {
                         <tr>
 
@@ -254,7 +254,10 @@
 
                 </table>
 
-                @if (!Model.Any())
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "documents"); }
+            <partial name="_Pager" model="pager" />
+
+                @if (!Model.Items.Any())
                 {
                     <p class="text-muted mb-0">
                         No documents match this filter.

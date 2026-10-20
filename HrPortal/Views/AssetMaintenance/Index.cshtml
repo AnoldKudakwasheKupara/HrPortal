@@ -1,6 +1,6 @@
 @using HrPortal.Entities
 @using Microsoft.AspNetCore.Mvc.Rendering
-@model IEnumerable<HrPortal.Entities.AssetMaintenance>
+@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.AssetMaintenance>
 
 @{
     ViewData["Title"] = "Maintenance Schedule";
@@ -141,7 +141,7 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="7" class="text-center text-muted py-4">
@@ -151,7 +151,7 @@
                     }
                     else
                     {
-                        foreach (var m in Model)
+                        foreach (var m in Model.Items)
                         {
                             <tr>
                                 <td>
@@ -234,6 +234,9 @@
                     </tbody>
 
                 </table>
+
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "maintenance records"); }
+            <partial name="_Pager" model="pager" />
             </div>
         </div>
     </div>

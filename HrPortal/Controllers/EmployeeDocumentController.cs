@@ -18,6 +18,8 @@ namespace HrPortal.Controllers
     {
         private const string UploadFolder = "employee-documents";
 
+        private const int PageSize = 50;
+
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
         private readonly CurrentUserService _currentUser;
@@ -40,7 +42,8 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index(
             int? employeeId,
-            int? categoryId)
+            int? categoryId,
+            int page = 1)
         {
             var query = await _scope.VisibleToAsync(
                 _context.EmployeeDocuments
@@ -64,7 +67,7 @@ namespace HrPortal.Controllers
 
             var documents = await query
                 .OrderByDescending(d => d.UploadedAt)
-                .ToListAsync();
+                .ToPagedResultAsync(page, PageSize);
 
             await LoadLookups();
 

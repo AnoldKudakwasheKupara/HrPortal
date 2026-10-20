@@ -1,0 +1,33 @@
+@model HrPortal.ViewModels.PagerViewModel
+
+@if (Model.TotalPages > 1)
+{
+    <div class="card-footer d-flex justify-content-between align-items-center">
+
+        <span class="text-muted">
+            Page @Model.Page of @Model.TotalPages
+            (@Model.TotalCount @Model.ItemNoun)
+        </span>
+
+        <div>
+
+            @if (Model.Page > 1)
+            {
+                <a class="btn btn-sm btn-outline-secondary"
+                   href="@Model.UrlForPage(Model.Page - 1)">
+                    Previous
+                </a>
+            }
+
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a class="btn btn-sm btn-outline-secondary"
+                   href="@Model.UrlForPage(Model.Page + 1)">
+                    Next
+                </a>
+            }
+
+        </div>
+
+    </div>
+}

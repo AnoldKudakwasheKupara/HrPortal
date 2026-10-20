@@ -15,6 +15,8 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.AdminOnly)]
     public class ItActivityController : Controller
     {
+        private const int PageSize = 50;
+
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
@@ -33,7 +35,8 @@ namespace HrPortal.Controllers
             DateTime? from,
             DateTime? to,
             ItActivityCategory? category,
-            ItActivityStatus? status)
+            ItActivityStatus? status,
+            int page = 1)
         {
             var today = DateTime.Today;
 
@@ -57,7 +60,7 @@ namespace HrPortal.Controllers
             var activities = await query
                 .OrderByDescending(a => a.LoggedOn)
                 .ThenByDescending(a => a.Id)
-                .ToListAsync();
+                .ToPagedResultAsync(page, PageSize);
 
             ViewBag.From = start;
             ViewBag.To = end;

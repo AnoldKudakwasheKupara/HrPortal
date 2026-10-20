@@ -13,6 +13,8 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.AdminOnly)]
     public class AssetMaintenanceController : Controller
     {
+        private const int PageSize = 50;
+
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
 
@@ -28,7 +30,8 @@ namespace HrPortal.Controllers
             int? assetId,
             MaintenanceStatus? status,
             MaintenanceType? type,
-            bool overdueOnly = false)
+            bool overdueOnly = false,
+            int page = 1)
         {
             var today = DateTime.Today;
 
@@ -57,7 +60,7 @@ namespace HrPortal.Controllers
             var records = await query
                 .OrderBy(m => m.Status == MaintenanceStatus.Scheduled ? 0 : 1)
                 .ThenBy(m => m.ScheduledFor)
-                .ToListAsync();
+                .ToPagedResultAsync(page, PageSize);
 
             ViewBag.Overdue = await _context.AssetMaintenances
                 .CountAsync(m =>

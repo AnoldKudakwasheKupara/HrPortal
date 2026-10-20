@@ -17,6 +17,8 @@ namespace HrPortal.Controllers
     {
         private const string UploadFolder = "repository";
 
+        private const int PageSize = 50;
+
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;
         private readonly AuditService _audit;
@@ -34,7 +36,8 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        public async Task<IActionResult> Index(int? folderId, string? search)
+        public async Task<IActionResult> Index(int? folderId, string? search,
+            int page = 1)
         {
             var audiences = AudienceRules.Visible(User);
 
@@ -82,7 +85,7 @@ namespace HrPortal.Controllers
 
             var rows = await documents
                 .OrderByDescending(d => d.UploadedAt)
-                .ToListAsync();
+                .ToPagedResultAsync(page, PageSize);
 
             return View(rows);
         }

@@ -1,5 +1,5 @@
 @using HrPortal.Entities
-@model IEnumerable<HrPortal.Entities.WeeklyReport>
+@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.WeeklyReport>
 
 @{
     ViewData["Title"] = "Weekly Reports";
@@ -89,7 +89,7 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="6" class="text-center text-muted py-4">
@@ -100,7 +100,7 @@
                     }
                     else
                     {
-                        foreach (var r in Model)
+                        foreach (var r in Model.Items)
                         {
                             <tr>
                                 <td>
@@ -164,6 +164,9 @@
                     </tbody>
 
                 </table>
+
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "reports"); }
+            <partial name="_Pager" model="pager" />
             </div>
         </div>
     </div>

@@ -1,5 +1,5 @@
 @using HrPortal.Entities
-@model IEnumerable<HrPortal.Entities.ItActivity>
+@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.ItActivity>
 
 @{
     ViewData["Title"] = "IT Activity Log";
@@ -181,7 +181,7 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="7" class="text-center text-muted py-4">
@@ -191,7 +191,7 @@
                     }
                     else
                     {
-                        foreach (var a in Model)
+                        foreach (var a in Model.Items)
                         {
                             <tr>
                                 <td>@a.LoggedOn.ToString("ddd d MMM")</td>
@@ -280,6 +280,10 @@
 
                 </table>
             </div>
+
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "activities"); }
+            <partial name="_Pager" model="pager" />
+
         </div>
     </div>
 

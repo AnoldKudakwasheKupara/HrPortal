@@ -14,6 +14,8 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.AdminOnly)]
     public class WeeklyReportController : Controller
     {
+        private const int PageSize = 50;
+
         private readonly ApplicationDbContext _context;
         private readonly WeeklyReportBuilder _builder;
         private readonly WeeklyReportPdfService _pdf;
@@ -34,22 +36,25 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             var reports = await _context.WeeklyReports
                 .AsNoTracking()
                 .Include(r => r.Sections)
                 .Include(r => r.Priorities)
                 .OrderByDescending(r => r.PeriodStart)
-                .ToListAsync();
+                .ToPagedResultAsync(page, PageSize);
 
-            ViewBag.Drafts = reports
-                .Count(r => r.Status == WeeklyReportStatus.Draft);
+            ViewBag.Drafts = await _context.WeeklyReports
+                .CountAsync(r => r.Status == WeeklyReportStatus.Draft);
 
-            ViewBag.Issued = reports
-                .Count(r => r.Status == WeeklyReportStatus.Final);
+            ViewBag.Issued = await _context.WeeklyReports
+                .CountAsync(r => r.Status == WeeklyReportStatus.Final);
 
-            var lastPeriod = reports.FirstOrDefault()?.PeriodStart;
+            var lastPeriod = await _context.WeeklyReports
+                .OrderByDescending(r => r.PeriodStart)
+                .Select(r => (DateTime?)r.PeriodStart)
+                .FirstOrDefaultAsync();
 
             ViewBag.NextPeriodStart = WeeklyReportBuilder.NextPeriodStart(lastPeriod);
 

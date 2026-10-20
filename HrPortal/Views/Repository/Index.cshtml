@@ -1,6 +1,6 @@
 @using HrPortal.Services
 @using HrPortal.ViewModels
-@model IEnumerable<HrPortal.Entities.RepositoryDocument>
+@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.RepositoryDocument>
 
 @{
     ViewData["Title"] = "Document Repository";
@@ -144,7 +144,7 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="5" class="text-center text-muted py-4">
@@ -154,7 +154,7 @@
                     }
                     else
                     {
-                        foreach (var document in Model)
+                        foreach (var document in Model.Items)
                         {
                             var stale = document.ExpiryDate != null &&
                                         document.ExpiryDate.Value.Date < today;
@@ -229,6 +229,9 @@
                     </tbody>
 
                 </table>
+
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "documents"); }
+            <partial name="_Pager" model="pager" />
             </div>
         </div>
     </div>
