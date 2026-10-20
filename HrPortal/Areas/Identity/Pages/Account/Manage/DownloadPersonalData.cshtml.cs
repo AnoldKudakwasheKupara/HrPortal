@@ -28,7 +28,7 @@ public class DownloadPersonalDataModel : PageModel
 
     public IActionResult OnGet()
     {
-        return NotFound();
+        return RedirectToPage("./PersonalData");
     }
 
     public async Task<IActionResult> OnPostAsync()
