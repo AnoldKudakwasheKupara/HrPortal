@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var leaveType = await _context.LeaveTypes
+                .AsNoTracking()
                 .Include(l => l.LeaveRequests)
                     .ThenInclude(r => r.Employee)
                 .FirstOrDefaultAsync(l => l.Id == id);

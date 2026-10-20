@@ -55,6 +55,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var employee = await _context.Employees
+                .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Position)
                 .Include(e => e.User)
@@ -473,6 +474,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var employee = await _context.Employees
+                .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Position)
                 .Include(e => e.User)

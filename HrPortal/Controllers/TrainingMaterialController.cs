@@ -63,6 +63,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var material = await _context.TrainingMaterials
+                .AsNoTracking()
                 .Include(m => m.TrainingCourse)
                 .Include(m => m.UploadedByEmployee)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -255,6 +256,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var material = await _context.TrainingMaterials
+                .AsNoTracking()
                 .Include(m => m.TrainingCourse)
                 .Include(m => m.UploadedByEmployee)
                 .FirstOrDefaultAsync(m => m.Id == id);

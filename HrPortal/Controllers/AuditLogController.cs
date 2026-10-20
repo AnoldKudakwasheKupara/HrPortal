@@ -93,6 +93,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var log = await _context.AuditLogs
+                .AsNoTracking()
                 .Include(a => a.Employee)
                     .ThenInclude(e => e!.Department)
                 .FirstOrDefaultAsync(a => a.Id == id);

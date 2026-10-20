@@ -39,6 +39,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var configuration = await _context.ApprovalConfigurations
+                .AsNoTracking()
                 .Include(a => a.Employee)
                     .ThenInclude(e => e.Department)
                 .FirstOrDefaultAsync(a => a.Id == id);

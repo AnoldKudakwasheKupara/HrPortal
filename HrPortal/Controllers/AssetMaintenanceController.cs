@@ -281,6 +281,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var record = await _context.AssetMaintenances
+                .AsNoTracking()
                 .Include(m => m.Asset)
                 .Include(m => m.Vendor)
                 .FirstOrDefaultAsync(m => m.Id == id);

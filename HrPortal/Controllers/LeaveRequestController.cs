@@ -78,6 +78,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var request = await _context.LeaveRequests
+                .AsNoTracking()
                 .Include(r => r.Employee)
                     .ThenInclude(e => e.Department)
                 .Include(r => r.LeaveType)

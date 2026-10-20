@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var department = await _context.Departments
+                .AsNoTracking()
                 .Include(d => d.Employees)
                 .FirstOrDefaultAsync(d => d.Id == id);
 

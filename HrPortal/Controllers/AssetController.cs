@@ -72,6 +72,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var asset = await _context.Assets
+                .AsNoTracking()
                 .Include(a => a.AssignedToEmployee)
                     .ThenInclude(e => e!.Department)
                 .FirstOrDefaultAsync(a => a.Id == id);
@@ -220,6 +221,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var asset = await _context.Assets
+                .AsNoTracking()
                 .Include(a => a.AssignedToEmployee)
                 .FirstOrDefaultAsync(a => a.Id == id);
 

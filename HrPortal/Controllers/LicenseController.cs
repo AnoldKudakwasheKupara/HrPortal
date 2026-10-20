@@ -100,6 +100,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var license = await _context.Licenses
+                .AsNoTracking()
                 .Include(l => l.Vendor)
                 .Include(l => l.AssignedToEmployee)
                     .ThenInclude(e => e!.Department)
@@ -341,6 +342,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var license = await _context.Licenses
+                .AsNoTracking()
                 .Include(l => l.Vendor)
                 .Include(l => l.Renewals)
                 .FirstOrDefaultAsync(l => l.Id == id);

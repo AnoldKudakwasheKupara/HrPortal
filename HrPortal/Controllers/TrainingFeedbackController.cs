@@ -40,6 +40,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var feedback = await _context.TrainingFeedbacks
+                .AsNoTracking()
                 .Include(f => f.TrainingAssignment)
                     .ThenInclude(a => a.TrainingCourse)
                 .Include(f => f.TrainingAssignment)
@@ -171,6 +172,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var feedback = await _context.TrainingFeedbacks
+                .AsNoTracking()
                 .Include(f => f.TrainingAssignment)
                     .ThenInclude(a => a.TrainingCourse)
                 .Include(f => f.TrainingAssignment)

@@ -80,6 +80,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var document = await _context.EmployeeDocuments
+                .AsNoTracking()
                 .Include(d => d.Employee)
                     .ThenInclude(e => e.Department)
                 .Include(d => d.DocumentCategory)
@@ -322,6 +323,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var document = await _context.EmployeeDocuments
+                .AsNoTracking()
                 .Include(d => d.Employee)
                 .Include(d => d.DocumentCategory)
                 .Include(d => d.UploadedByEmployee)

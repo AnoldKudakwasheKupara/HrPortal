@@ -74,6 +74,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var balance = await _context.LeaveBalances
+                .AsNoTracking()
                 .Include(b => b.LeaveType)
                 .FirstOrDefaultAsync(b =>
                     b.EmployeeId == request.EmployeeId &&

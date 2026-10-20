@@ -45,6 +45,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var course = await _context.TrainingCourses
+                .AsNoTracking()
                 .Include(c => c.CreatedByEmployee)
                 .Include(c => c.Materials)
                 .Include(c => c.Assignments)

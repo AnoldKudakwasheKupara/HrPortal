@@ -62,6 +62,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var balance = await _context.LeaveBalances
+                .AsNoTracking()
                 .Include(b => b.Employee)
                     .ThenInclude(e => e.Department)
                 .Include(b => b.LeaveType)
@@ -228,6 +229,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var balance = await _context.LeaveBalances
+                .AsNoTracking()
                 .Include(b => b.Employee)
                 .Include(b => b.LeaveType)
                 .FirstOrDefaultAsync(b => b.Id == id);

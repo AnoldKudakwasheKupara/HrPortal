@@ -67,6 +67,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var vendor = await _context.Vendors
+                .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vendor == null)
@@ -203,6 +204,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var vendor = await _context.Vendors
+                .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vendor == null)

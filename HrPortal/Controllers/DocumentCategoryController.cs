@@ -35,6 +35,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var category = await _context.DocumentCategories
+                .AsNoTracking()
                 .Include(c => c.Documents)
                     .ThenInclude(d => d.Employee)
                 .FirstOrDefaultAsync(c => c.Id == id);

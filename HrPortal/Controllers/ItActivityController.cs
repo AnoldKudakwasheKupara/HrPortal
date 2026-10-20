@@ -263,6 +263,7 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var activity = await _context.ItActivities
+                .AsNoTracking()
                 .Include(a => a.RaisedByEmployee)
                 .Include(a => a.Asset)
                 .FirstOrDefaultAsync(a => a.Id == id);
