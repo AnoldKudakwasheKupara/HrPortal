@@ -175,6 +175,19 @@ builder.Services.AddRazorPages(options =>
 
 var app = builder.Build();
 
+if (DatabaseConfigurationProvider.LastLoadError != null)
+{
+    app.Services
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Settings")
+        .LogWarning(
+            DatabaseConfigurationProvider.LastLoadError,
+            "Settings could not be read from the database, so the " +
+            "values in appsettings.json are being used instead. " +
+            "Anything an administrator changed on the settings page " +
+            "is not in effect.");
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

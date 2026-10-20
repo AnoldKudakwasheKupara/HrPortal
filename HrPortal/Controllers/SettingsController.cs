@@ -119,8 +119,14 @@ namespace HrPortal.Controllers
                     null,
                     string.Join("; ", changes));
 
-                TempData["Success"] =
-                    $"{changes.Count} setting(s) changed and in force now.";
+                TempData["Success"] = DatabaseConfigurationProvider
+                    .SettingsAreLive
+                        ? $"{changes.Count} setting(s) changed and in " +
+                          "force now."
+                        : $"{changes.Count} setting(s) were saved, but " +
+                          "they could not be re-read from the database, " +
+                          "so they are not in force yet. Check the " +
+                          "server log.";
             }
             else
             {
@@ -158,9 +164,14 @@ namespace HrPortal.Controllers
                 $"{stored.Count} setting override(s) removed, falling " +
                 "back to the configuration file.");
 
-            TempData["Success"] =
-                $"{stored.Count} override(s) removed. The settings in " +
-                "appsettings.json apply again.";
+            TempData["Success"] = DatabaseConfigurationProvider
+                .SettingsAreLive
+                    ? $"{stored.Count} override(s) removed. The settings " +
+                      "in appsettings.json apply again."
+                    : $"{stored.Count} override(s) were removed, but the " +
+                      "settings could not be re-read from the database, " +
+                      "so the change is not in force yet. Check the " +
+                      "server log.";
 
             return RedirectToAction(nameof(Index));
         }

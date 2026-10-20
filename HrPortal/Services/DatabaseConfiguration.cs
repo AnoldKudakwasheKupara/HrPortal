@@ -26,6 +26,10 @@ namespace HrPortal.Services
 
         private static readonly object Gate = new();
 
+        public static SqlException? LastLoadError { get; private set; }
+
+        public static bool SettingsAreLive => LastLoadError == null;
+
         public DatabaseConfigurationProvider(string connectionString)
         {
             _connectionString = connectionString;
@@ -63,9 +67,19 @@ namespace HrPortal.Services
                         : reader.GetString(1);
                 }
             }
-            catch (SqlException)
+            catch (SqlException ex)
             {
+                // This runs while configuration is still being built, so
+                // there is no logger yet. Keep the failure and let the
+                // host report it once it can, rather than losing it.
+                LastLoadError = ex;
+
+                Data = Data.Count > 0 ? Data : data;
+
+                return;
             }
+
+            LastLoadError = null;
 
             Data = data;
         }
