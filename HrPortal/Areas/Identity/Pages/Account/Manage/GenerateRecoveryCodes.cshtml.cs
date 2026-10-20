@@ -40,7 +40,11 @@ public class GenerateRecoveryCodesModel : PageModel
         var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
         if (!isTwoFactorEnabled)
         {
-            throw new InvalidOperationException($"Cannot generate recovery codes for user because they do not have 2FA enabled.");
+            StatusMessage =
+                "Recovery codes are only used for two-factor sign-in, " +
+                "which is off, so there are none to generate yet.";
+
+            return RedirectToPage("./TwoFactorAuthentication");
         }
 
         return Page();
