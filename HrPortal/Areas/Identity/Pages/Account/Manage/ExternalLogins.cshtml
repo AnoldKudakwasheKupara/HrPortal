@@ -1,54 +1,177 @@
-
 @page
+@using Microsoft.AspNetCore.Authentication
 @model ExternalLoginsModel
 @{
-    ViewData["Title"] = "Manage your external logins";
+    ViewData["Title"] = "External logins";
     ViewData["ActivePage"] = ManageNavPages.ExternalLogins;
+
+    var current = Model.CurrentLogins ?? new List<UserLoginInfo>();
+    var others = Model.OtherLogins ?? (IList<AuthenticationScheme>)new List<AuthenticationScheme>();
 }
 
-<partial name="_StatusMessage" for="StatusMessage" />
-@if (Model.CurrentLogins?.Count > 0)
-{
-    <h3>Registered Logins</h3>
-    <table class="table">
-        <tbody>
-            @foreach (var login in Model.CurrentLogins)
-            {
-                <tr>
-                    <td id="@($"login-provider-{login.LoginProvider}")">@login.ProviderDisplayName</td>
-                    <td>
-                        @if (Model.ShowRemoveButton)
-                        {
-                            <form id="@($"remove-login-{login.LoginProvider}")" asp-page-handler="RemoveLogin" method="post">
-                                <div>
-                                    <input asp-for="@login.LoginProvider" name="LoginProvider" type="hidden" />
-                                    <input asp-for="@login.ProviderKey" name="ProviderKey" type="hidden" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-@if (Model.OtherLogins?.Count > 0)
-{
-    <h4>Add another service to log in.</h4>
-    <hr />
-    <form id="link-login-form" asp-page-handler="LinkLogin" method="post" class="form-horizontal">
-        <div id="socialLoginList">
-            <p>
-                @foreach (var provider in Model.OtherLogins)
-                {
-                    <button id="@($"link-login-button-{provider.Name}")" type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                }
-            </p>
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>External logins</h2>
+
+        <p class="text-muted">
+            Outside accounts you can use to sign in to the portal instead
+            of a password.
+        </p>
+
+    </div>
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">Linked</div>
+
+                <div class="card-body is-table">
+
+                    @if (current.Count == 0)
+                    {
+                        <p class="field-value is-empty mb-0">
+                            Nothing is linked. You sign in with your email
+                            address and password.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-hover align-middle">
+
+                                <thead>
+                                    <tr>
+                                        <th>Service</th>
+                                        <th class="col-actions">Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                @foreach (var login in current)
+                                {
+                                    <tr>
+
+                                        <td id="@($"login-provider-{login.LoginProvider}")">
+                                            @login.ProviderDisplayName
+                                        </td>
+
+                                        <td class="col-actions">
+                                            @if (Model.ShowRemoveButton)
+                                            {
+                                                <form id="@($"remove-login-{login.LoginProvider}")"
+                                                      asp-page-handler="RemoveLogin"
+                                                      method="post">
+
+                                                    <input asp-for="@login.LoginProvider"
+                                                           name="LoginProvider"
+                                                           type="hidden" />
+
+                                                    <input asp-for="@login.ProviderKey"
+                                                           name="ProviderKey"
+                                                           type="hidden" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            title="Unlink @login.ProviderDisplayName from this account">
+                                                        Unlink
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    Your only way in
+                                                </span>
+                                            }
+                                        </td>
+
+                                    </tr>
+                                }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
         </div>
-    </form>
-}
+
+        <div class="col-lg-5">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header">Add another</div>
+
+                <div class="card-body">
+
+                    @if (others.Count == 0)
+                    {
+                        <p class="field-value is-empty mb-0">
+                            No outside services are set up for this
+                            portal.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="field-value">
+                            Linking one lets you sign in with it as well.
+                        </p>
+
+                        <form id="link-login-form"
+                              asp-page-handler="LinkLogin"
+                              method="post">
+
+                            <div id="socialLoginList"
+                                 class="d-flex flex-wrap gap-2">
+
+                                @foreach (var provider in others)
+                                {
+                                    <button id="@($"link-login-button-{provider.Name}")"
+                                            type="submit"
+                                            class="btn btn-outline-primary"
+                                            name="provider"
+                                            value="@provider.Name"
+                                            title="Sign in using your @provider.DisplayName account">
+                                        @provider.DisplayName
+                                    </button>
+                                }
+
+                            </div>
+
+                        </form>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mt-3 mb-4">
+
+        <div class="card-header">Account settings</div>
+
+        <div class="card-body">
+            <partial name="_ManageNav" />
+        </div>
+
+    </div>
+
+</div>
