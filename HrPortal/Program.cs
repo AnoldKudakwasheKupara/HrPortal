@@ -4,6 +4,7 @@ using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.Services.Reporting;
 using HrPortal.Services.Notifications;
+using HrPortal.Services.Reminders;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -117,6 +118,17 @@ builder.Services.Configure<LeaveOptions>(
 builder.Services.AddSingleton<EmailService>();
 
 builder.Services.AddScoped<INotificationChannel, EmailNotificationChannel>();
+
+builder.Services.AddScoped<IReminderRule, LicenceExpiryRule>();
+builder.Services.AddScoped<IReminderRule, DocumentExpiryRule>();
+builder.Services.AddScoped<IReminderRule, ContractEndingRule>();
+builder.Services.AddScoped<IReminderRule, StaleLeaveRule>();
+builder.Services.AddScoped<IReminderRule, StaleRequisitionRule>();
+builder.Services.AddScoped<IReminderRule, MaintenanceDueRule>();
+builder.Services.AddScoped<IReminderRule, TrainingDueRule>();
+builder.Services.AddScoped<IReminderRule, CertificationExpiryRule>();
+builder.Services.AddScoped<IReminderRule, PolicyReviewRule>();
+builder.Services.AddScoped<IReminderRule, PolicyUnreadRule>();
 
 builder.Services.AddScoped<ReminderService>();
 builder.Services.AddHostedService<ReminderHostedService>();
