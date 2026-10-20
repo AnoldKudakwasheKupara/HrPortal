@@ -1,31 +1,100 @@
 @page
 @model DeletePersonalDataModel
 @{
-    ViewData["Title"] = "Delete Personal Data";
+    ViewData["Title"] = "Delete account";
     ViewData["ActivePage"] = ManageNavPages.PersonalData;
 }
 
-<h3>@ViewData["Title"]</h3>
+<div class="container-fluid">
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
-</div>
+    <div class="page-head-simple">
 
-<div>
-    <form id="delete-user" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-        @if (Model.RequirePassword)
-        {
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label asp-for="Input.Password" class="form-label"></label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+        <h2>Delete account</h2>
+
+        <p class="text-muted">
+            Closing the sign-in you are using now.
+        </p>
+
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header">Confirm</div>
+
+                <div class="card-body">
+
+                    <div class="alert alert-warning">
+                        <strong>This cannot be undone.</strong>
+                        You will be signed out straight away and will not
+                        be able to sign in again.
+                    </div>
+
+                    <p class="field-value">
+                        Your employment record stays with HR. Leave,
+                        training, documents and the rest remain on file;
+                        it is the sign-in that is removed, and it cannot
+                        be put back without HR creating a new one.
+                    </p>
+
+                    <form id="delete-user" method="post">
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        @if (Model.RequirePassword)
+                        {
+                            <div class="mb-4">
+
+                                <label asp-for="Input.Password"
+                                       class="form-label">
+                                    Your password
+                                </label>
+
+                                <input asp-for="Input.Password"
+                                       class="form-control"
+                                       autocomplete="current-password"
+                                       aria-required="true" />
+
+                                <div class="form-text">
+                                    Confirming with your password makes
+                                    sure this is you.
+                                </div>
+
+                                <span asp-validation-for="Input.Password"
+                                      class="text-danger"></span>
+
+                            </div>
+                        }
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                Delete my account
+                            </button>
+
+                            <a class="btn btn-secondary"
+                               asp-page="./PersonalData">
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
-        }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
-    </form>
+
+        </div>
+
+    </div>
+
 </div>
 
 @section Scripts {
