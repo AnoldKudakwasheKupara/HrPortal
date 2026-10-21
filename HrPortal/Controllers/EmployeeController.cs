@@ -137,6 +137,9 @@ namespace HrPortal.Controllers
                 EmergencyContactPhone = model.EmergencyContactPhone?.Trim(),
                 EmergencyContactRelationship =
                     model.EmergencyContactRelationship?.Trim(),
+
+                EmergencyContactAddress =
+                    model.EmergencyContactAddress?.Trim(),
                 DateJoined = model.DateJoined,
                 EmploymentType = model.EmploymentType,
                 ContractEndDate = model.ContractEndDate,
@@ -267,6 +270,9 @@ namespace HrPortal.Controllers
                 EmergencyContactPhone = employee.EmergencyContactPhone,
                 EmergencyContactRelationship =
                     employee.EmergencyContactRelationship,
+
+                EmergencyContactAddress =
+                    employee.EmergencyContactAddress,
                 DateJoined = employee.DateJoined,
                 EmploymentType = employee.EmploymentType,
                 ContractEndDate = employee.ContractEndDate,
@@ -326,12 +332,31 @@ namespace HrPortal.Controllers
             employee.Gender = model.Gender;
             employee.MaritalStatus = model.MaritalStatus;
             employee.Address = model.Address?.Trim();
+            var emergencyChanged =
+                employee.EmergencyContactName !=
+                    model.EmergencyContactName?.Trim() ||
+                employee.EmergencyContactPhone !=
+                    model.EmergencyContactPhone?.Trim() ||
+                employee.EmergencyContactRelationship !=
+                    model.EmergencyContactRelationship?.Trim() ||
+                employee.EmergencyContactAddress !=
+                    model.EmergencyContactAddress?.Trim();
+
             employee.EmergencyContactName =
                 model.EmergencyContactName?.Trim();
             employee.EmergencyContactPhone =
                 model.EmergencyContactPhone?.Trim();
             employee.EmergencyContactRelationship =
                 model.EmergencyContactRelationship?.Trim();
+            employee.EmergencyContactAddress =
+                model.EmergencyContactAddress?.Trim();
+
+            // The confirmation belongs to the employee. If HR changes
+            // these details it no longer describes what was confirmed,
+            // so it is cleared and the employee is asked again.
+            if (emergencyChanged)
+                employee.NextOfKinConfirmedAt = null;
+
             employee.DateJoined = model.DateJoined;
             employee.EmploymentType = model.EmploymentType;
             employee.ContractEndDate = model.ContractEndDate;

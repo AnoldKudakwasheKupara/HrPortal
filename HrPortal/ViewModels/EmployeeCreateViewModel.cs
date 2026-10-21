@@ -57,6 +57,10 @@ namespace HrPortal.ViewModels
         [StringLength(100)]
         public string? EmergencyContactRelationship { get; set; }
 
+        [Display(Name = "Emergency Contact Address")]
+        [StringLength(500)]
+        public string? EmergencyContactAddress { get; set; }
+
         [Required]
         [Display(Name = "Date Joined")]
         [DataType(DataType.Date)]

@@ -241,6 +241,35 @@
                     </div>
                 </div>
 
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">Emergency Contact Address</span>
+                    <div class="field-value">
+                        @(string.IsNullOrWhiteSpace(Model.EmergencyContactAddress)
+                            ? "Same as the employee's"
+                            : Model.EmergencyContactAddress)
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <span class="field-label">Next Of Kin Confirmed</span>
+                    <div class="field-value">
+                        @if (Model.NextOfKinConfirmedAt == null)
+                        {
+                            <span class="badge bg-warning">
+                                Not confirmed by the employee
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Confirmed</span>
+                            <span class="text-muted">
+                                @(Model.NextOfKinConfirmedAt.Value.ToLocalTime()
+                                    .ToString("d MMM yyyy HH:mm"))
+                            </span>
+                        }
+                    </div>
+                </div>
+
             </div>
         </div>
 

@@ -256,6 +256,14 @@
                         <span asp-validation-for="EmergencyContactRelationship" class="text-danger"></span>
                     </div>
 
+                    <div class="col-12 mb-3">
+                        <label asp-for="EmergencyContactAddress" class="form-label"></label>
+                        <textarea asp-for="EmergencyContactAddress" class="form-control"
+                                  rows="2"
+                                  placeholder="Leave blank if the same as the employee address"></textarea>
+                        <span asp-validation-for="EmergencyContactAddress" class="text-danger"></span>
+                    </div>
+
                 </div>
 
                 <hr class="my-4" />
