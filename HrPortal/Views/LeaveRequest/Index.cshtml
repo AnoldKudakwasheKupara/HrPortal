@@ -111,6 +111,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                No leave requests match this filter.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var request in Model)
                     {
                         <tr>
@@ -188,13 +198,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Any())
-                {
-                    <p class="text-muted mb-0">
-                        No leave requests match this filter.
-                    </p>
-                }
 
             </div>
 

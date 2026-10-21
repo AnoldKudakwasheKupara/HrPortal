@@ -52,6 +52,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-4">
+                                You have no training assigned at the moment.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var assignment in Model)
                     {
                         <tr>
@@ -150,13 +160,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Any())
-                {
-                    <p class="text-muted mb-0">
-                        You have no training assigned at the moment.
-                    </p>
-                }
 
             </div>
 

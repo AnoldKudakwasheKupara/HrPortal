@@ -124,6 +124,16 @@
 
                     <tbody>
 
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                No documents match this filter.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var document in Model.Items)
                     {
                         <tr>
@@ -256,13 +266,6 @@
 
             @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "documents"); }
             <partial name="_Pager" model="pager" />
-
-                @if (!Model.Items.Any())
-                {
-                    <p class="text-muted mb-0">
-                        No documents match this filter.
-                    </p>
-                }
 
             </div>
 

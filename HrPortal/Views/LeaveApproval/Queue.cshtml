@@ -66,6 +66,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                There is nothing waiting for you right now.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var request in Model)
                     {
                         <tr>
@@ -115,13 +125,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Any())
-                {
-                    <p class="text-muted mb-0">
-                        There is nothing waiting for you right now.
-                    </p>
-                }
 
             </div>
 

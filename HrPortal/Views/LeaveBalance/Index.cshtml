@@ -113,6 +113,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                No leave balances have been recorded for @selectedYear.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var balance in Model)
                     {
                         <tr>
@@ -193,13 +203,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Any())
-                {
-                    <p class="text-muted mb-0">
-                        No leave balances have been recorded for @selectedYear.
-                    </p>
-                }
 
             </div>
 

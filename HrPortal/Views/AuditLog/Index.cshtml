@@ -141,6 +141,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                No audit entries match this filter.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var log in Model)
                     {
                         <tr>
@@ -223,13 +233,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Any())
-                {
-                    <p class="text-muted mb-0">
-                        No audit entries match this filter.
-                    </p>
-                }
 
             </div>
 
