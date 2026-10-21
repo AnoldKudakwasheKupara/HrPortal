@@ -57,6 +57,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                No employees have been added yet.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var employee in Model)
                     {
                         <tr>

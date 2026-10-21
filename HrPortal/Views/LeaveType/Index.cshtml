@@ -58,6 +58,16 @@
 
                     <tbody>
 
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-4">
+                                No leave types have been added yet.
+                            </td>
+                        </tr>
+                    }
+
                     @foreach (var leaveType in Model)
                     {
                         <tr>
