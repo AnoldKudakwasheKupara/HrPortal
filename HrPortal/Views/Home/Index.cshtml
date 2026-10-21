@@ -418,6 +418,19 @@
         </div>
     }
 
+    @{
+        var charts = Model.Trends
+            .Where(t => t.Points.Count > 1 && t.Total > 0)
+            .ToList();
+    }
+
+    @if (charts.Any())
+    {
+        <div class="section-heading">Trends</div>
+
+        <partial name="_ReportTrends" model="charts" />
+    }
+
     @if (Model.Hr != null)
     {
         <div class="section-heading">HR</div>

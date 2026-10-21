@@ -19,6 +19,8 @@ namespace HrPortal.ViewModels
         public AdminDashboardSection? Admin { get; set; }
 
         public List<DashboardFocusItem> Focus { get; set; } = new();
+
+        public List<ReportTrend> Trends { get; set; } = new();
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Controllers;
 using HrPortal.Security;
+using HrPortal.Services.Reporting;
 using HrPortal.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -51,6 +52,8 @@ namespace HrPortal.Services
                 model.Admin = await BuildAdminAsync();
 
             model.Focus = BuildFocus(model);
+
+            model.Trends = await BuildTrendsAsync(user, employee);
 
             return model;
         }
@@ -614,6 +617,104 @@ namespace HrPortal.Services
             }
 
             return focus;
+        }
+
+        /// <summary>
+        /// Builds the twelve-month charts shown under the personal
+        /// section. Each one is grouped by month in SQL, so a chart
+        /// costs twelve rows rather than a year of records.
+        /// </summary>
+        private async Task<List<ReportTrend>> BuildTrendsAsync(
+            ClaimsPrincipal user,
+            Employee? employee)
+        {
+            var trends = new List<ReportTrend>();
+
+            var start = new DateTime(
+                DateTime.Today.Year,
+                DateTime.Today.Month,
+                1).AddMonths(-11);
+
+            if (employee != null && !user.IsInRole(Roles.Md))
+            {
+                var mine = await MonthlyLeaveDaysAsync(
+                    start, employee.Id);
+
+                trends.Add(ReportMath.MonthlyTrend(
+                    "My leave days", mine, "days", "0.##"));
+            }
+
+            var seesEveryone =
+                user.IsInRole(Roles.HrOfficer) ||
+                user.IsInRole(Roles.Md) ||
+                user.IsInRole(Roles.Administrator);
+
+            if (seesEveryone)
+            {
+                var everyone = await MonthlyLeaveDaysAsync(start, null);
+
+                trends.Add(ReportMath.MonthlyTrend(
+                    "Leave days approved", everyone, "days", "0.##"));
+            }
+
+            if (user.IsInRole(Roles.Administrator))
+            {
+                var logged = await _context.ItActivities
+                    .AsNoTracking()
+                    .Where(a => a.LoggedOn >= start)
+                    .GroupBy(a => new
+                    {
+                        a.LoggedOn.Year,
+                        a.LoggedOn.Month
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        Value = (decimal)g.Count()
+                    })
+                    .ToListAsync();
+
+                trends.Add(ReportMath.MonthlyTrend(
+                    "IT activity logged",
+                    logged.Select(r =>
+                        (new DateTime(r.Year, r.Month, 1), r.Value)),
+                    "logged"));
+            }
+
+            return trends;
+        }
+
+        /// <summary>
+        /// Approved leave days per month, for one employee when an id
+        /// is given or across the business when it is not.
+        /// </summary>
+        private async Task<List<(DateTime When, decimal Value)>>
+            MonthlyLeaveDaysAsync(DateTime start, int? employeeId)
+        {
+            var rows = await _context.LeaveRequests
+                .AsNoTracking()
+                .Where(r =>
+                    r.Status == LeaveRequestStatus.Approved &&
+                    r.StartDate >= start &&
+                    (employeeId == null || r.EmployeeId == employeeId))
+                .GroupBy(r => new
+                {
+                    r.StartDate.Year,
+                    r.StartDate.Month
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    Value = g.Sum(r => r.NumberOfDays)
+                })
+                .ToListAsync();
+
+            return rows
+                .Select(r =>
+                    (new DateTime(r.Year, r.Month, 1), r.Value))
+                .ToList();
         }
     }
 }
