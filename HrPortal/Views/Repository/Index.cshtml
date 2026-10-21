@@ -184,8 +184,8 @@
                                 <td>@Size(document.FileSizeBytes)</td>
 
                                 <td>
-                                    @document.UploadedAt.ToLocalTime()
-                                        .ToString("d MMM yyyy")
+                                    @(document.UploadedAt.ToLocalTime()
+                                        .ToString("d MMM yyyy"))
                                     <div class="text-muted small">
                                         @(document.UploadedByName ?? "--")
                                     </div>

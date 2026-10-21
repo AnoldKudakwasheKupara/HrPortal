@@ -211,8 +211,8 @@
                                 @if (Model.AssignedOn.HasValue)
                                 {
                                     <div class="field-value">
-                                        @Model.AssignedOn.Value.ToLocalTime()
-                                            .ToString("dd MMM yyyy")
+                                        @(Model.AssignedOn.Value.ToLocalTime()
+                                            .ToString("dd MMM yyyy"))
                                     </div>
                                 }
                                 else
