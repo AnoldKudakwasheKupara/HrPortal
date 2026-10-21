@@ -104,23 +104,35 @@
 
             @if (Model.TrainingCourse.Materials.Any())
             {
-                <ul class="list-group list-group-flush">
+                <ul class="row-list">
 
                 @foreach (var material in Model.TrainingCourse.Materials
                     .OrderByDescending(m => m.UploadedAt))
                 {
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <li>
 
-                        <span>
-                            @material.OriginalFileName
-
-                            @if (!string.IsNullOrWhiteSpace(material.Description))
-                            {
-                                <span class="text-muted">
-                                    &mdash; @material.Description
-                                </span>
-                            }
+                        <span class="row-icon">
+                            <i class="fas fa-file-lines" aria-hidden="true"></i>
                         </span>
+
+                        <div class="row-main">
+
+                            <span class="row-title">
+                                @material.OriginalFileName
+                            </span>
+
+                            <span class="row-meta">
+                                @if (!string.IsNullOrWhiteSpace(material.Description))
+                                {
+                                    @material.Description
+                                }
+                                else
+                                {
+                                    <text>Uploaded @material.UploadedAt.ToString("dd MMM yyyy")</text>
+                                }
+                            </span>
+
+                        </div>
 
                         <a class="btn btn-sm btn-outline-primary"
                            asp-action="Material"
@@ -135,7 +147,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128193;</span>
                     No materials have been uploaded for this course.
                 </p>
             }

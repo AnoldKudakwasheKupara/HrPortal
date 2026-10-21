@@ -212,19 +212,29 @@
 
             @if (Model.Materials.Any())
             {
-                <ul class="list-group list-group-flush">
+                <ul class="row-list">
 
                 @foreach (var material in Model.Materials
                     .OrderByDescending(m => m.UploadedAt))
                 {
-                    <li class="list-group-item px-0">
+                    <li>
 
-                        @material.OriginalFileName
-
-                        <span class="text-muted">
-                            &mdash;
-                            @material.UploadedAt.ToString("dd MMM yyyy")
+                        <span class="row-icon">
+                            <i class="fas fa-file-lines" aria-hidden="true"></i>
                         </span>
+
+                        <div class="row-main">
+
+                            <span class="row-title">
+                                @material.OriginalFileName
+                            </span>
+
+                            <span class="row-meta">
+                                Uploaded
+                                @material.UploadedAt.ToString("dd MMM yyyy")
+                            </span>
+
+                        </div>
 
                     </li>
                 }
