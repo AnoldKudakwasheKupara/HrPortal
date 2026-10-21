@@ -46,7 +46,7 @@
 
         <div class="report-stat @(lastRunAt == null ? "is-warning" : "is-good")">
             <span class="report-stat-label">Last run</span>
-            <span class="report-stat-value" style="font-size:1.25rem">
+            <span class="report-stat-value is-text">
                 @(lastRunAt?.ToString("d MMM HH:mm") ?? "Not yet")
             </span>
             <span class="report-stat-note">
@@ -58,7 +58,7 @@
 
         <div class="report-stat">
             <span class="report-stat-label">Runs at</span>
-            <span class="report-stat-value" style="font-size:1.25rem">
+            <span class="report-stat-value is-text">
                 @($"{options.RunAtHour:00}:00")
             </span>
             <span class="report-stat-note">Every day</span>

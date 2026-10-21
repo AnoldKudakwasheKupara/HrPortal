@@ -938,6 +938,24 @@ a.stat-tile:hover .stat-icon {
     color: var(--gray-800);
 }
 
+/* A stat value sized for a count does not fit a currency amount or a
+   date, so those step down rather than carrying an inline font-size. */
+.report-stat-value.is-money { font-size: 1.35rem; }
+
+.report-stat-value.is-text  { font-size: 1.25rem; }
+
+/* Column widths for the requisition line editor. */
+.req-col-item { min-width: 16rem; }
+.req-col-qty  { width: 7rem; }
+.req-col-unit { width: 8rem; }
+.req-col-cost { width: 10rem; }
+.req-col-drop { width: 5rem; }
+
+/* The tick column on the role assignment table. */
+.role-tick-col { width: 80px; }
+
+.role-tick { width: 20px; height: 20px; }
+
 .report-stat-note {
     font-size: .75rem;
     color: var(--gray-400);

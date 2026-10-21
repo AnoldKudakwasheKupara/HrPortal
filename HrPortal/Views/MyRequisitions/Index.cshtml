@@ -49,7 +49,7 @@
 
         <div class="report-stat">
             <span class="report-stat-label">Approved to date</span>
-            <span class="report-stat-value" style="font-size:1.35rem">
+            <span class="report-stat-value is-money">
                 @currency @(((decimal)ViewBag.ApprovedTotal).ToString("N2"))
             </span>
             <span class="report-stat-note">Estimated value</span>
@@ -57,7 +57,7 @@
 
         <div class="report-stat">
             <span class="report-stat-label">MD threshold</span>
-            <span class="report-stat-value" style="font-size:1.35rem">
+            <span class="report-stat-value is-money">
                 @currency @threshold.ToString("N2")
             </span>
             <span class="report-stat-note">At or above, the MD decides</span>
