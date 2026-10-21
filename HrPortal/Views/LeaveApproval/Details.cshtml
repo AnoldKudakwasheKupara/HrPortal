@@ -44,10 +44,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @request.Employee.FirstName
                         @request.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -55,9 +55,9 @@
 
                     <span class="field-label">Department</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @request.Employee.Department.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -65,9 +65,9 @@
 
                     <span class="field-label">Leave Type</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @request.LeaveType.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -75,11 +75,11 @@
 
                     <span class="field-label">Dates</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @request.StartDate.ToString("dd MMM yyyy")
                         &ndash;
                         @request.EndDate.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -87,9 +87,9 @@
 
                     <span class="field-label">Working Days</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @request.NumberOfDays.ToString("0.##")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -97,11 +97,11 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         <span class="badge bg-warning text-dark">
                             @request.Status
                         </span>
-                    </p>
+                    </div>
 
                 </div>
 
@@ -109,9 +109,9 @@
 
                     <span class="field-label">Reason</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(request.Reason ?? "No reason given.")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -133,22 +133,22 @@
 
                     <div class="col">
                         <span class="field-label">Allocated</span>
-                        <p class="field-value">@Model.Balance.AllocatedDays.ToString("0.##")</p>
+                        <div class="field-value">@Model.Balance.AllocatedDays.ToString("0.##")</div>
                     </div>
 
                     <div class="col">
                         <span class="field-label">Used</span>
-                        <p class="field-value">@Model.Balance.UsedDays.ToString("0.##")</p>
+                        <div class="field-value">@Model.Balance.UsedDays.ToString("0.##")</div>
                     </div>
 
                     <div class="col">
                         <span class="field-label">Pending</span>
-                        <p class="field-value">@Model.Balance.PendingDays.ToString("0.##")</p>
+                        <div class="field-value">@Model.Balance.PendingDays.ToString("0.##")</div>
                     </div>
 
                     <div class="col">
                         <span class="field-label">Remaining</span>
-                        <p class="field-value">
+                        <div class="field-value">
                             @if (Model.Balance.RemainingDays < 0)
                             {
                                 <span class="badge bg-danger">
@@ -161,7 +161,7 @@
                                     @Model.Balance.RemainingDays.ToString("0.##")
                                 </span>
                             }
-                        </p>
+                        </div>
                     </div>
 
                 </div>

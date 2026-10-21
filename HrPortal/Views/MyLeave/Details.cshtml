@@ -42,7 +42,7 @@
 
                     <span class="field-label">Leave Type</span>
 
-                    <p class="field-value">@Model.LeaveType.Name</p>
+                    <div class="field-value">@Model.LeaveType.Name</div>
 
                 </div>
 
@@ -50,11 +50,11 @@
 
                     <span class="field-label">Dates</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.StartDate.ToString("dd MMM yyyy")
                         &ndash;
                         @Model.EndDate.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -62,7 +62,7 @@
 
                     <span class="field-label">Working Days</span>
 
-                    <p class="field-value">@Model.NumberOfDays.ToString("0.##")</p>
+                    <div class="field-value">@Model.NumberOfDays.ToString("0.##")</div>
 
                 </div>
 
@@ -70,11 +70,11 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         <span class="badge bg-secondary">
                             @Model.Status
                         </span>
-                    </p>
+                    </div>
 
                 </div>
 
@@ -82,9 +82,9 @@
 
                     <span class="field-label">Submitted</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -92,7 +92,7 @@
 
                     <span class="field-label">Completed</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.CompletedAt.HasValue)
                         {
                             @Model.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
@@ -103,7 +103,7 @@
                                 Still in progress
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -111,7 +111,7 @@
 
                     <span class="field-label">Reason</span>
 
-                    <p class="field-value">@(Model.Reason ?? "No reason given.")</p>
+                    <div class="field-value">@(Model.Reason ?? "No reason given.")</div>
 
                 </div>
 

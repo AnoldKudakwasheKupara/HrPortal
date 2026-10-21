@@ -96,9 +96,9 @@
 
                     <span class="field-label">Employee Number</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.EmployeeNumber
-                    </p>
+                    </div>
 
                 </div>
 
@@ -106,9 +106,9 @@
 
                     <span class="field-label">Name</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.FirstName @Model.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -116,9 +116,9 @@
 
                     <span class="field-label">Department</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Department?.Name ?? "Not set")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -126,9 +126,9 @@
 
                     <span class="field-label">Email</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Email
-                    </p>
+                    </div>
 
                 </div>
 
@@ -136,9 +136,9 @@
 
                     <span class="field-label">Sign-in Account</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.User != null ? "Yes" : "No")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -146,9 +146,9 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.IsActive ? "Active" : "Inactive")
-                    </p>
+                    </div>
 
                 </div>
 

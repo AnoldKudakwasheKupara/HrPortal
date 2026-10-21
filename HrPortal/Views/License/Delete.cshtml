@@ -38,24 +38,24 @@
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Licence</span>
-                    <p class="field-value">@Model.Name</p>
+                    <div class="field-value">@Model.Name</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Type</span>
-                    <p class="field-value">@Model.Type</p>
+                    <div class="field-value">@Model.Type</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Vendor</span>
-                    <p class="field-value">@(Model.Vendor?.Name ?? "--")</p>
+                    <div class="field-value">@(Model.Vendor?.Name ?? "--")</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Expires</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.ExpiryDate.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
                 </div>
 
             </div>

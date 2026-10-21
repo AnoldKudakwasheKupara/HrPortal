@@ -33,9 +33,9 @@
 
                     <span class="field-label">File Name</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.OriginalFileName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -43,10 +43,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -54,9 +54,9 @@
 
                     <span class="field-label">Category</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.DocumentCategory.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -64,7 +64,7 @@
 
                     <span class="field-label">Uploaded By</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (!string.IsNullOrWhiteSpace(Model.UploadedByName))
                         {
                             @Model.UploadedByName
@@ -78,7 +78,7 @@
                         {
                             <span class="text-muted">Not recorded</span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -86,9 +86,9 @@
 
                     <span class="field-label">Uploaded</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 

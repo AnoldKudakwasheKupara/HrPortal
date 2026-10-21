@@ -67,13 +67,13 @@
         <div class="card-body">
             @if (!string.IsNullOrWhiteSpace(Model.ExecutiveOverview))
             {
-                <p class="field-value mb-0">@Model.ExecutiveOverview</p>
+                <div class="field-value mb-0">@Model.ExecutiveOverview</div>
             }
             else
             {
-                <p class="field-value is-empty mb-0">
+                <div class="field-value is-empty mb-0">
                     Not written yet. The report cannot be issued without it.
-                </p>
+                </div>
             }
         </div>
 
@@ -114,9 +114,9 @@
                 }
                 else
                 {
-                    <p class="field-value is-empty mb-0">
+                    <div class="field-value is-empty mb-0">
                         Nothing recorded under this section.
-                    </p>
+                    </div>
                 }
 
             </div>
@@ -150,9 +150,9 @@
             }
             else
             {
-                <p class="field-value is-empty mb-0">
+                <div class="field-value is-empty mb-0">
                     No priorities recorded for the next period.
-                </p>
+                </div>
             }
         </div>
 

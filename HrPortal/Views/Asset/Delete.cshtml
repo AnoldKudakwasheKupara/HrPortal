@@ -26,20 +26,20 @@
 
                 <div class="col-md-4">
                     <span class="field-label">Device / Model</span>
-                    <p class="field-value">@Model.DeviceModel</p>
+                    <div class="field-value">@Model.DeviceModel</div>
                 </div>
 
                 <div class="col-md-4">
                     <span class="field-label">Serial Number</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @(string.IsNullOrWhiteSpace(Model.SerialNumber)
                             ? "Not recorded" : Model.SerialNumber)
-                    </p>
+                    </div>
                 </div>
 
                 <div class="col-md-4">
                     <span class="field-label">Assigned To</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.AssignedToEmployee != null)
                         {
                             @Model.AssignedToEmployee.FirstName
@@ -49,7 +49,7 @@
                         {
                             <span class="text-muted">Unassigned</span>
                         }
-                    </p>
+                    </div>
                 </div>
 
             </div>

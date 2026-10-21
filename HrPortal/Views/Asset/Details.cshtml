@@ -66,7 +66,7 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Device / model</span>
-                                <p class="field-value">@Model.DeviceModel</p>
+                                <div class="field-value">@Model.DeviceModel</div>
                             </div>
                         </div>
 
@@ -78,13 +78,13 @@
                                 <span class="field-label">Processor</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Processor))
                                 {
-                                    <p class="field-value">@Model.Processor</p>
+                                    <div class="field-value">@Model.Processor</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         Not recorded
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -97,13 +97,13 @@
                                 <span class="field-label">Serial number</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.SerialNumber))
                                 {
-                                    <p class="field-value">@Model.SerialNumber</p>
+                                    <div class="field-value">@Model.SerialNumber</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         Not recorded
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -116,15 +116,15 @@
                                 <span class="field-label">Procured</span>
                                 @if (Model.ProcuredOn.HasValue)
                                 {
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         @Model.ProcuredOn.Value.ToString("dd MMM yyyy")
-                                    </p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         Not recorded
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -137,13 +137,13 @@
                                 <span class="field-label">Company</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Company))
                                 {
-                                    <p class="field-value">@Model.Company</p>
+                                    <div class="field-value">@Model.Company</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         Not recorded
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -210,14 +210,14 @@
                                 <span class="field-label">Assigned on</span>
                                 @if (Model.AssignedOn.HasValue)
                                 {
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         @Model.AssignedOn.Value.ToLocalTime()
                                             .ToString("dd MMM yyyy")
-                                    </p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">--</p>
+                                    <div class="field-value is-empty">--</div>
                                 }
                             </div>
                         </div>
@@ -228,9 +228,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Status</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(Model.IsInUse ? "In use" : "Not in use")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -343,13 +343,13 @@
 
             @if (!string.IsNullOrWhiteSpace(Model.Notes))
             {
-                <p class="field-value mb-0">@Model.Notes</p>
+                <div class="field-value mb-0">@Model.Notes</div>
             }
             else
             {
-                <p class="field-value is-empty mb-0">
+                <div class="field-value is-empty mb-0">
                     Nothing recorded against this machine.
-                </p>
+                </div>
             }
 
         </div>

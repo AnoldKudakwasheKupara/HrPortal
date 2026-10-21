@@ -47,9 +47,9 @@
 
                     <span class="field-label">Category Name</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -57,7 +57,7 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
 
                         @if (Model.IsActive)
                         {
@@ -72,7 +72,7 @@
                             </span>
                         }
 
-                    </p>
+                    </div>
 
                 </div>
 
@@ -80,9 +80,9 @@
 
                     <span class="field-label">Description</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Description ?? "No description provided.")
-                    </p>
+                    </div>
 
                 </div>
 

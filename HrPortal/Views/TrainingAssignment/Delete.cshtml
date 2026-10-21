@@ -39,9 +39,9 @@
 
                     <span class="field-label">Course</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.TrainingCourse.Title
-                    </p>
+                    </div>
 
                 </div>
 
@@ -49,10 +49,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -60,9 +60,9 @@
 
                     <span class="field-label">Assigned</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.AssignedAt.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -70,7 +70,7 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.IsCompleted)
                         {
                             <span class="badge bg-success">
@@ -83,7 +83,7 @@
                                 Outstanding
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 

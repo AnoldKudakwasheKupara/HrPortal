@@ -55,9 +55,9 @@
 
                     <span class="field-label">File Name</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.OriginalFileName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -65,9 +65,9 @@
 
                     <span class="field-label">Course</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.TrainingCourse.Title
-                    </p>
+                    </div>
 
                 </div>
 
@@ -75,10 +75,10 @@
 
                     <span class="field-label">Uploaded By</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.UploadedByEmployee.FirstName
                         @Model.UploadedByEmployee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -86,9 +86,9 @@
 
                     <span class="field-label">Uploaded</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -96,9 +96,9 @@
 
                     <span class="field-label">Description</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Description ?? "No description provided.")
-                    </p>
+                    </div>
 
                 </div>
 

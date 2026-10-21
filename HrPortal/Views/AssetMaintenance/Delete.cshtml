@@ -25,26 +25,26 @@
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Asset</span>
-                    <p class="field-value">@Model.Asset.DeviceModel</p>
+                    <div class="field-value">@Model.Asset.DeviceModel</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Work</span>
-                    <p class="field-value">@Model.Type</p>
+                    <div class="field-value">@Model.Type</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Scheduled</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.ScheduledFor.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Status</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         <partial name="_MaintenanceStatusBadge" model="Model" />
-                    </p>
+                    </div>
                 </div>
 
             </div>

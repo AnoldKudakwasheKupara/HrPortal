@@ -35,9 +35,9 @@
 
                     <span class="field-label">Action</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Action
-                    </p>
+                    </div>
 
                 </div>
 
@@ -45,9 +45,9 @@
 
                     <span class="field-label">Entity</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.EntityName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -55,7 +55,7 @@
 
                     <span class="field-label">Record</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (!string.IsNullOrWhiteSpace(Model.EntityId))
                         {
                             @Model.EntityId
@@ -66,7 +66,7 @@
                                 Not recorded
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -74,7 +74,7 @@
 
                     <span class="field-label">Performed By</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.Employee != null)
                         {
                             @Model.Employee.FirstName
@@ -86,7 +86,7 @@
                                 System
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -94,9 +94,9 @@
 
                     <span class="field-label">When</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Timestamp.ToString("dd MMM yyyy HH:mm:ss")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -104,7 +104,7 @@
 
                     <span class="field-label">IP Address</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (!string.IsNullOrWhiteSpace(Model.IpAddress))
                         {
                             @Model.IpAddress
@@ -115,7 +115,7 @@
                                 Not recorded
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -123,9 +123,9 @@
 
                     <span class="field-label">Description</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Description ?? "No description recorded.")
-                    </p>
+                    </div>
 
                 </div>
 

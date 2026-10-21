@@ -54,11 +54,11 @@
                                 <span class="field-label">Reference or key</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Reference))
                                 {
-                                    <p class="field-value">@Model.Reference</p>
+                                    <div class="field-value">@Model.Reference</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -69,9 +69,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Seats</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(Model.Seats?.ToString() ?? "Not per seat")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -81,10 +81,10 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Started</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(Model.StartDate?.ToString("dd MMM yyyy")
                                         ?? "Not recorded")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -94,9 +94,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Expires</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @Model.ExpiryDate.ToString("dd MMM yyyy")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -106,9 +106,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Current cost</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(Model.Cost?.ToString("0.00") ?? "Not recorded")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -136,13 +136,13 @@
                                 <span class="field-label">Vendor</span>
                                 @if (Model.Vendor != null)
                                 {
-                                    <p class="field-value">@Model.Vendor.Name</p>
+                                    <div class="field-value">@Model.Vendor.Name</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         Not on the vendor register
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -155,14 +155,14 @@
                                 <span class="field-label">Held by</span>
                                 @if (Model.AssignedToEmployee != null)
                                 {
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         @Model.AssignedToEmployee.FirstName
                                         @Model.AssignedToEmployee.LastName
-                                    </p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Company wide</p>
+                                    <div class="field-value is-empty">Company wide</div>
                                 }
                             </div>
                         </div>
@@ -173,10 +173,10 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Department</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(Model.AssignedToEmployee?.Department?.Name
                                         ?? "--")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -253,13 +253,13 @@
         <div class="card-body">
             @if (!string.IsNullOrWhiteSpace(Model.Notes))
             {
-                <p class="field-value mb-0">@Model.Notes</p>
+                <div class="field-value mb-0">@Model.Notes</div>
             }
             else
             {
-                <p class="field-value is-empty mb-0">
+                <div class="field-value is-empty mb-0">
                     Nothing recorded against this licence.
-                </p>
+                </div>
             }
         </div>
 

@@ -122,16 +122,16 @@
 
                     @if (others.Count == 0)
                     {
-                        <p class="field-value is-empty mb-0">
+                        <div class="field-value is-empty mb-0">
                             No outside services are set up for this
                             portal.
-                        </p>
+                        </div>
                     }
                     else
                     {
-                        <p class="field-value">
+                        <div class="field-value">
                             Linking one lets you sign in with it as well.
-                        </p>
+                        </div>
 
                         <form id="link-login-form"
                               asp-page-handler="LinkLogin"

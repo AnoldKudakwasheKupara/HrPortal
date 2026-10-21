@@ -47,9 +47,9 @@
 
                     <span class="field-label">Approval Role</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Role
-                    </p>
+                    </div>
 
                 </div>
 
@@ -57,7 +57,7 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
 
                         @if (Model.IsActive)
                         {
@@ -72,7 +72,7 @@
                             </span>
                         }
 
-                    </p>
+                    </div>
 
                 </div>
 
@@ -80,10 +80,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -91,9 +91,9 @@
 
                     <span class="field-label">Department</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.Department.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -101,9 +101,9 @@
 
                     <span class="field-label">Email</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.Email
-                    </p>
+                    </div>
 
                 </div>
 
@@ -111,9 +111,9 @@
 
                     <span class="field-label">Employee Number</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.EmployeeNumber
-                    </p>
+                    </div>
 
                 </div>
 

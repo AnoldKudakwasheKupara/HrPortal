@@ -122,10 +122,10 @@
             <div class="row g-4 align-items-start">
 
                 <div class="col-lg-7">
-                    <p class="field-value mb-0">
+                    <div class="field-value mb-0">
                         Our door is always open for questions about your
                         role, pay, benefits or wellbeing.
-                    </p>
+                    </div>
                 </div>
 
                 <div class="col-lg-5">
@@ -134,33 +134,33 @@
 
                     @if (Model.HrContact.IsKnown)
                     {
-                        <p class="field-value mb-1">
+                        <div class="field-value mb-1">
                             <strong>@Model.HrContact.Name</strong>
-                        </p>
+                        </div>
 
                         @if (!string.IsNullOrWhiteSpace(Model.HrContact.Email))
                         {
-                            <p class="field-value mb-1">
+                            <div class="field-value mb-1">
                                 <a href="mailto:@Model.HrContact.Email">
                                     @Model.HrContact.Email
                                 </a>
-                            </p>
+                            </div>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(Model.HrContact.Phone))
                         {
-                            <p class="field-value mb-0">
+                            <div class="field-value mb-0">
                                 @Model.HrContact.Phone
-                            </p>
+                            </div>
                         }
                     }
                     else
                     {
-                        <p class="field-value is-empty mb-0">
+                        <div class="field-value is-empty mb-0">
                             No HR officer is set up yet. An administrator
                             can name one on the approval settings page,
                             and their details will show here.
-                        </p>
+                        </div>
                     }
 
                 </div>

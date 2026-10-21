@@ -49,9 +49,9 @@
 
                     <span class="field-label">Course</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.TrainingAssignment.TrainingCourse.Title
-                    </p>
+                    </div>
 
                 </div>
 
@@ -59,10 +59,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.TrainingAssignment.Employee.FirstName
                         @Model.TrainingAssignment.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -70,9 +70,9 @@
 
                     <span class="field-label">Department</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.TrainingAssignment.Employee.Department.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -80,11 +80,11 @@
 
                     <span class="field-label">Rating</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         <span class="badge bg-info text-dark">
                             @Model.Rating / 5
                         </span>
-                    </p>
+                    </div>
 
                 </div>
 
@@ -92,9 +92,9 @@
 
                     <span class="field-label">Submitted</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.SubmittedAt.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -102,9 +102,9 @@
 
                     <span class="field-label">Comments</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Comments ?? "No comments given.")
-                    </p>
+                    </div>
 
                 </div>
 

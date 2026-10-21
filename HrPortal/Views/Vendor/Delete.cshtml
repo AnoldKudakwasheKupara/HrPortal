@@ -31,21 +31,21 @@
 
                 <div class="col-md-4 mb-3">
                     <span class="field-label">Vendor</span>
-                    <p class="field-value">@Model.Name</p>
+                    <div class="field-value">@Model.Name</div>
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <span class="field-label">Product or service</span>
-                    <p class="field-value">@Model.ProductOrService</p>
+                    <div class="field-value">@Model.ProductOrService</div>
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <span class="field-label">Contact</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @(string.IsNullOrWhiteSpace(Model.ContactPerson)
                             ? "Not recorded"
                             : Model.ContactPerson)
-                    </p>
+                    </div>
                 </div>
 
             </div>

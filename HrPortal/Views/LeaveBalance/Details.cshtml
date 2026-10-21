@@ -51,10 +51,10 @@
 
                     <span class="field-label">Employee</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.FirstName
                         @Model.Employee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -62,9 +62,9 @@
 
                     <span class="field-label">Department</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Employee.Department.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -72,9 +72,9 @@
 
                     <span class="field-label">Leave Type</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.LeaveType.Name
-                    </p>
+                    </div>
 
                 </div>
 
@@ -82,9 +82,9 @@
 
                     <span class="field-label">Year</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.Year
-                    </p>
+                    </div>
 
                 </div>
 
@@ -92,9 +92,9 @@
 
                     <span class="field-label">Allocated Days</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.AllocatedDays.ToString("0.##")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -102,9 +102,9 @@
 
                     <span class="field-label">Used Days</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.UsedDays.ToString("0.##")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -112,9 +112,9 @@
 
                     <span class="field-label">Pending Days</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.PendingDays.ToString("0.##")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -122,7 +122,7 @@
 
                     <span class="field-label">Remaining Days</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.RemainingDays < 0)
                         {
                             <span class="badge bg-danger">
@@ -135,7 +135,7 @@
                                 @Model.RemainingDays.ToString("0.##")
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 

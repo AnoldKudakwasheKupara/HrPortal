@@ -54,7 +54,7 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Product or service</span>
-                                <p class="field-value">@Model.ProductOrService</p>
+                                <div class="field-value">@Model.ProductOrService</div>
                             </div>
                         </div>
 
@@ -66,11 +66,11 @@
                                 <span class="field-label">Category</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Category))
                                 {
-                                    <p class="field-value">@Model.Category</p>
+                                    <div class="field-value">@Model.Category</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not set</p>
+                                    <div class="field-value is-empty">Not set</div>
                                 }
                             </div>
                         </div>
@@ -81,9 +81,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">On the register since</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -111,11 +111,11 @@
                                 <span class="field-label">Contact person</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.ContactPerson))
                                 {
-                                    <p class="field-value">@Model.ContactPerson</p>
+                                    <div class="field-value">@Model.ContactPerson</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -128,13 +128,13 @@
                                 <span class="field-label">Email</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Email))
                                 {
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         <a href="mailto:@Model.Email">@Model.Email</a>
-                                    </p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -147,7 +147,7 @@
                                 <span class="field-label">Phone</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.PhoneNumber))
                                 {
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         @Model.PhoneNumber
                                         @if (!string.IsNullOrWhiteSpace(Model.AlternatePhone))
                                         {
@@ -155,11 +155,11 @@
                                                 &middot; @Model.AlternatePhone
                                             </span>
                                         }
-                                    </p>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -172,11 +172,11 @@
                                 <span class="field-label">Website</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Website))
                                 {
-                                    <p class="field-value">@Model.Website</p>
+                                    <div class="field-value">@Model.Website</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -189,11 +189,11 @@
                                 <span class="field-label">Address</span>
                                 @if (!string.IsNullOrWhiteSpace(Model.Address))
                                 {
-                                    <p class="field-value">@Model.Address</p>
+                                    <div class="field-value">@Model.Address</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">Not recorded</p>
+                                    <div class="field-value is-empty">Not recorded</div>
                                 }
                             </div>
                         </div>
@@ -214,13 +214,13 @@
         <div class="card-body">
             @if (!string.IsNullOrWhiteSpace(Model.Notes))
             {
-                <p class="field-value mb-0">@Model.Notes</p>
+                <div class="field-value mb-0">@Model.Notes</div>
             }
             else
             {
-                <p class="field-value is-empty mb-0">
+                <div class="field-value is-empty mb-0">
                     Nothing recorded against this vendor.
-                </p>
+                </div>
             }
         </div>
 

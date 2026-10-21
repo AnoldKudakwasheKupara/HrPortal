@@ -37,25 +37,25 @@
 
                 <div class="col-md-5 mb-3">
                     <span class="field-label">Reporting period</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.PeriodStart.ToString("dd MMM")
                         &ndash;
                         @Model.PeriodEnd.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <span class="field-label">Prepared by</span>
-                    <p class="field-value">@Model.PreparedBy</p>
+                    <div class="field-value">@Model.PreparedBy</div>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <span class="field-label">Status</span>
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Status == WeeklyReportStatus.Final
                             ? "Issued"
                             : "Draft")
-                    </p>
+                    </div>
                 </div>
 
             </div>

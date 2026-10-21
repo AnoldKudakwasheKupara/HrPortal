@@ -82,14 +82,14 @@
                 <div class="card-body">
                     @if (!string.IsNullOrWhiteSpace(p.Summary))
                     {
-                        <p class="field-value">@p.Summary</p>
+                        <div class="field-value">@p.Summary</div>
                     }
                     else
                     {
-                        <p class="field-value is-empty">
+                        <div class="field-value is-empty">
                             No summary was written. Open the document
                             itself.
-                        </p>
+                        </div>
                     }
 
                     <div class="text-muted small mt-3">
@@ -111,9 +111,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Takes effect</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @p.EffectiveDate.ToString("d MMM yyyy")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -123,10 +123,10 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Review by</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(p.ReviewDate?.ToString("d MMM yyyy")
                                         ?? "No review date set")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -136,11 +136,11 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Owner</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(string.IsNullOrWhiteSpace(p.Owner)
                                         ? "Not recorded"
                                         : p.Owner)
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -150,9 +150,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Applies to</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @Html.DisplayFor(m => m.Policy.Audience)
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -164,11 +164,11 @@
                                 </span>
                                 <div class="detail-text">
                                     <span class="field-label">Replaces</span>
-                                    <p class="field-value">
+                                    <div class="field-value">
                                         Version @p.Supersedes.Version,
                                         in force from
                                         @p.Supersedes.EffectiveDate.ToString("d MMM yyyy")
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -238,15 +238,15 @@
             <div class="card-body">
                 @if (!p.RequiresAcknowledgement)
                 {
-                    <p class="field-value is-empty mb-0">
+                    <div class="field-value is-empty mb-0">
                         This policy does not ask for acknowledgement.
-                    </p>
+                    </div>
                 }
                 else if (Model.Outstanding.Count == 0)
                 {
-                    <p class="field-value mb-0">
+                    <div class="field-value mb-0">
                         Everyone currently employed has acknowledged it.
-                    </p>
+                    </div>
                 }
                 else
                 {

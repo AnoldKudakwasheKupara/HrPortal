@@ -67,13 +67,13 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Raised by</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(r.Employee.FirstName + " " +
                                       r.Employee.LastName)
                                     <span class="text-muted">
                                         &mdash; @r.Employee.Department?.Name
                                     </span>
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -83,7 +83,7 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">What for</span>
-                                <p class="field-value">@r.Title</p>
+                                <div class="field-value">@r.Title</div>
                             </div>
                         </div>
 
@@ -95,13 +95,13 @@
                                 <span class="field-label">Justification</span>
                                 @if (!string.IsNullOrWhiteSpace(r.Justification))
                                 {
-                                    <p class="field-value">@r.Justification</p>
+                                    <div class="field-value">@r.Justification</div>
                                 }
                                 else
                                 {
-                                    <p class="field-value is-empty">
+                                    <div class="field-value is-empty">
                                         None given
-                                    </p>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -123,9 +123,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Estimated total</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @Model.Currency @r.EstimatedTotal.ToString("N2")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -135,7 +135,7 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">MD threshold</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @Model.Currency @Model.Threshold.ToString("N2")
                                     <span class="text-muted">
                                         &mdash;
@@ -143,7 +143,7 @@
                                             ? "at or above, so the MD decides"
                                             : "below, so review is final")
                                     </span>
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -153,9 +153,9 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Suggested vendor</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(r.Vendor?.Name ?? "None suggested")
-                                </p>
+                                </div>
                             </div>
                         </div>
 
@@ -165,10 +165,10 @@
                             </span>
                             <div class="detail-text">
                                 <span class="field-label">Needed by</span>
-                                <p class="field-value">
+                                <div class="field-value">
                                     @(r.NeededBy?.ToString("d MMM yyyy")
                                         ?? "No date given")
-                                </p>
+                                </div>
                             </div>
                         </div>
 

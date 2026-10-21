@@ -47,9 +47,9 @@
 
                     <span class="field-label">Trainer</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Trainer ?? "Not set")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -57,7 +57,7 @@
 
                     <span class="field-label">Training Date</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @if (Model.TrainingDate.HasValue)
                         {
                             @Model.TrainingDate.Value.ToString("dd MMM yyyy")
@@ -68,7 +68,7 @@
                                 Not scheduled
                             </span>
                         }
-                    </p>
+                    </div>
 
                 </div>
 
@@ -76,7 +76,7 @@
 
                     <span class="field-label">Status</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
 
                         @if (Model.IsActive)
                         {
@@ -91,7 +91,7 @@
                             </span>
                         }
 
-                    </p>
+                    </div>
 
                 </div>
 
@@ -99,10 +99,10 @@
 
                     <span class="field-label">Created By</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.CreatedByEmployee.FirstName
                         @Model.CreatedByEmployee.LastName
-                    </p>
+                    </div>
 
                 </div>
 
@@ -110,9 +110,9 @@
 
                     <span class="field-label">Created</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @Model.CreatedAt.ToString("dd MMM yyyy")
-                    </p>
+                    </div>
 
                 </div>
 
@@ -120,9 +120,9 @@
 
                     <span class="field-label">Description</span>
 
-                    <p class="field-value">
+                    <div class="field-value">
                         @(Model.Description ?? "No description provided.")
-                    </p>
+                    </div>
 
                 </div>
 
