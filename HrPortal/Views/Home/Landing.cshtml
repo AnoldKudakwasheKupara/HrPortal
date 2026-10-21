@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Welcome";
+    Layout = "~/Views/Shared/_PublicLayout.cshtml";
+}
+
+<div class="welcome-hero">
+
+    <span class="welcome-eyebrow">Intellego HR Portal</span>
+
+    <h1>Welcome to the Intellego team</h1>
+
+    <p>
+        This is your home for everything people-related at Intellego: our
+        policies, forms, benefits and the people who can help. Sign in to
+        reach your leave, training, documents and the staff directory.
+    </p>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a class="btn btn-light"
+           asp-area="Identity"
+           asp-page="/Account/Login">
+            <i class="fas fa-right-to-bracket"></i>
+            Sign in to the portal
+        </a>
+
+    </div>
+
+</div>
+
+<partial name="_IntellegoStory" />

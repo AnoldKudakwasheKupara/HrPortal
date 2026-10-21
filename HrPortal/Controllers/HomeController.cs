@@ -15,8 +15,12 @@ namespace HrPortal.Controllers
             _dashboard = dashboard;
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
+            if (User.Identity?.IsAuthenticated != true)
+                return View("Landing");
+
             return View(await _dashboard.BuildAsync(User));
         }
 
