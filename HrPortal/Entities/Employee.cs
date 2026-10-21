@@ -39,6 +39,14 @@ namespace HrPortal.Entities
 
         public string? EmergencyContactRelationship { get; set; }
 
+        public string? EmergencyContactAddress { get; set; }
+
+        /// <summary>
+        /// When the employee last confirmed their next of kin details
+        /// are correct. Null until they have completed the form.
+        /// </summary>
+        public DateTime? NextOfKinConfirmedAt { get; set; }
+
         public DateTime DateJoined { get; set; }
 
         public EmploymentType EmploymentType { get; set; }

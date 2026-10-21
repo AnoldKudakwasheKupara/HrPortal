@@ -17,7 +17,7 @@ namespace HrPortal.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -455,6 +455,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("EmergencyContactAddress")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("EmergencyContactName")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -510,6 +513,9 @@ namespace HrPortal.Migrations
                     b.Property<string>("NationalId")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("NextOfKinConfirmedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
