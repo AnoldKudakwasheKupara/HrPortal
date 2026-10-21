@@ -260,29 +260,6 @@
 
             </div>
 
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Mine.NextLeaveStart != null ? "is-good" : "")"
-                   asp-controller="MyLeave"
-                   asp-action="Index">
-
-                    <i class="fas fa-plane-departure stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Next leave</span>
-
-                    <span class="stat-value">
-                        @(Model.Mine.NextLeaveStart?.ToString("d MMM")
-                            ?? "--")
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Mine.NextLeaveStart == null
-                            ? "Nothing booked"
-                            : "Approved and upcoming")
-                    </div>
-
-                </a>
-
-            </div>
             }
 
         </div>

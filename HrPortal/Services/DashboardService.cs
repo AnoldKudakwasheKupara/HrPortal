@@ -144,15 +144,6 @@ namespace HrPortal.Services
 
                 DaysTakenThisYear = balances.Sum(b => b.UsedDays),
 
-                NextLeaveStart = await _context.LeaveRequests
-                    .Where(r =>
-                        r.EmployeeId == employeeId &&
-                        r.Status == LeaveRequestStatus.Approved &&
-                        r.StartDate >= today)
-                    .OrderBy(r => r.StartDate)
-                    .Select(r => (DateTime?)r.StartDate)
-                    .FirstOrDefaultAsync(),
-
                 RecentRequests = await _context.LeaveRequests
                     .Include(r => r.LeaveType)
                     .Where(r => r.EmployeeId == employeeId)

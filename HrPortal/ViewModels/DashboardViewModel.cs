@@ -45,8 +45,6 @@ namespace HrPortal.ViewModels
 
         public decimal DaysTakenThisYear { get; set; }
 
-        public DateTime? NextLeaveStart { get; set; }
-
         public List<LeaveRequest> RecentRequests { get; set; } = new();
 
         public List<TrainingAssignment> TrainingToDo { get; set; } = new();
