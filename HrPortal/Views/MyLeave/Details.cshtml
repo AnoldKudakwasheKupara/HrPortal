@@ -125,7 +125,7 @@
 
         <div class="card-header">Progress</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.History.Any() ? "is-table" : "")">
 
             @if (Model.History.Any())
             {
@@ -195,7 +195,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128220;</span>
                     Nothing has happened to this request yet.
                 </p>
             }

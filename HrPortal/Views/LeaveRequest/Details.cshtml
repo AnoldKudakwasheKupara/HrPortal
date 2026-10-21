@@ -157,7 +157,7 @@
 
         <div class="card-header">History</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.History.Any() ? "is-table" : "")">
 
             @if (Model.History.Any())
             {
@@ -230,7 +230,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128220;</span>
                     No history has been recorded for this request.
                 </p>
             }

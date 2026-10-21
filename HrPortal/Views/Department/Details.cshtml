@@ -108,7 +108,7 @@
 
         <div class="card-header">Employees in this Department</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.Employees.Any() ? "is-table" : "")">
 
             @if (Model.Employees.Any())
             {
@@ -172,7 +172,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128101;</span>
                     No employees are currently assigned to this department.
                 </p>
             }

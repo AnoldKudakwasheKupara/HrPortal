@@ -44,7 +44,7 @@
 
         <div class="card-header">My Balances for @DateTime.Today.Year</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.Balances.Any() ? "is-table" : "")">
 
             @if (Model.Balances.Any())
             {
@@ -87,7 +87,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128197;</span>
                     No leave balances have been set up for you yet.
                     You can still request leave types that are not
                     rationed.
@@ -120,6 +121,16 @@
                     </thead>
 
                     <tbody>
+
+                    @if (!Model.Requests.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-4">
+                                You have not made any leave requests yet.
+                            </td>
+                        </tr>
+                    }
 
                     @foreach (var request in Model.Requests)
                     {
@@ -232,13 +243,6 @@
                     </tbody>
 
                 </table>
-
-                @if (!Model.Requests.Any())
-                {
-                    <p class="text-muted mb-0">
-                        You have not made any leave requests yet.
-                    </p>
-                }
 
             </div>
 

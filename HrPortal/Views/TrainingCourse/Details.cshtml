@@ -136,7 +136,7 @@
 
         <div class="card-header">Assigned Employees</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.Assignments.Any() ? "is-table" : "")">
 
             @if (Model.Assignments.Any())
             {
@@ -194,7 +194,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128101;</span>
                     No employees have been assigned to this course.
                 </p>
             }
@@ -207,7 +208,7 @@
 
         <div class="card-header">Course Materials</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.Materials.Any() ? "is-table" : "")">
 
             @if (Model.Materials.Any())
             {
@@ -232,7 +233,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128193;</span>
                     No materials have been uploaded for this course.
                 </p>
             }

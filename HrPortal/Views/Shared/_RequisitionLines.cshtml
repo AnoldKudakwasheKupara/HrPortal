@@ -18,6 +18,17 @@
         </thead>
 
         <tbody>
+
+        @if (!Model.Lines.Any())
+        {
+            <tr>
+                <td colspan="5"
+                    class="text-center text-muted py-4">
+                    No items have been added to this requisition.
+                </td>
+            </tr>
+        }
+
         @foreach (var line in Model.Lines)
         {
             <tr>

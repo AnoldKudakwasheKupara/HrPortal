@@ -96,7 +96,7 @@
 
         <div class="card-header">Leave Requests of this Type</div>
 
-        <div class="card-body">
+        <div class="card-body @(Model.LeaveRequests.Any() ? "is-table" : "")">
 
             @if (Model.LeaveRequests.Any())
             {
@@ -157,7 +157,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128197;</span>
                     No leave requests have been made using this leave type.
                 </p>
             }
