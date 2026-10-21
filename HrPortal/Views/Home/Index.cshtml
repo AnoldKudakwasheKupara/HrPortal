@@ -1,4 +1,4 @@
-﻿@model HrPortal.ViewModels.DashboardViewModel
+@model HrPortal.ViewModels.DashboardViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -37,38 +37,88 @@
         </div>
     }
 
-    @if (Model.Md != null && Model.Md.AwaitingFinalApproval > 0)
+    @if (Model.Admin != null &&
+         (!Model.Admin.HrApproverConfigured ||
+          !Model.Admin.MdApproverConfigured))
     {
-        <div class="row g-3 mb-1">
+        <div class="alert alert-warning">
 
-            <div class="col-12">
+            <span class="field-label">Leave approval is not fully configured.</span>
 
-                <a class="stat-tile is-action"
-                   asp-controller="LeaveApproval"
-                   asp-action="FinalApproval">
+            <div class="field-value">
+                @if (!Model.Admin.HrApproverConfigured)
+                {
+                    <text>No active HR Officer approver. </text>
+                }
 
-                    <i class="fas fa-stamp stat-icon" aria-hidden="true"></i>
+                @if (!Model.Admin.MdApproverConfigured)
+                {
+                    <text>No active MD approver. </text>
+                }
 
-                    <span class="stat-label">
-                        Waiting for your final approval
+                Requests will still be raised, but nobody is
+                notified to act on them.
+
+                <a asp-controller="ApprovalConfiguration"
+                   asp-action="Index">Set the approvers</a>.
+            </div>
+
+        </div>
+    }
+
+    <div class="section-heading">Needs you</div>
+
+    @if (Model.Focus.Any())
+    {
+        <div class="focus-band">
+
+            @foreach (var item in Model.Focus)
+            {
+                <a class="focus-tile @item.Tone @(item.Figure == null ? "is-plain" : "")"
+                   asp-controller="@item.Controller"
+                   asp-action="@item.Action"
+                   asp-all-route-data="@item.RouteData">
+
+                    <span class="focus-icon">
+                        <i class="fas @item.Icon" aria-hidden="true"></i>
                     </span>
 
-                    <span class="hero-figure">
-                        @Model.Md.AwaitingFinalApproval
-                    </span>
+                    <span class="focus-label">@item.Label</span>
 
-                    <span class="hero-unit">
-                        @(Model.Md.AwaitingFinalApproval == 1
-                            ? "request" : "requests")
-                    </span>
+                    @if (item.Figure != null)
+                    {
+                        <span>
+                            <span class="focus-figure">@item.Figure</span>
 
-                    <div class="stat-note">
-                        Approved by HR and needing your decision.
-                    </div>
+                            @if (item.Unit != null)
+                            {
+                                <span class="focus-unit">@item.Unit</span>
+                            }
+                        </span>
+                    }
+
+                    <span class="focus-note">@item.Note</span>
 
                 </a>
+            }
 
-            </div>
+        </div>
+    }
+    else
+    {
+        <div class="focus-clear">
+
+            <i class="fas fa-circle-check" aria-hidden="true"></i>
+
+            <span>
+                <span class="focus-clear-title">
+                    Nothing needs your attention
+                </span>
+
+                <span class="focus-clear-note">
+                    Every queue you are responsible for is clear.
+                </span>
+            </span>
 
         </div>
     }
@@ -77,12 +127,10 @@
     {
         <div class="section-heading">Me</div>
 
-        <div class="row g-3">
+        <div class="stat-grid">
 
             @if (Model.ShowsOwnLeave)
             {
-            <div class="col-6 col-lg-3">
-
                 <div class="stat-tile">
 
                     <i class="fas fa-umbrella-beach stat-icon" aria-hidden="true"></i>
@@ -107,91 +155,39 @@
                     </div>
 
                 </div>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Mine.RequestsInProgress > 0 ? "is-action" : "")"
-                   asp-controller="MyLeave"
-                   asp-action="Index">
-
-                    <i class="fas fa-hourglass-half stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Requests in progress</span>
-
-                    <span class="stat-value">
-                        @Model.Mine.RequestsInProgress
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Mine.RequestsInProgress == 0
-                            ? "Nothing awaiting a decision"
-                            : "Awaiting a decision")
-                    </div>
-
-                </a>
-
-            </div>
             }
 
-            <div class="col-6 col-lg-3">
+            <a class="stat-tile @(Model.Mine.OverdueTraining > 0 ? "is-critical" : Model.Mine.OutstandingTraining > 0 ? "is-warning" : "is-good")"
+               asp-controller="MyTraining"
+               asp-action="Index">
 
-                <a class="stat-tile @(Model.Mine.OverdueTraining > 0 ? "is-critical" : Model.Mine.OutstandingTraining > 0 ? "is-warning" : "is-good")"
-                   asp-controller="MyTraining"
-                   asp-action="Index">
+                <i class="fas fa-graduation-cap stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">Training to do</span>
 
-                    <i class="fas fa-graduation-cap stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Training to do</span>
+                <span class="stat-value">
+                    @Model.Mine.OutstandingTraining
+                </span>
 
-                    <span class="stat-value">
-                        @Model.Mine.OutstandingTraining
-                    </span>
+                <div class="stat-note">
+                    @if (Model.Mine.OverdueTraining > 0)
+                    {
+                        <strong>@Model.Mine.OverdueTraining overdue</strong>
+                    }
+                    else if (Model.Mine.OutstandingTraining > 0)
+                    {
+                        <text>None overdue</text>
+                    }
+                    else
+                    {
+                        <text>All caught up</text>
+                    }
+                </div>
 
-                    <div class="stat-note">
-                        @if (Model.Mine.OverdueTraining > 0)
-                        {
-                            <strong>@Model.Mine.OverdueTraining overdue</strong>
-                        }
-                        else if (Model.Mine.OutstandingTraining > 0)
-                        {
-                            <text>None overdue</text>
-                        }
-                        else
-                        {
-                            <text>All caught up</text>
-                        }
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile"
-                   asp-controller="MyAssets"
-                   asp-action="Index">
-
-                    <i class="fas fa-laptop stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">My assets</span>
-
-                    <span class="stat-value">@Model.Mine.MyAssets</span>
-
-                    <div class="stat-note">
-                        @(Model.Mine.MyAssets == 0
-                            ? "Nothing issued to you"
-                            : "Issued to you")
-                    </div>
-
-                </a>
-
-            </div>
+            </a>
 
             @if (Model.Mine.KeepsTimesheet)
             {
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Mine.TimesheetEntriesThisWeek == 0 ? "is-action" : "is-good")"
+                <a class="stat-tile @(Model.Mine.TimesheetEntriesThisWeek == 0 ? "is-warning" : "is-good")"
                    asp-controller="MyTimesheet"
                    asp-action="Index">
 
@@ -210,63 +206,85 @@
                     </div>
 
                 </a>
-
-            </div>
             }
 
-            <div class="col-6 col-lg-3">
+        </div>
 
-                <a class="stat-tile @(Model.Mine.UnreadNotifications > 0 ? "is-action" : "")"
-                   asp-controller="MyNotifications"
-                   asp-action="Index">
-
-                    <i class="fas fa-bell stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Unread notices</span>
-
-                    <span class="stat-value">
-                        @Model.Mine.UnreadNotifications
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Mine.UnreadNotifications == 0
-                            ? "Nothing new"
-                            : "Waiting for you")
-                    </div>
-
-                </a>
-
-            </div>
+        <div class="stat-strip mt-3">
 
             @if (Model.ShowsOwnLeave)
             {
-            <div class="col-6 col-lg-3">
+                <a class="strip-item"
+                   asp-controller="MyLeave"
+                   asp-action="Index">
 
-                <div class="stat-tile">
+                    <span class="strip-label">In progress</span>
 
-                    <i class="fas fa-calendar-check stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Leave taken</span>
+                    <span class="strip-value">
+                        @Model.Mine.RequestsInProgress
+                    </span>
 
-                    <span class="stat-value">
+                    <span class="strip-note">
+                        @(Model.Mine.RequestsInProgress == 0
+                            ? "No open requests"
+                            : "Awaiting a decision")
+                    </span>
+
+                </a>
+
+                <div class="strip-item">
+
+                    <span class="strip-label">Leave taken</span>
+
+                    <span class="strip-value">
                         @(Model.Mine.HasBalances
                             ? Model.Mine.DaysTakenThisYear.ToString("0.##")
                             : "--")
                     </span>
 
-                    <div class="stat-note">
+                    <span class="strip-note">
                         Days used in @DateTime.Today.Year
-                    </div>
+                    </span>
 
                 </div>
-
-            </div>
-
             }
 
-        </div>
-    }
+            <a class="strip-item"
+               asp-controller="MyAssets"
+               asp-action="Index">
 
-    @if (Model.Mine != null)
-    {
+                <span class="strip-label">My assets</span>
+
+                <span class="strip-value">@Model.Mine.MyAssets</span>
+
+                <span class="strip-note">
+                    @(Model.Mine.MyAssets == 0
+                        ? "Nothing issued"
+                        : "Issued to you")
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="MyNotifications"
+               asp-action="Index">
+
+                <span class="strip-label">Unread notices</span>
+
+                <span class="strip-value">
+                    @Model.Mine.UnreadNotifications
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Mine.UnreadNotifications == 0
+                        ? "Nothing new"
+                        : "Waiting for you")
+                </span>
+
+            </a>
+
+        </div>
+
         <div class="row g-3 mt-1">
 
             @if (Model.ShowsOwnLeave)
@@ -404,174 +422,140 @@
     {
         <div class="section-heading">HR</div>
 
-        <div class="row g-3">
+        <div class="stat-grid">
 
-            <div class="col-6 col-lg-3">
+            <a class="stat-tile @(Model.Hr.AwaitingReview > 0 ? "is-action" : "is-good")"
+               asp-controller="LeaveApproval"
+               asp-action="Index">
 
-                <a class="stat-tile @(Model.Hr.AwaitingReview > 0 ? "is-action" : "")"
-                   asp-controller="LeaveApproval"
-                   asp-action="Index">
+                <i class="fas fa-inbox stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">Awaiting review</span>
 
-                    <i class="fas fa-inbox stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Awaiting review</span>
+                <span class="stat-value">@Model.Hr.AwaitingReview</span>
 
-                    <span class="stat-value">@Model.Hr.AwaitingReview</span>
+                <div class="stat-note">
+                    @(Model.Hr.AwaitingReview == 0
+                        ? "Queue is clear"
+                        : "Leave requests to action")
+                </div>
 
-                    <div class="stat-note">
-                        @(Model.Hr.AwaitingReview == 0
-                            ? "Queue is clear"
-                            : "Leave requests to action")
-                    </div>
+            </a>
 
-                </a>
+            <a class="stat-tile @(Model.Hr.OnLeaveToday > 0 ? "is-action" : "")"
+               asp-controller="LeaveRequest"
+               asp-action="Index">
 
-            </div>
+                <i class="fas fa-person-walking-luggage stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">On leave today</span>
 
-            <div class="col-6 col-lg-3">
+                <span class="stat-value">@Model.Hr.OnLeaveToday</span>
 
-                <a class="stat-tile"
-                   asp-controller="LeaveRequest"
-                   asp-action="Index">
+                <div class="stat-note">
+                    @(Model.Hr.OnLeaveToday == 0
+                        ? "Everyone is in"
+                        : "Away right now")
+                </div>
 
-                    <i class="fas fa-paper-plane stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">With the MD</span>
+            </a>
 
-                    <span class="stat-value">@Model.Hr.WithMd</span>
+            <a class="stat-tile @(Model.Hr.OverdueTrainingOrgWide > 0 ? "is-critical" : "is-good")"
+               asp-controller="TrainingAssignment"
+               asp-action="Index">
 
-                    <div class="stat-note">Past you, awaiting sign-off</div>
+                <i class="fas fa-triangle-exclamation stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">Overdue training</span>
 
-                </a>
+                <span class="stat-value">
+                    @Model.Hr.OverdueTrainingOrgWide
+                </span>
 
-            </div>
+                <div class="stat-note">
+                    @(Model.Hr.OverdueTrainingOrgWide == 0
+                        ? "Nothing past its due date"
+                        : "Past the due date")
+                </div>
 
-            <div class="col-6 col-lg-3">
+            </a>
 
-                <a class="stat-tile @(Model.Hr.ReturnedToEmployees > 0 ? "is-warning" : "")"
-                   asp-controller="LeaveRequest"
-                   asp-action="Index">
+        </div>
 
-                    <i class="fas fa-rotate-left stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Returned</span>
+        <div class="stat-strip mt-3">
 
-                    <span class="stat-value">
-                        @Model.Hr.ReturnedToEmployees
-                    </span>
+            <a class="strip-item"
+               asp-controller="LeaveRequest"
+               asp-action="Index">
 
-                    <div class="stat-note">
-                        @(Model.Hr.ReturnedToEmployees == 0
-                            ? "None sent back"
-                            : "Waiting on the employee")
-                    </div>
+                <span class="strip-label">With the MD</span>
 
-                </a>
+                <span class="strip-value">@Model.Hr.WithMd</span>
 
-            </div>
+                <span class="strip-note">Awaiting sign-off</span>
 
-            <div class="col-6 col-lg-3">
+            </a>
 
-                <a class="stat-tile"
-                   asp-controller="Employee"
-                   asp-action="Index">
+            <a class="strip-item @(Model.Hr.ReturnedToEmployees > 0 ? "is-warning" : "")"
+               asp-controller="LeaveRequest"
+               asp-action="Index">
 
-                    <i class="fas fa-users stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Active employees</span>
+                <span class="strip-label">Returned</span>
 
-                    <span class="stat-value">@Model.Hr.ActiveEmployees</span>
+                <span class="strip-value">
+                    @Model.Hr.ReturnedToEmployees
+                </span>
 
-                    <div class="stat-note">On the books</div>
+                <span class="strip-note">
+                    @(Model.Hr.ReturnedToEmployees == 0
+                        ? "None sent back"
+                        : "With the employee")
+                </span>
 
-                </a>
+            </a>
 
-            </div>
+            <a class="strip-item"
+               asp-controller="Employee"
+               asp-action="Index">
 
-            <div class="col-6 col-lg-3">
+                <span class="strip-label">Active staff</span>
 
-                <a class="stat-tile @(Model.Hr.OnLeaveToday > 0 ? "is-action" : "")"
-                   asp-controller="LeaveRequest"
-                   asp-action="Index">
+                <span class="strip-value">@Model.Hr.ActiveEmployees</span>
 
-                    <i class="fas fa-person-walking-luggage stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">On leave today</span>
+                <span class="strip-note">On the books</span>
 
-                    <span class="stat-value">@Model.Hr.OnLeaveToday</span>
+            </a>
 
-                    <div class="stat-note">
-                        @(Model.Hr.OnLeaveToday == 0
-                            ? "Everyone is in"
-                            : "Away right now")
-                    </div>
+            <a class="strip-item @(Model.Hr.EmployeesWithoutLogin > 0 ? "is-warning" : "")"
+               asp-controller="Employee"
+               asp-action="Index">
 
-                </a>
+                <span class="strip-label">No sign-in yet</span>
 
-            </div>
+                <span class="strip-value">
+                    @Model.Hr.EmployeesWithoutLogin
+                </span>
 
-            <div class="col-6 col-lg-3">
+                <span class="strip-note">
+                    @(Model.Hr.EmployeesWithoutLogin == 0
+                        ? "All have accounts"
+                        : "Staff with no account")
+                </span>
 
-                <a class="stat-tile @(Model.Hr.EmployeesWithoutLogin > 0 ? "is-warning" : "is-good")"
-                   asp-controller="Employee"
-                   asp-action="Index">
+            </a>
 
-                    <i class="fas fa-user-lock stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">No sign-in yet</span>
+            <a class="strip-item"
+               asp-controller="LeaveRequest"
+               asp-action="Index">
 
-                    <span class="stat-value">
-                        @Model.Hr.EmployeesWithoutLogin
-                    </span>
+                <span class="strip-label">Approved</span>
 
-                    <div class="stat-note">
-                        @(Model.Hr.EmployeesWithoutLogin == 0
-                            ? "Everyone has an account"
-                            : "Active staff with no account")
-                    </div>
+                <span class="strip-value">
+                    @Model.Hr.ApprovedThisMonth
+                </span>
 
-                </a>
+                <span class="strip-note">
+                    Since @DateTime.Today.ToString("1 MMM")
+                </span>
 
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile is-good"
-                   asp-controller="LeaveRequest"
-                   asp-action="Index">
-
-                    <i class="fas fa-circle-check stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Approved this month</span>
-
-                    <span class="stat-value">
-                        @Model.Hr.ApprovedThisMonth
-                    </span>
-
-                    <div class="stat-note">
-                        Fully signed off since
-                        @DateTime.Today.ToString("1 MMM")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Hr.OverdueTrainingOrgWide > 0 ? "is-critical" : "is-good")"
-                   asp-controller="TrainingAssignment"
-                   asp-action="Index">
-
-                    <i class="fas fa-triangle-exclamation stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Overdue training</span>
-
-                    <span class="stat-value">
-                        @Model.Hr.OverdueTrainingOrgWide
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Hr.OverdueTrainingOrgWide == 0
-                            ? "Nothing past its due date"
-                            : "Past the due date")
-                    </div>
-
-                </a>
-
-            </div>
+            </a>
 
         </div>
 
@@ -718,110 +702,99 @@
     {
         <div class="section-heading">Managing Director</div>
 
-        <div class="row g-3">
+        <div class="stat-grid">
 
-            <div class="col-6 col-lg-3">
+            <a class="stat-tile @(Model.Md.AwaitingFinalApproval > 0 ? "is-action" : "is-good")"
+               asp-controller="LeaveApproval"
+               asp-action="FinalApproval">
 
-                <a class="stat-tile @(Model.Md.AwaitingFinalApproval > 0 ? "is-action" : "is-good")"
-                   asp-controller="LeaveApproval"
-                   asp-action="FinalApproval">
+                <i class="fas fa-stamp stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">Awaiting your decision</span>
 
-                    <i class="fas fa-stamp stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Awaiting your decision</span>
+                <span class="stat-value">
+                    @Model.Md.AwaitingFinalApproval
+                </span>
 
-                    <span class="stat-value">
-                        @Model.Md.AwaitingFinalApproval
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Md.AwaitingFinalApproval == 0
-                            ? "Queue is clear"
-                            : "Cleared HR, needs sign-off")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Md.RequisitionsAwaitingApproval > 0 ? "is-action" : "is-good")"
-                   asp-controller="RequisitionApproval"
-                   asp-action="FinalApproval">
-
-                    <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Requisitions to approve</span>
-
-                    <span class="stat-value">
-                        @Model.Md.RequisitionsAwaitingApproval
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Md.RequisitionsAwaitingApproval == 0
-                            ? "Nothing waiting"
-                            : $"{Model.Md.RequisitionValueAwaiting:N2} in value")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <div class="stat-tile">
-
-                    <i class="fas fa-calendar-day stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Days approved</span>
-
-                    <span class="stat-value">
-                        @Model.Md.DaysApprovedThisMonth.ToString("0.##")
-                    </span>
-
-                    <div class="stat-note">
-                        Across the business this month
-                    </div>
-
+                <div class="stat-note">
+                    @(Model.Md.AwaitingFinalApproval == 0
+                        ? "Queue is clear"
+                        : "Cleared HR, needs sign-off")
                 </div>
 
-            </div>
+            </a>
 
-            <div class="col-6 col-lg-3">
+            <a class="stat-tile @(Model.Md.RequisitionsAwaitingApproval > 0 ? "is-action" : "is-good")"
+               asp-controller="RequisitionApproval"
+               asp-action="FinalApproval">
 
-                <div class="stat-tile is-good">
+                <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
+                <span class="stat-label">Requisitions to approve</span>
 
-                    <i class="fas fa-circle-check stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Approved this month</span>
+                <span class="stat-value">
+                    @Model.Md.RequisitionsAwaitingApproval
+                </span>
 
-                    <span class="stat-value">
-                        @Model.Md.ApprovedThisMonth
-                    </span>
-
-                    <div class="stat-note">
-                        @Model.Md.RejectedThisMonth rejected
-                    </div>
-
+                <div class="stat-note">
+                    @(Model.Md.RequisitionsAwaitingApproval == 0
+                        ? "Nothing waiting"
+                        : $"{Model.Md.RequisitionValueAwaiting:N2} in value")
                 </div>
 
+            </a>
+
+        </div>
+
+        <div class="stat-strip mt-3">
+
+            <a class="strip-item @(Model.Md.OnLeaveToday > 0 ? "is-warning" : "")"
+               asp-controller="LeaveRequest"
+               asp-action="Index">
+
+                <span class="strip-label">On leave today</span>
+
+                <span class="strip-value">@Model.Md.OnLeaveToday</span>
+
+                <span class="strip-note">
+                    @(Model.Md.OnLeaveToday == 0
+                        ? "Everyone is in"
+                        : "Away right now")
+                </span>
+
+            </a>
+
+            <div class="strip-item">
+
+                <span class="strip-label">Days approved</span>
+
+                <span class="strip-value">
+                    @Model.Md.DaysApprovedThisMonth.ToString("0.##")
+                </span>
+
+                <span class="strip-note">Business-wide this month</span>
+
             </div>
 
-            <div class="col-6 col-lg-3">
+            <div class="strip-item">
 
-                <a class="stat-tile @(Model.Md.OnLeaveToday > 0 ? "is-action" : "")"
-                   asp-controller="LeaveRequest"
-                   asp-action="Index">
+                <span class="strip-label">Approved</span>
 
-                    <i class="fas fa-person-walking-luggage stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">On leave today</span>
+                <span class="strip-value">
+                    @Model.Md.ApprovedThisMonth
+                </span>
 
-                    <span class="stat-value">@Model.Md.OnLeaveToday</span>
+                <span class="strip-note">Requests this month</span>
 
-                    <div class="stat-note">
-                        @(Model.Md.OnLeaveToday == 0
-                            ? "Everyone is in"
-                            : "Away right now")
-                    </div>
+            </div>
 
-                </a>
+            <div class="strip-item">
+
+                <span class="strip-label">Rejected</span>
+
+                <span class="strip-value">
+                    @Model.Md.RejectedThisMonth
+                </span>
+
+                <span class="strip-note">Requests this month</span>
 
             </div>
 
@@ -942,327 +915,235 @@
     {
         <div class="section-heading">System</div>
 
-        @if (!Model.Admin.HrApproverConfigured ||
-             !Model.Admin.MdApproverConfigured)
-        {
-            <div class="alert alert-warning">
+        <div class="stat-grid">
 
-                <span class="field-label">Leave approval is not fully configured.</span>
+            <a class="stat-tile @(Model.Admin.MaintenanceOverdue > 0 ? "is-critical" : Model.Admin.MaintenanceDueSoon > 0 ? "is-warning" : "is-good")"
+               asp-controller="AssetMaintenance"
+               asp-action="Index">
 
-                <div class="field-value">
-                    @if (!Model.Admin.HrApproverConfigured)
-                    {
-                        <text>No active HR Officer approver. </text>
-                    }
+                <i class="fas fa-screwdriver-wrench stat-icon" aria-hidden="true"></i>
 
-                    @if (!Model.Admin.MdApproverConfigured)
-                    {
-                        <text>No active MD approver. </text>
-                    }
+                <span class="stat-label">Maintenance due</span>
 
-                    Requests will still be raised, but nobody is
-                    notified to act on them.
+                <span class="stat-value">
+                    @Model.Admin.MaintenanceOverdue
+                </span>
 
-                    <a asp-controller="ApprovalConfiguration"
-                       asp-action="Index">Set the approvers</a>.
+                <div class="stat-note">
+                    @(Model.Admin.MaintenanceOverdue == 0
+                        ? $"{Model.Admin.MaintenanceDueSoon} due in 30 days"
+                        : $"overdue, {Model.Admin.MaintenanceDueSoon} due soon")
                 </div>
 
-            </div>
-        }
+            </a>
 
-        <div class="row g-3">
+            <a class="stat-tile @(Model.Admin.LicensesExpired > 0 ? "is-critical" : Model.Admin.LicensesExpiringSoon > 0 ? "is-warning" : "is-good")"
+               asp-controller="License"
+               asp-action="Index"
+               asp-route-show="@(Model.Admin.LicensesExpired > 0 ? "expired" : "expiring")">
 
-            <div class="col-6 col-lg-3">
+                <i class="fas fa-certificate stat-icon" aria-hidden="true"></i>
 
-                <a class="stat-tile"
-                   asp-controller="Employee"
-                   asp-action="Index">
+                <span class="stat-label">Licences expired</span>
 
-                    <i class="fas fa-users stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Employees</span>
+                <span class="stat-value">
+                    @Model.Admin.LicensesExpired
+                </span>
 
-                    <span class="stat-value">@Model.Admin.Employees</span>
+                <div class="stat-note">
+                    @(Model.Admin.LicensesExpired == 0
+                        ? $"{Model.Admin.LicensesExpiringSoon} due in {HrPortal.Controllers.LicenseController.ExpiringWindowDays} days"
+                        : $"lapsed, {Model.Admin.LicensesExpiringSoon} due soon")
+                </div>
 
-                    <div class="stat-note">
-                        @Model.Admin.ActiveEmployees active
-                    </div>
+            </a>
 
-                </a>
+            <a class="stat-tile @(Model.Admin.WeeklyReportDue ? "is-warning" : "")"
+               asp-controller="ItActivity"
+               asp-action="Index">
 
-            </div>
+                <i class="fas fa-headset stat-icon" aria-hidden="true"></i>
 
-            <div class="col-6 col-lg-3">
+                <span class="stat-label">IT activity this week</span>
 
-                <a class="stat-tile"
-                   asp-controller="Department"
-                   asp-action="Index">
+                <span class="stat-value">
+                    @Model.Admin.ActivitiesThisWeek
+                </span>
 
-                    <i class="fas fa-sitemap stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Departments</span>
+                <div class="stat-note">
+                    @(Model.Admin.WeeklyReportDue
+                        ? "Weekly report not drafted yet"
+                        : $"{Model.Admin.ActivitiesOutstanding} still outstanding")
+                </div>
 
-                    <span class="stat-value">@Model.Admin.Departments</span>
-
-                    <div class="stat-note">Active</div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile"
-                   asp-controller="Employee"
-                   asp-action="Index">
-
-                    <i class="fas fa-right-to-bracket stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Sign-in accounts</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.SignInAccounts
-                    </span>
-
-                    <div class="stat-note">
-                        Employees who can log in
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.EmployeesWithoutLogin > 0 ? "is-warning" : "is-good")"
-                   asp-controller="Employee"
-                   asp-action="Index">
-
-                    <i class="fas fa-user-plus stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">No account yet</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.EmployeesWithoutLogin
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.EmployeesWithoutLogin == 0
-                            ? "Everyone is set up"
-                            : "Active staff needing access")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile"
-                   asp-controller="Asset"
-                   asp-action="Index">
-
-                    <i class="fas fa-laptop stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Assets</span>
-
-                    <span class="stat-value">@Model.Admin.Assets</span>
-
-                    <div class="stat-note">
-                        @Model.Admin.UnassignedAssets unassigned
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.AssetsNeedingAttention > 0 ? "is-warning" : "is-good")"
-                   asp-controller="Asset"
-                   asp-action="Index">
-
-                    <i class="fas fa-screwdriver-wrench stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Ageing machines</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.AssetsNeedingAttention
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.AssetsNeedingAttention == 0
-                            ? "Fleet is healthy"
-                            : "Marked old or bad")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.MaintenanceOverdue > 0 ? "is-critical" : Model.Admin.MaintenanceDueSoon > 0 ? "is-warning" : "is-good")"
-                   asp-controller="AssetMaintenance"
-                   asp-action="Index">
-
-                    <i class="fas fa-screwdriver-wrench stat-icon" aria-hidden="true"></i>
-
-                    <span class="stat-label">Maintenance due</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.MaintenanceOverdue
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.MaintenanceOverdue == 0
-                            ? $"{Model.Admin.MaintenanceDueSoon} due in 30 days"
-                            : $"overdue, {Model.Admin.MaintenanceDueSoon} due soon")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.LicensesExpired > 0 ? "is-critical" : Model.Admin.LicensesExpiringSoon > 0 ? "is-warning" : "is-good")"
-                   asp-controller="License"
-                   asp-action="Index"
-                   asp-route-show="@(Model.Admin.LicensesExpired > 0 ? "expired" : "expiring")">
-
-                    <i class="fas fa-certificate stat-icon" aria-hidden="true"></i>
-
-                    <span class="stat-label">Licences expired</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.LicensesExpired
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.LicensesExpired == 0
-                            ? $"{Model.Admin.LicensesExpiringSoon} due in {HrPortal.Controllers.LicenseController.ExpiringWindowDays} days"
-                            : $"lapsed, {Model.Admin.LicensesExpiringSoon} due soon")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.WeeklyReportDue ? "is-warning" : "")"
-                   asp-controller="ItActivity"
-                   asp-action="Index">
-
-                    <i class="fas fa-headset stat-icon" aria-hidden="true"></i>
-
-                    <span class="stat-label">IT activity this week</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.ActivitiesThisWeek
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.WeeklyReportDue
-                            ? "Weekly report not drafted yet"
-                            : $"{Model.Admin.ActivitiesOutstanding} still outstanding")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.RequisitionsAwaitingReview > 0 ? "is-action" : "is-good")"
-                   asp-controller="RequisitionApproval"
-                   asp-action="Index">
-
-                    <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Requisitions to review</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.RequisitionsAwaitingReview
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.RequisitionsAwaitingReview == 0
-                            ? "Nothing waiting"
-                            : $"{Model.Admin.RequisitionValueInReview:N2} in value")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile"
-                   asp-controller="Timesheet"
-                   asp-action="Index">
-
-                    <i class="fas fa-business-time stat-icon" aria-hidden="true"></i>
-
-                    <span class="stat-label">Timesheet hours</span>
-
-                    <span class="stat-value">
-                        @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Admin.TimesheetMinutesThisMonth)
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.TimesheetPeopleThisMonth == 0
-                            ? "Nothing logged this month"
-                            : $"{Model.Admin.TimesheetPeopleThisMonth} " +
-                              (Model.Admin.TimesheetPeopleThisMonth == 1 ? "person" : "people") +
-                              " logging this month")
-                    </div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile"
-                   asp-controller="DocumentCategory"
-                   asp-action="Index">
-
-                    <i class="fas fa-folder-tree stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Document categories</span>
-
-                    <span class="stat-value">
-                        @Model.Admin.DocumentCategories
-                    </span>
-
-                    <div class="stat-note">Active filing categories</div>
-
-                </a>
-
-            </div>
-
-            <div class="col-6 col-lg-3">
-
-                <a class="stat-tile @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured ? "is-good" : "is-warning")"
-                   asp-controller="ApprovalConfiguration"
-                   asp-action="Index">
-
-                    <i class="fas fa-user-shield stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Approvers</span>
-
-                    <span class="stat-value">
-                        @((Model.Admin.HrApproverConfigured ? 1 : 0) + (Model.Admin.MdApproverConfigured ? 1 : 0)) / 2
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured
-                            ? "HR and MD both set"
-                            : "Roles still to fill")
-                    </div>
-
-                </a>
-
-            </div>
+            </a>
 
         </div>
-    }
 
-    @if (Model.Admin != null)
-    {
+        <div class="stat-strip mt-3">
+
+            <a class="strip-item"
+               asp-controller="Employee"
+               asp-action="Index">
+
+                <span class="strip-label">Employees</span>
+
+                <span class="strip-value">@Model.Admin.Employees</span>
+
+                <span class="strip-note">
+                    @Model.Admin.ActiveEmployees active
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="Department"
+               asp-action="Index">
+
+                <span class="strip-label">Departments</span>
+
+                <span class="strip-value">@Model.Admin.Departments</span>
+
+                <span class="strip-note">Active</span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="Employee"
+               asp-action="Index">
+
+                <span class="strip-label">Sign-in accounts</span>
+
+                <span class="strip-value">
+                    @Model.Admin.SignInAccounts
+                </span>
+
+                <span class="strip-note">Can log in</span>
+
+            </a>
+
+            <a class="strip-item @(Model.Admin.EmployeesWithoutLogin > 0 ? "is-warning" : "")"
+               asp-controller="Employee"
+               asp-action="Index">
+
+                <span class="strip-label">No account yet</span>
+
+                <span class="strip-value">
+                    @Model.Admin.EmployeesWithoutLogin
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Admin.EmployeesWithoutLogin == 0
+                        ? "Everyone is set up"
+                        : "Staff needing access")
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="Asset"
+               asp-action="Index">
+
+                <span class="strip-label">Assets</span>
+
+                <span class="strip-value">@Model.Admin.Assets</span>
+
+                <span class="strip-note">
+                    @Model.Admin.UnassignedAssets unassigned
+                </span>
+
+            </a>
+
+            <a class="strip-item @(Model.Admin.AssetsNeedingAttention > 0 ? "is-warning" : "")"
+               asp-controller="Asset"
+               asp-action="Index">
+
+                <span class="strip-label">Ageing machines</span>
+
+                <span class="strip-value">
+                    @Model.Admin.AssetsNeedingAttention
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Admin.AssetsNeedingAttention == 0
+                        ? "Fleet is healthy"
+                        : "Marked old or bad")
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="RequisitionApproval"
+               asp-action="Index">
+
+                <span class="strip-label">Requisitions</span>
+
+                <span class="strip-value">
+                    @Model.Admin.RequisitionsAwaitingReview
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Admin.RequisitionsAwaitingReview == 0
+                        ? "Nothing to review"
+                        : $"{Model.Admin.RequisitionValueInReview:N2} in value")
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="Timesheet"
+               asp-action="Index">
+
+                <span class="strip-label">Timesheet hours</span>
+
+                <span class="strip-value">
+                    @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Admin.TimesheetMinutesThisMonth)
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Admin.TimesheetPeopleThisMonth == 0
+                        ? "Nothing logged"
+                        : $"{Model.Admin.TimesheetPeopleThisMonth} " +
+                          (Model.Admin.TimesheetPeopleThisMonth == 1 ? "person" : "people") +
+                          " this month")
+                </span>
+
+            </a>
+
+            <a class="strip-item"
+               asp-controller="DocumentCategory"
+               asp-action="Index">
+
+                <span class="strip-label">Doc categories</span>
+
+                <span class="strip-value">
+                    @Model.Admin.DocumentCategories
+                </span>
+
+                <span class="strip-note">Active filing</span>
+
+            </a>
+
+            <a class="strip-item @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured ? "" : "is-warning")"
+               asp-controller="ApprovalConfiguration"
+               asp-action="Index">
+
+                <span class="strip-label">Approvers</span>
+
+                <span class="strip-value">
+                    @((Model.Admin.HrApproverConfigured ? 1 : 0) + (Model.Admin.MdApproverConfigured ? 1 : 0)) / 2
+                </span>
+
+                <span class="strip-note">
+                    @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured
+                        ? "HR and MD both set"
+                        : "Roles still to fill")
+                </span>
+
+            </a>
+
+        </div>
+
         <div class="row g-3 mt-1">
 
             <div class="col-12">

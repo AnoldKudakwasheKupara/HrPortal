@@ -17,6 +17,33 @@ namespace HrPortal.ViewModels
         public MdDashboardSection? Md { get; set; }
 
         public AdminDashboardSection? Admin { get; set; }
+
+        public List<DashboardFocusItem> Focus { get; set; } = new();
+    }
+
+    /// <summary>
+    /// One entry in the dashboard's "Needs you" band: a piece of
+    /// outstanding work the signed-in user can act on.
+    /// </summary>
+    public class DashboardFocusItem
+    {
+        public string Icon { get; init; } = "fa-circle-dot";
+
+        public string Label { get; init; } = string.Empty;
+
+        public string? Figure { get; init; }
+
+        public string? Unit { get; init; }
+
+        public string Note { get; init; } = string.Empty;
+
+        public string Tone { get; init; } = string.Empty;
+
+        public string Controller { get; init; } = string.Empty;
+
+        public string Action { get; init; } = "Index";
+
+        public Dictionary<string, string> RouteData { get; init; } = new();
     }
 
     public class MyDashboardSection

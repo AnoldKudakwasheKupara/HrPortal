@@ -1331,3 +1331,212 @@ a.stat-tile:hover .stat-icon {
         font-size: 1.7rem;
     }
 }
+
+/* ===== Dashboard: focus band ===================================== */
+
+.focus-band {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.focus-band > * { flex: 1 1 220px; }
+
+.focus-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem 1.5rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--primary);
+    box-shadow: var(--shadow-sm);
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+a.focus-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    color: inherit;
+}
+
+.focus-tile .focus-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+    color: var(--accent);
+    font-size: 0.95rem;
+    margin-bottom: 0.9rem;
+}
+
+.focus-tile .focus-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.focus-tile .focus-figure {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--gray-800);
+}
+
+.focus-tile .focus-unit {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    margin-left: 0.35rem;
+}
+
+.focus-tile .focus-note {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    line-height: 1.35;
+    margin-top: auto;
+    padding-top: 0.7rem;
+}
+
+/* A tile with no figure has nothing to push the note away from, so
+   it sits with the label instead of stranded at the bottom. */
+.focus-tile.is-plain { justify-content: flex-start; }
+
+.focus-tile.is-plain .focus-note {
+    margin-top: 0;
+    padding-top: 0.15rem;
+}
+
+.focus-tile.is-warning { border-left-color: var(--warning); }
+
+.focus-tile.is-warning .focus-icon {
+    background: var(--warning-light);
+    color: var(--warning-ink);
+}
+
+.focus-tile.is-critical { border-left-color: var(--danger); }
+
+.focus-tile.is-critical .focus-figure { color: var(--danger); }
+
+.focus-tile.is-critical .focus-icon {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.focus-clear {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    border-radius: var(--radius-md);
+    background: var(--success-light);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--success);
+}
+
+.focus-clear i {
+    font-size: 1.4rem;
+    color: var(--success);
+}
+
+.focus-clear .focus-clear-title {
+    display: block;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.focus-clear .focus-clear-note {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+}
+
+/* ===== Dashboard: primary tile grid ============================== */
+
+/* Fills the row evenly whatever the tile count, so a section with two
+   or five tiles never leaves a ragged gap at the end of a row. */
+.stat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.stat-grid > * { flex: 1 1 210px; }
+
+/* ===== Dashboard: compact reference strip ======================== */
+
+.stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background: var(--border-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.strip-item {
+    flex: 1 1 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 1.05rem;
+    background: var(--bg-card);
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+a.strip-item:hover {
+    background: var(--accent-wash);
+    text-decoration: none;
+    color: inherit;
+}
+
+.strip-item .strip-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-500);
+}
+
+.strip-item .strip-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--gray-800);
+}
+
+.strip-item .strip-note {
+    font-size: 0.72rem;
+    color: var(--gray-400);
+    line-height: 1.3;
+}
+
+.strip-item.is-warning .strip-value { color: var(--warning-ink); }
+
+.strip-item.is-critical .strip-value { color: var(--danger); }
+
+@media (max-width: 575.98px) {
+    .focus-tile {
+        padding: 1.15rem 1.25rem;
+    }
+
+    .focus-tile .focus-figure {
+        font-size: 2.1rem;
+    }
+}

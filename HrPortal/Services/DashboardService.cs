@@ -50,6 +50,8 @@ namespace HrPortal.Services
             if (user.IsInRole(Roles.Administrator))
                 model.Admin = await BuildAdminAsync();
 
+            model.Focus = BuildFocus(model);
+
             return model;
         }
 
@@ -406,6 +408,212 @@ namespace HrPortal.Services
                     .Take(ListLength)
                     .ToListAsync()
             };
+        }
+
+        /// <summary>
+        /// Collects the outstanding work the signed-in user can act on,
+        /// most pressing first, so the dashboard can lead with it
+        /// instead of burying it among the section tiles.
+        /// </summary>
+        private static List<DashboardFocusItem> BuildFocus(
+            DashboardViewModel model)
+        {
+            var focus = new List<DashboardFocusItem>();
+
+            if (model.Md is { AwaitingFinalApproval: > 0 } mdLeave)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-stamp",
+                    Label = "Leave to sign off",
+                    Figure = mdLeave.AwaitingFinalApproval.ToString("N0"),
+                    Unit = mdLeave.AwaitingFinalApproval == 1
+                        ? "request" : "requests",
+                    Note = "Cleared HR and waiting on your decision.",
+                    Controller = "LeaveApproval",
+                    Action = "FinalApproval"
+                });
+            }
+
+            if (model.Md is { RequisitionsAwaitingApproval: > 0 } mdReq)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-file-invoice-dollar",
+                    Label = "Requisitions to approve",
+                    Figure = mdReq.RequisitionsAwaitingApproval.ToString("N0"),
+                    Unit = mdReq.RequisitionsAwaitingApproval == 1
+                        ? "request" : "requests",
+                    Note =
+                        $"{mdReq.RequisitionValueAwaiting:N2} in value "
+                        + "awaiting your approval.",
+                    Controller = "RequisitionApproval",
+                    Action = "FinalApproval"
+                });
+            }
+
+            if (model.Hr is { AwaitingReview: > 0 } hrQueue)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-inbox",
+                    Label = "Leave to review",
+                    Figure = hrQueue.AwaitingReview.ToString("N0"),
+                    Unit = hrQueue.AwaitingReview == 1
+                        ? "request" : "requests",
+                    Note = "Submitted by staff and waiting on HR.",
+                    Controller = "LeaveApproval",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Admin is { RequisitionsAwaitingReview: > 0 } adminReq)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-file-invoice-dollar",
+                    Label = "Requisitions to review",
+                    Figure = adminReq
+                        .RequisitionsAwaitingReview.ToString("N0"),
+                    Unit = adminReq.RequisitionsAwaitingReview == 1
+                        ? "request" : "requests",
+                    Note =
+                        $"{adminReq.RequisitionValueInReview:N2} in value "
+                        + "awaiting review.",
+                    Controller = "RequisitionApproval",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Mine is { OverdueTraining: > 0 } myTraining)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-graduation-cap",
+                    Label = "Your training is overdue",
+                    Figure = myTraining.OverdueTraining.ToString("N0"),
+                    Unit = myTraining.OverdueTraining == 1
+                        ? "course" : "courses",
+                    Note = "Past the due date and assigned to you.",
+                    Tone = "is-critical",
+                    Controller = "MyTraining",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Admin is { LicensesExpired: > 0 } expiredLicences)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-certificate",
+                    Label = "Licences lapsed",
+                    Figure = expiredLicences.LicensesExpired.ToString("N0"),
+                    Unit = expiredLicences.LicensesExpired == 1
+                        ? "licence" : "licences",
+                    Note = "Still active but past the expiry date.",
+                    Tone = "is-critical",
+                    Controller = "License",
+                    Action = "Index",
+                    RouteData = new Dictionary<string, string>
+                    {
+                        ["show"] = "expired"
+                    }
+                });
+            }
+
+            if (model.Admin is { MaintenanceOverdue: > 0 } lateMaintenance)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-screwdriver-wrench",
+                    Label = "Maintenance overdue",
+                    Figure = lateMaintenance
+                        .MaintenanceOverdue.ToString("N0"),
+                    Unit = lateMaintenance.MaintenanceOverdue == 1
+                        ? "job" : "jobs",
+                    Note = "Scheduled for a date that has already passed.",
+                    Tone = "is-critical",
+                    Controller = "AssetMaintenance",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Hr is { OverdueTrainingOrgWide: > 0 } orgTraining)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-triangle-exclamation",
+                    Label = "Overdue training",
+                    Figure = orgTraining
+                        .OverdueTrainingOrgWide.ToString("N0"),
+                    Unit = orgTraining.OverdueTrainingOrgWide == 1
+                        ? "assignment" : "assignments",
+                    Note = "Past the due date across the business.",
+                    Tone = "is-warning",
+                    Controller = "TrainingAssignment",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Hr is { ReturnedToEmployees: > 0 } returned)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-rotate-left",
+                    Label = "Returned to staff",
+                    Figure = returned.ReturnedToEmployees.ToString("N0"),
+                    Unit = returned.ReturnedToEmployees == 1
+                        ? "request" : "requests",
+                    Note = "Sent back for changes and not resubmitted.",
+                    Tone = "is-warning",
+                    Controller = "LeaveRequest",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Admin is { WeeklyReportDue: true })
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-file-lines",
+                    Label = "Weekly IT report",
+                    Note = "The report for this week is not drafted yet.",
+                    Tone = "is-warning",
+                    Controller = "ItActivity",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Mine is
+                { KeepsTimesheet: true, TimesheetEntriesThisWeek: 0 })
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-stopwatch",
+                    Label = "Timesheet",
+                    Note = "No time has been logged this week.",
+                    Tone = "is-warning",
+                    Controller = "MyTimesheet",
+                    Action = "Index"
+                });
+            }
+
+            if (model.Mine is { UnreadNotifications: > 0 } notices)
+            {
+                focus.Add(new DashboardFocusItem
+                {
+                    Icon = "fa-bell",
+                    Label = "Unread notices",
+                    Figure = notices.UnreadNotifications.ToString("N0"),
+                    Unit = notices.UnreadNotifications == 1
+                        ? "notice" : "notices",
+                    Note = "Waiting for you to read.",
+                    Controller = "MyNotifications",
+                    Action = "Index"
+                });
+            }
+
+            return focus;
         }
     }
 }
