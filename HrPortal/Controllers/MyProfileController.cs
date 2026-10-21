@@ -1,4 +1,5 @@
 ﻿using HrPortal.DbContexts;
+using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
@@ -17,16 +18,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly IAuthorizationService _authorization;
 
+        private readonly AuditService _audit;
+
         public MyProfileController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             CurrentUserService currentUser,
-            IAuthorizationService authorization)
+            IAuthorizationService authorization,
+            AuditService audit)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
             _authorization = authorization;
+            _audit = audit;
         }
 
         public async Task<IActionResult> Index()
@@ -56,6 +61,105 @@ namespace HrPortal.Controllers
             };
 
             return View(model);
+        }
+
+        public async Task<IActionResult> NextOfKin()
+        {
+            var employee = await _currentUser.GetEmployeeAsync();
+
+            if (employee == null)
+                return View("NoEmployeeRecord");
+
+            var model = new NextOfKinViewModel
+            {
+                EmergencyContactName =
+                    employee.EmergencyContactName ?? string.Empty,
+
+                EmergencyContactRelationship =
+                    employee.EmergencyContactRelationship ?? string.Empty,
+
+                EmergencyContactAddress =
+                    employee.EmergencyContactAddress,
+
+                EmergencyContactPhone =
+                    employee.EmergencyContactPhone ?? string.Empty
+            };
+
+            Describe(model, employee);
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> NextOfKin(NextOfKinViewModel model)
+        {
+            var employee = await _currentUser.GetEmployeeAsync();
+
+            if (employee == null)
+                return View("NoEmployeeRecord");
+
+            if (!model.Confirmed)
+            {
+                ModelState.AddModelError(
+                    nameof(model.Confirmed),
+                    "Tick the box to confirm the details are accurate.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                Describe(model, employee);
+                return View(model);
+            }
+
+            employee.EmergencyContactName =
+                model.EmergencyContactName.Trim();
+
+            employee.EmergencyContactRelationship =
+                model.EmergencyContactRelationship.Trim();
+
+            employee.EmergencyContactPhone =
+                model.EmergencyContactPhone.Trim();
+
+            employee.EmergencyContactAddress =
+                string.IsNullOrWhiteSpace(model.EmergencyContactAddress)
+                    ? null
+                    : model.EmergencyContactAddress.Trim();
+
+            employee.NextOfKinConfirmedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.Updated,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                "Next of kin details confirmed by the employee.");
+
+            TempData["Success"] =
+                "Your next of kin details have been saved.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Fills the part of the form the employee cannot edit, so the
+        /// page still shows what they are confirming when it comes back
+        /// with validation errors.
+        /// </summary>
+        private static void Describe(
+            NextOfKinViewModel model,
+            Employee employee)
+        {
+            model.EmployeeName =
+                $"{employee.FirstName} {employee.LastName}";
+
+            model.DepartmentName = employee.Department.Name;
+            model.JobTitle = employee.JobTitle;
+            model.Address = employee.Address;
+            model.PhoneNumber = employee.PhoneNumber;
+            model.Email = employee.Email;
+            model.ConfirmedAt = employee.NextOfKinConfirmedAt;
         }
 
         public async Task<IActionResult> Document(int? id)

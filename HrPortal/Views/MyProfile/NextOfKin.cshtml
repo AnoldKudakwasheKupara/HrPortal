@@ -1,0 +1,244 @@
+@model HrPortal.ViewModels.NextOfKinViewModel
+
+@{
+    ViewData["Title"] = "Next of Kin";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>Next of kin</h2>
+
+        <p class="text-muted">
+            Who we should contact in an emergency. Please tell us
+            straight away if any of this changes, as it is what we will
+            go on.
+        </p>
+
+    </div>
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger mb-3"
+         role="alert"></div>
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Your details</span>
+
+            <span class="text-muted small">Kept by HR</span>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-sm-6">
+                    <span class="field-label">Name</span>
+                    <div class="field-value">@Model.EmployeeName</div>
+                </div>
+
+                <div class="col-sm-6">
+                    <span class="field-label">Department / division</span>
+                    <div class="field-value">@Model.DepartmentName</div>
+                </div>
+
+                <div class="col-sm-6">
+                    <span class="field-label">Position / title</span>
+                    <div class="field-value @(Model.JobTitle == null ? "is-empty" : "")">
+                        @(Model.JobTitle ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <span class="field-label">Phone number</span>
+                    <div class="field-value @(Model.PhoneNumber == null ? "is-empty" : "")">
+                        @(Model.PhoneNumber ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-sm-6">
+                    <span class="field-label">Email address</span>
+                    <div class="field-value">@Model.Email</div>
+                </div>
+
+                <div class="col-sm-6">
+                    <span class="field-label">Address</span>
+                    <div class="field-value @(Model.Address == null ? "is-empty" : "")">
+                        @(Model.Address ?? "Not recorded")
+                    </div>
+                </div>
+
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                These come from your employment record. If any are
+                wrong, speak to HR rather than changing them here.
+            </p>
+
+        </div>
+
+    </div>
+
+    <form asp-action="NextOfKin" method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header">Emergency contact</div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label asp-for="EmergencyContactName"
+                               class="form-label"></label>
+
+                        <input asp-for="EmergencyContactName"
+                               class="form-control" />
+
+                        <span asp-validation-for="EmergencyContactName"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="EmergencyContactRelationship"
+                               class="form-label"></label>
+
+                        <input asp-for="EmergencyContactRelationship"
+                               class="form-control"
+                               placeholder="Spouse, parent, sibling" />
+
+                        <span asp-validation-for="EmergencyContactRelationship"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="EmergencyContactPhone"
+                               class="form-label"></label>
+
+                        <input asp-for="EmergencyContactPhone"
+                               class="form-control"
+                               placeholder="0771234567" />
+
+                        <div class="form-text">
+                            More than one is fine. Separate them with a
+                            comma.
+                        </div>
+
+                        <span asp-validation-for="EmergencyContactPhone"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="EmergencyContactAddress"
+                               class="form-label"></label>
+
+                        <textarea asp-for="EmergencyContactAddress"
+                                  class="form-control"
+                                  rows="3"></textarea>
+
+                        <div class="form-text">
+                            Leave this blank if they live with you.
+                        </div>
+
+                        <span asp-validation-for="EmergencyContactAddress"
+                              class="text-danger"></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header">Acknowledgement</div>
+
+            <div class="card-body">
+
+                <div class="form-check">
+
+                    <input asp-for="Confirmed"
+                           class="form-check-input"
+                           required />
+
+                    <label asp-for="Confirmed"
+                           class="form-check-label"></label>
+
+                    <div class="form-text">
+                        Ticking this stands in place of signing the
+                        form. We record the date and time, and it is
+                        your confirmation that the details are correct.
+                    </div>
+
+                    <span asp-validation-for="Confirmed"
+                          class="text-danger"></span>
+
+                </div>
+
+                @if (Model.ConfirmedAt != null)
+                {
+                    <div class="detail-rows mt-3">
+
+                        <div class="detail-row">
+
+                            <span class="detail-icon">
+                                <i class="fas fa-circle-check"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <div class="detail-text">
+                                <span class="field-label">
+                                    Last confirmed
+                                </span>
+                                <div class="field-value">
+                                    @(Model.ConfirmedAt.Value.ToLocalTime()
+                                        .ToString("d MMM yyyy HH:mm"))
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+        <div class="mb-4">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-floppy-disk" aria-hidden="true"></i>
+                Save and confirm
+            </button>
+
+            <a class="btn btn-outline-secondary"
+               asp-action="Index">
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

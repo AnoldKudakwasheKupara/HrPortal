@@ -24,6 +24,13 @@
 
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger">
@@ -150,6 +157,88 @@
                 </div>
 
             </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mt-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Next of kin</span>
+
+            <a class="btn btn-sm btn-primary"
+               asp-action="NextOfKin">
+                @(string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName)
+                    ? "Complete this form"
+                    : "Update")
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            @if (string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName))
+            {
+                <p class="empty-state">
+                    <span class="empty-icon">&#128101;</span>
+                    You have not told us who to contact in an emergency.
+                </p>
+            }
+            else
+            {
+                <div class="row g-3">
+
+                    <div class="col-sm-6">
+                        <span class="field-label">Contact</span>
+                        <div class="field-value">
+                            @Model.Employee.EmergencyContactName
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <span class="field-label">Relationship</span>
+                        <div class="field-value @(Model.Employee.EmergencyContactRelationship == null ? "is-empty" : "")">
+                            @(Model.Employee.EmergencyContactRelationship
+                                ?? "Not recorded")
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <span class="field-label">Phone number(s)</span>
+                        <div class="field-value @(Model.Employee.EmergencyContactPhone == null ? "is-empty" : "")">
+                            @(Model.Employee.EmergencyContactPhone
+                                ?? "Not recorded")
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <span class="field-label">Address</span>
+                        <div class="field-value @(Model.Employee.EmergencyContactAddress == null ? "is-empty" : "")">
+                            @(Model.Employee.EmergencyContactAddress
+                                ?? "Same as yours")
+                        </div>
+                    </div>
+
+                </div>
+
+                @if (Model.Employee.NextOfKinConfirmedAt != null)
+                {
+                    <p class="text-muted small mt-3 mb-0">
+                        You confirmed these on
+                        @(Model.Employee.NextOfKinConfirmedAt.Value
+                            .ToLocalTime().ToString("d MMM yyyy HH:mm")).
+                    </p>
+                }
+                else
+                {
+                    <div class="alert alert-warning mt-3 mb-0">
+                        These were entered by HR and you have not
+                        confirmed them yet. Please check them over.
+                    </div>
+                }
+            }
 
         </div>
 
