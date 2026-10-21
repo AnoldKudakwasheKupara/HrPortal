@@ -1,20 +1,25 @@
-﻿@model HrPortal.ViewModels.MyProfileViewModel
+@model HrPortal.ViewModels.MyProfileViewModel
 
 @{
     ViewData["Title"] = "My Profile";
+
+    var fullName =
+        $"{Model.Employee.FirstName} {Model.Employee.LastName}".Trim();
+
+    var initial = string.IsNullOrWhiteSpace(fullName)
+        ? "?"
+        : fullName[0].ToString().ToUpper();
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head-simple">
 
-        <h2>
-            @Model.Employee.FirstName
-            @Model.Employee.LastName
-        </h2>
+        <h2>My profile</h2>
 
         <p class="text-muted">
-            Your employment information, documents and notifications.
+            Your employment record, the documents on your file and the
+            notices the portal has sent you.
         </p>
 
     </div>
@@ -26,76 +31,151 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="row g-3">
 
-        <div class="card-header">
-            <strong>Employment Information</strong>
-        </div>
+        <div class="col-lg-5">
 
-        <div class="card-body">
+            <div class="card shadow-sm h-100">
 
-            <div class="row">
+                <div class="card-body">
 
-                <div class="col-md-4">
-                    <span class="field-label">Employee Number</span>
-                    <p class="field-value">@Model.Employee.EmployeeNumber</p>
-                </div>
+                    <div class="account-identity">
 
-                <div class="col-md-4">
-                    <span class="field-label">Job Title</span>
-                    <p class="field-value">
-                        @(Model.Employee.JobTitle ?? "Not recorded")
-                    </p>
-                </div>
+                        <div class="account-avatar">@initial</div>
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Department</span>
-                    <p class="field-value">@Model.Employee.Department.Name</p>
-                </div>
+                        <div>
+                            <h5 class="mb-1">@fullName</h5>
 
-                <div class="col-md-4">
-                    <span class="field-label">Date Joined</span>
-                    <p class="field-value">@Model.Employee.DateJoined.ToString("dd MMM yyyy")</p>
-                </div>
+                            <div class="text-muted">
+                                @(Model.Employee.JobTitle ?? "No job title recorded")
+                            </div>
 
-                <div class="col-md-4">
-                    <span class="field-label">Email</span>
-                    <p class="field-value">@Model.Employee.Email</p>
-                </div>
+                            <div class="mt-2">
+                                <span class="badge bg-primary">
+                                    @Model.Employee.Department.Name
+                                </span>
 
-                <div class="col-md-4">
-                    <span class="field-label">Phone Number</span>
-                    <p class="field-value">@(Model.Employee.PhoneNumber ?? "Not recorded")</p>
-                </div>
+                                @if (Model.Employee.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+                                }
+                            </div>
+                        </div>
 
-                <div class="col-md-4">
-                    <span class="field-label">National ID</span>
-                    <p class="field-value">@(Model.Employee.NationalId ?? "Not recorded")</p>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+
+                        <div class="col-6">
+                            <span class="field-label">Employee number</span>
+                            <div class="field-value">
+                                @Model.Employee.EmployeeNumber
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <span class="field-label">Date joined</span>
+                            <div class="field-value">
+                                @Model.Employee.DateJoined.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
 
             </div>
 
-            <p class="text-muted mb-0">
-                To correct any of this, speak to HR.
-            </p>
+        </div>
+
+        <div class="col-lg-7">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-header d-flex justify-content-between align-items-center">
+
+                    <span>Contact details</span>
+
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-area="Identity"
+                       asp-page="/Account/Manage/Index">
+                        My account
+                    </a>
+
+                </div>
+
+                <div class="card-body d-flex flex-column">
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+                            <span class="field-label">Email</span>
+                            <div class="field-value">
+                                @Model.Employee.Email
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <span class="field-label">Phone number</span>
+                            <div class="field-value @(Model.Employee.PhoneNumber == null ? "is-empty" : "")">
+                                @(Model.Employee.PhoneNumber ?? "Not recorded")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <span class="field-label">National ID</span>
+                            <div class="field-value @(Model.Employee.NationalId == null ? "is-empty" : "")">
+                                @(Model.Employee.NationalId ?? "Not recorded")
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <p class="text-muted small mt-auto pt-3 mb-0">
+                        HR keeps this record. To correct anything on this
+                        page, speak to them. Your sign-in email and phone
+                        number are managed separately under
+                        <a asp-area="Identity"
+                           asp-page="/Account/Manage/Index">My account</a>.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mt-3">
 
-        <div class="card-header">
-            <strong>My Documents</strong>
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>My documents</span>
+
+            <span class="text-muted small">
+                @Model.Documents.Count
+                @(Model.Documents.Count == 1 ? "document" : "documents")
+                on your file
+            </span>
+
         </div>
 
-        <div class="card-body">
+        @if (Model.Documents.Any())
+        {
+            <div class="card-body is-table">
 
-            @if (Model.Documents.Any())
-            {
                 <div class="table-responsive">
 
-                    <table class="table align-middle">
+                    <table class="table table-hover align-middle">
 
                         <thead>
                             <tr>
@@ -127,6 +207,8 @@
                                         <a class="btn btn-sm btn-outline-primary"
                                            asp-action="Document"
                                            asp-route-id="@document.Id">
+                                            <i class="fas fa-download"
+                                               aria-hidden="true"></i>
                                             Download
                                         </a>
 
@@ -142,83 +224,97 @@
                     </table>
 
                 </div>
-            }
-            else
-            {
-                <p class="text-muted mb-0">
+
+            </div>
+        }
+        else
+        {
+            <div class="card-body">
+
+                <p class="empty-state">
+                    <span class="empty-icon">&#128193;</span>
                     There are no documents on your file.
                 </p>
-            }
 
-        </div>
+            </div>
+        }
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-3 mb-4">
 
-        <div class="card-header">
-            <strong>Notifications</strong>
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Notifications</span>
+
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-controller="MyNotifications"
+               asp-action="Index">
+                All notifications
+            </a>
+
         </div>
 
         <div class="card-body">
 
             @if (Model.Notifications.Any())
             {
-                <ul class="list-group list-group-flush">
+                <ul class="row-list">
 
                 @foreach (var notification in Model.Notifications)
                 {
-                    <li class="list-group-item px-0">
+                    <li>
 
-                        <div class="d-flex justify-content-between align-items-start">
+                        <span class="row-icon">
+                            <i class="fas @(notification.IsRead ? "fa-envelope-open" : "fa-bell")"
+                               aria-hidden="true"></i>
+                        </span>
 
-                            <div>
-                                <strong>
-                                    @notification.Title
+                        <div class="row-main">
 
-                                    @if (!notification.IsRead)
-                                    {
-                                        <span class="badge bg-primary">
-                                            New
-                                        </span>
-                                    }
-                                </strong>
-
-                                <div>@notification.Message</div>
-
-                                <small class="text-muted">
-                                    @notification.CreatedAt.ToString("dd MMM yyyy HH:mm")
-                                </small>
-                            </div>
-
-                            <div class="text-nowrap">
-
-                                @if (!string.IsNullOrWhiteSpace(notification.Link))
-                                {
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       href="@notification.Link">
-                                        Open
-                                    </a>
-                                }
+                            <span class="row-title">
+                                @notification.Title
 
                                 @if (!notification.IsRead)
                                 {
-                                    <form asp-action="MarkRead"
-                                          asp-route-id="@notification.Id"
-                                          method="post"
-                                          class="d-inline">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
-                                            Mark read
-                                        </button>
-
-                                    </form>
+                                    <span class="badge bg-primary">New</span>
                                 }
+                            </span>
 
-                            </div>
+                            <span class="row-meta">
+                                @notification.Message
+                                &middot;
+                                @notification.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                            </span>
+
+                        </div>
+
+                        <div class="table-actions">
+
+                            @if (!string.IsNullOrWhiteSpace(notification.Link))
+                            {
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   href="@notification.Link">
+                                    Open
+                                </a>
+                            }
+
+                            @if (!notification.IsRead)
+                            {
+                                <form asp-action="MarkRead"
+                                      asp-route-id="@notification.Id"
+                                      method="post"
+                                      class="d-inline">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-secondary">
+                                        Mark read
+                                    </button>
+
+                                </form>
+                            }
 
                         </div>
 
@@ -229,7 +325,8 @@
             }
             else
             {
-                <p class="text-muted mb-0">
+                <p class="empty-state">
+                    <span class="empty-icon">&#128276;</span>
                     You have no notifications.
                 </p>
             }

@@ -1,35 +1,82 @@
-﻿@{
-    ViewData["Title"] = "No Employee Record";
+@{
+    ViewData["Title"] = "My Profile";
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head-simple">
 
-        <h2>No Employee Record</h2>
+        <h2>My profile</h2>
 
-    </div>
-
-    <div class="alert alert-info">
-
-        <p>
-            Your sign-in account is not linked to an employee
-            record, so there is no personal leave to show.
-        </p>
-
-        <p class="mb-0">
-            An administrator can link it by editing your employee
-            record, or by creating one for you.
+        <p class="text-muted">
+            Your employment record, the documents on your file and the
+            notices the portal has sent you.
         </p>
 
     </div>
 
-    <a asp-controller="Home"
-       asp-action="Index"
-       class="btn btn-secondary">
+    <div class="card shadow-sm">
 
-        Back to Home
+        <div class="card-header">No employee record</div>
 
-    </a>
+        <div class="card-body">
+
+            <div class="detail-rows">
+
+                <div class="detail-row">
+
+                    <span class="detail-icon">
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
+                    </span>
+
+                    <div class="detail-text">
+                        <span class="field-label">Nothing to show yet</span>
+                        <p class="field-value">
+                            Your sign-in is not linked to an employee
+                            record, so there is no employment
+                            information, document or notice to show here.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="detail-row">
+
+                    <span class="detail-icon">
+                        <i class="fas fa-user-shield" aria-hidden="true"></i>
+                    </span>
+
+                    <div class="detail-text">
+                        <span class="field-label">How to fix it</span>
+                        <p class="field-value">
+                            An administrator can link your sign-in by
+                            editing your employee record, or by creating
+                            one for you.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="mt-4">
+
+                <a class="btn btn-primary"
+                   asp-controller="Home"
+                   asp-action="Index">
+                    Back to the dashboard
+                </a>
+
+                <a class="btn btn-outline-secondary"
+                   asp-area="Identity"
+                   asp-page="/Account/Manage/Index">
+                    My account
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
