@@ -1,0 +1,174 @@
+@model HrPortal.ViewModels.WelcomeViewModel
+
+@{
+    ViewData["Title"] = "Welcome";
+
+    var greeting = string.IsNullOrWhiteSpace(Model.FirstName)
+        ? "Welcome to the Intellego team"
+        : $"Welcome, {Model.FirstName}";
+}
+
+<div class="container-fluid">
+
+    <div class="welcome-hero">
+
+        <span class="welcome-eyebrow">Intellego HR Portal</span>
+
+        <h1>@greeting</h1>
+
+        <p>
+            This is your home for everything people-related at Intellego:
+            our policies, forms, benefits and the people who can help. We
+            are glad you are here.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+
+            <a class="btn btn-light" asp-controller="MyProfile" asp-action="Index">
+                <i class="fas fa-circle-play"></i>
+                Start your onboarding
+            </a>
+
+            <a class="btn btn-outline-light" asp-controller="Policy" asp-action="Index">
+                <i class="fas fa-book"></i>
+                Read the employee handbook
+            </a>
+
+        </div>
+
+    </div>
+
+    <partial name="_IntellegoStory" />
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Quick links</span>
+            <span class="text-muted small">Find what you need</span>
+        </div>
+
+        <div class="card-body">
+
+            <div class="settings-grid">
+
+                <a class="settings-item" asp-controller="Policy" asp-action="Index">
+                    <span class="settings-icon">
+                        <i class="fas fa-book" aria-hidden="true"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Employee handbook</span>
+                        <span class="settings-note">
+                            Policies, code of conduct and procedures
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"
+                       aria-hidden="true"></i>
+                </a>
+
+                <a class="settings-item" asp-controller="MyLeave" asp-action="Create">
+                    <span class="settings-icon">
+                        <i class="fas fa-plane-departure" aria-hidden="true"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Apply for leave</span>
+                        <span class="settings-note">
+                            Annual, sick and special leave requests
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"
+                       aria-hidden="true"></i>
+                </a>
+
+                <a class="settings-item" asp-controller="Directory" asp-action="Index">
+                    <span class="settings-icon">
+                        <i class="fas fa-address-book" aria-hidden="true"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Staff directory</span>
+                        <span class="settings-note">
+                            Find colleagues, roles and contacts
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"
+                       aria-hidden="true"></i>
+                </a>
+
+                <a class="settings-item" asp-controller="Repository" asp-action="Index">
+                    <span class="settings-icon">
+                        <i class="fas fa-folder-open" aria-hidden="true"></i>
+                    </span>
+                    <span class="settings-text">
+                        <span class="settings-title">Forms and documents</span>
+                        <span class="settings-note">
+                            The forms and guidance you are asked for most
+                        </span>
+                    </span>
+                    <i class="fas fa-chevron-right settings-chevron"
+                       aria-hidden="true"></i>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">Need help? Talk to HR</div>
+
+        <div class="card-body">
+
+            <div class="row g-4 align-items-start">
+
+                <div class="col-lg-7">
+                    <p class="field-value mb-0">
+                        Our door is always open for questions about your
+                        role, pay, benefits or wellbeing.
+                    </p>
+                </div>
+
+                <div class="col-lg-5">
+
+                    <span class="section-eyebrow">HR contact</span>
+
+                    @if (Model.HrContact.IsKnown)
+                    {
+                        <p class="field-value mb-1">
+                            <strong>@Model.HrContact.Name</strong>
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.HrContact.Email))
+                        {
+                            <p class="field-value mb-1">
+                                <a href="mailto:@Model.HrContact.Email">
+                                    @Model.HrContact.Email
+                                </a>
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.HrContact.Phone))
+                        {
+                            <p class="field-value mb-0">
+                                @Model.HrContact.Phone
+                            </p>
+                        }
+                    }
+                    else
+                    {
+                        <p class="field-value is-empty mb-0">
+                            No HR officer is set up yet. An administrator
+                            can name one on the approval settings page,
+                            and their details will show here.
+                        </p>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

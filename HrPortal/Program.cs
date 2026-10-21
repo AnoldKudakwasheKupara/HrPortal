@@ -91,6 +91,7 @@ builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<LeaveBalanceService>();
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<HrContactService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<WorkingCalendar>();
 builder.Services.AddScoped<TimesheetRegisterService>();

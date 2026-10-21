@@ -1149,3 +1149,185 @@ a.stat-tile:hover .stat-icon {
         break-inside: avoid;
     }
 }
+
+.welcome-hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
+    border-radius: var(--radius-lg);
+    padding: 2.75rem 2.5rem;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 1rem;
+}
+
+.welcome-eyebrow,
+.section-eyebrow {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.welcome-eyebrow {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.section-eyebrow {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.welcome-hero h1 {
+    font-weight: 800;
+    font-size: 2.15rem;
+    line-height: 1.15;
+    margin: 0.6rem 0 0.85rem;
+}
+
+.welcome-hero p {
+    max-width: 56ch;
+    color: rgba(255, 255, 255, 0.92);
+    margin-bottom: 1.5rem;
+}
+
+.welcome-hero .btn-light {
+    font-weight: 600;
+}
+
+.welcome-hero .btn-outline-light {
+    font-weight: 600;
+}
+
+.story-lede {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--primary);
+    line-height: 1.45;
+}
+
+.service-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.service-chip {
+    background: var(--primary-surface);
+    color: var(--primary-dark);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.value-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--bg-main);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1.15rem;
+}
+
+.value-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.65rem;
+    background: var(--primary-surface);
+    color: var(--primary);
+}
+
+.value-title {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.value-points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.value-points li {
+    position: relative;
+    padding-left: 1rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.875rem;
+    color: var(--text-soft, #64748b);
+}
+
+.value-points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.public-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-main);
+}
+
+.public-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.public-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.public-brand small {
+    display: block;
+    font-weight: 600;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.public-main {
+    flex: 1;
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 2rem;
+}
+
+.public-foot {
+    text-align: center;
+    padding: 1.25rem 1rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 575.98px) {
+    .welcome-hero {
+        padding: 2rem 1.25rem;
+    }
+
+    .welcome-hero h1 {
+        font-size: 1.7rem;
+    }
+}
