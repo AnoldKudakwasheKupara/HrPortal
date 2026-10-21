@@ -21,18 +21,22 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly FileStorageService _fileStorage;
 
+        private readonly NextOfKinPdfService _nextOfKinPdf;
+
         public EmployeeController(
             ApplicationDbContext context,
             EmployeeRecordService records,
             UserManager<ApplicationUser> userManager,
             AuditService audit,
-            FileStorageService fileStorage)
+            FileStorageService fileStorage,
+            NextOfKinPdfService nextOfKinPdf)
         {
             _context = context;
             _records = records;
             _userManager = userManager;
             _audit = audit;
             _fileStorage = fileStorage;
+            _nextOfKinPdf = nextOfKinPdf;
         }
 
         public async Task<IActionResult> Index()
@@ -65,6 +69,26 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             return View(employee);
+        }
+
+        public async Task<IActionResult> NextOfKinForm(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .AsNoTracking()
+                .Include(e => e.Department)
+                .Include(e => e.Position)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            return File(
+                _nextOfKinPdf.Render(employee),
+                "application/pdf",
+                MyProfileController.FileName(employee));
         }
 
         public async Task<IActionResult> Create()

@@ -28,6 +28,16 @@
                 </a>
             }
 
+            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+            {
+                <a asp-action="NextOfKinForm"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-download" aria-hidden="true"></i>
+                    Next of kin (PDF)
+                </a>
+            }
+
             <a asp-action="Edit"
                asp-route-id="@Model.Id"
                class="btn btn-primary">

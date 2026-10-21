@@ -168,12 +168,25 @@
 
             <span>Next of kin</span>
 
-            <a class="btn btn-sm btn-primary"
-               asp-action="NextOfKin">
-                @(string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName)
-                    ? "Complete this form"
-                    : "Update")
-            </a>
+            <span class="table-actions">
+
+                @if (!string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName))
+                {
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-action="NextOfKinForm">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        Form (PDF)
+                    </a>
+                }
+
+                <a class="btn btn-sm btn-primary"
+                   asp-action="NextOfKin">
+                    @(string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName)
+                        ? "Complete this form"
+                        : "Update")
+                </a>
+
+            </span>
 
         </div>
 

@@ -20,18 +20,22 @@ namespace HrPortal.Controllers
 
         private readonly AuditService _audit;
 
+        private readonly NextOfKinPdfService _nextOfKinPdf;
+
         public MyProfileController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             CurrentUserService currentUser,
             IAuthorizationService authorization,
-            AuditService audit)
+            AuditService audit,
+            NextOfKinPdfService nextOfKinPdf)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
             _authorization = authorization;
             _audit = audit;
+            _nextOfKinPdf = nextOfKinPdf;
         }
 
         public async Task<IActionResult> Index()
@@ -140,6 +144,32 @@ namespace HrPortal.Controllers
                 "Your next of kin details have been saved.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> NextOfKinForm()
+        {
+            var employee = await _currentUser.GetEmployeeAsync();
+
+            if (employee == null)
+                return View("NoEmployeeRecord");
+
+            return File(
+                _nextOfKinPdf.Render(employee),
+                "application/pdf",
+                FileName(employee));
+        }
+
+        /// <summary>
+        /// A download name HR can file without renaming it.
+        /// </summary>
+        internal static string FileName(Employee employee)
+        {
+            var who = $"{employee.FirstName} {employee.LastName}".Trim();
+
+            foreach (var bad in Path.GetInvalidFileNameChars())
+                who = who.Replace(bad, ' ');
+
+            return $"Next of kin - {who}.pdf";
         }
 
         /// <summary>
