@@ -1,0 +1,117 @@
+@model List<HrPortal.Entities.CourseApplication>
+
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>My courses</h2>
+
+            <p class="text-muted mb-0">
+                Applications to study a professional programme. HR
+                reviews them, then the Managing Consultant decides.
+            </p>
+        </div>
+
+        <a class="btn btn-primary" asp-action="Create">
+            Apply for a course
+        </a>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Programme</th>
+                            <th>Target exam</th>
+                            <th>Status</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-4">
+                                You have not applied for a course yet.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var application in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>@application.ApplicationNumber</strong>
+                                <div class="row-meta">
+                                    @(application.CreatedAt.ToLocalTime().ToString("d MMM yyyy"))
+                                </div>
+                            </td>
+
+                            <td>@application.ProgramIntended</td>
+
+                            <td>
+                                @(application.TargetExamDate == null
+                                    ? "--"
+                                    : application.TargetExamDate.Value.ToString("d MMM yyyy"))
+                            </td>
+
+                            <td>
+                                <partial name="_CourseStatusBadge"
+                                         model="application.Status" />
+                            </td>
+
+                            <td class="col-actions">
+
+                                <div class="table-actions">
+
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Details"
+                                       asp-route-id="@application.Id">
+                                        Open
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

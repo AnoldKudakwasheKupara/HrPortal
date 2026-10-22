@@ -1,0 +1,37 @@
+@using HrPortal.Entities
+@model CourseApplicationStatus
+
+@switch (Model)
+{
+    case CourseApplicationStatus.Approved:
+        <span class="badge bg-success">Approved</span>
+        break;
+
+    case CourseApplicationStatus.Rejected:
+        <span class="badge bg-danger">Declined</span>
+        break;
+
+    case CourseApplicationStatus.HrRejected:
+        <span class="badge bg-danger">Declined by HR</span>
+        break;
+
+    case CourseApplicationStatus.Cancelled:
+        <span class="badge bg-secondary">Cancelled</span>
+        break;
+
+    case CourseApplicationStatus.ReturnedToApplicant:
+        <span class="badge bg-warning">Returned</span>
+        break;
+
+    case CourseApplicationStatus.HrApproved:
+        <span class="badge bg-info">With the Managing Consultant</span>
+        break;
+
+    case CourseApplicationStatus.Draft:
+        <span class="badge bg-secondary">Draft</span>
+        break;
+
+    default:
+        <span class="badge bg-info">With HR</span>
+        break;
+}

@@ -1,0 +1,74 @@
+@model HrPortal.Entities.CourseApplication
+
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header">History</div>
+
+    @if (Model.History.Any())
+    {
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-sm align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>What happened</th>
+                            <th>By</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @foreach (var entry in Model.History
+                        .OrderByDescending(h => h.ActionDate))
+                    {
+                        <tr>
+
+                            <td>
+                                @(entry.ActionDate.ToLocalTime().ToString("d MMM yyyy HH:mm"))
+                            </td>
+
+                            <td>@entry.Action</td>
+
+                            <td>
+                                @(entry.ActionedByEmployee == null
+                                    ? "--"
+                                    : entry.ActionedByEmployee.FirstName
+                                      + " "
+                                      + entry.ActionedByEmployee.LastName)
+                            </td>
+
+                            <td class="text-muted">
+                                @(string.IsNullOrWhiteSpace(entry.Comment)
+                                    ? "--"
+                                    : entry.Comment)
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="card-body">
+
+            <p class="empty-state">
+                <span class="empty-icon">&#128220;</span>
+                Nothing has happened to this application yet.
+            </p>
+
+        </div>
+    }
+
+</div>

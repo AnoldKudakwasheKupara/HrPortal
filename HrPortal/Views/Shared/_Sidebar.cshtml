@@ -86,6 +86,11 @@
         <i class="fas fa-hand-holding-dollar"></i> My Loans
     </a>
 
+    <a class="nav-item @On("MyCourses")"
+       asp-controller="MyCourses" asp-action="Index">
+        <i class="fas fa-user-graduate"></i> My Courses
+    </a>
+
     @if (keepsTimesheet)
     {
         <a class="nav-item @On("MyTimesheet")"

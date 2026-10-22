@@ -1,0 +1,105 @@
+@using HrPortal.Entities
+@model HrPortal.Entities.CourseApplication
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+
+        <span>The application</span>
+
+        <partial name="_CourseStatusBadge" model="Model.Status" />
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Applicant</span>
+                <div class="field-value">
+                    @Model.Employee.FirstName @Model.Employee.LastName
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">I.D. no.</span>
+                <div class="field-value @(Model.Employee.NationalId == null ? "is-empty" : "")">
+                    @(Model.Employee.NationalId ?? "Not recorded")
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Department</span>
+                <div class="field-value">
+                    @(Model.Employee.Department?.Name ?? "--")
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Position</span>
+                <div class="field-value @(Model.Employee.JobTitle == null ? "is-empty" : "")">
+                    @(Model.Employee.JobTitle ?? "Not recorded")
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Programme intended</span>
+                <div class="field-value">@Model.ProgramIntended</div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Target exam date</span>
+                <div class="field-value @(Model.TargetExamDate == null ? "is-empty" : "")">
+                    @(Model.TargetExamDate == null
+                        ? "Not given"
+                        : Model.TargetExamDate.Value.ToString("d MMM yyyy"))
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">Sat before</span>
+                <div class="field-value">
+                    @(Model.HasSatBefore ? "Yes" : "No")
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <span class="field-label">This attempt</span>
+                <div class="field-value">
+                    @(Model.Sitting switch
+                    {
+                        CourseSitting.NextLevel => "Proceeding to the next level",
+                        CourseSitting.Rewriting => "Re-writing",
+                        _ => "First attempt"
+                    })
+                </div>
+            </div>
+
+            <div class="col-12">
+                <span class="field-label">Justification and relevance</span>
+                <div class="field-value">@Model.Justification</div>
+            </div>
+
+            <div class="col-12">
+                <span class="field-label">Pledge</span>
+                <div class="field-value @(Model.PledgedAt == null ? "is-empty" : "")">
+                    @if (Model.PledgedAt == null)
+                    {
+                        <text>Not made yet</text>
+                    }
+                    else
+                    {
+                        <text>
+                            Made on
+                            @(Model.PledgedAt.Value.ToLocalTime().ToString("d MMM yyyy HH:mm"))
+                        </text>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

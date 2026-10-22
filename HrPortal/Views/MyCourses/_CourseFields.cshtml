@@ -1,0 +1,197 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.MyCourseApplicationViewModel
+
+@{
+    var applicant = ViewBag.Applicant as Employee;
+}
+
+@if (applicant != null)
+{
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Employee details</span>
+
+            <span class="text-muted small">From your record</span>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">First name(s)</span>
+                    <div class="field-value">@applicant.FirstName</div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Surname</span>
+                    <div class="field-value">@applicant.LastName</div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">I.D. no.</span>
+                    <div class="field-value @(applicant.NationalId == null ? "is-empty" : "")">
+                        @(applicant.NationalId ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Department</span>
+                    <div class="field-value">
+                        @(applicant.Department?.Name ?? "--")
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Position</span>
+                    <div class="field-value @(applicant.JobTitle == null ? "is-empty" : "")">
+                        @(applicant.JobTitle ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Phone number</span>
+                    <div class="field-value @(applicant.PhoneNumber == null ? "is-empty" : "")">
+                        @(applicant.PhoneNumber ?? "Not recorded")
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <span class="field-label">Address</span>
+                    <div class="field-value @(applicant.Address == null ? "is-empty" : "")">
+                        @(applicant.Address ?? "Not recorded")
+                    </div>
+                </div>
+
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                These come from your employment record. If any are
+                wrong, speak to HR rather than changing them here.
+            </p>
+
+        </div>
+
+    </div>
+}
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Programme intended</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+
+                <label asp-for="ProgramIntended" class="form-label"></label>
+
+                <input asp-for="ProgramIntended"
+                       class="form-control"
+                       placeholder="CFA Level II" />
+
+                <span asp-validation-for="ProgramIntended"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label asp-for="TargetExamDate" class="form-label"></label>
+
+                <input asp-for="TargetExamDate"
+                       class="form-control"
+                       type="date" />
+
+                <span asp-validation-for="TargetExamDate"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-12">
+
+                <label asp-for="Justification" class="form-label"></label>
+
+                <textarea asp-for="Justification"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Why the programme is relevant to your work"></textarea>
+
+                <span asp-validation-for="Justification"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="form-check">
+
+                    <input asp-for="HasSatBefore"
+                           class="form-check-input" />
+
+                    <label asp-for="HasSatBefore"
+                           class="form-check-label"></label>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label asp-for="Sitting" class="form-label"></label>
+
+                <select asp-for="Sitting" class="form-select">
+                    <option value="@CourseSitting.FirstAttempt">
+                        Not applicable, this is a first attempt
+                    </option>
+                    <option value="@CourseSitting.NextLevel">
+                        I am proceeding to the next level
+                    </option>
+                    <option value="@CourseSitting.Rewriting">
+                        I am re-writing
+                    </option>
+                </select>
+
+                <span asp-validation-for="Sitting"
+                      class="text-danger"></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Pledge</div>
+
+    <div class="card-body">
+
+        <div class="form-check">
+
+            <input asp-for="Pledged"
+                   class="form-check-input"
+                   required />
+
+            <label asp-for="Pledged"
+                   class="form-check-label"></label>
+
+            <div class="form-text">
+                Ticking this stands in place of signing the form. We
+                record the date and time.
+            </div>
+
+            <span asp-validation-for="Pledged"
+                  class="text-danger"></span>
+
+        </div>
+
+    </div>
+
+</div>
