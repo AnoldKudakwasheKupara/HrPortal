@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
@@ -7,6 +8,10 @@ namespace HrPortal.ViewModels
         public int Id { get; set; }
 
         public string? ApplicationNumber { get; set; }
+
+        [Required]
+        [Display(Name = "Currency")]
+        public LoanCurrency Currency { get; set; } = LoanCurrency.Usd;
 
         [Required]
         [Range(1, 100000000, ErrorMessage =
@@ -26,5 +31,12 @@ namespace HrPortal.ViewModels
         [StringLength(2000)]
         [Display(Name = "Purpose")]
         public string Purpose { get; set; } = string.Empty;
+
+        /// <summary>
+        /// An optional receipt or quotation attached as the
+        /// application is made. More can be added afterwards.
+        /// </summary>
+        [Display(Name = "Receipt or quotation")]
+        public IFormFile? Receipt { get; set; }
     }
 }

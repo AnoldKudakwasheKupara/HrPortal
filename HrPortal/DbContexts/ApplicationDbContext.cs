@@ -778,6 +778,10 @@ namespace HrPortal.DbContexts
                     .HasConversion<string>()
                     .HasMaxLength(30);
 
+                entity.Property(l => l.Currency)
+                    .HasConversion<string>()
+                    .HasMaxLength(10);
+
                 entity.Property(l => l.Purpose)
                     .IsRequired()
                     .HasMaxLength(2000);

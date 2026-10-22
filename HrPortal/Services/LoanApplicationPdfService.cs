@@ -73,10 +73,13 @@ namespace HrPortal.Services
                     text.Span(who).Bold();
                     text.Span(" hereby request you to grant to me a " +
                               "loan of ");
-                    text.Span(application.AmountRequested.ToString("N2"))
+                    text.Span(LoanCurrencies.Format(
+                            application.Currency,
+                            application.AmountRequested))
                         .Bold();
                     text.Span(" (");
-                    text.Span(AmountInWords.Convert(
+                    text.Span(LoanCurrencies.InWords(
+                        application.Currency,
                         application.AmountRequested));
                     text.Span(") in words.");
                 });
@@ -97,14 +100,20 @@ namespace HrPortal.Services
                     row.RelativeItem().Element(e => Field(
                         e,
                         "AMOUNT REQUIRED",
-                        application.AmountRequested.ToString("N2")));
+                        LoanCurrencies.Format(
+                            application.Currency,
+                            application.AmountRequested)));
 
                     row.ConstantItem(16);
 
                     row.RelativeItem().Element(e => Field(
                         e,
                         "AMOUNT AUTHORIZED",
-                        application.AmountAuthorised?.ToString("N2")));
+                        application.AmountAuthorised == null
+                            ? null
+                            : LoanCurrencies.Format(
+                                application.Currency,
+                                application.AmountAuthorised.Value)));
                 });
 
                 column.Item().Row(row =>
@@ -185,7 +194,11 @@ namespace HrPortal.Services
                     row.RelativeItem().Element(e => Field(
                         e,
                         "NEW INSTALLMENT PER MONTH",
-                        application.MonthlyInstalment?.ToString("N2")));
+                        application.MonthlyInstalment == null
+                            ? null
+                            : LoanCurrencies.Format(
+                                application.Currency,
+                                application.MonthlyInstalment.Value)));
                 });
 
                 column.Item()

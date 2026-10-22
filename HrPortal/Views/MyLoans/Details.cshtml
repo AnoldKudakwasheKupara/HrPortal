@@ -23,7 +23,7 @@
             <h2>@Model.ApplicationNumber</h2>
 
             <p class="text-muted mb-0">
-                @AmountInWords.Convert(Model.AmountRequested)
+                @LoanCurrencies.InWords(Model.Currency, Model.AmountRequested)
             </p>
         </div>
 
@@ -71,7 +71,7 @@
                 <div class="col-sm-6 col-lg-3">
                     <span class="field-label">Amount required</span>
                     <div class="field-value">
-                        @Model.AmountRequested.ToString("N2")
+                        @LoanCurrencies.Format(Model.Currency, Model.AmountRequested)
                     </div>
                 </div>
 
@@ -80,7 +80,7 @@
                     <div class="field-value @(Model.AmountAuthorised == null ? "is-empty" : "")">
                         @(Model.AmountAuthorised == null
                             ? "Not yet decided"
-                            : Model.AmountAuthorised.Value.ToString("N2"))
+                            : LoanCurrencies.Format(Model.Currency, Model.AmountAuthorised.Value))
                     </div>
                 </div>
 
@@ -96,7 +96,7 @@
                     <div class="field-value">
                         @(Model.MonthlyInstalment == null
                             ? "--"
-                            : Model.MonthlyInstalment.Value.ToString("N2"))
+                            : LoanCurrencies.Format(Model.Currency, Model.MonthlyInstalment.Value))
                     </div>
                 </div>
 

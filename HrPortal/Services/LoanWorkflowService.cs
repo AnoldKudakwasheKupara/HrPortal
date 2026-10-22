@@ -101,7 +101,9 @@ namespace HrPortal.Services
                 "Loan application to sanction",
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} for " +
-                $"{application.AmountRequested:N2}.",
+                LoanCurrencies.Format(
+                    application.Currency,
+                    application.AmountRequested) + ".",
                 $"/LoanApproval/Details/{application.Id}");
 
             await _context.SaveChangesAsync();
@@ -134,7 +136,9 @@ namespace HrPortal.Services
                 application.EmployeeId,
                 "Loan sanctioned",
                 $"{application.ApplicationNumber} was sanctioned for " +
-                $"{amountAuthorised:N2}, repayable over " +
+                LoanCurrencies.Format(
+                    application.Currency,
+                    amountAuthorised) + ", repayable over " +
                 $"{application.RepaymentMonths} months from " +
                 $"{repaymentStartDate:d MMM yyyy}.",
                 $"/MyLoans/Details/{application.Id}");

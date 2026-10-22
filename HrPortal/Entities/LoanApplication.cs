@@ -18,6 +18,9 @@ namespace HrPortal.Entities
         public LoanApplicationStatus Status { get; set; }
             = LoanApplicationStatus.Draft;
 
+        /// <summary>The currency the loan is taken in.</summary>
+        public LoanCurrency Currency { get; set; } = LoanCurrency.Usd;
+
         /// <summary>What the applicant asked for.</summary>
         public decimal AmountRequested { get; set; }
 

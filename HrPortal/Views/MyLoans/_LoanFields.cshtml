@@ -61,7 +61,21 @@
 
         <div class="row g-3">
 
-            <div class="col-md-4">
+            <div class="col-md-3">
+
+                <label asp-for="Currency" class="form-label"></label>
+
+                <select asp-for="Currency" class="form-select">
+                    <option value="@HrPortal.Entities.LoanCurrency.Usd">USD</option>
+                    <option value="@HrPortal.Entities.LoanCurrency.ZiG">ZiG</option>
+                </select>
+
+                <span asp-validation-for="Currency"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-md-3">
 
                 <label asp-for="AmountRequested" class="form-label"></label>
 
@@ -104,11 +118,25 @@
                           rows="3"
                           placeholder="What the loan is for"></textarea>
 
+                <span asp-validation-for="Purpose"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-12">
+
+                <label asp-for="Receipt" class="form-label"></label>
+
+                <input asp-for="Receipt"
+                       class="form-control"
+                       type="file" />
+
                 <div class="form-text">
-                    Attach receipts or quotations on the next screen.
+                    Optional. You can add more once the application is
+                    saved.
                 </div>
 
-                <span asp-validation-for="Purpose"
+                <span asp-validation-for="Receipt"
                       class="text-danger"></span>
 
             </div>

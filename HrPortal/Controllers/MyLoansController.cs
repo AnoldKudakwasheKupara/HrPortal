@@ -111,6 +111,8 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
+            CheckReceipt(model);
+
             if (!ModelState.IsValid)
             {
                 await LoadApplicantAsync();
@@ -123,6 +125,7 @@ namespace HrPortal.Controllers
                     await _workflow.GenerateApplicationNumberAsync(),
                 EmployeeId = employeeId.Value,
                 Status = LoanApplicationStatus.Draft,
+                Currency = model.Currency,
                 AmountRequested = model.AmountRequested,
                 RepaymentMonths = model.RepaymentMonths,
                 Purpose = model.Purpose.Trim(),
@@ -132,6 +135,8 @@ namespace HrPortal.Controllers
             _context.LoanApplications.Add(application);
 
             await _context.SaveChangesAsync();
+
+            await AttachAsync(application, model.Receipt);
 
             TempData["Success"] =
                 $"{application.ApplicationNumber} saved as a draft. " +
@@ -169,6 +174,7 @@ namespace HrPortal.Controllers
             {
                 Id = application.Id,
                 ApplicationNumber = application.ApplicationNumber,
+                Currency = application.Currency,
                 AmountRequested = application.AmountRequested,
                 RepaymentMonths = application.RepaymentMonths,
                 Purpose = application.Purpose
@@ -195,17 +201,22 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
+            CheckReceipt(model);
+
             if (!ModelState.IsValid)
             {
                 await LoadApplicantAsync();
                 return View(model);
             }
 
+            application.Currency = model.Currency;
             application.AmountRequested = model.AmountRequested;
             application.RepaymentMonths = model.RepaymentMonths;
             application.Purpose = model.Purpose.Trim();
 
             await _context.SaveChangesAsync();
+
+            await AttachAsync(application, model.Receipt);
 
             TempData["Success"] =
                 $"{application.ApplicationNumber} updated.";
@@ -420,6 +431,57 @@ namespace HrPortal.Controllers
                 attachment.OriginalFileName);
         }
 
+
+        /// <summary>
+        /// A receipt offered with the application is checked before
+        /// anything is written, so a file the storage would refuse
+        /// does not leave a half-made draft behind.
+        /// </summary>
+        private void CheckReceipt(MyLoanViewModel model)
+        {
+            if (model.Receipt == null)
+                return;
+
+            var problem = FileStorageService.Validate(model.Receipt);
+
+            if (problem != null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.Receipt),
+                    problem);
+            }
+        }
+
+        /// <summary>
+        /// Stores a receipt offered on the application form. More can
+        /// be added from the application's own page afterwards.
+        /// </summary>
+        private async Task AttachAsync(
+            LoanApplication application,
+            IFormFile? receipt)
+        {
+            if (receipt == null)
+                return;
+
+            var (fileName, filePath) =
+                await _fileStorage.SaveAsync(receipt, UploadFolder);
+
+            _context.LoanApplicationAttachments.Add(
+                new LoanApplicationAttachment
+                {
+                    LoanApplicationId = application.Id,
+                    FileName = fileName,
+                    OriginalFileName =
+                        Path.GetFileName(receipt.FileName),
+                    FilePath = filePath,
+                    SizeInBytes = receipt.Length,
+                    UploadedAt = DateTime.UtcNow,
+                    UploadedByEmployeeId =
+                        await _currentUser.GetEmployeeIdAsync()
+                });
+
+            await _context.SaveChangesAsync();
+        }
         private async Task LoadApplicantAsync()
         {
             ViewBag.Applicant = await _currentUser.GetEmployeeAsync();

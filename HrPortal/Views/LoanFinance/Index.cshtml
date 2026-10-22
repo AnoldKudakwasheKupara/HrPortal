@@ -1,3 +1,4 @@
+@using HrPortal.Services
 @model List<HrPortal.Entities.LoanApplication>
 
 @{
@@ -69,7 +70,7 @@
                             <td class="num">
                                 @(application.AmountAuthorised == null
                                     ? "--"
-                                    : application.AmountAuthorised.Value.ToString("N2"))
+                                    : LoanCurrencies.Format(application.Currency, application.AmountAuthorised.Value))
                             </td>
 
                             <td>
@@ -77,7 +78,7 @@
                                 @if (application.MonthlyInstalment != null)
                                 {
                                     <div class="row-meta">
-                                        @(application.MonthlyInstalment.Value.ToString("N2")) a month
+                                        @LoanCurrencies.Format(application.Currency, application.MonthlyInstalment.Value) a month
                                     </div>
                                 }
                             </td>
