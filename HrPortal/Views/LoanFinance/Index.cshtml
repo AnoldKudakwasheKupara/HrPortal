@@ -1,0 +1,119 @@
+@model List<HrPortal.Entities.LoanApplication>
+
+@{
+    ViewData["Title"] = "Sanctioned Loans";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>Sanctioned loans</h2>
+
+            <p class="text-muted mb-0">
+                Loans the Managing Director has sanctioned. Print the
+                form and take it to Finance.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Applicant</th>
+                            <th class="num">Authorised</th>
+                            <th>Repayment</th>
+                            <th>Deductions start</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-4">
+                                No loans are waiting to go to Finance.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var application in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>@application.ApplicationNumber</strong>
+                            </td>
+
+                            <td>
+                                @application.Employee.FirstName
+                                @application.Employee.LastName
+                                <div class="row-meta">
+                                    @(application.Employee.Department?.Name ?? "--")
+                                </div>
+                            </td>
+
+                            <td class="num">
+                                @(application.AmountAuthorised == null
+                                    ? "--"
+                                    : application.AmountAuthorised.Value.ToString("N2"))
+                            </td>
+
+                            <td>
+                                @application.RepaymentMonths months
+                                @if (application.MonthlyInstalment != null)
+                                {
+                                    <div class="row-meta">
+                                        @(application.MonthlyInstalment.Value.ToString("N2")) a month
+                                    </div>
+                                }
+                            </td>
+
+                            <td>
+                                @(application.RepaymentStartDate == null
+                                    ? "--"
+                                    : application.RepaymentStartDate.Value.ToString("d MMM yyyy"))
+                            </td>
+
+                            <td class="col-actions">
+
+                                <div class="table-actions">
+
+                                    <a class="btn btn-sm btn-primary"
+                                       asp-action="Form"
+                                       asp-route-id="@application.Id">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                        Form (PDF)
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

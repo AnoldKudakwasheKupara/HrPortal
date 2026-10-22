@@ -70,6 +70,16 @@
                                     Open
                                 </a>
 
+                                @if (application.Status == HrPortal.Entities.CourseApplicationStatus.Approved)
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Form"
+                                       asp-route-id="@application.Id">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                        Form
+                                    </a>
+                                }
+
                             </div>
 
                         </td>

@@ -20,14 +20,18 @@ namespace HrPortal.Controllers
         private readonly CourseApplicationWorkflowService _workflow;
         private readonly CurrentUserService _currentUser;
 
+        private readonly CourseApplicationPdfService _pdf;
+
         public CourseApprovalController(
             ApplicationDbContext context,
             CourseApplicationWorkflowService workflow,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            CourseApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
+            _pdf = pdf;
         }
 
         /// <summary>
@@ -131,6 +135,23 @@ namespace HrPortal.Controllers
                 comment,
                 CourseApplicationAction.RejectedByManagingConsultant);
 
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var application = await LoadAsync(id.Value);
+
+            if (application == null)
+                return NotFound();
+
+            return File(
+                _pdf.Render(application),
+                "application/pdf",
+                $"Course application - " +
+                $"{application.ApplicationNumber}.pdf");
+        }
         private async Task<IActionResult> ActAsync(
             int id,
             string? comment,

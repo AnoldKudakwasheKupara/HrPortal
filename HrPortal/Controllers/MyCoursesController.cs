@@ -18,16 +18,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly IAuthorizationService _authorization;
 
+        private readonly CourseApplicationPdfService _pdf;
+
         public MyCoursesController(
             ApplicationDbContext context,
             CourseApplicationWorkflowService workflow,
             CurrentUserService currentUser,
-            IAuthorizationService authorization)
+            IAuthorizationService authorization,
+            CourseApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _authorization = authorization;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -61,6 +65,25 @@ namespace HrPortal.Controllers
             return View(application);
         }
 
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var application = await LoadAuthorizedAsync(
+                id.Value,
+                Operations.View);
+
+            if (application == null)
+                return NotFound();
+
+            return File(
+                _pdf.Render(application),
+                "application/pdf",
+                $"Course application - " +
+                $"{application.ApplicationNumber}.pdf");
+        }
         public async Task<IActionResult> Create()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();

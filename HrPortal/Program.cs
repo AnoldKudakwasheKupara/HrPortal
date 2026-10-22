@@ -145,6 +145,7 @@ builder.Services.AddSingleton<WeeklyReportPdfService>();
 builder.Services.AddSingleton<NextOfKinPdfService>();
 builder.Services.AddScoped<LeaveApplicationPdfService>();
 builder.Services.AddSingleton<LoanApplicationPdfService>();
+builder.Services.AddSingleton<CourseApplicationPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(
     builder.Configuration.GetSection(WeeklyReportBranding.Section));
