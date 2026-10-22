@@ -141,6 +141,8 @@ builder.Services.Configure<ReminderOptions>(
 
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.Section));
+
+builder.Services.AddSingleton<BrandAssets>();
 builder.Services.AddSingleton<WeeklyReportPdfService>();
 builder.Services.AddSingleton<NextOfKinPdfService>();
 builder.Services.AddScoped<LeaveApplicationPdfService>();

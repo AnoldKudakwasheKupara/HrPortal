@@ -17,6 +17,13 @@ namespace HrPortal.Services
 
         private const string NotRecorded = "--";
 
+        private readonly BrandAssets _brand;
+
+        public NextOfKinPdfService(BrandAssets brand)
+        {
+            _brand = brand;
+        }
+
         public byte[] Render(Employee employee)
         {
             var document = Document.Create(container =>
@@ -44,6 +51,8 @@ namespace HrPortal.Services
             container.Column(column =>
             {
                 column.Spacing(14);
+
+                column.Item().Element(Letterhead);
 
                 column.Item()
                     .AlignCenter()
@@ -117,6 +126,30 @@ namespace HrPortal.Services
         /// A label over the value, with a rule under it so the printed
         /// page still reads like the form it came from.
         /// </summary>
+
+        /// <summary>
+        /// The company logo at the head of the form, falling back to
+        /// the name in text where the artwork cannot be read.
+        /// </summary>
+        private void Letterhead(IContainer container)
+        {
+            if (!_brand.HasLogo)
+            {
+                container
+                    .AlignCenter()
+                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
+                    .FontSize(11)
+                    .Bold();
+
+                return;
+            }
+
+            container
+                .AlignCenter()
+                .Width(190)
+                .Image(_brand.Logo!);
+        }
+
         private void Field(IContainer container, string label, string? value)
         {
             container.Column(column =>

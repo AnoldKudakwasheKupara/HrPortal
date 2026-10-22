@@ -17,6 +17,13 @@ namespace HrPortal.Services
         private const string Rule = "#d9dee5";
         private const string Wash = "#f3f5f7";
 
+        private readonly BrandAssets _brand;
+
+        public CourseApplicationPdfService(BrandAssets brand)
+        {
+            _brand = brand;
+        }
+
         public byte[] Render(CourseApplication application)
         {
             var document = Document.Create(container =>
@@ -50,10 +57,7 @@ namespace HrPortal.Services
             {
                 column.Spacing(7);
 
-                column.Item().AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(10.5f)
-                    .Bold();
+                column.Item().Element(Letterhead);
 
                 column.Item().AlignCenter()
                     .Text("COURSES APPLICATION FORM")
@@ -368,6 +372,30 @@ namespace HrPortal.Services
                         .FontColor(Muted);
                 }
             });
+        }
+
+
+        /// <summary>
+        /// The company logo at the head of the form, falling back to
+        /// the name in text where the artwork cannot be read.
+        /// </summary>
+        private void Letterhead(IContainer container)
+        {
+            if (!_brand.HasLogo)
+            {
+                container
+                    .AlignCenter()
+                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
+                    .FontSize(11)
+                    .Bold();
+
+                return;
+            }
+
+            container
+                .AlignCenter()
+                .Width(190)
+                .Image(_brand.Logo!);
         }
 
         private void Field(

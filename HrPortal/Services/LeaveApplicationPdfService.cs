@@ -20,9 +20,14 @@ namespace HrPortal.Services
 
         private readonly ApplicationDbContext _context;
 
-        public LeaveApplicationPdfService(ApplicationDbContext context)
+        private readonly BrandAssets _brand;
+
+        public LeaveApplicationPdfService(
+            ApplicationDbContext context,
+            BrandAssets brand)
         {
             _context = context;
+            _brand = brand;
         }
 
         /// <summary>
@@ -84,10 +89,7 @@ namespace HrPortal.Services
             {
                 column.Spacing(12);
 
-                column.Item().AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(11)
-                    .Bold();
+                column.Item().Element(Letterhead);
 
                 column.Item().AlignCenter()
                     .Text("LEAVE APPLICATION FORM")
@@ -325,6 +327,30 @@ namespace HrPortal.Services
                     }
                 }
             });
+        }
+
+
+        /// <summary>
+        /// The company logo at the head of the form, falling back to
+        /// the name in text where the artwork cannot be read.
+        /// </summary>
+        private void Letterhead(IContainer container)
+        {
+            if (!_brand.HasLogo)
+            {
+                container
+                    .AlignCenter()
+                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
+                    .FontSize(11)
+                    .Bold();
+
+                return;
+            }
+
+            container
+                .AlignCenter()
+                .Width(190)
+                .Image(_brand.Logo!);
         }
 
         private void Field(IContainer container, string label, string? value)

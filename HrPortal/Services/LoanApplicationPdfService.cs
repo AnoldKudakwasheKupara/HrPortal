@@ -15,6 +15,13 @@ namespace HrPortal.Services
         private const string Muted = "#6b7280";
         private const string Rule = "#d9dee5";
 
+        private readonly BrandAssets _brand;
+
+        public LoanApplicationPdfService(BrandAssets brand)
+        {
+            _brand = brand;
+        }
+
         public byte[] Render(LoanApplication application)
         {
             var document = Document.Create(container =>
@@ -48,10 +55,7 @@ namespace HrPortal.Services
             {
                 column.Spacing(11);
 
-                column.Item().AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(11)
-                    .Bold();
+                column.Item().Element(Letterhead);
 
                 column.Item().Element(e => Standing(e, application));
 
@@ -291,6 +295,30 @@ namespace HrPortal.Services
                     .FontSize(8)
                     .FontColor(Muted);
             });
+        }
+
+
+        /// <summary>
+        /// The company logo at the head of the form, falling back to
+        /// the name in text where the artwork cannot be read.
+        /// </summary>
+        private void Letterhead(IContainer container)
+        {
+            if (!_brand.HasLogo)
+            {
+                container
+                    .AlignCenter()
+                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
+                    .FontSize(11)
+                    .Bold();
+
+                return;
+            }
+
+            container
+                .AlignCenter()
+                .Width(190)
+                .Image(_brand.Logo!);
         }
 
         private void Field(
