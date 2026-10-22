@@ -129,6 +129,14 @@
             </a>
         }
 
+        @if (isMd)
+        {
+            <a class="nav-item @On("LoanApproval")"
+               asp-controller="LoanApproval" asp-action="Index">
+                <i class="fas fa-hand-holding-dollar"></i> Loan Sanction
+            </a>
+        }
+
         @if (isAdmin)
         {
             <a class="nav-item @OnAction("RequisitionApproval", "Index")"
