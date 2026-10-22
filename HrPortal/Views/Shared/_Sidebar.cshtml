@@ -126,6 +126,14 @@
             </a>
         }
 
+        @if (isHr || isMd)
+        {
+            <a class="nav-item @On("CourseApproval")"
+               asp-controller="CourseApproval" asp-action="Index">
+                <i class="fas fa-user-graduate"></i> Course Applications
+            </a>
+        }
+
         @if (isMd)
         {
             <a class="nav-item @OnAction("LeaveApproval", "FinalApproval")"

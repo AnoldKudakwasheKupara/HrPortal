@@ -1,0 +1,88 @@
+@model List<HrPortal.Entities.CourseApplication>
+
+<div class="card shadow-sm mb-4">
+
+    <div class="card-body is-table">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead>
+                    <tr>
+                        <th>Application</th>
+                        <th>Applicant</th>
+                        <th>Programme</th>
+                        <th>Target exam</th>
+                        <th>Status</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6"
+                            class="text-center text-muted py-4">
+                            Nothing here right now.
+                        </td>
+                    </tr>
+                }
+
+                @foreach (var application in Model)
+                {
+                    <tr>
+
+                        <td>
+                            <strong>@application.ApplicationNumber</strong>
+                        </td>
+
+                        <td>
+                            @application.Employee.FirstName
+                            @application.Employee.LastName
+                            <div class="row-meta">
+                                @(application.Employee.Department?.Name ?? "--")
+                            </div>
+                        </td>
+
+                        <td>@application.ProgramIntended</td>
+
+                        <td>
+                            @(application.TargetExamDate == null
+                                ? "--"
+                                : application.TargetExamDate.Value.ToString("d MMM yyyy"))
+                        </td>
+
+                        <td>
+                            <partial name="_CourseStatusBadge"
+                                     model="application.Status" />
+                        </td>
+
+                        <td class="col-actions">
+
+                            <div class="table-actions">
+
+                                <a class="btn btn-sm btn-primary"
+                                   asp-action="Details"
+                                   asp-route-id="@application.Id">
+                                    Open
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+                }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,33 @@
+@model List<HrPortal.Entities.CourseApplication>
+
+@{
+    ViewData["Title"] = "Approved Course Applications";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>Approved, to print</h2>
+
+            <p class="text-muted mb-0">
+                Applications the Managing Consultant has approved.
+                Print the form and take it to Finance.
+            </p>
+        </div>
+
+        <a class="btn btn-outline-secondary" asp-action="Index">
+            Waiting on me
+        </a>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <partial name="_CourseApplicationTable" model="Model" />
+
+</div>
