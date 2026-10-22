@@ -1,163 +1,135 @@
-<div class="card shadow-sm mb-3">
+<section class="story-section">
 
-    <div class="card-body">
+    <div class="row g-4 align-items-start">
 
-        <div class="row g-4 align-items-start">
+        <div class="col-lg-4">
 
-            <div class="col-lg-4">
+            <span class="section-eyebrow">Who we are</span>
 
-                <span class="section-eyebrow">Who we are</span>
+            <p class="story-lede">
+                Bespoke investment and corporate advisory solutions,
+                fit for purpose.
+            </p>
 
-                <p class="story-lede">
-                    Bespoke investment and corporate advisory solutions,
-                    fit for purpose.
-                </p>
+        </div>
 
-            </div>
+        <div class="col-lg-8 story-body">
 
-            <div class="col-lg-8">
+            <p>
+                Intellego Investment Consultants (Pvt) Ltd is a
+                specialist investment consulting and corporate advisory
+                firm licensed by the Securities and Exchange Commission
+                of Zimbabwe. Founded in 2013 as an independent
+                consultancy for institutional clients, mainly pension
+                funds, we added corporate advisory in 2015 and real
+                estate advisory since.
+            </p>
 
-                <div class="field-value mb-3">
-                    Intellego Investment Consultants (Pvt) Ltd is a
-                    specialist investment consulting and corporate advisory
-                    firm licensed by the Securities and Exchange Commission
-                    of Zimbabwe. Founded in 2013 as an independent
-                    consultancy for institutional clients, mainly pension
-                    funds, we added corporate advisory in 2015 and real
-                    estate advisory since.
-                </div>
+            <p>
+                Today we advise more than 75 pension funds and other
+                institutional investors. Every one of us plays a part
+                in that work, and this portal is here to support you
+                while you do it.
+            </p>
 
-                <div class="field-value">
-                    Today we advise more than 75 pension funds and other
-                    institutional investors. Every one of us plays a part
-                    in that work, and this portal is here to support you
-                    while you do it.
-                </div>
-
-                <div class="service-chips">
-                    <span class="service-chip">Investment Consulting</span>
-                    <span class="service-chip">Corporate Advisory</span>
-                    <span class="service-chip">Real Estate Advisory</span>
-                </div>
-
+            <div class="service-chips">
+                <span class="service-chip">Investment Consulting</span>
+                <span class="service-chip">Corporate Advisory</span>
+                <span class="service-chip">Real Estate Advisory</span>
             </div>
 
         </div>
 
     </div>
 
-</div>
+</section>
 
-<div class="row g-3 mb-3">
+<section class="story-section">
 
-    <div class="col-lg-6">
+    <div class="statement-grid">
 
-        <div class="card shadow-sm h-100">
+        <div class="statement">
 
-            <div class="card-header">Our vision</div>
+            <span class="section-eyebrow">Our vision</span>
 
-            <div class="card-body">
-                <div class="field-value mb-0">
-                    To be the leading provider of institutional investment
-                    consulting and corporate advisory solutions in Zimbabwe
-                    and the sub-region.
-                </div>
-            </div>
+            <p>
+                To be the leading provider of institutional investment
+                consulting and corporate advisory solutions in Zimbabwe
+                and the sub-region.
+            </p>
+
+        </div>
+
+        <div class="statement">
+
+            <span class="section-eyebrow">Our mission</span>
+
+            <p>
+                To help our clients achieve their investment and
+                corporate objectives through focused investment advice
+                and well-crafted capital market and strategic
+                solutions.
+            </p>
 
         </div>
 
     </div>
 
-    <div class="col-lg-6">
+</section>
 
-        <div class="card shadow-sm h-100">
+<section class="story-section">
 
-            <div class="card-header">Our mission</div>
+    <h2 class="story-title">Our core values</h2>
 
-            <div class="card-body">
-                <div class="field-value mb-0">
-                    To help our clients achieve their investment and
-                    corporate objectives through focused investment advice
-                    and well-crafted capital market and strategic
-                    solutions.
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-<div class="card shadow-sm mb-3">
-
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Our core values</span>
-        <span class="text-muted small">What we stand for, every day</span>
-    </div>
-
-    <div class="card-body">
-
-        <div class="field-value mb-0">
-            These values guide how we work with clients and with each
-            other.
-        </div>
-
-        <div class="row g-3 mt-1">
-
-            @{
-                var values = new (string Icon, string Title, string[] Points)[]
-                {
-                    ("fa-fire-flame-curved", "Passion & Excellence", new[]
-                    {
-                        "Passionately engaged in our work",
-                        "Always striving for excellence",
-                        "Exceeding client expectations"
-                    }),
-                    ("fa-scale-balanced", "Integrity", new[]
-                    {
-                        "Respect, honesty and sincerity",
-                        "Good stewardship of client resources"
-                    }),
-                    ("fa-award", "Professionalism", new[]
-                    {
-                        "Adherence to the highest performance standards",
-                        "Sound, independent judgement"
-                    }),
-                    ("fa-people-group", "Teamwork", new[]
-                    {
-                        "Coordinated approach to client engagements",
-                        "Collaborative ethic"
-                    })
-                };
-            }
-
-            @foreach (var value in values)
+    @{
+        var values = new (string Icon, string Title, string[] Points)[]
+        {
+            ("fa-fire-flame-curved", "Passion & Excellence", new[]
             {
-                <div class="col-sm-6 col-xl-3">
+                "Passionately engaged in our work",
+                "Always striving for excellence",
+                "Exceeding client expectations"
+            }),
+            ("fa-scale-balanced", "Integrity", new[]
+            {
+                "Respect, honesty and sincerity",
+                "Good stewardship of client resources"
+            }),
+            ("fa-award", "Professionalism", new[]
+            {
+                "Adherence to the highest performance standards",
+                "Sound, independent judgement"
+            }),
+            ("fa-people-group", "Teamwork", new[]
+            {
+                "Coordinated approach to client engagements",
+                "Collaborative ethic"
+            })
+        };
+    }
 
-                    <div class="value-card h-100">
+    <div class="value-grid">
 
-                        <span class="value-icon">
-                            <i class="fas @value.Icon"></i>
-                        </span>
+        @foreach (var value in values)
+        {
+            <div class="value">
 
-                        <span class="value-title">@value.Title</span>
+                <span class="value-icon">
+                    <i class="fas @value.Icon" aria-hidden="true"></i>
+                </span>
 
-                        <ul class="value-points">
-                            @foreach (var point in value.Points)
-                            {
-                                <li>@point</li>
-                            }
-                        </ul>
+                <span class="value-title">@value.Title</span>
 
-                    </div>
+                <ul class="value-points">
+                    @foreach (var point in value.Points)
+                    {
+                        <li>@point</li>
+                    }
+                </ul>
 
-                </div>
-            }
-
-        </div>
+            </div>
+        }
 
     </div>
 
-</div>
+</section>

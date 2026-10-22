@@ -641,7 +641,13 @@ a.stat-tile:hover .stat-icon {
     height: auto;
 }
 
-.public-brand .brand-logo { max-width: 210px; }
+/* the top bar carries the wordmark on its own, sized by height so
+   it sits in the bar rather than filling it */
+.public-brand .brand-logo {
+    width: auto;
+    max-width: 15rem;
+    height: 2.9rem;
+}
 
 .auth-head {
     margin-bottom: 1.25rem;
@@ -1170,26 +1176,34 @@ a.stat-tile:hover .stat-icon {
     }
 }
 
+/* ---------------------------------------------------------------
+   The front page and the welcome page.
+
+   These two pages open the portal, so they are laid out as a
+   document rather than as a dashboard: one coloured hero, then
+   sections set apart by space and a single rule. Nothing is boxed
+   inside another box, which is what made them feel busy.
+   --------------------------------------------------------------- */
+
 .welcome-hero {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #ffffff;
     border-radius: var(--radius-lg);
-    padding: 2.75rem 2.5rem;
-    box-shadow: var(--shadow-lg);
-    margin-bottom: 1rem;
+    padding: 3.25rem 3rem;
+    margin-bottom: 3.25rem;
 }
 
 .welcome-eyebrow,
 .section-eyebrow {
     display: block;
     text-transform: uppercase;
-    letter-spacing: 0.14em;
-    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    font-size: 0.68rem;
     font-weight: 700;
 }
 
 .welcome-eyebrow {
-    color: rgba(255, 255, 255, 0.78);
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .section-eyebrow {
@@ -1199,37 +1213,84 @@ a.stat-tile:hover .stat-icon {
 
 .welcome-hero h1 {
     font-weight: 800;
-    font-size: 2.15rem;
-    line-height: 1.15;
-    margin: 0.6rem 0 0.85rem;
+    font-size: 2.4rem;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0.75rem 0 1rem;
 }
 
 .welcome-hero p {
-    max-width: 56ch;
-    color: rgba(255, 255, 255, 0.92);
-    margin-bottom: 1.5rem;
+    max-width: 54ch;
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 1.75rem;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.hero-actions .btn {
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
 }
 
 .welcome-hero .btn-light {
-    font-weight: 600;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--primary-dark);
 }
 
-.welcome-hero .btn-outline-light {
-    font-weight: 600;
+.welcome-hero .btn-light:hover,
+.welcome-hero .btn-light:focus {
+    background: var(--paper);
+    border-color: var(--paper);
+    color: var(--primary-dark);
+}
+
+/* One section after another, parted by a rule rather than each one
+   sitting in its own panel. */
+.story-section + .story-section {
+    border-top: 1px solid var(--border-light);
+    margin-top: 2.75rem;
+    padding-top: 2.75rem;
+}
+
+.story-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1.35rem;
+}
+
+.story-body p {
+    color: var(--text-secondary);
+    line-height: 1.75;
+    max-width: 66ch;
+    margin-bottom: 1rem;
+}
+
+.story-body p:last-child {
+    margin-bottom: 0;
 }
 
 .story-lede {
-    font-size: 1.05rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--primary);
     line-height: 1.45;
+    max-width: 24ch;
+    margin: 0;
 }
 
 .service-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
 }
 
 .service-chip {
@@ -1241,30 +1302,39 @@ a.stat-tile:hover .stat-icon {
     font-weight: 600;
 }
 
-.value-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background: var(--bg-main);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    padding: 1.15rem;
+/* Vision and mission are statements, so they are given room and no
+   border to sit in. */
+.statement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 2.5rem;
+}
+
+.statement p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.value-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 2.25rem;
 }
 
 .value-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.65rem;
-    background: var(--primary-surface);
+    display: block;
+    font-size: 1.25rem;
     color: var(--primary);
+    margin-bottom: 0.85rem;
 }
 
 .value-title {
+    display: block;
     font-weight: 700;
-    color: var(--text-main);
+    color: var(--text-primary);
+    margin-bottom: 0.6rem;
 }
 
 .value-points {
@@ -1274,29 +1344,19 @@ a.stat-tile:hover .stat-icon {
 }
 
 .value-points li {
-    position: relative;
-    padding-left: 1rem;
-    margin-bottom: 0.3rem;
     font-size: 0.875rem;
-    color: var(--text-soft, #64748b);
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin-bottom: 0.7rem;
 }
 
-.value-points li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.55em;
-    width: 0.35rem;
-    height: 0.35rem;
-    border-radius: 50%;
-    background: var(--primary);
-}
-
+/* The page the public sees. White, so the sections below the hero
+   stand on the page itself rather than floating as panels. */
 .public-shell {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--bg-main);
+    background: var(--bg-card);
 }
 
 .public-topbar {
@@ -1304,7 +1364,7 @@ a.stat-tile:hover .stat-icon {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1rem 1.5rem;
+    padding: 1.1rem 2rem;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border-light);
 }
@@ -1312,43 +1372,50 @@ a.stat-tile:hover .stat-icon {
 .public-brand {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-weight: 800;
-    color: var(--primary);
-    font-size: 1.1rem;
-}
-
-.public-brand small {
-    display: block;
-    font-weight: 600;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
 }
 
 .public-main {
     flex: 1;
     width: 100%;
-    max-width: 1120px;
+    max-width: 1060px;
     margin: 0 auto;
-    padding: 1.5rem 1rem 2rem;
+    padding: 2.5rem 1.5rem 3.5rem;
 }
 
 .public-foot {
     text-align: center;
-    padding: 1.25rem 1rem 2rem;
+    border-top: 1px solid var(--border-light);
+    padding: 1.5rem 1rem 2rem;
     color: var(--text-muted);
     font-size: 0.8rem;
 }
 
-@media (max-width: 575.98px) {
+@media (max-width: 767.98px) {
+    .public-topbar {
+        padding: 0.9rem 1.25rem;
+    }
+
+    .public-main {
+        padding: 1.75rem 1.25rem 2.5rem;
+    }
+
     .welcome-hero {
-        padding: 2rem 1.25rem;
+        padding: 2.25rem 1.5rem;
+        margin-bottom: 2.25rem;
     }
 
     .welcome-hero h1 {
-        font-size: 1.7rem;
+        font-size: 1.75rem;
+    }
+
+    .story-section + .story-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+    }
+
+    .story-lede {
+        max-width: none;
+        margin-bottom: 1rem;
     }
 }
 
