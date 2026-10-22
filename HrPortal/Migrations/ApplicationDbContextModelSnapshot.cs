@@ -365,6 +365,117 @@ namespace HrPortal.Migrations
                     b.ToTable("Certifications");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("HasSatBefore")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Justification")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("PledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProgramIntended")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Sitting")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("TargetExamDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EmployeeId", "Status");
+
+                    b.ToTable("CourseApplications");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.CourseApplicationHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("ActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ActionedByEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("CourseApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionedByEmployeeId");
+
+                    b.HasIndex("CourseApplicationId");
+
+                    b.ToTable("CourseApplicationHistories");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Department", b =>
                 {
                     b.Property<int>("Id")
@@ -2181,6 +2292,36 @@ namespace HrPortal.Migrations
                     b.Navigation("TrainingCourse");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.CourseApplicationHistory", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "ActionedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ActionedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.CourseApplication", "CourseApplication")
+                        .WithMany("History")
+                        .HasForeignKey("CourseApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActionedByEmployee");
+
+                    b.Navigation("CourseApplication");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Employee", b =>
                 {
                     b.HasOne("HrPortal.Entities.Department", "Department")
@@ -2656,6 +2797,11 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
+                {
+                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Department", b =>

@@ -75,10 +75,17 @@ namespace HrPortal.Security
             {
                 LeaveRequest => isHr || (isMd && viewing),
 
-                // Loans are sanctioned by the Managing Director and
-                // are nobody else's business, so HR has no standing
-                // view of them the way it does for leave.
-                LoanApplication => isMd,
+                // Loans are sanctioned by the Managing Director.
+                // HR sees them too, but only to print a sanctioned
+                // one for Finance, so its view stops at reading.
+                LoanApplication loan =>
+                    isMd ||
+                    (isHr && viewing &&
+                     loan.Status == LoanApplicationStatus.Approved),
+
+                // A course application is reviewed by HR and decided
+                // by the Managing Consultant, so both see it.
+                CourseApplication => isHr || isMd,
 
                 LeaveBalance => isHr,
 

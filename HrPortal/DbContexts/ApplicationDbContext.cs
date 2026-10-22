@@ -49,6 +49,9 @@ namespace HrPortal.DbContexts
         public DbSet<LoanApplication> LoanApplications { get; set; }
         public DbSet<LoanApplicationAttachment> LoanApplicationAttachments { get; set; }
         public DbSet<LoanApplicationHistory> LoanApplicationHistories { get; set; }
+
+        public DbSet<CourseApplication> CourseApplications { get; set; }
+        public DbSet<CourseApplicationHistory> CourseApplicationHistories { get; set; }
         public DbSet<ItActivity> ItActivities { get; set; }
         public DbSet<WeeklyReport> WeeklyReports { get; set; }
         public DbSet<WeeklyReportSection> WeeklyReportSections { get; set; }
@@ -842,6 +845,69 @@ namespace HrPortal.DbContexts
                 entity.HasOne(h => h.LoanApplication)
                     .WithMany(l => l.History)
                     .HasForeignKey(h => h.LoanApplicationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(h => h.ActionedByEmployee)
+                    .WithMany()
+                    .HasForeignKey(h => h.ActionedByEmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<CourseApplication>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+
+                entity.Property(c => c.ApplicationNumber)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(c => c.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(c => c.Sitting)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(c => c.ProgramIntended)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(c => c.Justification)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.HasOne(c => c.Employee)
+                    .WithMany()
+                    .HasForeignKey(c => c.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(c => c.ApplicationNumber).IsUnique();
+                entity.HasIndex(c => c.Status);
+                entity.HasIndex(c => new { c.EmployeeId, c.Status });
+            });
+
+            builder.Entity<CourseApplicationHistory>(entity =>
+            {
+                entity.HasKey(h => h.Id);
+
+                entity.Property(h => h.Action)
+                    .HasConversion<string>()
+                    .HasMaxLength(40);
+
+                entity.Property(h => h.PreviousStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(h => h.NewStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(h => h.Comment).HasMaxLength(1000);
+
+                entity.HasOne(h => h.CourseApplication)
+                    .WithMany(c => c.History)
+                    .HasForeignKey(h => h.CourseApplicationId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(h => h.ActionedByEmployee)
