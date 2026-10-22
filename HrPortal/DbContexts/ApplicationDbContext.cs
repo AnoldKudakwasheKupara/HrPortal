@@ -45,6 +45,10 @@ namespace HrPortal.DbContexts
         public DbSet<Requisition> Requisitions { get; set; }
         public DbSet<RequisitionLine> RequisitionLines { get; set; }
         public DbSet<RequisitionHistory> RequisitionHistories { get; set; }
+
+        public DbSet<LoanApplication> LoanApplications { get; set; }
+        public DbSet<LoanApplicationAttachment> LoanApplicationAttachments { get; set; }
+        public DbSet<LoanApplicationHistory> LoanApplicationHistories { get; set; }
         public DbSet<ItActivity> ItActivities { get; set; }
         public DbSet<WeeklyReport> WeeklyReports { get; set; }
         public DbSet<WeeklyReportSection> WeeklyReportSections { get; set; }
@@ -751,6 +755,93 @@ namespace HrPortal.DbContexts
                 entity.HasOne(h => h.Requisition)
                     .WithMany(r => r.History)
                     .HasForeignKey(h => h.RequisitionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(h => h.ActionedByEmployee)
+                    .WithMany()
+                    .HasForeignKey(h => h.ActionedByEmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<LoanApplication>(entity =>
+            {
+                entity.HasKey(l => l.Id);
+
+                entity.Property(l => l.ApplicationNumber)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(l => l.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(l => l.Purpose)
+                    .IsRequired()
+                    .HasMaxLength(2000);
+
+                entity.Property(l => l.AmountRequested).HasPrecision(14, 2);
+                entity.Property(l => l.AmountAuthorised).HasPrecision(14, 2);
+
+                entity.HasOne(l => l.Employee)
+                    .WithMany()
+                    .HasForeignKey(l => l.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(l => l.ApplicationNumber).IsUnique();
+                entity.HasIndex(l => l.Status);
+                entity.HasIndex(l => new { l.EmployeeId, l.Status });
+
+                entity.Ignore(l => l.MonthlyInstalment);
+            });
+
+            builder.Entity<LoanApplicationAttachment>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+
+                entity.Property(a => a.FileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(a => a.OriginalFileName)
+                    .IsRequired()
+                    .HasMaxLength(260);
+
+                entity.Property(a => a.FilePath)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.HasOne(a => a.LoanApplication)
+                    .WithMany(l => l.Attachments)
+                    .HasForeignKey(a => a.LoanApplicationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(a => a.UploadedByEmployee)
+                    .WithMany()
+                    .HasForeignKey(a => a.UploadedByEmployeeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<LoanApplicationHistory>(entity =>
+            {
+                entity.HasKey(h => h.Id);
+
+                entity.Property(h => h.Action)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(h => h.PreviousStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(h => h.NewStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(30);
+
+                entity.Property(h => h.Comment).HasMaxLength(1000);
+
+                entity.HasOne(h => h.LoanApplication)
+                    .WithMany(l => l.History)
+                    .HasForeignKey(h => h.LoanApplicationId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(h => h.ActionedByEmployee)

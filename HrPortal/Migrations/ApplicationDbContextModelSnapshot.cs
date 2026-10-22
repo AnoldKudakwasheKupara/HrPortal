@@ -943,6 +943,156 @@ namespace HrPortal.Migrations
                     b.ToTable("LicenseRenewals");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.LoanApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("AmountAuthorised")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("decimal(14,2)");
+
+                    b.Property<decimal>("AmountRequested")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("decimal(14,2)");
+
+                    b.Property<string>("ApplicationNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("RepaymentMonths")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RepaymentStartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EmployeeId", "Status");
+
+                    b.ToTable("LoanApplications");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LoanApplicationAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("LoanApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<long>("SizeInBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UploadedByEmployeeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanApplicationId");
+
+                    b.HasIndex("UploadedByEmployeeId");
+
+                    b.ToTable("LoanApplicationAttachments");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LoanApplicationHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("ActionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ActionedByEmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("LoanApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActionedByEmployeeId");
+
+                    b.HasIndex("LoanApplicationId");
+
+                    b.ToTable("LoanApplicationHistories");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -2184,6 +2334,54 @@ namespace HrPortal.Migrations
                     b.Navigation("License");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.LoanApplication", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LoanApplicationAttachment", b =>
+                {
+                    b.HasOne("HrPortal.Entities.LoanApplication", "LoanApplication")
+                        .WithMany("Attachments")
+                        .HasForeignKey("LoanApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Employee", "UploadedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("UploadedByEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("LoanApplication");
+
+                    b.Navigation("UploadedByEmployee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LoanApplicationHistory", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "ActionedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ActionedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.LoanApplication", "LoanApplication")
+                        .WithMany("History")
+                        .HasForeignKey("LoanApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActionedByEmployee");
+
+                    b.Navigation("LoanApplication");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Notification", b =>
                 {
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
@@ -2494,6 +2692,13 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.License", b =>
                 {
                     b.Navigation("Renewals");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LoanApplication", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Policy", b =>

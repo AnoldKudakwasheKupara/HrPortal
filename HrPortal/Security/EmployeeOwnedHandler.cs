@@ -75,6 +75,11 @@ namespace HrPortal.Security
             {
                 LeaveRequest => isHr || (isMd && viewing),
 
+                // Loans are sanctioned by the Managing Director and
+                // are nobody else's business, so HR has no standing
+                // view of them the way it does for leave.
+                LoanApplication => isMd,
+
                 LeaveBalance => isHr,
 
                 EmployeeDocument => isHr,
