@@ -25,6 +25,92 @@
 
     </div>
 
+    @{
+        var balance = ViewBag.Balance as HrPortal.Entities.LeaveBalance;
+    }
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header">Applicant</div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">First name</span>
+                    <div class="field-value">@Model.Employee.FirstName</div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Surname</span>
+                    <div class="field-value">@Model.Employee.LastName</div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Employee number</span>
+                    <div class="field-value">
+                        @Model.Employee.EmployeeNumber
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Department</span>
+                    <div class="field-value">
+                        @(Model.Employee.Department?.Name ?? "--")
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    @if (balance != null)
+    {
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>@Model.LeaveType.Name days</span>
+
+                <span class="text-muted small">@balance.Year</span>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-sm-4">
+                        <span class="field-label">Total leave days taken</span>
+                        <div class="field-value">
+                            @balance.UsedDays.ToString("0.##")
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <span class="field-label">Total leave days accrued</span>
+                        <div class="field-value">
+                            @balance.AllocatedDays.ToString("0.##")
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <span class="field-label">Leave days balance</span>
+                        <div class="field-value">
+                            @balance.RemainingDays.ToString("0.##")
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger">

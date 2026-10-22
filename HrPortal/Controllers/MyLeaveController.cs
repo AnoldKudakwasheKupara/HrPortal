@@ -71,6 +71,13 @@ namespace HrPortal.Controllers
             if (request == null)
                 return NotFound();
 
+            ViewBag.Balance = await _context.LeaveBalances
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b =>
+                    b.EmployeeId == request.EmployeeId &&
+                    b.LeaveTypeId == request.LeaveTypeId &&
+                    b.Year == request.StartDate.Year);
+
             return View(request);
         }
 
@@ -81,7 +88,7 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            await LoadLeaveTypes();
+            await LoadApplicationContext();
 
             return View(new MyLeaveRequestViewModel());
         }
@@ -110,7 +117,7 @@ namespace HrPortal.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LoadLeaveTypes();
+                await LoadApplicationContext();
                 return View(model);
             }
 
@@ -168,7 +175,7 @@ namespace HrPortal.Controllers
                     new { id });
             }
 
-            await LoadLeaveTypes();
+            await LoadApplicationContext();
 
             return View(new MyLeaveRequestViewModel
             {
@@ -225,7 +232,7 @@ namespace HrPortal.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LoadLeaveTypes();
+                await LoadApplicationContext();
                 return View(model);
             }
 
@@ -291,6 +298,7 @@ namespace HrPortal.Controllers
             var request = await _context.LeaveRequests
                 .Include(r => r.LeaveType)
                 .Include(r => r.Employee)
+                    .ThenInclude(e => e.Department)
                 .Include(r => r.History)
                     .ThenInclude(h => h.ActionedByEmployee)
                 .FirstOrDefaultAsync(r => r.Id == id);
@@ -306,7 +314,13 @@ namespace HrPortal.Controllers
             return result.Succeeded ? request : null;
         }
 
-        private async Task LoadLeaveTypes()
+        /// <summary>
+        /// What the application form shows besides the fields: the
+        /// leave types to pick from, who is applying, and their days
+        /// taken, accrued and remaining, which the paper form carries
+        /// at the foot of the leave type boxes.
+        /// </summary>
+        private async Task LoadApplicationContext()
         {
             var leaveTypes = await _context.LeaveTypes
                 .Where(l => l.IsActive)
@@ -318,6 +332,21 @@ namespace HrPortal.Controllers
                     leaveTypes,
                     "Id",
                     "Name");
+
+            var employee = await _currentUser.GetEmployeeAsync();
+
+            ViewBag.Applicant = employee;
+
+            ViewBag.Balances = employee == null
+                ? new List<LeaveBalance>()
+                : await _context.LeaveBalances
+                    .AsNoTracking()
+                    .Include(b => b.LeaveType)
+                    .Where(b =>
+                        b.EmployeeId == employee.Id &&
+                        b.Year == DateTime.Today.Year)
+                    .OrderBy(b => b.LeaveType.Name)
+                    .ToListAsync();
         }
     }
 }
