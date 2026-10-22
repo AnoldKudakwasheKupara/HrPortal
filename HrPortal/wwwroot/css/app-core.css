@@ -454,6 +454,13 @@ textarea:focus-visible,
 .form-select:focus { border-color: #4e9c92; box-shadow: 0 0 0 0.25rem rgba(16, 103, 93, 0.25); }
 .form-switch .form-check-input:checked { background-color: #10675d; border-color: #10675d; }
 
+/* A validation summary is rendered on every form, empty until
+   something is wrong with it. Left visible it draws a bare red
+   panel on a form nobody has filled in yet, so keep it out of
+   the way until it has something to say. The tag helper and
+   jQuery both swap the class when errors appear. */
+.validation-summary-valid { display: none; }
+
 .page-container > .page-header {
     background: linear-gradient(120deg, #0f4c81, var(--primary-dark));
     color: #fff;
