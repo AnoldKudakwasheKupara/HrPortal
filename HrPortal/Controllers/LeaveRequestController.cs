@@ -1,6 +1,7 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,16 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly RecordScope _scope;
 
+        private readonly LeaveApplicationPdfService _pdf;
+
         public LeaveRequestController(
             ApplicationDbContext context,
-            RecordScope scope)
+            RecordScope scope,
+            LeaveApplicationPdfService pdf)
         {
             _context = context;
             _scope = scope;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index(
@@ -90,6 +95,29 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             return View(request);
+        }
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var request = await _context.LeaveRequests
+                .AsNoTracking()
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(r => r.LeaveType)
+                .Include(r => r.History)
+                    .ThenInclude(h => h.ActionedByEmployee)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+                return NotFound();
+
+            return File(
+                await _pdf.RenderAsync(request),
+                "application/pdf",
+                $"Leave application - {request.RequestNumber}.pdf");
         }
 
         private async Task LoadEmployees()

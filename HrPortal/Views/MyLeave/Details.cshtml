@@ -16,12 +16,21 @@
             </p>
         </div>
 
-        <a asp-action="Index"
-           class="btn btn-secondary">
+        <div class="table-actions">
 
-            Back
+            <a asp-action="Form"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Application form (PDF)
+            </a>
 
-        </a>
+            <a asp-action="Index"
+               class="btn btn-secondary">
+                Back
+            </a>
+
+        </div>
 
     </div>
 

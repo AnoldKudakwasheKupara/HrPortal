@@ -20,16 +20,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly IAuthorizationService _authorization;
 
+        private readonly LeaveApplicationPdfService _pdf;
+
         public MyLeaveController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
             CurrentUserService currentUser,
-            IAuthorizationService authorization)
+            IAuthorizationService authorization,
+            LeaveApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _authorization = authorization;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -81,6 +85,24 @@ namespace HrPortal.Controllers
             return View(request);
         }
 
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var request = await LoadAuthorizedRequest(
+                id.Value,
+                Operations.View);
+
+            if (request == null)
+                return NotFound();
+
+            return File(
+                await _pdf.RenderAsync(request),
+                "application/pdf",
+                $"Leave application - {request.RequestNumber}.pdf");
+        }
         public async Task<IActionResult> Create()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
