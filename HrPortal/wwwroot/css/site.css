@@ -628,18 +628,20 @@ a.stat-tile:hover .stat-icon {
 
 .auth-brand {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--gray-800);
-    margin-bottom: 1.5rem;
+    justify-content: center;
+    margin-bottom: 1.75rem;
 }
 
-.auth-brand i {
-    color: var(--primary);
-    font-size: 1.3rem;
+/* The logo is the company artwork, so it is placed rather than
+   rebuilt: a width cap keeps it legible without stretching it. */
+.brand-logo {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
 }
+
+.public-brand .brand-logo { max-width: 210px; }
 
 .auth-head {
     margin-bottom: 1.25rem;
