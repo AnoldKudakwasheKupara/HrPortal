@@ -105,6 +105,7 @@ builder.Services.AddScoped<AssetReportService>();
 builder.Services.AddScoped<OperationsReportService>();
 builder.Services.AddScoped<ReportsOverviewService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
+builder.Services.AddScoped<LoanWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
 builder.Services.AddScoped<WeeklyReportBuilder>();

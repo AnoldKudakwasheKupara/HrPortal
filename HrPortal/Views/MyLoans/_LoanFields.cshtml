@@ -1,0 +1,169 @@
+@model HrPortal.ViewModels.MyLoanViewModel
+
+@{
+    var applicant = ViewBag.Applicant as HrPortal.Entities.Employee;
+}
+
+@if (applicant != null)
+{
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <span>Applicant</span>
+
+            <span class="text-muted small">From your record</span>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Name</span>
+                    <div class="field-value">
+                        @applicant.FirstName @applicant.LastName
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Employee number</span>
+                    <div class="field-value">@applicant.EmployeeNumber</div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Department</span>
+                    <div class="field-value">
+                        @(applicant.Department?.Name ?? "--")
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <span class="field-label">Date</span>
+                    <div class="field-value">
+                        @DateTime.Today.ToString("d MMM yyyy")
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">The loan</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+
+                <label asp-for="AmountRequested" class="form-label"></label>
+
+                <input asp-for="AmountRequested"
+                       class="form-control"
+                       type="number"
+                       step="0.01"
+                       min="0" />
+
+                <span asp-validation-for="AmountRequested"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <label asp-for="RepaymentMonths" class="form-label"></label>
+
+                <input asp-for="RepaymentMonths"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       max="120" />
+
+                <div class="form-text">
+                    Deducted in equal monthly instalments.
+                </div>
+
+                <span asp-validation-for="RepaymentMonths"
+                      class="text-danger"></span>
+
+            </div>
+
+            <div class="col-12">
+
+                <label asp-for="Purpose" class="form-label"></label>
+
+                <textarea asp-for="Purpose"
+                          class="form-control"
+                          rows="3"
+                          placeholder="What the loan is for"></textarea>
+
+                <div class="form-text">
+                    Attach receipts or quotations on the next screen.
+                </div>
+
+                <span asp-validation-for="Purpose"
+                      class="text-danger"></span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">What you are agreeing to</div>
+
+    <div class="card-body">
+
+        <div class="detail-rows">
+
+            <div class="detail-row">
+
+                <span class="detail-icon">
+                    <i class="fas fa-money-bill-transfer" aria-hidden="true"></i>
+                </span>
+
+                <div class="detail-text">
+                    <span class="field-label">Deduction from salary</span>
+                    <div class="field-value">
+                        Sending this authorises the company to deduct
+                        the loan from your salary in equal monthly
+                        instalments over the period above.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="detail-row">
+
+                <span class="detail-icon">
+                    <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                </span>
+
+                <div class="detail-text">
+                    <span class="field-label">If you leave</span>
+                    <div class="field-value">
+                        If you resign or are removed from the company
+                        for any reason, you remain liable to repay what
+                        is left of the loan, after everything owed to
+                        you has been set against it, before you leave.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

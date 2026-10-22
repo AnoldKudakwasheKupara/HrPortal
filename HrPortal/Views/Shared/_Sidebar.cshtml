@@ -81,6 +81,11 @@
         <i class="fas fa-cart-shopping"></i> My Requisitions
     </a>
 
+    <a class="nav-item @On("MyLoans")"
+       asp-controller="MyLoans" asp-action="Index">
+        <i class="fas fa-hand-holding-dollar"></i> My Loans
+    </a>
+
     @if (keepsTimesheet)
     {
         <a class="nav-item @On("MyTimesheet")"

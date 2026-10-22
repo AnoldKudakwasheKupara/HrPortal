@@ -1,0 +1,29 @@
+@using HrPortal.Entities
+@model LoanApplicationStatus
+
+@switch (Model)
+{
+    case LoanApplicationStatus.Approved:
+        <span class="badge bg-success">Sanctioned</span>
+        break;
+
+    case LoanApplicationStatus.Rejected:
+        <span class="badge bg-danger">Declined</span>
+        break;
+
+    case LoanApplicationStatus.Cancelled:
+        <span class="badge bg-secondary">Cancelled</span>
+        break;
+
+    case LoanApplicationStatus.ReturnedToApplicant:
+        <span class="badge bg-warning">Returned</span>
+        break;
+
+    case LoanApplicationStatus.Draft:
+        <span class="badge bg-secondary">Draft</span>
+        break;
+
+    default:
+        <span class="badge bg-info">With the MD</span>
+        break;
+}
