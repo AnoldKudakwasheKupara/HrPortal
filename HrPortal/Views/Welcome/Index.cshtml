@@ -22,15 +22,15 @@
             are glad you are here.
         </p>
 
-        <div class="d-flex flex-wrap gap-2">
+        <div class="hero-actions">
 
             <a class="btn btn-light" asp-controller="MyProfile" asp-action="Index">
-                <i class="fas fa-circle-play"></i>
+                <i class="fas fa-circle-play" aria-hidden="true"></i>
                 Start your onboarding
             </a>
 
             <a class="btn btn-outline-light" asp-controller="Policy" asp-action="Index">
-                <i class="fas fa-book"></i>
+                <i class="fas fa-book" aria-hidden="true"></i>
                 Read the employee handbook
             </a>
 
@@ -38,137 +38,139 @@
 
     </div>
 
-    <partial name="_IntellegoStory" />
+    <section class="story-section">
 
-    <div class="card shadow-sm mb-3">
+        <h2 class="story-title">Get going</h2>
 
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Quick links</span>
-            <span class="text-muted small">Find what you need</span>
+        <div class="settings-grid">
+
+            <a class="settings-item" asp-controller="Policy" asp-action="Index">
+                <span class="settings-icon">
+                    <i class="fas fa-book" aria-hidden="true"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Employee handbook</span>
+                    <span class="settings-note">
+                        Policies, code of conduct and procedures
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"
+                   aria-hidden="true"></i>
+            </a>
+
+            <a class="settings-item" asp-controller="MyLeave" asp-action="Create">
+                <span class="settings-icon">
+                    <i class="fas fa-plane-departure" aria-hidden="true"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Apply for leave</span>
+                    <span class="settings-note">
+                        Annual, sick and special leave requests
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"
+                   aria-hidden="true"></i>
+            </a>
+
+            <a class="settings-item" asp-controller="Directory" asp-action="Index">
+                <span class="settings-icon">
+                    <i class="fas fa-address-book" aria-hidden="true"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Staff directory</span>
+                    <span class="settings-note">
+                        Find colleagues, roles and contacts
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"
+                   aria-hidden="true"></i>
+            </a>
+
+            <a class="settings-item" asp-controller="Repository" asp-action="Index">
+                <span class="settings-icon">
+                    <i class="fas fa-folder-open" aria-hidden="true"></i>
+                </span>
+                <span class="settings-text">
+                    <span class="settings-title">Forms and documents</span>
+                    <span class="settings-note">
+                        The forms and guidance you are asked for most
+                    </span>
+                </span>
+                <i class="fas fa-chevron-right settings-chevron"
+                   aria-hidden="true"></i>
+            </a>
+
         </div>
 
-        <div class="card-body">
+    </section>
 
-            <div class="settings-grid">
+    <section class="story-section">
 
-                <a class="settings-item" asp-controller="Policy" asp-action="Index">
-                    <span class="settings-icon">
-                        <i class="fas fa-book" aria-hidden="true"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Employee handbook</span>
-                        <span class="settings-note">
-                            Policies, code of conduct and procedures
-                        </span>
-                    </span>
-                    <i class="fas fa-chevron-right settings-chevron"
-                       aria-hidden="true"></i>
-                </a>
+        <h2 class="story-title">Talk to HR</h2>
 
-                <a class="settings-item" asp-controller="MyLeave" asp-action="Create">
-                    <span class="settings-icon">
-                        <i class="fas fa-plane-departure" aria-hidden="true"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Apply for leave</span>
-                        <span class="settings-note">
-                            Annual, sick and special leave requests
-                        </span>
-                    </span>
-                    <i class="fas fa-chevron-right settings-chevron"
-                       aria-hidden="true"></i>
-                </a>
+        <div class="row g-4 align-items-start">
 
-                <a class="settings-item" asp-controller="Directory" asp-action="Index">
-                    <span class="settings-icon">
-                        <i class="fas fa-address-book" aria-hidden="true"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Staff directory</span>
-                        <span class="settings-note">
-                            Find colleagues, roles and contacts
-                        </span>
-                    </span>
-                    <i class="fas fa-chevron-right settings-chevron"
-                       aria-hidden="true"></i>
-                </a>
-
-                <a class="settings-item" asp-controller="Repository" asp-action="Index">
-                    <span class="settings-icon">
-                        <i class="fas fa-folder-open" aria-hidden="true"></i>
-                    </span>
-                    <span class="settings-text">
-                        <span class="settings-title">Forms and documents</span>
-                        <span class="settings-note">
-                            The forms and guidance you are asked for most
-                        </span>
-                    </span>
-                    <i class="fas fa-chevron-right settings-chevron"
-                       aria-hidden="true"></i>
-                </a>
-
+            <div class="col-lg-7 story-body">
+                <p>
+                    Our door is always open for questions about your
+                    role, pay, benefits or wellbeing.
+                </p>
             </div>
 
-        </div>
+            <div class="col-lg-5">
 
-    </div>
+                <span class="section-eyebrow">HR contact</span>
 
-    <div class="card shadow-sm mb-4">
+                @if (Model.HrContact.IsKnown)
+                {
+                    <div class="detail-rows">
 
-        <div class="card-header">Need help? Talk to HR</div>
-
-        <div class="card-body">
-
-            <div class="row g-4 align-items-start">
-
-                <div class="col-lg-7">
-                    <div class="field-value mb-0">
-                        Our door is always open for questions about your
-                        role, pay, benefits or wellbeing.
-                    </div>
-                </div>
-
-                <div class="col-lg-5">
-
-                    <span class="section-eyebrow">HR contact</span>
-
-                    @if (Model.HrContact.IsKnown)
-                    {
-                        <div class="field-value mb-1">
-                            <strong>@Model.HrContact.Name</strong>
+                        <div class="detail-row">
+                            <span class="detail-icon">
+                                <i class="fas fa-user" aria-hidden="true"></i>
+                            </span>
+                            <span class="detail-text">@Model.HrContact.Name</span>
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(Model.HrContact.Email))
                         {
-                            <div class="field-value mb-1">
-                                <a href="mailto:@Model.HrContact.Email">
-                                    @Model.HrContact.Email
-                                </a>
+                            <div class="detail-row">
+                                <span class="detail-icon">
+                                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                                </span>
+                                <span class="detail-text">
+                                    <a href="mailto:@Model.HrContact.Email">
+                                        @Model.HrContact.Email
+                                    </a>
+                                </span>
                             </div>
                         }
 
                         @if (!string.IsNullOrWhiteSpace(Model.HrContact.Phone))
                         {
-                            <div class="field-value mb-0">
-                                @Model.HrContact.Phone
+                            <div class="detail-row">
+                                <span class="detail-icon">
+                                    <i class="fas fa-phone" aria-hidden="true"></i>
+                                </span>
+                                <span class="detail-text">@Model.HrContact.Phone</span>
                             </div>
                         }
-                    }
-                    else
-                    {
-                        <div class="field-value is-empty mb-0">
-                            No HR officer is set up yet. An administrator
-                            can name one on the approval settings page,
-                            and their details will show here.
-                        </div>
-                    }
 
-                </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="field-value is-empty mb-0">
+                        No HR officer is set up yet. An administrator
+                        can name one on the approval settings page,
+                        and their details will show here.
+                    </p>
+                }
 
             </div>
 
         </div>
 
-    </div>
+    </section>
 
 </div>
