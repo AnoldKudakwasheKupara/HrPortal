@@ -22,16 +22,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly FileStorageService _fileStorage;
 
+        private readonly LoanApplicationPdfService _pdf;
+
         public LoanApprovalController(
             ApplicationDbContext context,
             LoanWorkflowService workflow,
             CurrentUserService currentUser,
-            FileStorageService fileStorage)
+            FileStorageService fileStorage,
+            LoanApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _fileStorage = fileStorage;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index(bool settled = false)
@@ -152,6 +156,23 @@ namespace HrPortal.Controllers
                 "sent back to the applicant");
         }
 
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var application = await LoadAsync(id.Value);
+
+            if (application == null)
+                return NotFound();
+
+            return File(
+                _pdf.Render(application),
+                "application/pdf",
+                $"Loan application - " +
+                $"{application.ApplicationNumber}.pdf");
+        }
         public async Task<IActionResult> Attachment(
             int id,
             int attachmentId)

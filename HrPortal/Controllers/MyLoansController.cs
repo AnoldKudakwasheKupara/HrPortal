@@ -22,18 +22,22 @@ namespace HrPortal.Controllers
         private readonly IAuthorizationService _authorization;
         private readonly FileStorageService _fileStorage;
 
+        private readonly LoanApplicationPdfService _pdf;
+
         public MyLoansController(
             ApplicationDbContext context,
             LoanWorkflowService workflow,
             CurrentUserService currentUser,
             IAuthorizationService authorization,
-            FileStorageService fileStorage)
+            FileStorageService fileStorage,
+            LoanApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _authorization = authorization;
             _fileStorage = fileStorage;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -67,6 +71,25 @@ namespace HrPortal.Controllers
             return View(application);
         }
 
+
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var application = await LoadAuthorizedAsync(
+                id.Value,
+                Operations.View);
+
+            if (application == null)
+                return NotFound();
+
+            return File(
+                _pdf.Render(application),
+                "application/pdf",
+                $"Loan application - " +
+                $"{application.ApplicationNumber}.pdf");
+        }
         public async Task<IActionResult> Create()
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();

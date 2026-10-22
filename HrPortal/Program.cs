@@ -143,6 +143,7 @@ builder.Services.Configure<EmailOptions>(
 builder.Services.AddSingleton<WeeklyReportPdfService>();
 builder.Services.AddSingleton<NextOfKinPdfService>();
 builder.Services.AddScoped<LeaveApplicationPdfService>();
+builder.Services.AddSingleton<LoanApplicationPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(
     builder.Configuration.GetSection(WeeklyReportBranding.Section));
