@@ -17,6 +17,9 @@ namespace HrPortal.Areas.Identity.Pages.Account;
 [AllowAnonymous]
 public class ResendEmailConfirmationModel : PageModel
 {
+    private const string Sent =
+        "Verification email sent. Please check your email.";
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailSender _emailSender;
 
@@ -28,6 +31,13 @@ public class ResendEmailConfirmationModel : PageModel
 
     [BindProperty]
     public InputModel Input { get; set; } = default!;
+
+    /// <summary>
+    /// Shown once the link has been sent. The wording is the same
+    /// whether or not the address belongs to an account, so the
+    /// page cannot be used to find out who has one.
+    /// </summary>
+    public string? StatusMessage { get; set; }
 
     public class InputModel
     {
@@ -50,7 +60,7 @@ public class ResendEmailConfirmationModel : PageModel
         var user = await _userManager.FindByEmailAsync(Input.Email);
         if (user == null)
         {
-            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+            StatusMessage = Sent;
             return Page();
         }
 
@@ -67,7 +77,7 @@ public class ResendEmailConfirmationModel : PageModel
             "Confirm your email",
             $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-        ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+        StatusMessage = Sent;
         return Page();
     }
 }
