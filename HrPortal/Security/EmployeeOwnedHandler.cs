@@ -94,7 +94,6 @@ namespace HrPortal.Security
 
                 Notification => false,
 
-                TimesheetEntry => false,
 
                 _ => false
             };

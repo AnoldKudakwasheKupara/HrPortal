@@ -75,28 +75,6 @@ namespace HrPortal.Services
             var year = DateTime.Today.Year;
             var today = DateTime.Today;
 
-            var weekStart = MyTimesheetController.WeekStart(today);
-            var weekEnd = weekStart.AddDays(6);
-
-            var keepsTimesheet =
-                employee.IsActive &&
-                employee.Department.TracksTimesheets;
-
-            var timesheetWeek = !keepsTimesheet
-                ? null
-                : await _context.TimesheetEntries
-                    .Where(t =>
-                        t.EmployeeId == employeeId &&
-                        t.WorkDate >= weekStart &&
-                        t.WorkDate <= weekEnd)
-                    .GroupBy(_ => 1)
-                    .Select(g => new
-                    {
-                        Minutes = g.Sum(t => t.DurationMinutes),
-                        Count = g.Count()
-                    })
-                    .FirstOrDefaultAsync();
-
             var balances = await _context.LeaveBalances
                 .Include(b => b.LeaveType)
                 .Where(b =>
@@ -142,10 +120,6 @@ namespace HrPortal.Services
                 MyAssets = await _context.Assets
                     .CountAsync(a =>
                         a.AssignedToEmployeeId == employeeId),
-
-                KeepsTimesheet = keepsTimesheet,
-                TimesheetMinutesThisWeek = timesheetWeek?.Minutes ?? 0,
-                TimesheetEntriesThisWeek = timesheetWeek?.Count ?? 0,
 
                 DaysTakenThisYear = balances.Sum(b => b.UsedDays),
 
@@ -302,7 +276,7 @@ namespace HrPortal.Services
         private async Task<AdminDashboardSection> BuildAdminAsync()
         {
             var today = DateTime.Today;
-            var weekStart = MyTimesheetController.WeekStart(today);
+            var weekStart = WeekStart(today);
             var monthStart = new DateTime(today.Year, today.Month, 1);
 
             return new AdminDashboardSection
@@ -344,16 +318,6 @@ namespace HrPortal.Services
                         m.Status == MaintenanceStatus.Scheduled &&
                         m.ScheduledFor >= today &&
                         m.ScheduledFor <= today.AddDays(30)),
-
-                TimesheetMinutesThisMonth = await _context.TimesheetEntries
-                    .Where(t => t.WorkDate >= monthStart && t.WorkDate <= today)
-                    .SumAsync(t => (int?)t.DurationMinutes) ?? 0,
-
-                TimesheetPeopleThisMonth = await _context.TimesheetEntries
-                    .Where(t => t.WorkDate >= monthStart && t.WorkDate <= today)
-                    .Select(t => t.EmployeeId)
-                    .Distinct()
-                    .CountAsync(),
 
                 LicensesExpired = await _context.Licenses
                     .CountAsync(l =>
@@ -537,20 +501,6 @@ namespace HrPortal.Services
                 });
             }
 
-            if (model.Mine is
-                { KeepsTimesheet: true, TimesheetEntriesThisWeek: 0 })
-            {
-                focus.Add(new DashboardFocusItem
-                {
-                    Icon = "fa-stopwatch",
-                    Label = "Timesheet",
-                    Note = "No time has been logged this week.",
-                    Tone = "is-warning",
-                    Controller = "MyTimesheet",
-                    Action = "Index"
-                });
-            }
-
             if (model.Mine is { UnreadNotifications: > 0 } notices)
             {
                 focus.Add(new DashboardFocusItem
@@ -665,6 +615,17 @@ namespace HrPortal.Services
                 .Select(r =>
                     (new DateTime(r.Year, r.Month, 1), r.Value))
                 .ToList();
+        }
+
+        /// <summary>
+        /// The Monday of the week a date falls in. The IT activity
+        /// count and the weekly report both run to that week.
+        /// </summary>
+        private static DateTime WeekStart(DateTime date)
+        {
+            var offset = ((int)date.DayOfWeek + 6) % 7;
+
+            return date.Date.AddDays(-offset);
         }
     }
 }

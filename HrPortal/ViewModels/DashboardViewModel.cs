@@ -66,12 +66,6 @@ namespace HrPortal.ViewModels
 
         public int MyAssets { get; set; }
 
-        public bool KeepsTimesheet { get; set; }
-
-        public int TimesheetMinutesThisWeek { get; set; }
-
-        public int TimesheetEntriesThisWeek { get; set; }
-
         public decimal DaysTakenThisYear { get; set; }
 
         public List<LeaveRequest> RecentRequests { get; set; } = new();
@@ -152,10 +146,6 @@ namespace HrPortal.ViewModels
         public int ActivitiesOutstanding { get; set; }
 
         public bool WeeklyReportDue { get; set; }
-
-        public int TimesheetMinutesThisMonth { get; set; }
-
-        public int TimesheetPeopleThisMonth { get; set; }
 
         public bool HrApproverConfigured { get; set; }
 

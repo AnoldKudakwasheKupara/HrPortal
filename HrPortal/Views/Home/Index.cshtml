@@ -185,29 +185,6 @@
 
             </a>
 
-            @if (Model.Mine.KeepsTimesheet)
-            {
-                <a class="stat-tile @(Model.Mine.TimesheetEntriesThisWeek == 0 ? "is-warning" : "is-good")"
-                   asp-controller="MyTimesheet"
-                   asp-action="Index">
-
-                    <i class="fas fa-stopwatch stat-icon" aria-hidden="true"></i>
-                    <span class="stat-label">Logged this week</span>
-
-                    <span class="stat-value">
-                        @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Mine.TimesheetMinutesThisWeek)
-                    </span>
-
-                    <div class="stat-note">
-                        @(Model.Mine.TimesheetEntriesThisWeek == 0
-                            ? "Nothing logged yet"
-                            : $"{Model.Mine.TimesheetEntriesThisWeek} " +
-                              (Model.Mine.TimesheetEntriesThisWeek == 1 ? "entry" : "entries"))
-                    </div>
-
-                </a>
-            }
-
         </div>
 
         <div class="stat-strip mt-3">
@@ -1062,26 +1039,6 @@
                     @(Model.Admin.AssetsNeedingAttention == 0
                         ? "Fleet is healthy"
                         : "Marked old or bad")
-                </span>
-
-            </a>
-
-            <a class="strip-item"
-               asp-controller="Timesheet"
-               asp-action="Index">
-
-                <span class="strip-label">Timesheet hours</span>
-
-                <span class="strip-value">
-                    @HrPortal.Entities.TimesheetEntry.FormatDuration(Model.Admin.TimesheetMinutesThisMonth)
-                </span>
-
-                <span class="strip-note">
-                    @(Model.Admin.TimesheetPeopleThisMonth == 0
-                        ? "Nothing logged"
-                        : $"{Model.Admin.TimesheetPeopleThisMonth} " +
-                          (Model.Admin.TimesheetPeopleThisMonth == 1 ? "person" : "people") +
-                          " this month")
                 </span>
 
             </a>

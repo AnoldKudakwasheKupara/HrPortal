@@ -93,8 +93,6 @@ builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<HrContactService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<WorkingCalendar>();
-builder.Services.AddScoped<TimesheetRegisterService>();
-builder.Services.AddScoped<TimesheetEntryValidator>();
 builder.Services.AddScoped<PolicyService>();
 builder.Services.AddScoped<EmployeeRecordService>();
 builder.Services.AddScoped<LeaveReportService>();
@@ -107,7 +105,6 @@ builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<LoanWorkflowService>();
 builder.Services.AddScoped<CourseApplicationWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
-builder.Services.AddScoped<TimesheetAccessService>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
 
 

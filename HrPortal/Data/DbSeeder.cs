@@ -147,15 +147,13 @@ namespace HrPortal.Data
                 .Where(d => ItDepartmentNames.Contains(
                     d.Name.Trim().ToUpperInvariant()))
                 .OrderByDescending(d => d.IsActive)
-                .ThenByDescending(d => d.TracksTimesheets)
                 .FirstOrDefault();
 
             if (existing != null)
             {
-                if (!existing.IsActive || !existing.TracksTimesheets)
+                if (!existing.IsActive)
                 {
                     existing.IsActive = true;
-                    existing.TracksTimesheets = true;
                     await context.SaveChangesAsync();
                 }
 
@@ -166,8 +164,7 @@ namespace HrPortal.Data
             {
                 Name = "IT",
                 Description = "Information Technology",
-                IsActive = true,
-                TracksTimesheets = true
+                IsActive = true
             };
 
             context.Departments.Add(department);

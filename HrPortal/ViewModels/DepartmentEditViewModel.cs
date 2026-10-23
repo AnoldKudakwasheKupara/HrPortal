@@ -17,8 +17,5 @@ namespace HrPortal.ViewModels
 
         [Display(Name = "Active")]
         public bool IsActive { get; set; }
-
-        [Display(Name = "Keeps timesheets")]
-        public bool TracksTimesheets { get; set; }
     }
 }

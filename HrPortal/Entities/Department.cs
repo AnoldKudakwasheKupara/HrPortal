@@ -10,7 +10,6 @@
 
         public bool IsActive { get; set; } = true;
 
-        public bool TracksTimesheets { get; set; }
 
         public ICollection<Employee> Employees { get; set; }
             = new List<Employee>();

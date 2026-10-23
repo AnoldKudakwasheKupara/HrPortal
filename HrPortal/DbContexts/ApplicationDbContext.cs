@@ -54,7 +54,6 @@ namespace HrPortal.DbContexts
         public DbSet<WeeklyReportPriority> WeeklyReportPriorities { get; set; }
         public DbSet<License> Licenses { get; set; }
         public DbSet<LicenseRenewal> LicenseRenewals { get; set; }
-        public DbSet<TimesheetEntry> TimesheetEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -1034,37 +1033,6 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            builder.Entity<TimesheetEntry>(entity =>
-            {
-                entity.HasKey(t => t.Id);
-
-                entity.Property(t => t.WorkDate)
-                    .HasColumnType("date");
-
-                entity.Property(t => t.Category)
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(t => t.Title)
-                    .IsRequired()
-                    .HasMaxLength(200);
-
-                entity.Property(t => t.Details).HasMaxLength(2000);
-                entity.Property(t => t.Reference).HasMaxLength(100);
-
-                entity.HasOne(t => t.Employee)
-                    .WithMany()
-                    .HasForeignKey(t => t.EmployeeId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(t => t.Asset)
-                    .WithMany()
-                    .HasForeignKey(t => t.AssetId)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasIndex(t => new { t.EmployeeId, t.WorkDate });
-                entity.HasIndex(t => t.WorkDate);
-            });
         }
     }
 }
