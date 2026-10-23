@@ -1438,40 +1438,6 @@ namespace HrPortal.Migrations
                     b.ToTable("PublicHolidays");
                 });
 
-            modelBuilder.Entity("HrPortal.Entities.ReminderLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Kind")
-                        .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)");
-
-                    b.Property<DateTime>("LastSentOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ReferenceKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("Kind", "ReferenceKey", "EmployeeId")
-                        .IsUnique();
-
-                    b.ToTable("ReminderLogs");
-                });
-
             modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>
                 {
                     b.Property<int>("Id")
@@ -2426,17 +2392,6 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("HrPortal.Entities.ReminderLog", b =>
-                {
-                    b.HasOne("HrPortal.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>

@@ -19,20 +19,17 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
         private readonly IOptionsSnapshot<LeaveOptions> _leave;
-        private readonly IOptionsSnapshot<ReminderOptions> _reminders;
 
         public SettingsController(
             ApplicationDbContext context,
             AuditService audit,
             CurrentUserService currentUser,
-            IOptionsSnapshot<LeaveOptions> leave,
-            IOptionsSnapshot<ReminderOptions> reminders)
+            IOptionsSnapshot<LeaveOptions> leave)
         {
             _context = context;
             _audit = audit;
             _currentUser = currentUser;
             _leave = leave;
-            _reminders = reminders;
         }
 
         public async Task<IActionResult> Index()
@@ -59,36 +56,6 @@ namespace HrPortal.Controllers
             await SetAsync(
                 "Leave:BackdateGraceDays",
                 model.BackdateGraceDays.ToString(),
-                by,
-                changes);
-
-            await SetAsync(
-                "Reminders:Enabled",
-                model.RemindersEnabled ? "true" : "false",
-                by,
-                changes);
-
-            await SetAsync(
-                "Reminders:RunAtHour",
-                model.RunAtHour.ToString(),
-                by,
-                changes);
-
-            await SetAsync(
-                "Reminders:ExpiryWindowDays",
-                model.ExpiryWindowDays.ToString(),
-                by,
-                changes);
-
-            await SetAsync(
-                "Reminders:RepeatEveryDays",
-                model.RepeatEveryDays.ToString(),
-                by,
-                changes);
-
-            await SetAsync(
-                "Reminders:StaleApprovalDays",
-                model.StaleApprovalDays.ToString(),
                 by,
                 changes);
 
@@ -164,16 +131,10 @@ namespace HrPortal.Controllers
         private SettingsViewModel Current()
         {
             var leave = _leave.Value;
-            var reminders = _reminders.Value;
 
             return new SettingsViewModel
             {
-                BackdateGraceDays = leave.BackdateGraceDays,
-                RemindersEnabled = reminders.Enabled,
-                RunAtHour = reminders.RunAtHour,
-                ExpiryWindowDays = reminders.ExpiryWindowDays,
-                RepeatEveryDays = reminders.RepeatEveryDays,
-                StaleApprovalDays = reminders.StaleApprovalDays
+                BackdateGraceDays = leave.BackdateGraceDays
             };
         }
 

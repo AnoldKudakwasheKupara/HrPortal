@@ -41,7 +41,6 @@ namespace HrPortal.DbContexts
         public DbSet<RepositoryFolder> RepositoryFolders { get; set; }
         public DbSet<RepositoryDocument> RepositoryDocuments { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
-        public DbSet<ReminderLog> ReminderLogs { get; set; }
 
         public DbSet<LoanApplication> LoanApplications { get; set; }
         public DbSet<LoanApplicationAttachment> LoanApplicationAttachments { get; set; }
@@ -468,31 +467,6 @@ namespace HrPortal.DbContexts
                     .WithMany(l => l.Renewals)
                     .HasForeignKey(r => r.LicenseId)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<ReminderLog>(entity =>
-            {
-                entity.HasKey(r => r.Id);
-
-                entity.Property(r => r.Kind)
-                    .IsRequired()
-                    .HasMaxLength(60);
-
-                entity.Property(r => r.ReferenceKey)
-                    .IsRequired()
-                    .HasMaxLength(100);
-
-                entity.HasOne(r => r.Employee)
-                    .WithMany()
-                    .HasForeignKey(r => r.EmployeeId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasIndex(r => new
-                {
-                    r.Kind,
-                    r.ReferenceKey,
-                    r.EmployeeId
-                }).IsUnique();
             });
 
             builder.Entity<Policy>(entity =>
