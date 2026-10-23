@@ -13,7 +13,6 @@ namespace HrPortal.Services.Reminders
         public const string DocumentExpiry = "Document expiry";
         public const string ContractEnding = "Contract ending";
         public const string LeaveWaiting = "Leave awaiting a decision";
-        public const string RequisitionWaiting = "Requisition awaiting a decision";
         public const string MaintenanceDue = "Maintenance due";
         public const string TrainingDue = "Training due";
         public const string CertificationExpiry = "Certification expiry";

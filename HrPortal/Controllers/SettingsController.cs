@@ -18,7 +18,6 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
-        private readonly IOptionsSnapshot<RequisitionOptions> _requisitions;
         private readonly IOptionsSnapshot<LeaveOptions> _leave;
         private readonly IOptionsSnapshot<ReminderOptions> _reminders;
 
@@ -26,14 +25,12 @@ namespace HrPortal.Controllers
             ApplicationDbContext context,
             AuditService audit,
             CurrentUserService currentUser,
-            IOptionsSnapshot<RequisitionOptions> requisitions,
             IOptionsSnapshot<LeaveOptions> leave,
             IOptionsSnapshot<ReminderOptions> reminders)
         {
             _context = context;
             _audit = audit;
             _currentUser = currentUser;
-            _requisitions = requisitions;
             _leave = leave;
             _reminders = reminders;
         }
@@ -58,18 +55,6 @@ namespace HrPortal.Controllers
             var by = await _currentUser.GetDisplayNameAsync();
 
             var changes = new List<string>();
-
-            await SetAsync(
-                "Requisitions:MdApprovalThreshold",
-                model.MdApprovalThreshold.ToString("0.##"),
-                by,
-                changes);
-
-            await SetAsync(
-                "Requisitions:CurrencyCode",
-                model.CurrencyCode.Trim(),
-                by,
-                changes);
 
             await SetAsync(
                 "Leave:BackdateGraceDays",
@@ -178,14 +163,11 @@ namespace HrPortal.Controllers
 
         private SettingsViewModel Current()
         {
-            var requisitions = _requisitions.Value;
             var leave = _leave.Value;
             var reminders = _reminders.Value;
 
             return new SettingsViewModel
             {
-                MdApprovalThreshold = requisitions.MdApprovalThreshold,
-                CurrencyCode = requisitions.CurrencyCode,
                 BackdateGraceDays = leave.BackdateGraceDays,
                 RemindersEnabled = reminders.Enabled,
                 RunAtHour = reminders.RunAtHour,

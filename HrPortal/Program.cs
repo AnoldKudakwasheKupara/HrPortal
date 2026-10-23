@@ -110,10 +110,7 @@ builder.Services.AddScoped<CourseApplicationWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<TimesheetAccessService>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
-builder.Services.AddScoped<RequisitionWorkflowService>();
 
-builder.Services.Configure<RequisitionOptions>(
-    builder.Configuration.GetSection(RequisitionOptions.Section));
 
 builder.Services.Configure<LeaveOptions>(
     builder.Configuration.GetSection(LeaveOptions.Section));
@@ -126,7 +123,6 @@ builder.Services.AddScoped<IReminderRule, LicenceExpiryRule>();
 builder.Services.AddScoped<IReminderRule, DocumentExpiryRule>();
 builder.Services.AddScoped<IReminderRule, ContractEndingRule>();
 builder.Services.AddScoped<IReminderRule, StaleLeaveRule>();
-builder.Services.AddScoped<IReminderRule, StaleRequisitionRule>();
 builder.Services.AddScoped<IReminderRule, MaintenanceDueRule>();
 builder.Services.AddScoped<IReminderRule, TrainingDueRule>();
 builder.Services.AddScoped<IReminderRule, CertificationExpiryRule>();

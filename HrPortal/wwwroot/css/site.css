@@ -952,13 +952,6 @@ a.stat-tile:hover .stat-icon {
 
 .report-stat-value.is-text  { font-size: 1.25rem; }
 
-/* Column widths for the requisition line editor. */
-.req-col-item { min-width: 16rem; }
-.req-col-qty  { width: 7rem; }
-.req-col-unit { width: 8rem; }
-.req-col-cost { width: 10rem; }
-.req-col-drop { width: 5rem; }
-
 /* The tick column on the role assignment table. */
 .role-tick-col { width: 80px; }
 

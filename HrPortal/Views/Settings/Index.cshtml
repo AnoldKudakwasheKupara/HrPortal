@@ -35,65 +35,7 @@
 
         <div class="row g-3">
 
-            <div class="col-lg-6">
-
-                <div class="card shadow-sm h-100">
-
-                    <div class="card-header">Requisitions</div>
-
-                    <div class="card-body">
-
-                        <div class="row">
-
-                            <div class="col-sm-6 mb-3">
-
-                                <label asp-for="MdApprovalThreshold"
-                                       class="form-label"></label>
-
-                                <input asp-for="MdApprovalThreshold"
-                                       class="form-control"
-                                       type="number"
-                                       step="0.01"
-                                       min="0" />
-
-                                <div class="form-text">
-                                    At or above this, a requisition goes
-                                    to the Managing Director after
-                                    review. Below it, review is the
-                                    final approval.
-                                </div>
-
-                                <span asp-validation-for="MdApprovalThreshold"
-                                      class="text-danger"></span>
-
-                            </div>
-
-                            <div class="col-sm-6 mb-3">
-
-                                <label asp-for="CurrencyCode"
-                                       class="form-label"></label>
-
-                                <input asp-for="CurrencyCode"
-                                       class="form-control" />
-
-                                <div class="form-text">
-                                    Shown against requisition amounts.
-                                </div>
-
-                                <span asp-validation-for="CurrencyCode"
-                                      class="text-danger"></span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="col-lg-6">
+            <div class="col-12">
 
                 <div class="card shadow-sm h-100">
 

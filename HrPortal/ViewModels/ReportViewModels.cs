@@ -52,9 +52,6 @@ namespace HrPortal.ViewModels
         [Display(Name = "Show")]
         public string? Show { get; set; }
 
-        [Display(Name = "Status")]
-        public RequisitionStatus? RequisitionStatus { get; set; }
-
         [Display(Name = "Category")]
         public ItActivityCategory? ActivityCategory { get; set; }
 
@@ -358,25 +355,6 @@ namespace HrPortal.ViewModels
         public bool IsOverdue { get; set; }
 
         public int? DaysToComplete { get; set; }
-    }
-
-    public class RequisitionReportRow
-    {
-        public string RequisitionNumber { get; set; } = string.Empty;
-        public string RaisedBy { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public RequisitionStatus Status { get; set; }
-        public string Vendor { get; set; } = string.Empty;
-        public int Lines { get; set; }
-        public decimal EstimatedTotal { get; set; }
-        public bool RequiresMdApproval { get; set; }
-        public DateTime? NeededBy { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? SubmittedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
-
-        public double? TurnaroundDays { get; set; }
     }
 
     public class ItActivityReportRow

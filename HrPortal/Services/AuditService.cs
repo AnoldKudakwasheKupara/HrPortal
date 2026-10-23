@@ -34,12 +34,6 @@ namespace HrPortal.Services
         public const string TrainingCompleted = "Training Completed";
         public const string DocumentUploaded = "Document Uploaded";
 
-        public const string RequisitionSubmitted = "Requisition Submitted";
-        public const string RequisitionApproved = "Requisition Approved";
-        public const string RequisitionRejected = "Requisition Rejected";
-        public const string RequisitionReturned = "Requisition Returned";
-        public const string RequisitionCancelled = "Requisition Cancelled";
-
         public async Task LogAsync(
             string action,
             string entityName,

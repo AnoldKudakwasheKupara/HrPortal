@@ -218,23 +218,6 @@ namespace HrPortal.Controllers
             return View(payload.Model);
         }
 
-        [Authorize(Roles = Roles.AdminOrMd)]
-        public async Task<IActionResult> Requisitions(
-            ReportFilter filter,
-            string? export)
-        {
-            var payload = await _operationsReports.RequisitionsAsync(
-                filter,
-                export == "csv");
-
-            if (payload.IsCsv)
-                return Csv(payload);
-
-            await LoadLookups();
-
-            return View(payload.Model);
-        }
-
         [Authorize(Roles = Roles.AdminOnly)]
         public async Task<IActionResult> Maintenance(
             ReportFilter filter,

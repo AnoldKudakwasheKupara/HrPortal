@@ -246,14 +246,6 @@ namespace HrPortal.Services
 
             return new MdDashboardSection
             {
-                RequisitionsAwaitingApproval = await _context.Requisitions
-                    .CountAsync(r =>
-                        r.Status == RequisitionStatus.ReviewApproved),
-
-                RequisitionValueAwaiting = await _context.Requisitions
-                    .Where(r => r.Status == RequisitionStatus.ReviewApproved)
-                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m,
-
                 AwaitingFinalApproval = await _context.LeaveRequests
                     .CountAsync(r =>
                         r.Status == LeaveRequestStatus.HRApproved ||
@@ -363,13 +355,6 @@ namespace HrPortal.Services
                     .Distinct()
                     .CountAsync(),
 
-                RequisitionsAwaitingReview = await _context.Requisitions
-                    .CountAsync(r => r.Status == RequisitionStatus.Submitted),
-
-                RequisitionValueInReview = await _context.Requisitions
-                    .Where(r => r.Status == RequisitionStatus.Submitted)
-                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m,
-
                 LicensesExpired = await _context.Licenses
                     .CountAsync(l =>
                         l.Status == LicenseStatus.Active &&
@@ -438,23 +423,6 @@ namespace HrPortal.Services
                 });
             }
 
-            if (model.Md is { RequisitionsAwaitingApproval: > 0 } mdReq)
-            {
-                focus.Add(new DashboardFocusItem
-                {
-                    Icon = "fa-file-invoice-dollar",
-                    Label = "Requisitions to approve",
-                    Figure = mdReq.RequisitionsAwaitingApproval.ToString("N0"),
-                    Unit = mdReq.RequisitionsAwaitingApproval == 1
-                        ? "request" : "requests",
-                    Note =
-                        $"{mdReq.RequisitionValueAwaiting:N2} in value "
-                        + "awaiting your approval.",
-                    Controller = "RequisitionApproval",
-                    Action = "FinalApproval"
-                });
-            }
-
             if (model.Hr is { AwaitingReview: > 0 } hrQueue)
             {
                 focus.Add(new DashboardFocusItem
@@ -466,24 +434,6 @@ namespace HrPortal.Services
                         ? "request" : "requests",
                     Note = "Submitted by staff and waiting on HR.",
                     Controller = "LeaveApproval",
-                    Action = "Index"
-                });
-            }
-
-            if (model.Admin is { RequisitionsAwaitingReview: > 0 } adminReq)
-            {
-                focus.Add(new DashboardFocusItem
-                {
-                    Icon = "fa-file-invoice-dollar",
-                    Label = "Requisitions to review",
-                    Figure = adminReq
-                        .RequisitionsAwaitingReview.ToString("N0"),
-                    Unit = adminReq.RequisitionsAwaitingReview == 1
-                        ? "request" : "requests",
-                    Note =
-                        $"{adminReq.RequisitionValueInReview:N2} in value "
-                        + "awaiting review.",
-                    Controller = "RequisitionApproval",
                     Action = "Index"
                 });
             }

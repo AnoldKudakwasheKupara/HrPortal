@@ -21,9 +21,6 @@ namespace HrPortal.Entities
         HROfficer,
 
         [Display(Name = "Managing Director")]
-        MD,
-
-        [Display(Name = "Requisition Reviewer")]
-        RequisitionReviewer
+        MD
     }
 }

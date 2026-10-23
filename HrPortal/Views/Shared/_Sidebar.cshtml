@@ -76,11 +76,6 @@
         <i class="fas fa-laptop"></i> My Assets
     </a>
 
-    <a class="nav-item @On("MyRequisitions")"
-       asp-controller="MyRequisitions" asp-action="Index">
-        <i class="fas fa-cart-shopping"></i> My Requisitions
-    </a>
-
     <a class="nav-item @On("MyLoans")"
        asp-controller="MyLoans" asp-action="Index">
         <i class="fas fa-hand-holding-dollar"></i> My Loans
@@ -158,29 +153,6 @@
             </a>
         }
 
-        @if (isAdmin)
-        {
-            <a class="nav-item @OnAction("RequisitionApproval", "Index")"
-               asp-controller="RequisitionApproval" asp-action="Index">
-                <i class="fas fa-file-invoice-dollar"></i> Requisition Review
-            </a>
-        }
-
-        @if (isMd)
-        {
-            <a class="nav-item @OnAction("RequisitionApproval", "FinalApproval")"
-               asp-controller="RequisitionApproval" asp-action="FinalApproval">
-                <i class="fas fa-file-invoice-dollar"></i> Requisition Approval
-            </a>
-        }
-
-        @if (isAdmin || isMd)
-        {
-            <a class="nav-item @OnAction("RequisitionApproval", "All")"
-               asp-controller="RequisitionApproval" asp-action="All">
-                <i class="fas fa-rectangle-list"></i> All Requisitions
-            </a>
-        }
     }
 
     @if (isHr || isAdmin)

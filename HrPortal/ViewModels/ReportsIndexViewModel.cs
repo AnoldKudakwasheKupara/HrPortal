@@ -14,8 +14,6 @@ namespace HrPortal.ViewModels
 
         public bool ShowSystem { get; set; }
 
-        public bool ShowProcurement { get; set; }
-
         public int LeaveRequests { get; set; }
 
         public int LeaveAwaitingDecision { get; set; }
@@ -51,10 +49,6 @@ namespace HrPortal.ViewModels
         public int Assets { get; set; }
 
         public int AssetsNeedingAttention { get; set; }
-
-        public int RequisitionsAwaiting { get; set; }
-
-        public decimal RequisitionsApprovedValue { get; set; }
 
         public int ItActivity30Days { get; set; }
 

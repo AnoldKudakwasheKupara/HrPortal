@@ -4,15 +4,6 @@ namespace HrPortal.ViewModels
 {
     public class SettingsViewModel
     {
-        [Display(Name = "MD approval threshold")]
-        [Range(0, 100000000)]
-        public decimal MdApprovalThreshold { get; set; }
-
-        [Required]
-        [Display(Name = "Currency")]
-        [StringLength(10)]
-        public string CurrencyCode { get; set; } = "USD";
-
         [Display(Name = "Leave backdating allowed")]
         [Range(0, 365)]
         public int BackdateGraceDays { get; set; }

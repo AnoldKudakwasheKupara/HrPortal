@@ -736,25 +736,6 @@
 
             </a>
 
-            <a class="stat-tile @(Model.Md.RequisitionsAwaitingApproval > 0 ? "is-action" : "is-good")"
-               asp-controller="RequisitionApproval"
-               asp-action="FinalApproval">
-
-                <i class="fas fa-file-invoice-dollar stat-icon" aria-hidden="true"></i>
-                <span class="stat-label">Requisitions to approve</span>
-
-                <span class="stat-value">
-                    @Model.Md.RequisitionsAwaitingApproval
-                </span>
-
-                <div class="stat-note">
-                    @(Model.Md.RequisitionsAwaitingApproval == 0
-                        ? "Nothing waiting"
-                        : $"{Model.Md.RequisitionValueAwaiting:N2} in value")
-                </div>
-
-            </a>
-
         </div>
 
         <div class="stat-strip mt-3">
@@ -1081,24 +1062,6 @@
                     @(Model.Admin.AssetsNeedingAttention == 0
                         ? "Fleet is healthy"
                         : "Marked old or bad")
-                </span>
-
-            </a>
-
-            <a class="strip-item"
-               asp-controller="RequisitionApproval"
-               asp-action="Index">
-
-                <span class="strip-label">Requisitions</span>
-
-                <span class="strip-value">
-                    @Model.Admin.RequisitionsAwaitingReview
-                </span>
-
-                <span class="strip-note">
-                    @(Model.Admin.RequisitionsAwaitingReview == 0
-                        ? "Nothing to review"
-                        : $"{Model.Admin.RequisitionValueInReview:N2} in value")
                 </span>
 
             </a>

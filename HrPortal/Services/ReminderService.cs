@@ -52,7 +52,6 @@ namespace HrPortal.Services
         public const string DocumentExpiry = ReminderKinds.DocumentExpiry;
         public const string ContractEnding = ReminderKinds.ContractEnding;
         public const string LeaveWaiting = ReminderKinds.LeaveWaiting;
-        public const string RequisitionWaiting = ReminderKinds.RequisitionWaiting;
         public const string MaintenanceDue = ReminderKinds.MaintenanceDue;
         public const string TrainingDue = ReminderKinds.TrainingDue;
         public const string CertificationExpiry = ReminderKinds.CertificationExpiry;

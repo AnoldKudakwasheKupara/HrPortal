@@ -34,8 +34,7 @@ namespace HrPortal.Services.Reporting
                 ShowTraining = isHr,
                 ShowPeople = isHr || isAdmin,
                 ShowDocuments = isHr,
-                ShowSystem = isAdmin,
-                ShowProcurement = isAdmin || isMd
+                ShowSystem = isAdmin
             };
 
             if (model.ShowLeave)
@@ -123,21 +122,6 @@ namespace HrPortal.Services.Reporting
 
                 model.EmployeesWithoutDocuments =
                     Math.Max(0, active - covered);
-            }
-
-            if (model.ShowProcurement)
-            {
-                model.RequisitionsAwaiting = await _context.Requisitions
-                    .CountAsync(r =>
-                        r.Status == RequisitionStatus.Submitted ||
-                        r.Status == RequisitionStatus.ReviewApproved);
-
-                model.RequisitionsApprovedValue = await _context.Requisitions
-                    .Where(r =>
-                        r.Status == RequisitionStatus.Approved &&
-                        r.CompletedAt != null &&
-                        r.CompletedAt >= yearStart)
-                    .SumAsync(r => (decimal?)r.EstimatedTotal) ?? 0m;
             }
 
             if (model.ShowSystem)

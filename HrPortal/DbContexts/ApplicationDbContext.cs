@@ -42,9 +42,6 @@ namespace HrPortal.DbContexts
         public DbSet<RepositoryDocument> RepositoryDocuments { get; set; }
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
         public DbSet<ReminderLog> ReminderLogs { get; set; }
-        public DbSet<Requisition> Requisitions { get; set; }
-        public DbSet<RequisitionLine> RequisitionLines { get; set; }
-        public DbSet<RequisitionHistory> RequisitionHistories { get; set; }
 
         public DbSet<LoanApplication> LoanApplications { get; set; }
         public DbSet<LoanApplicationAttachment> LoanApplicationAttachments { get; set; }
@@ -680,90 +677,6 @@ namespace HrPortal.DbContexts
                 entity.Property(h => h.Notes).HasMaxLength(500);
 
                 entity.HasIndex(h => h.Date).IsUnique();
-            });
-
-            builder.Entity<Requisition>(entity =>
-            {
-                entity.HasKey(r => r.Id);
-
-                entity.Property(r => r.RequisitionNumber)
-                    .IsRequired()
-                    .HasMaxLength(30);
-
-                entity.Property(r => r.Title)
-                    .IsRequired()
-                    .HasMaxLength(200);
-
-                entity.Property(r => r.Status)
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(r => r.Justification).HasMaxLength(2000);
-                entity.Property(r => r.EstimatedTotal).HasPrecision(14, 2);
-
-                entity.HasOne(r => r.Employee)
-                    .WithMany()
-                    .HasForeignKey(r => r.EmployeeId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(r => r.Vendor)
-                    .WithMany()
-                    .HasForeignKey(r => r.VendorId)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasIndex(r => r.RequisitionNumber).IsUnique();
-                entity.HasIndex(r => r.Status);
-                entity.HasIndex(r => new { r.EmployeeId, r.Status });
-            });
-
-            builder.Entity<RequisitionLine>(entity =>
-            {
-                entity.HasKey(l => l.Id);
-
-                entity.Property(l => l.Description)
-                    .IsRequired()
-                    .HasMaxLength(300);
-
-                entity.Property(l => l.UnitOfMeasure).HasMaxLength(30);
-                entity.Property(l => l.Notes).HasMaxLength(500);
-                entity.Property(l => l.Quantity).HasPrecision(12, 2);
-                entity.Property(l => l.EstimatedUnitCost).HasPrecision(14, 2);
-
-                entity.HasOne(l => l.Requisition)
-                    .WithMany(r => r.Lines)
-                    .HasForeignKey(l => l.RequisitionId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.Ignore(l => l.LineTotal);
-            });
-
-            builder.Entity<RequisitionHistory>(entity =>
-            {
-                entity.HasKey(h => h.Id);
-
-                entity.Property(h => h.Action)
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(h => h.PreviousStatus)
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(h => h.NewStatus)
-                    .HasConversion<string>()
-                    .HasMaxLength(30);
-
-                entity.Property(h => h.Comment).HasMaxLength(1000);
-
-                entity.HasOne(h => h.Requisition)
-                    .WithMany(r => r.History)
-                    .HasForeignKey(h => h.RequisitionId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(h => h.ActionedByEmployee)
-                    .WithMany()
-                    .HasForeignKey(h => h.ActionedByEmployeeId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<LoanApplication>(entity =>
