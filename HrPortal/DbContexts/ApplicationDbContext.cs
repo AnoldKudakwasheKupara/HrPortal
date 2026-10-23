@@ -33,7 +33,6 @@ namespace HrPortal.DbContexts
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
-        public DbSet<Position> Positions { get; set; }
         public DbSet<Certification> Certifications { get; set; }
         public DbSet<AppSetting> AppSettings { get; set; }
         public DbSet<Policy> Policies { get; set; }
@@ -116,10 +115,8 @@ namespace HrPortal.DbContexts
                 entity.Property(e => e.NationalId)
                     .HasMaxLength(50);
 
-                entity.HasOne(e => e.Position)
-                    .WithMany(p => p.Employees)
-                    .HasForeignKey(e => e.PositionId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                entity.Property(e => e.JobTitle)
+                    .HasMaxLength(150);
 
                 entity.HasOne(e => e.Department)
                     .WithMany(d => d.Employees)
@@ -619,24 +616,6 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasIndex(c => c.ExpiryDate);
-            });
-
-            builder.Entity<Position>(entity =>
-            {
-                entity.HasKey(p => p.Id);
-
-                entity.Property(p => p.Title)
-                    .IsRequired()
-                    .HasMaxLength(150);
-
-                entity.Property(p => p.Description).HasMaxLength(500);
-
-                entity.HasOne(p => p.Department)
-                    .WithMany()
-                    .HasForeignKey(p => p.DepartmentId)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasIndex(p => p.Title).IsUnique();
             });
 
             builder.Entity<PublicHoliday>(entity =>

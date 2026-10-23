@@ -90,25 +90,15 @@
 
                     <div class="col-md-6 mb-3">
 
-                        <label asp-for="PositionId"
+                        <label asp-for="JobTitle"
                                class="form-label">
                         </label>
 
-                        <select asp-for="PositionId"
-                                class="form-select">
-                            <option value="">-- Not assigned --</option>
-                            @foreach (var p in (ViewBag.Positions
-                                as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)
-                                ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>())
-                            {
-                                <option value="@p.Value"
-                                        selected="@(Model.PositionId?.ToString() == p.Value)">
-                                    @p.Text
-                                </option>
-                            }
-                        </select>
+                        <input asp-for="JobTitle"
+                               class="form-control"
+                               placeholder="Investment Analyst" />
 
-                        <span asp-validation-for="PositionId"
+                        <span asp-validation-for="JobTitle"
                               class="text-danger"></span>
 
                     </div>

@@ -23,7 +23,6 @@ namespace HrPortal.Services.Reporting
 
             var query = _context.Employees
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -85,7 +84,7 @@ namespace HrPortal.Services.Reporting
                 {
                     EmployeeNumber = e.EmployeeNumber,
                     Name = e.FirstName + " " + e.LastName,
-                    JobTitle = e.Position != null ? e.Position.Title : null,
+                    JobTitle = e.JobTitle,
                     EmploymentType = e.EmploymentType,
                     ContractEndDate = e.ContractEndDate,
                     EndDate = e.EndDate,

@@ -234,8 +234,6 @@ namespace HrPortal.Controllers
             return await _context.CourseApplications
                 .Include(c => c.Employee)
                     .ThenInclude(e => e.Department)
-                .Include(c => c.Employee)
-                    .ThenInclude(e => e.Position)
                 .Include(c => c.History)
                     .ThenInclude(h => h.ActionedByEmployee)
                 .FirstOrDefaultAsync(c => c.Id == id);

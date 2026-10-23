@@ -44,7 +44,6 @@ namespace HrPortal.Controllers
             var employees = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .Include(e => e.User)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
@@ -61,7 +60,6 @@ namespace HrPortal.Controllers
             var employee = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -79,7 +77,6 @@ namespace HrPortal.Controllers
             var employee = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employee == null)
@@ -150,7 +147,7 @@ namespace HrPortal.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
-                PositionId = model.PositionId,
+                JobTitle = model.JobTitle?.Trim(),
                 PhoneNumber = model.PhoneNumber,
                 NationalId = model.NationalId,
                 DateOfBirth = model.DateOfBirth,
@@ -283,7 +280,7 @@ namespace HrPortal.Controllers
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
                 Email = employee.Email,
-                PositionId = employee.PositionId,
+                JobTitle = employee.JobTitle,
                 PhoneNumber = employee.PhoneNumber,
                 NationalId = employee.NationalId,
                 DateOfBirth = employee.DateOfBirth,
@@ -349,7 +346,7 @@ namespace HrPortal.Controllers
             employee.FirstName = model.FirstName;
             employee.LastName = model.LastName;
             employee.Email = model.Email;
-            employee.PositionId = model.PositionId;
+            employee.JobTitle = model.JobTitle?.Trim();
             employee.PhoneNumber = model.PhoneNumber;
             employee.NationalId = model.NationalId;
             employee.DateOfBirth = model.DateOfBirth;
@@ -525,7 +522,6 @@ namespace HrPortal.Controllers
             var employee = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -605,17 +601,6 @@ namespace HrPortal.Controllers
         private async Task LoadLookups()
         {
             await LoadDepartments();
-            await LoadPositions();
-        }
-
-        private async Task LoadPositions()
-        {
-            ViewBag.Positions = await _context.Positions
-                .AsNoTracking()
-                .Where(p => p.IsActive)
-                .OrderBy(p => p.Title)
-                .Select(p => new SelectListItem(p.Title, p.Id.ToString()))
-                .ToListAsync();
         }
 
         private async Task LoadDepartments()

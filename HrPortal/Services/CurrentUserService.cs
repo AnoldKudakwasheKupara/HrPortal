@@ -53,7 +53,6 @@ namespace HrPortal.Services
 
             _employee = await _context.Employees
                 .Include(e => e.Department)
-                .Include(e => e.Position)
                 .FirstOrDefaultAsync(e => e.UserId == userId.Value);
 
             _employeeLoaded = true;

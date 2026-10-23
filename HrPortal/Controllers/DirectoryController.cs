@@ -36,7 +36,7 @@ namespace HrPortal.Controllers
                 query = query.Where(e =>
                     e.FirstName.Contains(term) ||
                     e.LastName.Contains(term) ||
-                    (e.Position != null && e.Position.Title.Contains(term)) ||
+                    (e.JobTitle != null && e.JobTitle.Contains(term)) ||
                     e.Email.Contains(term));
             }
 
@@ -47,7 +47,7 @@ namespace HrPortal.Controllers
                 .Select(e => new DirectoryEntryViewModel
                 {
                     Name = e.FirstName + " " + e.LastName,
-                    JobTitle = e.Position != null ? e.Position.Title : null,
+                    JobTitle = e.JobTitle,
                     Department = e.Department.Name,
                     Email = e.Email,
                     PhoneNumber = e.PhoneNumber

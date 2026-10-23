@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using HrPortal.Data;
+﻿using HrPortal.Data;
 
 namespace HrPortal.Entities
 {
@@ -15,10 +14,7 @@ namespace HrPortal.Entities
 
         public string Email { get; set; } = string.Empty;
 
-        public int? PositionId { get; set; }
-
-        [NotMapped]
-        public string? JobTitle => Position?.Title;
+        public string? JobTitle { get; set; }
 
         public string? PhoneNumber { get; set; }
 
@@ -65,8 +61,6 @@ namespace HrPortal.Entities
         public bool IsActive { get; set; } = true;
 
         public Department Department { get; set; } = null!;
-
-        public Position? Position { get; set; }
 
         public ApplicationUser? User { get; set; }
 
