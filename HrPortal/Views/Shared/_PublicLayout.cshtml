@@ -25,18 +25,22 @@
 
         <header class="public-topbar">
 
-            <div class="public-brand">
-                <img src="~/images/intellego-wordmark.png"
-                     alt="Intellego Investment Consultants"
-                     class="brand-logo" />
-            </div>
+            <div class="public-topbar-inner">
 
-            <a class="btn btn-outline-primary"
-               asp-area="Identity"
-               asp-page="/Account/Login">
-                <i class="fas fa-right-to-bracket"></i>
-                Sign in
-            </a>
+                <div class="public-brand">
+                    <img src="~/images/intellego-wordmark.png"
+                         alt="Intellego Investment Consultants"
+                         class="brand-logo" />
+                </div>
+
+                <a class="btn btn-outline-primary"
+                   asp-area="Identity"
+                   asp-page="/Account/Login">
+                    <i class="fas fa-right-to-bracket"></i>
+                    Sign in
+                </a>
+
+            </div>
 
         </header>
 
@@ -45,8 +49,12 @@
         </main>
 
         <footer class="public-foot">
-            &copy; @DateTime.Today.Year Intellego Investment Consultants
-            (Pvt) Ltd &middot; For internal use by Intellego staff
+
+            <div class="public-foot-inner">
+                &copy; @DateTime.Today.Year Intellego Investment Consultants
+                (Pvt) Ltd &middot; For internal use by Intellego staff
+            </div>
+
         </footer>
 
     </div>

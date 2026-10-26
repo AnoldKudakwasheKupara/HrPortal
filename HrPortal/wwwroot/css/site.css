@@ -646,7 +646,7 @@ a.stat-tile:hover .stat-icon {
 .public-brand .brand-logo {
     width: auto;
     max-width: 15rem;
-    height: 2.9rem;
+    height: clamp(2.6rem, 2.2rem + 1vw, 3.5rem);
 }
 
 .auth-head {
@@ -1178,12 +1178,15 @@ a.stat-tile:hover .stat-icon {
    inside another box, which is what made them feel busy.
    --------------------------------------------------------------- */
 
+/* The hero and the headings below it grow with the window. At a
+   fixed size they read as a small card adrift on a wide screen. */
 .welcome-hero {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #ffffff;
     border-radius: var(--radius-lg);
-    padding: 3.25rem 3rem;
-    margin-bottom: 3.25rem;
+    padding: clamp(2.25rem, 1.4rem + 2.6vw, 4.25rem)
+             clamp(1.5rem, 0.8rem + 2.4vw, 3.75rem);
+    margin-bottom: clamp(2.25rem, 1.6rem + 1.4vw, 3.75rem);
 }
 
 .welcome-eyebrow,
@@ -1206,16 +1209,16 @@ a.stat-tile:hover .stat-icon {
 
 .welcome-hero h1 {
     font-weight: 800;
-    font-size: 2.4rem;
-    line-height: 1.12;
-    letter-spacing: -0.015em;
-    margin: 0.75rem 0 1rem;
+    font-size: clamp(1.75rem, 1.15rem + 2.1vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0.75rem 0 1.1rem;
 }
 
 .welcome-hero p {
     max-width: 54ch;
-    font-size: 1.02rem;
-    line-height: 1.65;
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.18rem);
+    line-height: 1.6;
     color: rgba(255, 255, 255, 0.88);
     margin-bottom: 1.75rem;
 }
@@ -1253,7 +1256,7 @@ a.stat-tile:hover .stat-icon {
 }
 
 .story-title {
-    font-size: 1.3rem;
+    font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.65rem);
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 1.35rem;
@@ -1261,6 +1264,7 @@ a.stat-tile:hover .stat-icon {
 
 .story-body p {
     color: var(--text-secondary);
+    font-size: clamp(0.95rem, 0.9rem + 0.22vw, 1.08rem);
     line-height: 1.75;
     max-width: 66ch;
     margin-bottom: 1rem;
@@ -1271,7 +1275,7 @@ a.stat-tile:hover .stat-icon {
 }
 
 .story-lede {
-    font-size: 1.25rem;
+    font-size: clamp(1.15rem, 1rem + 0.55vw, 1.55rem);
     font-weight: 600;
     color: var(--primary);
     line-height: 1.45;
@@ -1304,7 +1308,7 @@ a.stat-tile:hover .stat-icon {
 }
 
 .statement p {
-    font-size: 1.05rem;
+    font-size: clamp(1rem, 0.93rem + 0.28vw, 1.2rem);
     line-height: 1.65;
     color: var(--text-primary);
     margin: 0;
@@ -1352,14 +1356,31 @@ a.stat-tile:hover .stat-icon {
     background: var(--bg-card);
 }
 
+/* The bar, the page and the footer all line up on one column, so
+   the logo sits above the content rather than out at the window
+   edge. The rules themselves still run the full width. */
+.public-topbar-inner,
+.public-main,
+.public-foot-inner {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-left: 1.75rem;
+    padding-right: 1.75rem;
+}
+
 .public-topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.public-topbar-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.1rem 2rem;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border-light);
+    padding-top: 1.15rem;
+    padding-bottom: 1.15rem;
 }
 
 .public-brand {
@@ -1369,36 +1390,35 @@ a.stat-tile:hover .stat-icon {
 
 .public-main {
     flex: 1;
-    width: 100%;
-    max-width: 1060px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 3.5rem;
+    padding-top: 3rem;
+    padding-bottom: 4rem;
 }
 
 .public-foot {
-    text-align: center;
     border-top: 1px solid var(--border-light);
-    padding: 1.5rem 1rem 2rem;
     color: var(--text-muted);
     font-size: 0.8rem;
 }
 
+.public-foot-inner {
+    text-align: center;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+
 @media (max-width: 767.98px) {
-    .public-topbar {
-        padding: 0.9rem 1.25rem;
+    /* The hero and headings size themselves from the window, so
+       only the gutters and the section rhythm need tightening. */
+    .public-topbar-inner,
+    .public-main,
+    .public-foot-inner {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
     }
 
     .public-main {
-        padding: 1.75rem 1.25rem 2.5rem;
-    }
-
-    .welcome-hero {
-        padding: 2.25rem 1.5rem;
-        margin-bottom: 2.25rem;
-    }
-
-    .welcome-hero h1 {
-        font-size: 1.75rem;
+        padding-top: 1.75rem;
+        padding-bottom: 2.5rem;
     }
 
     .story-section + .story-section {
