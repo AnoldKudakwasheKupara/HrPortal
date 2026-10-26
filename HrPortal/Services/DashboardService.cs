@@ -55,6 +55,8 @@ namespace HrPortal.Services
 
             model.Trends = await BuildTrendsAsync(user, employee);
 
+            model.Upcoming = await BuildUpcomingAsync(user, employee);
+
             return model;
         }
 
@@ -614,6 +616,98 @@ namespace HrPortal.Services
             return rows
                 .Select(r =>
                     (new DateTime(r.Year, r.Month, 1), r.Value))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Dates coming up that the signed-in person can do something
+        /// about: their own training first, then the renewals and
+        /// bookings an administrator keeps an eye on. Anything more
+        /// than three months out is left off, and the list is short
+        /// because it sits on the dashboard rather than replacing the
+        /// pages that hold the detail.
+        /// </summary>
+        private async Task<List<DashboardUpcomingItem>> BuildUpcomingAsync(
+            ClaimsPrincipal user,
+            Employee? employee)
+        {
+            var today = DateTime.Today;
+            var horizon = today.AddMonths(3);
+
+            var items = new List<DashboardUpcomingItem>();
+
+            if (employee != null)
+            {
+                var training = await _context.TrainingAssignments
+                    .AsNoTracking()
+                    .Include(t => t.TrainingCourse)
+                    .Where(t =>
+                        t.EmployeeId == employee.Id &&
+                        t.CompletedAt == null &&
+                        t.DueDate != null &&
+                        t.DueDate <= horizon)
+                    .OrderBy(t => t.DueDate)
+                    .Take(5)
+                    .ToListAsync();
+
+                items.AddRange(training.Select(t =>
+                    new DashboardUpcomingItem
+                    {
+                        Icon = "fa-graduation-cap",
+                        Title = t.TrainingCourse.Title,
+                        Detail = "Training assigned to you",
+                        Date = t.DueDate!.Value,
+                        Controller = "MyTraining"
+                    }));
+            }
+
+            if (user.IsInRole(Roles.Administrator))
+            {
+                var licences = await _context.Licenses
+                    .AsNoTracking()
+                    .Where(l =>
+                        l.Status == LicenseStatus.Active &&
+                        l.ExpiryDate <= horizon)
+                    .OrderBy(l => l.ExpiryDate)
+                    .Take(5)
+                    .ToListAsync();
+
+                items.AddRange(licences.Select(l =>
+                    new DashboardUpcomingItem
+                    {
+                        Icon = "fa-certificate",
+                        Title = l.Name,
+                        Detail = "Licence renewal",
+                        Date = l.ExpiryDate,
+                        Controller = "License"
+                    }));
+
+                var maintenance = await _context.AssetMaintenances
+                    .AsNoTracking()
+                    .Include(m => m.Asset)
+                    .Where(m =>
+                        m.Status == MaintenanceStatus.Scheduled &&
+                        m.ScheduledFor <= horizon)
+                    .OrderBy(m => m.ScheduledFor)
+                    .Take(5)
+                    .ToListAsync();
+
+                items.AddRange(maintenance.Select(m =>
+                    new DashboardUpcomingItem
+                    {
+                        Icon = "fa-screwdriver-wrench",
+                        Title = m.Asset == null
+                            ? "Maintenance"
+                            : m.Asset.DeviceModel,
+                        Detail = "Maintenance booked",
+                        Date = m.ScheduledFor,
+                        Controller = "AssetMaintenance"
+                    }));
+            }
+
+            return items
+                .OrderBy(i => i.Date)
+                .Take(6)
                 .ToList();
         }
 

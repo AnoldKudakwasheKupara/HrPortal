@@ -2525,3 +2525,100 @@ a.strip-item:hover {
     white-space: nowrap;
     padding-bottom: 0.2rem;
 }
+
+/* ===== Dashboard: the panels under the header =================== */
+
+.dash-stats {
+    margin-bottom: 1.25rem;
+}
+
+/* Quick actions beside recent activity, stacking when there is not
+   room for two readable columns. */
+.dash-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(23rem, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    align-items: start;
+}
+
+/* A panel heading that carries a line of explanation under it. */
+.card-header.is-titled {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    border-bottom: 0;
+    padding-bottom: 0.4rem;
+}
+
+.panel-title {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    position: relative;
+    padding-bottom: 0.55rem;
+}
+
+.panel-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0.15rem;
+    width: 1.9rem;
+    height: 2px;
+    background: var(--accent-gold);
+}
+
+.panel-note {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+/* The banner shown when there is nothing waiting. */
+.focus-clear {
+    gap: 1.15rem;
+    padding: 1.35rem 1.5rem;
+}
+
+.focus-clear-icon {
+    flex: 0 0 2.9rem;
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+}
+
+.focus-clear-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary-dark);
+    margin-bottom: 0.25rem;
+}
+
+/* A line in the activity and upcoming lists. */
+.row-when {
+    margin-left: auto;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    align-self: center;
+}
+
+.row-when.is-late {
+    color: var(--danger);
+    font-weight: 600;
+}

@@ -21,6 +21,47 @@ namespace HrPortal.ViewModels
         public List<DashboardFocusItem> Focus { get; set; } = new();
 
         public List<ReportTrend> Trends { get; set; } = new();
+
+        public List<DashboardUpcomingItem> Upcoming { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A date coming up that somebody should know about: training
+    /// falling due, a licence running out, maintenance booked in.
+    /// </summary>
+    public class DashboardUpcomingItem
+    {
+        public string Icon { get; init; } = "fa-calendar";
+
+        public string Title { get; init; } = string.Empty;
+
+        public string Detail { get; init; } = string.Empty;
+
+        public DateTime Date { get; init; }
+
+        public string Controller { get; init; } = string.Empty;
+
+        public string Action { get; init; } = "Index";
+
+        /// <summary>Reads as "in 3 days" or "overdue".</summary>
+        public string When
+        {
+            get
+            {
+                var days = (Date.Date - DateTime.Today).Days;
+
+                return days switch
+                {
+                    < 0 => "Overdue",
+                    0 => "Today",
+                    1 => "Tomorrow",
+                    < 14 => $"In {days} days",
+                    _ => Date.ToString("d MMM yyyy")
+                };
+            }
+        }
+
+        public bool IsLate => Date.Date < DateTime.Today;
     }
 
     /// <summary>

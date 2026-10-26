@@ -1,4 +1,8 @@
-﻿@{
+﻿@inject HrPortal.Services.NotificationBadgeService Notifications
+
+@{
+    var unread = await Notifications.UnreadCountAsync();
+
     var ctrl = ViewContext.RouteData.Values["controller"] as string;
     var act = ViewContext.RouteData.Values["action"] as string;
 
@@ -20,51 +24,36 @@
 
 <nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation">
 
-    <div class="nav-group">Core</div>
+    <div class="nav-group">Home</div>
+
+    <a class="nav-item @On("Home")"
+       asp-controller="Home" asp-action="Index">
+        <i class="fas fa-house"></i> Dashboard
+    </a>
 
     <a class="nav-item @On("Welcome")"
        asp-controller="Welcome" asp-action="Index">
         <i class="fas fa-hand-sparkles"></i> Welcome
     </a>
 
-    <a class="nav-item @On("Home")"
-       asp-controller="Home" asp-action="Index">
-        <i class="fas fa-chart-line"></i> Dashboard
-    </a>
-
-    <a class="nav-item @On("Directory")"
-       asp-controller="Directory" asp-action="Index">
-        <i class="fas fa-address-book"></i> Staff Directory
-    </a>
-
-    <a class="nav-item @On("Repository")"
-       asp-controller="Repository" asp-action="Index">
-        <i class="fas fa-folder-open"></i> Documents
-    </a>
-
-    <a class="nav-item @On("Policy")"
-       asp-controller="Policy" asp-action="Index">
-        <i class="fas fa-scale-balanced"></i> Policy Hub
-    </a>
-
-    <div class="nav-group">Mine</div>
-
-    <a class="nav-item @On("MyProfile")"
-       asp-controller="MyProfile" asp-action="Index">
-        <i class="fas fa-id-badge"></i> My Profile
-    </a>
+    <div class="nav-group">My work</div>
 
     @if (!isMd)
     {
         <a class="nav-item @On("MyLeave")"
            asp-controller="MyLeave" asp-action="Index">
-            <i class="fas fa-umbrella-beach"></i> My Leave
+            <i class="fas fa-calendar-days"></i> My Leave
         </a>
     }
 
     <a class="nav-item @On("MyTraining")"
        asp-controller="MyTraining" asp-action="Index">
         <i class="fas fa-graduation-cap"></i> My Training
+    </a>
+
+    <a class="nav-item @On("MyProfile")"
+       asp-controller="MyProfile" asp-action="Index">
+        <i class="fas fa-id-badge"></i> My Documents
     </a>
 
     <a class="nav-item @On("MyAssets")"
@@ -85,19 +74,30 @@
     <a class="nav-item @On("MyNotifications")"
        asp-controller="MyNotifications" asp-action="Index">
         <i class="fas fa-bell"></i> Notifications
+        @if (unread > 0)
+        {
+            <span class="nav-badge">@unread</span>
+        }
     </a>
 
-    @if (isHr || isMd || isAdmin)
-    {
-        <div class="nav-group">Insight</div>
+    <div class="nav-group">Company</div>
 
-        <a class="nav-item @On("Reports")"
-           asp-controller="Reports" asp-action="Index">
-            <i class="fas fa-chart-column"></i> Reports
-        </a>
-    }
+    <a class="nav-item @On("Directory")"
+       asp-controller="Directory" asp-action="Index">
+        <i class="fas fa-address-book"></i> Staff Directory
+    </a>
 
-    @if (isHr || isMd || isAdmin)
+    <a class="nav-item @On("Repository")"
+       asp-controller="Repository" asp-action="Index">
+        <i class="fas fa-folder-open"></i> Documents
+    </a>
+
+    <a class="nav-item @On("Policy")"
+       asp-controller="Policy" asp-action="Index">
+        <i class="fas fa-scale-balanced"></i> Policies
+    </a>
+
+    @if (isHr || isMd)
     {
         <div class="nav-group">Approvals</div>
 
@@ -109,11 +109,24 @@
             </a>
         }
 
-        @if (isHr || isMd)
+        @if (isMd)
         {
-            <a class="nav-item @On("CourseApproval")"
-               asp-controller="CourseApproval" asp-action="Index">
-                <i class="fas fa-user-graduate"></i> Course Applications
+            <a class="nav-item @OnAction("LeaveApproval", "FinalApproval")"
+               asp-controller="LeaveApproval" asp-action="FinalApproval">
+                <i class="fas fa-stamp"></i> Final Approval
+            </a>
+        }
+
+        <a class="nav-item @On("CourseApproval")"
+           asp-controller="CourseApproval" asp-action="Index">
+            <i class="fas fa-user-graduate"></i> Course Applications
+        </a>
+
+        @if (isMd)
+        {
+            <a class="nav-item @On("LoanApproval")"
+               asp-controller="LoanApproval" asp-action="Index">
+                <i class="fas fa-hand-holding-dollar"></i> Loan Sanction
             </a>
         }
 
@@ -124,33 +137,19 @@
                 <i class="fas fa-hand-holding-dollar"></i> Sanctioned Loans
             </a>
         }
-
-        @if (isMd)
-        {
-            <a class="nav-item @OnAction("LeaveApproval", "FinalApproval")"
-               asp-controller="LeaveApproval" asp-action="FinalApproval">
-                <i class="fas fa-stamp"></i> Final Approval
-            </a>
-        }
-
-        @if (isMd)
-        {
-            <a class="nav-item @On("LoanApproval")"
-               asp-controller="LoanApproval" asp-action="Index">
-                <i class="fas fa-hand-holding-dollar"></i> Loan Sanction
-            </a>
-        }
-
     }
 
-    @if (isHr || isAdmin)
+    @if (isAdmin || isHr || isMd)
     {
-        <div class="nav-group">People</div>
+        <div class="nav-group">Administration</div>
 
-        <a class="nav-item @On("Employee")"
-           asp-controller="Employee" asp-action="Index">
-            <i class="fas fa-users"></i> Employees
-        </a>
+        @if (isAdmin || isHr)
+        {
+            <a class="nav-item @On("Employee")"
+               asp-controller="Employee" asp-action="Index">
+                <i class="fas fa-users"></i> Employees
+            </a>
+        }
 
         @if (isHr)
         {
@@ -159,16 +158,32 @@
                 <i class="fas fa-folder-open"></i> Employee Documents
             </a>
         }
-    }
 
-    @if (isHr || isMd)
-    {
-        <div class="nav-group">Leave</div>
+        @if (isAdmin)
+        {
+            <a class="nav-item @On("Department")"
+               asp-controller="Department" asp-action="Index">
+                <i class="fas fa-sitemap"></i> Departments
+            </a>
 
-        <a class="nav-item @On("LeaveRequest")"
-           asp-controller="LeaveRequest" asp-action="Index">
-            <i class="fas fa-calendar-days"></i> All Requests
-        </a>
+            <a class="nav-item @On("Role")"
+               asp-controller="Role" asp-action="Index">
+                <i class="fas fa-user-shield"></i> Roles &amp; Access
+            </a>
+
+            <a class="nav-item @On("ApprovalConfiguration")"
+               asp-controller="ApprovalConfiguration" asp-action="Index">
+                <i class="fas fa-circle-check"></i> Approvals
+            </a>
+        }
+
+        @if (isHr || isMd)
+        {
+            <a class="nav-item @On("LeaveRequest")"
+               asp-controller="LeaveRequest" asp-action="Index">
+                <i class="fas fa-calendar-days"></i> Leave Requests
+            </a>
+        }
 
         @if (isHr)
         {
@@ -186,102 +201,88 @@
                asp-controller="PublicHoliday" asp-action="Index">
                 <i class="fas fa-calendar-check"></i> Public Holidays
             </a>
+
+            <a class="nav-item @On("TrainingCourse")"
+               asp-controller="TrainingCourse" asp-action="Index">
+                <i class="fas fa-chalkboard-user"></i> Courses
+            </a>
+
+            <a class="nav-item @On("TrainingAssignment")"
+               asp-controller="TrainingAssignment" asp-action="Index">
+                <i class="fas fa-clipboard-check"></i> Assignments
+            </a>
+
+            <a class="nav-item @On("TrainingMaterial")"
+               asp-controller="TrainingMaterial" asp-action="Index">
+                <i class="fas fa-file-lines"></i> Materials
+            </a>
+
+            <a class="nav-item @On("TrainingFeedback")"
+               asp-controller="TrainingFeedback" asp-action="Index">
+                <i class="fas fa-comment-dots"></i> Feedback
+            </a>
+
+            <a class="nav-item @On("Certification")"
+               asp-controller="Certification" asp-action="Index">
+                <i class="fas fa-award"></i> Certifications
+            </a>
         }
-    }
 
-    @if (isHr)
-    {
-        <div class="nav-group">Training</div>
+        @if (isAdmin)
+        {
+            <a class="nav-item @On("Asset")"
+               asp-controller="Asset" asp-action="Index">
+                <i class="fas fa-laptop"></i> Assets &amp; Maintenance
+            </a>
 
-        <a class="nav-item @On("TrainingCourse")"
-           asp-controller="TrainingCourse" asp-action="Index">
-            <i class="fas fa-chalkboard-user"></i> Courses
+            <a class="nav-item @On("AssetMaintenance")"
+               asp-controller="AssetMaintenance" asp-action="Index">
+                <i class="fas fa-screwdriver-wrench"></i> Maintenance
+            </a>
+
+            <a class="nav-item @On("Vendor")"
+               asp-controller="Vendor" asp-action="Index">
+                <i class="fas fa-truck-field"></i> Vendors &amp; Licences
+            </a>
+
+            <a class="nav-item @On("License")"
+               asp-controller="License" asp-action="Index">
+                <i class="fas fa-certificate"></i> Licence Renewals
+            </a>
+
+            <a class="nav-item @On("DocumentCategory")"
+               asp-controller="DocumentCategory" asp-action="Index">
+                <i class="fas fa-folder-tree"></i> Document Categories
+            </a>
+
+            <a class="nav-item @On("ItActivity")"
+               asp-controller="ItActivity" asp-action="Index">
+                <i class="fas fa-headset"></i> IT Activity Log
+            </a>
+
+            <a class="nav-item @On("WeeklyReport")"
+               asp-controller="WeeklyReport" asp-action="Index">
+                <i class="fas fa-file-contract"></i> Weekly Reports
+            </a>
+        }
+
+        <a class="nav-item @On("Reports")"
+           asp-controller="Reports" asp-action="Index">
+            <i class="fas fa-chart-column"></i> Reports &amp; Audit
         </a>
 
-        <a class="nav-item @On("TrainingAssignment")"
-           asp-controller="TrainingAssignment" asp-action="Index">
-            <i class="fas fa-clipboard-check"></i> Assignments
-        </a>
+        @if (isAdmin)
+        {
+            <a class="nav-item @On("AuditLog")"
+               asp-controller="AuditLog" asp-action="Index">
+                <i class="fas fa-clipboard-list"></i> Audit Log
+            </a>
 
-        <a class="nav-item @On("TrainingMaterial")"
-           asp-controller="TrainingMaterial" asp-action="Index">
-            <i class="fas fa-file-lines"></i> Materials
-        </a>
-
-        <a class="nav-item @On("TrainingFeedback")"
-           asp-controller="TrainingFeedback" asp-action="Index">
-            <i class="fas fa-comment-dots"></i> Feedback
-        </a>
-
-        <a class="nav-item @On("Certification")"
-           asp-controller="Certification" asp-action="Index">
-            <i class="fas fa-award"></i> Certifications
-        </a>
-    }
-
-    @if (isAdmin)
-    {
-        <div class="nav-group">System</div>
-
-        <a class="nav-item @On("Department")"
-           asp-controller="Department" asp-action="Index">
-            <i class="fas fa-sitemap"></i> Departments
-        </a>
-
-        <a class="nav-item @On("DocumentCategory")"
-           asp-controller="DocumentCategory" asp-action="Index">
-            <i class="fas fa-folder-tree"></i> Document Categories
-        </a>
-
-        <a class="nav-item @On("Role")"
-           asp-controller="Role" asp-action="Index">
-            <i class="fas fa-user-shield"></i> Roles
-        </a>
-
-        <a class="nav-item @On("ApprovalConfiguration")"
-           asp-controller="ApprovalConfiguration" asp-action="Index">
-            <i class="fas fa-sliders"></i> Approval Configuration
-        </a>
-
-        <a class="nav-item @On("Asset")"
-           asp-controller="Asset" asp-action="Index">
-            <i class="fas fa-laptop"></i> Asset Register
-        </a>
-
-        <a class="nav-item @On("AssetMaintenance")"
-           asp-controller="AssetMaintenance" asp-action="Index">
-            <i class="fas fa-screwdriver-wrench"></i> Maintenance
-        </a>
-
-        <a class="nav-item @On("Vendor")"
-           asp-controller="Vendor" asp-action="Index">
-            <i class="fas fa-truck-field"></i> Vendors
-        </a>
-
-        <a class="nav-item @On("License")"
-           asp-controller="License" asp-action="Index">
-            <i class="fas fa-certificate"></i> Licence Renewals
-        </a>
-
-        <a class="nav-item @On("ItActivity")"
-           asp-controller="ItActivity" asp-action="Index">
-            <i class="fas fa-headset"></i> IT Activity Log
-        </a>
-
-        <a class="nav-item @On("WeeklyReport")"
-           asp-controller="WeeklyReport" asp-action="Index">
-            <i class="fas fa-file-contract"></i> Weekly Reports
-        </a>
-
-        <a class="nav-item @On("Settings")"
-           asp-controller="Settings" asp-action="Index">
-            <i class="fas fa-sliders"></i> Settings
-        </a>
-
-        <a class="nav-item @On("AuditLog")"
-           asp-controller="AuditLog" asp-action="Index">
-            <i class="fas fa-clipboard-list"></i> Audit Log
-        </a>
+            <a class="nav-item @On("Settings")"
+               asp-controller="Settings" asp-action="Index">
+                <i class="fas fa-sliders"></i> Settings
+            </a>
+        }
     }
 
     <div class="sidebar-foot">

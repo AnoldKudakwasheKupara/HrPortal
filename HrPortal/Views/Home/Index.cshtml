@@ -9,6 +9,32 @@
         hour < 12 ? "Good morning"
         : hour < 18 ? "Good afternoon"
         : "Good evening";
+
+    // "2 hours ago" reads faster than a timestamp on a feed that is
+    // only ever about the last few days.
+    string Ago(DateTime when)
+    {
+        var span = DateTime.UtcNow - when;
+
+        if (span.TotalMinutes < 1) return "Just now";
+        if (span.TotalMinutes < 60)
+        {
+            var m = (int)span.TotalMinutes;
+            return m == 1 ? "1 minute ago" : $"{m} minutes ago";
+        }
+        if (span.TotalHours < 24)
+        {
+            var h = (int)span.TotalHours;
+            return h == 1 ? "1 hour ago" : $"{h} hours ago";
+        }
+        if (span.TotalDays < 30)
+        {
+            var d = (int)span.TotalDays;
+            return d == 1 ? "1 day ago" : $"{d} days ago";
+        }
+
+        return when.ToLocalTime().ToString("d MMM yyyy");
+    }
 }
 
 <div class="container-fluid">
@@ -77,7 +103,174 @@
         </div>
     }
 
-    <div class="section-heading">Needs you</div>
+    @{
+        // Four headline figures and four common tasks, chosen for
+        // whoever is looking. The layout does not change; what it
+        // counts does.
+        var cards =
+            new List<(string Icon, string Label, string Value,
+                      string Note, string Ctrl, string Act)>();
+
+        var actions =
+            new List<(string Icon, string Title, string Note,
+                      string Ctrl, string Act)>();
+
+        if (Model.Admin != null)
+        {
+            var pending = (Model.Hr?.AwaitingReview ?? 0)
+                + (Model.Md?.AwaitingFinalApproval ?? 0);
+
+            cards.Add(("fa-users", "Employees",
+                Model.Admin.ActiveEmployees.ToString("N0"),
+                $"{Model.Admin.ActiveEmployees:N0} active employees",
+                "Employee", "Index"));
+
+            cards.Add(("fa-file-circle-check", "Pending approvals",
+                pending.ToString("N0"),
+                pending == 0 ? "No items pending" : "Waiting on a decision",
+                "ApprovalConfiguration", "Index"));
+
+            cards.Add(("fa-laptop", "Assets",
+                Model.Admin.Assets.ToString("N0"),
+                $"{Model.Admin.Assets:N0} registered assets",
+                "Asset", "Index"));
+
+            cards.Add(("fa-graduation-cap", "Training due",
+                (Model.Mine?.OutstandingTraining ?? 0).ToString("N0"),
+                (Model.Mine?.OutstandingTraining ?? 0) == 0
+                    ? "No training due" : "Waiting on you",
+                "MyTraining", "Index"));
+
+            actions.Add(("fa-user-plus", "Add employee",
+                "Create a new employee record", "Employee", "Create"));
+
+            actions.Add(("fa-circle-check", "Review approvals",
+                "View and action pending requests",
+                "ApprovalConfiguration", "Index"));
+
+            actions.Add(("fa-file-arrow-up", "Upload document",
+                "Add a document to the system", "Repository", "Upload"));
+
+            actions.Add(("fa-laptop", "Register asset",
+                "Add a new company asset", "Asset", "Create"));
+        }
+        else if (Model.Hr != null)
+        {
+            cards.Add(("fa-inbox", "Awaiting review",
+                Model.Hr.AwaitingReview.ToString("N0"),
+                Model.Hr.AwaitingReview == 0
+                    ? "Nothing to review" : "Submitted by staff",
+                "LeaveApproval", "Index"));
+
+            cards.Add(("fa-users", "Staff",
+                Model.Hr.ActiveEmployees.ToString("N0"),
+                $"{Model.Hr.OnLeaveToday:N0} on leave today",
+                "Employee", "Index"));
+
+            cards.Add(("fa-folder-open", "Employee documents",
+                "—", "Files held for staff",
+                "EmployeeDocument", "Index"));
+
+            cards.Add(("fa-graduation-cap", "Training overdue",
+                Model.Hr.OverdueTrainingOrgWide.ToString("N0"),
+                Model.Hr.OverdueTrainingOrgWide == 0
+                    ? "All up to date" : "Past the due date",
+                "TrainingAssignment", "Index"));
+
+            actions.Add(("fa-inbox", "Review leave",
+                "Work through the review queue",
+                "LeaveApproval", "Index"));
+
+            actions.Add(("fa-user-plus", "Add employee",
+                "Create a new employee record", "Employee", "Create"));
+
+            actions.Add(("fa-file-arrow-up", "Upload document",
+                "File a document for somebody",
+                "EmployeeDocument", "Create"));
+
+            actions.Add(("fa-clipboard-check", "Assign training",
+                "Put a course in front of staff",
+                "TrainingAssignment", "Create"));
+        }
+        else if (Model.Md != null)
+        {
+            cards.Add(("fa-stamp", "To sanction",
+                Model.Md.AwaitingFinalApproval.ToString("N0"),
+                Model.Md.AwaitingFinalApproval == 0
+                    ? "Nothing waiting" : "Waiting on you",
+                "LeaveApproval", "FinalApproval"));
+
+            cards.Add(("fa-hand-holding-dollar", "Loans",
+                "—", "Applications to sanction",
+                "LoanApproval", "Index"));
+
+            cards.Add(("fa-user-graduate", "Courses",
+                "—", "Applications to decide",
+                "CourseApproval", "Index"));
+
+            cards.Add(("fa-calendar-check", "Approved this month",
+                Model.Md.ApprovedThisMonth.ToString("N0"),
+                $"{Model.Md.DaysApprovedThisMonth:N1} days",
+                "LeaveRequest", "Index"));
+
+            actions.Add(("fa-stamp", "Final approval",
+                "Leave waiting on your decision",
+                "LeaveApproval", "FinalApproval"));
+
+            actions.Add(("fa-hand-holding-dollar", "Sanction a loan",
+                "Review loan applications",
+                "LoanApproval", "Index"));
+
+            actions.Add(("fa-user-graduate", "Course applications",
+                "Decide who studies what",
+                "CourseApproval", "Index"));
+
+            actions.Add(("fa-chart-column", "Reports",
+                "See how the portal is being used",
+                "Reports", "Index"));
+        }
+        else if (Model.Mine != null)
+        {
+            cards.Add(("fa-calendar-days", "Leave remaining",
+                Model.Mine.HasBalances
+                    ? Model.Mine.RemainingDays.ToString("0.#")
+                    : "—",
+                Model.Mine.HasBalances
+                    ? $"{Model.Mine.DaysTakenThisYear:0.#} days taken"
+                    : "No balance set up yet",
+                "MyLeave", "Index"));
+
+            cards.Add(("fa-graduation-cap", "Training to do",
+                Model.Mine.OutstandingTraining.ToString("N0"),
+                Model.Mine.OutstandingTraining == 0
+                    ? "All caught up" : "Waiting on you",
+                "MyTraining", "Index"));
+
+            cards.Add(("fa-laptop", "My assets",
+                Model.Mine.MyAssets.ToString("N0"),
+                Model.Mine.MyAssets == 0
+                    ? "Nothing issued" : "Issued to you",
+                "MyAssets", "Index"));
+
+            cards.Add(("fa-bell", "Notices",
+                Model.Mine.UnreadNotifications.ToString("N0"),
+                Model.Mine.UnreadNotifications == 0
+                    ? "Nothing new" : "Waiting for you",
+                "MyNotifications", "Index"));
+
+            actions.Add(("fa-calendar-plus", "Book leave",
+                "Put in a new leave request", "MyLeave", "Create"));
+
+            actions.Add(("fa-graduation-cap", "My training",
+                "See what is assigned to you", "MyTraining", "Index"));
+
+            actions.Add(("fa-id-badge", "My documents",
+                "Your record and next of kin", "MyProfile", "Index"));
+
+            actions.Add(("fa-user-graduate", "Apply for a course",
+                "Ask to study a programme", "MyCourses", "Create"));
+        }
+    }
 
     @if (Model.Focus.Any())
     {
@@ -98,9 +291,8 @@
 
                     @if (item.Figure != null)
                     {
-                        <span>
-                            <span class="focus-figure">@item.Figure</span>
-
+                        <span class="focus-figure">
+                            @item.Figure
                             @if (item.Unit != null)
                             {
                                 <span class="focus-unit">@item.Unit</span>
@@ -119,20 +311,219 @@
     {
         <div class="focus-clear">
 
-            <i class="fas fa-circle-check" aria-hidden="true"></i>
+            <span class="focus-clear-icon">
+                <i class="fas fa-check" aria-hidden="true"></i>
+            </span>
 
             <span>
+                <span class="focus-clear-eyebrow">Needs your attention</span>
+
                 <span class="focus-clear-title">
-                    Nothing needs your attention
+                    All approval queues are clear
                 </span>
 
                 <span class="focus-clear-note">
-                    Every queue you are responsible for is clear.
+                    You're all caught up. We'll tell you when there is
+                    something new to review.
                 </span>
             </span>
 
         </div>
     }
+
+    <div class="stat-grid dash-stats">
+
+        @foreach (var card in cards)
+        {
+            <a class="stat-tile"
+               asp-controller="@card.Ctrl"
+               asp-action="@card.Act">
+
+                <i class="fas @card.Icon stat-icon" aria-hidden="true"></i>
+
+                <span class="stat-label">@card.Label</span>
+
+                <span class="stat-value">@card.Value</span>
+
+                <div class="stat-note">@card.Note</div>
+
+            </a>
+        }
+
+    </div>
+
+    <div class="dash-split">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header is-titled">
+                <span class="panel-title">Quick actions</span>
+                <span class="panel-note">
+                    Common tasks to manage your workplace.
+                </span>
+            </div>
+
+            <div class="card-body">
+
+                <div class="settings-grid">
+
+                    @foreach (var action in actions)
+                    {
+                        <a class="settings-item"
+                           asp-controller="@action.Ctrl"
+                           asp-action="@action.Act">
+
+                            <span class="settings-icon">
+                                <i class="fas @action.Icon" aria-hidden="true"></i>
+                            </span>
+
+                            <span class="settings-text">
+                                <span class="settings-title">@action.Title</span>
+                                <span class="settings-note">@action.Note</span>
+                            </span>
+
+                            <i class="fas fa-chevron-right settings-chevron"
+                               aria-hidden="true"></i>
+
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card shadow-sm">
+
+            <div class="card-header is-titled">
+
+                <div>
+                    <span class="panel-title">Recent activity</span>
+                    <span class="panel-note">
+                        Latest activity across the portal.
+                    </span>
+                </div>
+
+                @if (Model.Admin != null)
+                {
+                    <a class="btn btn-sm btn-secondary"
+                       asp-controller="AuditLog"
+                       asp-action="Index">
+                        View full log
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </a>
+                }
+
+            </div>
+
+            @if (Model.Admin != null && Model.Admin.RecentActivity.Any())
+            {
+                <div class="card-body">
+
+                    <div class="row-list">
+
+                        @foreach (var entry in Model.Admin.RecentActivity.Take(4))
+                        {
+                            <div class="row-item">
+
+                                <span class="row-icon">
+                                    <i class="fas fa-clock-rotate-left"
+                                       aria-hidden="true"></i>
+                                </span>
+
+                                <span class="row-main">
+                                    <span class="row-title">@entry.Action</span>
+                                    <span class="row-meta">
+                                        @(string.IsNullOrWhiteSpace(entry.Description)
+                                            ? entry.EntityName
+                                            : entry.Description)
+                                    </span>
+                                </span>
+
+                                <span class="row-when">
+                                    @Ago(entry.Timestamp)
+                                </span>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+
+                    <p class="empty-state mb-0">
+                        <span class="empty-icon">&#128220;</span>
+                        No activity has been recorded yet.
+                    </p>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header is-titled">
+            <span class="panel-title">Upcoming</span>
+            <span class="panel-note">
+                Key dates, training deadlines and other events coming up.
+            </span>
+        </div>
+
+        @if (Model.Upcoming.Any())
+        {
+            <div class="card-body">
+
+                <div class="row-list">
+
+                    @foreach (var item in Model.Upcoming)
+                    {
+                        <a class="row-item"
+                           asp-controller="@item.Controller"
+                           asp-action="@item.Action">
+
+                            <span class="row-icon">
+                                <i class="fas @item.Icon" aria-hidden="true"></i>
+                            </span>
+
+                            <span class="row-main">
+                                <span class="row-title">@item.Title</span>
+                                <span class="row-meta">@item.Detail</span>
+                            </span>
+
+                            <span class="row-when @(item.IsLate ? "is-late" : "")">
+                                @item.When
+                            </span>
+
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <div class="card-body">
+
+                <p class="empty-state mb-0">
+                    <span class="empty-icon">&#128197;</span>
+                    <strong>No upcoming deadlines.</strong>
+                    You're all up to date. Training, licence renewals
+                    and other dates will appear here.
+                </p>
+
+            </div>
+        }
+
+    </div>
 
     @if (Model.Mine != null)
     {
@@ -895,84 +1286,6 @@
 
     @if (Model.Admin != null)
     {
-        <div class="section-heading">Quick actions</div>
-
-        <div class="card shadow-sm mb-4">
-
-            <div class="card-body">
-
-                <div class="settings-grid">
-
-                    <a class="settings-item"
-                       asp-controller="Employee"
-                       asp-action="Create">
-                        <span class="settings-icon">
-                            <i class="fas fa-user-plus" aria-hidden="true"></i>
-                        </span>
-                        <span class="settings-text">
-                            <span class="settings-title">Add employee</span>
-                            <span class="settings-note">
-                                Create a new employee record
-                            </span>
-                        </span>
-                        <i class="fas fa-chevron-right settings-chevron"
-                           aria-hidden="true"></i>
-                    </a>
-
-                    <a class="settings-item"
-                       asp-controller="LeaveApproval"
-                       asp-action="Index">
-                        <span class="settings-icon">
-                            <i class="fas fa-circle-check" aria-hidden="true"></i>
-                        </span>
-                        <span class="settings-text">
-                            <span class="settings-title">Review approvals</span>
-                            <span class="settings-note">
-                                View and action pending requests
-                            </span>
-                        </span>
-                        <i class="fas fa-chevron-right settings-chevron"
-                           aria-hidden="true"></i>
-                    </a>
-
-                    <a class="settings-item"
-                       asp-controller="EmployeeDocument"
-                       asp-action="Create">
-                        <span class="settings-icon">
-                            <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
-                        </span>
-                        <span class="settings-text">
-                            <span class="settings-title">Upload document</span>
-                            <span class="settings-note">
-                                Add a document to the system
-                            </span>
-                        </span>
-                        <i class="fas fa-chevron-right settings-chevron"
-                           aria-hidden="true"></i>
-                    </a>
-
-                    <a class="settings-item"
-                       asp-controller="Asset"
-                       asp-action="Create">
-                        <span class="settings-icon">
-                            <i class="fas fa-laptop" aria-hidden="true"></i>
-                        </span>
-                        <span class="settings-text">
-                            <span class="settings-title">Register asset</span>
-                            <span class="settings-note">
-                                Add a new company asset
-                            </span>
-                        </span>
-                        <i class="fas fa-chevron-right settings-chevron"
-                           aria-hidden="true"></i>
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
         <div class="section-heading">System</div>
 
         <div class="stat-grid">
