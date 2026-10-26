@@ -35,18 +35,20 @@
     --gray-700: #334155;
     --gray-800: #1e293b;
 
-    /* The website is a white site with teal as its leading accent,
-       so the shell is white and the green moves to the accents. */
-    --sidebar-bg: #ffffff;
-    --sidebar-hover: #f4f2ed;
-    --sidebar-active: #018080;
+    /* Navigation sits on the company green, with a lighter teal
+       marking where you are. */
+    --sidebar-bg: #0c4a40;
+    --sidebar-hover: rgba(255, 255, 255, 0.07);
+    --sidebar-active: #176a5b;
+    --sidebar-ink: #cfdedb;
+    --sidebar-ink-dim: #9db5af;
     /* the website body ink, warmer than the near-black we had */
     --text-primary: var(--brand-ink);
     --text-secondary: #5f6368;
     --text-light: #e2e8f0;
     /* Muted text is mostly 12px captions and notes, so it sits
        where small text is still comfortably readable. */
-    --text-muted: #70747a;
+    --text-muted: #6b6f74;
     --bg-main: #faf9f6;
     --bg-card: #ffffff;
     --border-light: #e7e3db;

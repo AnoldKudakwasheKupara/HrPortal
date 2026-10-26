@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using HrPortal.Data
 @inject SignInManager<ApplicationUser> SignInManager
+@inject HrPortal.Services.NotificationBadgeService NotificationBadge
 
 <!DOCTYPE html>
 <html lang="en">
@@ -35,8 +36,14 @@
         <aside class="sidebar" id="sidebar">
 
             <div class="sidebar-header">
-                <i class="fas fa-users-gear"></i>
-                <span>My Intellego</span>
+
+                <i class="fas fa-users-gear" aria-hidden="true"></i>
+
+                <span class="brand-text">
+                    <span class="brand-name">My Intellego</span>
+                    <span class="brand-sub">People Portal</span>
+                </span>
+
             </div>
 
             <partial name="_Sidebar" />
@@ -55,10 +62,17 @@
                         <i class="fas fa-bars"></i>
                     </button>
 
-                    <h5>
-                        @ViewData["Title"]
-                        <small>Intellego Investment Consultants</small>
-                    </h5>
+                    <nav class="crumbs" aria-label="Breadcrumb">
+
+                        <span class="crumb-here">@ViewData["Title"]</span>
+
+                        @if (ViewData["Crumb"] != null)
+                        {
+                            <span class="crumb-sep" aria-hidden="true">/</span>
+                            <span class="crumb-then">@ViewData["Crumb"]</span>
+                        }
+
+                    </nav>
 
                 </div>
 
@@ -76,37 +90,64 @@
                         : User.IsInRole("MD") ? "Managing Director"
                         : "Employee";
 
-                    <div class="user-profile">
+                    var unread = await NotificationBadge.UnreadCountAsync();
 
-                        <a asp-area="Identity"
-                           asp-page="/Account/Manage/Index"
-                           class="profile-link">
+                    <div class="topbar-right">
 
-                            <div class="user-avatar">
-                                @displayName.Trim()[0].ToString().ToUpper()
-                            </div>
+                        <a class="topbar-bell"
+                           asp-controller="MyNotifications"
+                           asp-action="Index"
+                           aria-label="@(unread == 1
+                               ? "Notifications, 1 unread"
+                               : $"Notifications, {unread} unread")">
 
-                            <div class="user-info">
-                                <div class="user-name">@displayName</div>
-                                <div class="user-role">@roleName</div>
-                            </div>
+                            <i class="fas fa-bell" aria-hidden="true"></i>
+
+                            @if (unread > 0)
+                            {
+                                <span class="topbar-bell-count">
+                                    @(unread > 9 ? "9+" : unread.ToString())
+                                </span>
+                            }
 
                         </a>
 
-                        <form asp-area="Identity"
-                              asp-page="/Account/Logout"
-                              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
-                              method="post"
-                              class="logout-form">
+                        <div class="user-profile">
 
-                            <button type="submit"
-                                    class="btn-logout"
-                                    title="Log out"
-                                    aria-label="Log out">
-                                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-                            </button>
+                            <a asp-area="Identity"
+                               asp-page="/Account/Manage/Index"
+                               class="profile-link">
 
-                        </form>
+                                <div class="user-avatar">
+                                    @displayName.Trim()[0].ToString().ToUpper()
+                                </div>
+
+                                <div class="user-info">
+                                    <div class="user-name">@displayName</div>
+                                    <div class="user-role">@roleName</div>
+                                </div>
+
+                                <i class="fas fa-chevron-down profile-caret"
+                                   aria-hidden="true"></i>
+
+                            </a>
+
+                            <form asp-area="Identity"
+                                  asp-page="/Account/Logout"
+                                  asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })"
+                                  method="post"
+                                  class="logout-form">
+
+                                <button type="submit"
+                                        class="btn-logout"
+                                        title="Log out"
+                                        aria-label="Log out">
+                                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                                </button>
+
+                            </form>
+
+                        </div>
 
                     </div>
                 }

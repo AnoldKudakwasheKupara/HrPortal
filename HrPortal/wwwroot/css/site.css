@@ -432,20 +432,55 @@ a.stat-tile:hover .stat-icon {
     color: #fff;
 }
 
+/* The icon sits beside the figure rather than floating in the
+   corner, which leaves the corner for the chevron. */
+.stat-tile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "icon label"
+        "icon value"
+        "icon note";
+    column-gap: 1.05rem;
+    align-content: center;
+}
+
 .stat-tile .stat-icon {
-    position: absolute;
-    top: 1.05rem;
-    right: 1.1rem;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    grid-area: icon;
+    align-self: center;
+    position: static;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--accent-wash);
     color: var(--accent);
-    font-size: 0.8rem;
+    font-size: 1.05rem;
     transition: var(--transition-smooth);
+}
+
+.stat-tile .stat-label { grid-area: label; }
+.stat-tile .stat-value { grid-area: value; }
+.stat-tile .stat-note  { grid-area: note; }
+
+/* Only a tile you can follow gets the chevron. */
+a.stat-tile::after {
+    content: "\f054";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 1.15rem;
+    right: 1.15rem;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    transition: var(--transition-smooth);
+}
+
+a.stat-tile:hover::after {
+    color: var(--primary);
+    transform: translateX(2px);
 }
 
 .stat-tile .stat-label {
@@ -935,28 +970,25 @@ a.stat-tile:hover .stat-icon {
 }
 
 .sidebar .nav-item {
-    color: var(--text-secondary);
+    color: var(--sidebar-ink);
 }
 
 .sidebar .nav-item.active {
-    color: var(--primary-dark);
+    color: #ffffff;
 }
 
-/* Small uppercase labels need more contrast than body text, not
-   less, so these do not take the muted token. */
 .sidebar .nav-group {
-    color: #6b6f74;
+    color: var(--sidebar-ink-dim);
 }
 
 .sidebar .nav-item i {
-    color: #797d82;
+    color: var(--sidebar-ink-dim);
 }
 
 .sidebar .nav-item.active i,
 .sidebar .nav-item:hover i {
-    color: var(--brand-teal);
+    color: #ffffff;
 }
-
 .account-identity {
     display: flex;
     align-items: center;
@@ -2375,4 +2407,121 @@ a.strip-item:hover {
 
 .auth-privacy a:hover {
     color: var(--primary-dark);
+}
+
+/* ===== App shell: top bar ======================================= */
+
+.crumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    min-width: 0;
+}
+
+.crumb-here {
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.crumb-sep {
+    color: var(--text-muted);
+}
+
+.crumb-then {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+.topbar-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.topbar-bell:hover {
+    background: var(--bg-main);
+    color: var(--primary-dark);
+}
+
+.topbar-bell-count {
+    position: absolute;
+    top: -0.1rem;
+    right: -0.15rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--accent-gold);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+    border: 2px solid var(--bg-card);
+}
+
+.profile-caret {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 0.35rem;
+}
+
+/* The role reads as a label rather than a second line of name. */
+.user-role {
+    display: inline-block;
+    margin-top: 0.15rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--primary-surface);
+    color: var(--primary-dark);
+    font-size: 0.67rem;
+    font-weight: 600;
+}
+
+/* ===== Dashboard header ========================================= */
+
+.dash-head {
+    align-items: flex-end;
+    margin-bottom: 1.75rem;
+}
+
+.dash-head h1 {
+    font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin: 0 0 0.35rem;
+}
+
+.dash-head .dash-name {
+    color: var(--primary);
+}
+
+.dash-head p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.dash-date {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    padding-bottom: 0.2rem;
 }
