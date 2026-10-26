@@ -287,7 +287,6 @@ body {
     color: var(--gray-600) !important;
     border: 1px solid var(--gray-300);
 }
-}
 
 .form-label {
     font-weight: 600;
@@ -608,24 +607,174 @@ a.stat-tile:hover .stat-icon {
     background: var(--bg-main);
 }
 
-.auth-shell {
+/* Sign-in is the first thing anyone sees of the company, so it is
+   laid out as two halves: the brand on a deep green field, and the
+   form on a quiet one beside it. */
+.auth-split {
     min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+}
+
+.auth-feature {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(150deg,
+                #0c5047 0%, var(--primary) 45%, #0a443d 100%);
+    color: #ffffff;
+    padding: clamp(2.5rem, 1.5rem + 3vw, 5rem);
+}
+
+/* Soft shapes behind the words, drawn rather than photographed so
+   the panel stays sharp at any size. */
+.auth-feature-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.auth-feature-art .art-wash {
+    fill: rgba(255, 255, 255, 0.035);
+}
+
+.auth-feature-art .art-thread {
+    fill: none;
+    stroke: var(--brand-beige);
+    stroke-width: 1.5;
+    opacity: 0.5;
+}
+
+.auth-feature-art .art-thread.is-faint {
+    stroke: rgba(255, 255, 255, 0.5);
+    opacity: 0.16;
+}
+
+.auth-feature-inner {
+    position: relative;
+    width: 100%;
+    max-width: 34rem;
+    margin-left: auto;
+}
+
+.auth-feature-logo {
+    display: block;
+    width: 100%;
+    max-width: 17rem;
+    height: auto;
+    margin-bottom: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+}
+
+.auth-feature-title {
+    font-size: clamp(2rem, 1.2rem + 2.6vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 1.1rem;
+}
+
+.auth-feature-title span {
+    display: block;
+    color: var(--brand-beige);
+}
+
+.auth-feature-lede {
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.18rem);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 30rem;
+    margin: 0 0 clamp(2rem, 1.4rem + 1.8vw, 3.25rem);
+}
+
+.auth-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 clamp(2.5rem, 1.6rem + 2.4vw, 4rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.auth-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.1rem;
+}
+
+.auth-point-icon {
+    flex: 0 0 3rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+.auth-point-text {
+    display: block;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    padding-top: 0.15rem;
+}
+
+.auth-point-text strong {
+    display: block;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.auth-feature-name {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-feature-name::before {
+    content: "";
+    width: 1.6rem;
+    height: 2px;
+    background: var(--brand-beige);
+}
+
+.auth-feature-tagline {
+    display: block;
+    margin-top: 0.7rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.auth-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem 1rem;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 2.5rem 1.5rem;
 }
 
 .auth-card {
     width: 100%;
-    max-width: 400px;
+    max-width: 27rem;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    padding: 2rem;
+    border-radius: 0.875rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+                0 12px 32px -12px rgba(16, 24, 40, 0.12);
+    padding: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
 }
 
 .auth-brand {
@@ -652,20 +801,68 @@ a.stat-tile:hover .stat-icon {
 }
 
 .auth-head {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
 .auth-head h1 {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: var(--gray-800);
-    margin-bottom: 0.2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.015em;
 }
 
 .auth-head p {
-    color: var(--gray-500);
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
     margin: 0;
+}
+
+/* An icon inside the field, with room made for it so the caret
+   never lands underneath. */
+.field-icon {
+    position: relative;
+    display: block;
+}
+
+.field-icon > i {
+    position: absolute;
+    left: 0.95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.field-icon > .form-control {
+    padding-left: 2.75rem;
+}
+
+.field-icon.has-toggle > .form-control {
+    padding-right: 2.9rem;
+}
+
+.field-reveal {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.1rem;
+    height: 2.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.field-reveal:hover,
+.field-reveal:focus-visible {
+    color: var(--text-primary);
 }
 
 .auth-minor {
@@ -676,9 +873,11 @@ a.stat-tile:hover .stat-icon {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 1.25rem 0;
+    margin: 1.5rem 0;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 .auth-divider::before,
@@ -690,21 +889,50 @@ a.stat-tile:hover .stat-icon {
 }
 
 .auth-foot-link {
-    margin: 1.25rem 0 0;
+    margin: 0;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* A quiet reassurance under the form, not a control. */
+.auth-assurance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1.1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 .auth-foot {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     margin: 0;
+    text-align: center;
 }
 
-.auth-card h1 { font-size: 1.4rem; }
+.auth-card h1 { font-size: 1.6rem; }
 .auth-card h2 { font-size: 1.1rem; }
 .auth-card h3 { font-size: 1rem; }
 .auth-card hr { border-color: var(--border-light); }
+
+/* Below a laptop the brand panel would squeeze the form, so it
+   steps aside and the card takes the page. */
+@media (max-width: 991.98px) {
+    .auth-split {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-feature {
+        display: none;
+    }
+
+    .auth-panel {
+        min-height: 100vh;
+    }
+}
 
 .sidebar .nav-item {
     color: var(--text-secondary);
@@ -1660,4 +1888,34 @@ a.strip-item:hover {
 
 .alert a:hover {
     color: var(--primary-dark);
+}
+
+/* The sign-in card reads as a piece of company stationery rather
+   than an admin form: labels in sentence case, and the one action
+   in the deep green the brand leads with. */
+.auth-card .form-label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.auth-card .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    padding: 0.8rem 1.25rem;
+    font-size: 0.95rem;
+    gap: 0.6rem;
+}
+
+.auth-card .btn-primary:hover,
+.auth-card .btn-primary:active,
+.auth-card .btn-primary:focus {
+    background: var(--primary-dark) !important;
+    border-color: var(--primary-dark);
+}
+
+.auth-card .form-control {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
 }

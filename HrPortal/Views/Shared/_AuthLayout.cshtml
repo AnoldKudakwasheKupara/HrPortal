@@ -17,25 +17,112 @@
 </head>
 <body class="auth-body">
 
-    <main class="auth-shell">
+    <div class="auth-split">
 
-        <div class="auth-card">
+        <aside class="auth-feature">
 
-            <div class="auth-brand">
-                <img src="~/images/intellego-logo.png"
+            <svg class="auth-feature-art"
+                 viewBox="0 0 600 900"
+                 preserveAspectRatio="xMidYMid slice"
+                 aria-hidden="true"
+                 focusable="false">
+                <circle cx="520" cy="110" r="300" class="art-wash" />
+                <circle cx="250" cy="820" r="340" class="art-wash" />
+                <path d="M600 0 C 430 250, 470 520, 300 900"
+                      class="art-thread" />
+                <path d="M600 120 C 400 330, 460 600, 250 900"
+                      class="art-thread is-faint" />
+            </svg>
+
+            <div class="auth-feature-inner">
+
+                <img src="~/images/intellego-logo-on-dark.png"
                      alt="Intellego Investment Consultants"
-                     class="brand-logo" />
+                     class="auth-feature-logo" />
+
+                <h1 class="auth-feature-title">
+                    Your workplace,
+                    <span>connected.</span>
+                </h1>
+
+                <p class="auth-feature-lede">
+                    Secure access to your employee services, company
+                    resources and essential updates.
+                </p>
+
+                <ul class="auth-points">
+
+                    <li>
+                        <span class="auth-point-icon">
+                            <i class="fas fa-user-group" aria-hidden="true"></i>
+                        </span>
+                        <span class="auth-point-text">
+                            <strong>Employee services</strong>
+                            Manage your leave, training and personal
+                            information.
+                        </span>
+                    </li>
+
+                    <li>
+                        <span class="auth-point-icon">
+                            <i class="fas fa-file-lines" aria-hidden="true"></i>
+                        </span>
+                        <span class="auth-point-text">
+                            <strong>Company resources</strong>
+                            Access policies, documents and useful tools.
+                        </span>
+                    </li>
+
+                    <li>
+                        <span class="auth-point-icon">
+                            <i class="fas fa-headset" aria-hidden="true"></i>
+                        </span>
+                        <span class="auth-point-text">
+                            <strong>HR support</strong>
+                            Get the help you need, when you need it.
+                        </span>
+                    </li>
+
+                </ul>
+
+                <div class="auth-feature-foot">
+
+                    <span class="auth-feature-name">
+                        Intellego Investment Consultants
+                    </span>
+
+                    <span class="auth-feature-tagline">
+                        Investing in people &nbsp;|&nbsp; Building tomorrow
+                    </span>
+
+                </div>
+
             </div>
 
-            @RenderBody()
+        </aside>
 
-        </div>
+        <main class="auth-panel">
 
-        <p class="auth-foot">
-            &copy; 2026 My Intellego
-        </p>
+            <div class="auth-card">
 
-    </main>
+                <div class="auth-brand">
+                    <img src="~/images/intellego-logo.png"
+                         alt="Intellego Investment Consultants"
+                         class="brand-logo" />
+                </div>
+
+                @RenderBody()
+
+            </div>
+
+            <p class="auth-foot">
+                &copy; @DateTime.Today.Year Intellego Investment
+                Consultants (Pvt) Ltd.
+            </p>
+
+        </main>
+
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
