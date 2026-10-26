@@ -1,31 +1,264 @@
 @{
     ViewData["Title"] = "Welcome";
     Layout = "~/Views/Shared/_PublicLayout.cshtml";
+
+    var quickAccess = new (string Icon, string Title, string Note, string Target)[]
+    {
+        ("fa-user-group", "People & Directory",
+            "Find colleagues and connect across the business.",
+            "/Directory"),
+
+        ("fa-file-lines", "Policies & Documents",
+            "Access company policies, forms and useful resources.",
+            "/Policy"),
+
+        ("fa-calendar-check", "Leave & Training",
+            "Manage your leave and explore training opportunities.",
+            "/MyLeave"),
+
+        ("fa-bell", "Company Updates",
+            "Stay informed with the latest news and announcements.",
+            "/MyNotifications")
+    };
+
+    var values = new (string Icon, string Title, string[] Points)[]
+    {
+        ("fa-gem", "Passion & Excellence", new[]
+        {
+            "Passionately engaged in our work",
+            "Always striving for excellence",
+            "Exceeding client expectations"
+        }),
+        ("fa-scale-balanced", "Integrity", new[]
+        {
+            "Respect, honesty and sincerity",
+            "Good stewardship of client resources"
+        }),
+        ("fa-shield-halved", "Professionalism", new[]
+        {
+            "Adherence to the highest performance standards",
+            "Sound, independent judgement"
+        }),
+        ("fa-people-group", "Teamwork", new[]
+        {
+            "Coordinated approach to client engagements",
+            "Collaborative ethic"
+        })
+    };
 }
 
-<div class="welcome-hero">
+<section class="hero" id="home">
 
-    <span class="welcome-eyebrow">Intellego HR Portal</span>
+    <div class="hero-copy">
 
-    <h1>Welcome to the Intellego team</h1>
+        <span class="eyebrow is-on-dark">Intellego People Portal</span>
 
-    <p>
-        This is your home for everything people-related at Intellego: our
-        policies, forms, benefits and the people who can help. Sign in to
-        reach your leave, training, documents and the staff directory.
-    </p>
+        <h1 class="hero-title">
+            Welcome to the
+            <span>Intellego team.</span>
+        </h1>
 
-    <div class="hero-actions">
+        <p class="hero-lede">
+            Your central place for company policies, employee
+            resources, training, leave and staff information.
+        </p>
 
-        <a class="btn btn-light"
+        <a class="btn btn-light hero-action"
            asp-area="Identity"
            asp-page="/Account/Login">
-            <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
             Sign in to the portal
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
         </a>
 
     </div>
 
-</div>
+    <div class="hero-plate">
 
-<partial name="_IntellegoStory" />
+        <svg class="hero-plate-art"
+             viewBox="0 0 800 520"
+             preserveAspectRatio="xMidYMid slice"
+             aria-hidden="true"
+             focusable="false">
+            <circle cx="690" cy="60" r="300" class="plate-wash" />
+            <circle cx="120" cy="470" r="260" class="plate-wash" />
+            <path d="M-40 0 C 140 150, 90 360, 210 520" class="plate-thread" />
+        </svg>
+
+        <img src="~/images/intellego-logo-on-dark.png"
+             alt="Intellego Investment Consultants"
+             class="hero-plate-logo" />
+
+        <span class="hero-badge">
+            <i class="fas fa-user-group" aria-hidden="true"></i>
+            Your workplace, connected
+        </span>
+
+    </div>
+
+</section>
+
+<section class="band is-sunken" id="quick-access">
+
+    <div class="band-inner quick-layout">
+
+        <div class="quick-intro">
+            <span class="eyebrow">Quick access</span>
+            <h2 class="band-title">
+                Everything you need,
+                <span>in one place</span>
+            </h2>
+        </div>
+
+        <div class="quick-grid">
+
+            @foreach (var item in quickAccess)
+            {
+                <a class="quick-card"
+                   asp-area="Identity"
+                   asp-page="/Account/Login"
+                   asp-route-returnUrl="@item.Target">
+
+                    <span class="quick-icon">
+                        <i class="fas @item.Icon" aria-hidden="true"></i>
+                    </span>
+
+                    <span class="quick-title">@item.Title</span>
+
+                    <span class="quick-note">@item.Note</span>
+
+                    <i class="fas fa-chevron-right quick-chevron"
+                       aria-hidden="true"></i>
+
+                </a>
+            }
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="band" id="about">
+
+    <div class="band-inner story-layout">
+
+        <div>
+            <span class="eyebrow">Who we are</span>
+
+            <p class="story-lede">
+                Bespoke investment and corporate advisory
+                solutions, fit for purpose.
+            </p>
+        </div>
+
+        <div class="story-body">
+
+            <p>
+                Intellego Investment Consultants (Pvt) Ltd is a
+                specialist investment consulting and corporate advisory
+                firm licensed by the Securities and Exchange Commission
+                of Zimbabwe. Founded in 2013 as an independent
+                consultancy for institutional clients, mainly pension
+                funds, we added corporate advisory in 2015 and real
+                estate advisory since.
+            </p>
+
+            <p>
+                Today we advise more than 75 pension funds and other
+                institutional investors. Every one of us plays a part
+                in that work, and this portal is here to support you
+                while you do it.
+            </p>
+
+            <div class="service-chips" id="services">
+                <span class="service-chip">Investment Consulting</span>
+                <span class="service-chip">Corporate Advisory</span>
+                <span class="service-chip">Real Estate Advisory</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="band is-ruled">
+
+    <div class="band-inner statement-layout">
+
+        <div class="statement">
+
+            <span class="statement-icon">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+            </span>
+
+            <div>
+                <span class="eyebrow">Our vision</span>
+                <p>
+                    To be the leading provider of institutional
+                    investment consulting and corporate advisory
+                    solutions in Zimbabwe and the sub-region.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="statement">
+
+            <span class="statement-icon">
+                <i class="fas fa-bullseye" aria-hidden="true"></i>
+            </span>
+
+            <div>
+                <span class="eyebrow">Our mission</span>
+                <p>
+                    To help our clients achieve their investment and
+                    corporate objectives through focused investment
+                    advice and well-crafted capital market and
+                    strategic solutions.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="band is-ruled" id="values">
+
+    <div class="band-inner">
+
+        <span class="eyebrow">Our core values</span>
+
+        <div class="value-grid">
+
+            @foreach (var value in values)
+            {
+                <div class="value">
+
+                    <span class="value-icon">
+                        <i class="fas @value.Icon" aria-hidden="true"></i>
+                    </span>
+
+                    <div class="value-text">
+
+                        <span class="value-title">@value.Title</span>
+
+                        <ul class="value-points">
+                            @foreach (var point in value.Points)
+                            {
+                                <li>@point</li>
+                            }
+                        </ul>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</section>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -21,22 +21,29 @@
 </head>
 <body>
 
-    <div class="public-shell">
+    <div class="public-shell" id="top">
 
         <header class="public-topbar">
 
             <div class="public-topbar-inner">
 
-                <div class="public-brand">
-                    <img src="~/images/intellego-wordmark.png"
+                <a class="public-brand" href="#top" aria-label="Intellego, back to top">
+                    <img src="~/images/intellego-logo.png"
                          alt="Intellego Investment Consultants"
                          class="brand-logo" />
-                </div>
+                </a>
 
-                <a class="btn btn-outline-primary"
+                <nav class="public-nav" aria-label="Sections of this page">
+                    <a href="#home" class="is-active">Home</a>
+                    <a href="#about">About Intellego</a>
+                    <a href="#services">Our Services</a>
+                    <a href="#values">Our Values</a>
+                </nav>
+
+                <a class="btn btn-outline-primary public-signin"
                    asp-area="Identity"
                    asp-page="/Account/Login">
-                    <i class="fas fa-right-to-bracket"></i>
+                    <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
                     Sign in
                 </a>
 
@@ -51,8 +58,20 @@
         <footer class="public-foot">
 
             <div class="public-foot-inner">
-                &copy; @DateTime.Today.Year Intellego Investment Consultants
-                (Pvt) Ltd &middot; For internal use by Intellego staff
+
+                <span class="public-foot-note">
+                    &copy; @DateTime.Today.Year Intellego Investment
+                    Consultants (Pvt) Ltd.
+                    <span class="public-foot-sep">|</span>
+                    For internal use by Intellego staff.
+                </span>
+
+                <span class="public-foot-links">
+                    <a asp-area=""
+                       asp-controller="Home"
+                       asp-action="Privacy">Privacy</a>
+                </span>
+
             </div>
 
         </footer>
@@ -61,6 +80,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/public-nav.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

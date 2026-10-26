@@ -1414,16 +1414,12 @@ a.stat-tile:hover .stat-icon {
 }
 
 /* ---------------------------------------------------------------
-   The front page and the welcome page.
+   The signed-in welcome page.
 
-   These two pages open the portal, so they are laid out as a
-   document rather than as a dashboard: one coloured hero, then
-   sections set apart by space and a single rule. Nothing is boxed
-   inside another box, which is what made them feel busy.
+   It keeps the rounded hero inside the app shell; the front page
+   below uses full-width bands instead.
    --------------------------------------------------------------- */
 
-/* The hero and the headings below it grow with the window. At a
-   fixed size they read as a small card adrift on a wide screen. */
 .welcome-hero {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: #ffffff;
@@ -1431,6 +1427,22 @@ a.stat-tile:hover .stat-icon {
     padding: clamp(2.25rem, 1.4rem + 2.6vw, 4.25rem)
              clamp(1.5rem, 0.8rem + 2.4vw, 3.75rem);
     margin-bottom: clamp(2.25rem, 1.6rem + 1.4vw, 3.75rem);
+}
+
+.welcome-hero h1 {
+    font-weight: 800;
+    font-size: clamp(1.75rem, 1.15rem + 2.1vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0.75rem 0 1.1rem;
+}
+
+.welcome-hero p {
+    max-width: 54ch;
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.18rem);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.88);
+    margin-bottom: 1.75rem;
 }
 
 .welcome-eyebrow,
@@ -1449,22 +1461,6 @@ a.stat-tile:hover .stat-icon {
 .section-eyebrow {
     color: var(--primary);
     margin-bottom: 0.5rem;
-}
-
-.welcome-hero h1 {
-    font-weight: 800;
-    font-size: clamp(1.75rem, 1.15rem + 2.1vw, 3rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    margin: 0.75rem 0 1.1rem;
-}
-
-.welcome-hero p {
-    max-width: 54ch;
-    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.18rem);
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.88);
-    margin-bottom: 1.75rem;
 }
 
 .hero-actions {
@@ -1491,8 +1487,6 @@ a.stat-tile:hover .stat-icon {
     color: var(--primary-dark);
 }
 
-/* One section after another, parted by a rule rather than each one
-   sitting in its own panel. */
 .story-section + .story-section {
     border-top: 1px solid var(--border-light);
     margin-top: 2.75rem;
@@ -1506,25 +1500,374 @@ a.stat-tile:hover .stat-icon {
     margin: 0 0 1.35rem;
 }
 
-.story-body p {
+/* ---------------------------------------------------------------
+   The front page.
+
+   Full-width bands, each with its contents held to one column, so
+   colour runs edge to edge while the words stay where the eye
+   expects them.
+   --------------------------------------------------------------- */
+
+.public-topbar-inner,
+.public-main,
+.public-foot-inner,
+.band-inner {
+    width: 100%;
+    max-width: 82rem;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* The hero runs the full width of the window, so the page itself
+   carries no gutter and each band sets its own. */
+.public-main {
+    flex: 1;
+    max-width: none;
+    padding: 0;
+}
+
+.public-topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.public-topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.public-brand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.public-brand .brand-logo {
+    width: clamp(9.5rem, 7.5rem + 4vw, 12rem);
+    max-width: none;
+    height: auto;
+}
+
+.public-nav {
+    display: flex;
+    align-items: center;
+    gap: 2.25rem;
+}
+
+.public-nav a {
+    position: relative;
+    padding: 0.4rem 0;
+    font-size: 0.92rem;
+    font-weight: 500;
     color: var(--text-secondary);
-    font-size: clamp(0.95rem, 0.9rem + 0.22vw, 1.08rem);
-    line-height: 1.75;
-    max-width: 66ch;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.public-nav a:hover {
+    color: var(--primary-dark);
+}
+
+.public-nav a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.1rem;
+    height: 2px;
+    background: var(--accent-gold);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.public-nav a.is-active {
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.public-nav a.is-active::after {
+    opacity: 1;
+}
+
+.public-signin {
+    flex-shrink: 0;
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+}
+
+/* A short gold rule before a small heading, used throughout. */
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-gold);
     margin-bottom: 1rem;
 }
 
-.story-body p:last-child {
-    margin-bottom: 0;
+.eyebrow::before {
+    content: "";
+    width: 1.9rem;
+    height: 2px;
+    background: var(--accent-gold);
+    flex-shrink: 0;
+}
+
+.eyebrow.is-on-dark {
+    color: var(--brand-beige);
+}
+
+.eyebrow.is-on-dark::before {
+    background: var(--brand-beige);
+}
+
+/* ----- the hero ------------------------------------------------ */
+
+.hero {
+    display: grid;
+    grid-template-columns: 47fr 53fr;
+    background: linear-gradient(135deg,
+                #0c5047 0%, var(--primary) 55%, #0a443d 100%);
+    color: #ffffff;
+}
+
+.hero-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(3rem, 1.5rem + 4vw, 5.5rem)
+             clamp(2rem, 0.5rem + 4vw, 4.5rem);
+    max-width: 46rem;
+    margin-left: auto;
+}
+
+.hero-title {
+    font-size: clamp(2.1rem, 1.3rem + 2.6vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 0 0 1.1rem;
+}
+
+.hero-title span {
+    display: block;
+    color: var(--brand-beige);
+}
+
+.hero-lede {
+    font-size: clamp(1rem, 0.94rem + 0.3vw, 1.15rem);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 32rem;
+    margin: 0 0 2rem;
+}
+
+.hero-action {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 600;
+    padding: 0.8rem 1.6rem;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--primary-dark);
+}
+
+.hero-action:hover,
+.hero-action:focus {
+    background: var(--paper);
+    border-color: var(--paper);
+    color: var(--primary-dark);
+}
+
+/* The plate beside the hero. A photograph belongs here; until there
+   is one it carries the mark on a deeper field so the panel still
+   reads as part of the brand rather than as a gap. */
+.hero-plate {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(18rem, 12rem + 18vw, 27rem);
+    background: linear-gradient(135deg, #0a443d 0%, #063029 100%);
+}
+
+.hero-plate-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-plate-art .plate-wash {
+    fill: rgba(255, 255, 255, 0.04);
+}
+
+.hero-plate-art .plate-thread {
+    fill: none;
+    stroke: var(--brand-beige);
+    stroke-width: 1.5;
+    opacity: 0.45;
+}
+
+.hero-plate-logo {
+    position: relative;
+    width: min(46%, 17rem);
+    height: auto;
+}
+
+.hero-badge {
+    position: absolute;
+    right: clamp(1rem, 0.2rem + 2vw, 2.5rem);
+    bottom: clamp(1rem, 0.2rem + 2vw, 2.5rem);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1.15rem;
+    border-radius: 0.6rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.45);
+}
+
+.hero-badge i {
+    color: var(--brand-teal);
+}
+
+/* ----- the bands below ----------------------------------------- */
+
+.band {
+    padding: clamp(2.75rem, 1.8rem + 3vw, 4.5rem) 0;
+    background: var(--bg-card);
+}
+
+.band.is-sunken {
+    background: var(--bg-main);
+}
+
+.band.is-ruled {
+    border-top: 1px solid var(--border-light);
+}
+
+.band-title {
+    font-size: clamp(1.45rem, 1.1rem + 1.2vw, 1.95rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--primary-dark);
+    margin: 0;
+}
+
+.band-title span {
+    display: block;
+}
+
+.quick-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 22rem) 1fr;
+    gap: clamp(2rem, 1rem + 3vw, 3.5rem);
+    align-items: center;
+}
+
+.quick-grid {
+    display: grid;
+    /* Four across, and told to ignore the cards' own minimums so
+       the row never breaks into a stray second line. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.1rem;
+}
+
+.quick-card {
+    position: relative;
+    display: block;
+    padding: 1.35rem 2.4rem 1.35rem 1.35rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 0.625rem;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition-smooth);
+}
+
+.quick-card:hover {
+    border-color: var(--brand-teal);
+    box-shadow: 0 10px 24px -14px rgba(16, 24, 40, 0.3);
+}
+
+.quick-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    background: var(--primary-surface);
+    color: var(--primary);
+    font-size: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.quick-title {
+    display: block;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+}
+
+.quick-note {
+    display: block;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.quick-chevron {
+    position: absolute;
+    right: 1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.story-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 26rem) 1fr;
+    gap: clamp(2rem, 1rem + 3vw, 4rem);
+    align-items: start;
 }
 
 .story-lede {
-    font-size: clamp(1.15rem, 1rem + 0.55vw, 1.55rem);
-    font-weight: 600;
-    color: var(--primary);
-    line-height: 1.45;
-    max-width: 24ch;
+    font-size: clamp(1.3rem, 1rem + 1vw, 1.85rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--primary-dark);
     margin: 0;
+}
+
+.story-body p {
+    color: var(--text-secondary);
+    font-size: clamp(0.95rem, 0.9rem + 0.22vw, 1.05rem);
+    line-height: 1.75;
+    margin-bottom: 1rem;
+}
+
+.story-body p:last-of-type {
+    margin-bottom: 0;
 }
 
 .service-chips {
@@ -1543,39 +1886,78 @@ a.stat-tile:hover .stat-icon {
     font-weight: 600;
 }
 
-/* Vision and mission are statements, so they are given room and no
-   border to sit in. */
-.statement-grid {
+.statement-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: clamp(2rem, 1rem + 3vw, 4rem);
+}
+
+.statement {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.statement + .statement {
+    border-left: 1px solid var(--border-light);
+    padding-left: clamp(2rem, 1rem + 3vw, 4rem);
+}
+
+.statement-icon {
+    flex: 0 0 3.4rem;
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
 }
 
 .statement p {
-    font-size: clamp(1rem, 0.93rem + 0.28vw, 1.2rem);
-    line-height: 1.65;
-    color: var(--text-primary);
     margin: 0;
+    color: var(--text-secondary);
+    font-size: clamp(0.95rem, 0.9rem + 0.22vw, 1.05rem);
+    line-height: 1.7;
+}
+
+.statement .eyebrow {
+    margin-bottom: 0.6rem;
 }
 
 .value-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-    gap: 2.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: clamp(1.5rem, 0.8rem + 2vw, 2.75rem);
+    margin-top: 0.5rem;
+}
+
+.value {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.1rem;
+}
+
+.value + .value {
+    border-left: 1px solid var(--border-light);
+    padding-left: clamp(1.5rem, 0.8rem + 2vw, 2.75rem);
 }
 
 .value-icon {
-    display: block;
-    font-size: 1.25rem;
+    flex: 0 0 auto;
+    font-size: 1.6rem;
     color: var(--primary);
-    margin-bottom: 0.85rem;
+    line-height: 1;
+    padding-top: 0.1rem;
 }
 
 .value-title {
     display: block;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
 }
 
 .value-points {
@@ -1586,93 +1968,89 @@ a.stat-tile:hover .stat-icon {
 
 .value-points li {
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--text-secondary);
-    margin-bottom: 0.7rem;
-}
-
-/* The page the public sees. White, so the sections below the hero
-   stand on the page itself rather than floating as panels. */
-.public-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-card);
-}
-
-/* The bar, the page and the footer all line up on one column, so
-   the logo sits above the content rather than out at the window
-   edge. The rules themselves still run the full width. */
-.public-topbar-inner,
-.public-main,
-.public-foot-inner {
-    width: 100%;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding-left: 1.75rem;
-    padding-right: 1.75rem;
-}
-
-.public-topbar {
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.public-topbar-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-top: 1.15rem;
-    padding-bottom: 1.15rem;
-}
-
-.public-brand {
-    display: flex;
-    align-items: center;
-}
-
-.public-main {
-    flex: 1;
-    padding-top: 3rem;
-    padding-bottom: 4rem;
+    margin-bottom: 0.3rem;
 }
 
 .public-foot {
     border-top: 1px solid var(--border-light);
+    background: var(--bg-main);
     color: var(--text-muted);
     font-size: 0.8rem;
 }
 
 .public-foot-inner {
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     padding-top: 1.5rem;
-    padding-bottom: 2rem;
+    padding-bottom: 1.5rem;
+}
+
+.public-foot-sep {
+    margin: 0 0.6rem;
+}
+
+.public-foot-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.public-foot-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.public-foot-links a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* The nav would crowd the logo long before the bands need to
+   stack, so it goes first. */
+@media (max-width: 991.98px) {
+    .public-nav {
+        display: none;
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-copy {
+        margin-left: 0;
+        max-width: none;
+    }
+
+    .quick-layout,
+    .story-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-grid {
+        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    }
+
+    .statement + .statement,
+    .value + .value {
+        border-left: 0;
+        padding-left: 0;
+    }
 }
 
 @media (max-width: 767.98px) {
-    /* The hero and headings size themselves from the window, so
-       only the gutters and the section rhythm need tightening. */
     .public-topbar-inner,
-    .public-main,
-    .public-foot-inner {
+    .public-foot-inner,
+    .band-inner {
         padding-left: 1.25rem;
         padding-right: 1.25rem;
     }
 
-    .public-main {
-        padding-top: 1.75rem;
-        padding-bottom: 2.5rem;
-    }
-
-    .story-section + .story-section {
-        margin-top: 2rem;
-        padding-top: 2rem;
-    }
-
-    .story-lede {
-        max-width: none;
-        margin-bottom: 1rem;
+    .public-foot-inner {
+        justify-content: flex-start;
     }
 }
 
