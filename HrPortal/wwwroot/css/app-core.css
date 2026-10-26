@@ -30,22 +30,26 @@
     --gray-200: #e2e8f0;
     --gray-300: #cbd5e1;
     --gray-400: #94a3b8;
-    --gray-500: #64748b;
+    --gray-500: #5b6066;
     --gray-600: #475569;
     --gray-700: #334155;
     --gray-800: #1e293b;
 
-    --sidebar-bg: #0b4a43;
-    --sidebar-hover: #10675d;
+    /* The website is a white site with teal as its leading accent,
+       so the shell is white and the green moves to the accents. */
+    --sidebar-bg: #ffffff;
+    --sidebar-hover: #f4f2ed;
     --sidebar-active: #018080;
     /* the website body ink, warmer than the near-black we had */
     --text-primary: var(--brand-ink);
-    --text-secondary: #475569;
+    --text-secondary: #5f6368;
     --text-light: #e2e8f0;
-    --text-muted: #94a3b8;
-    --bg-main: #f1f5f9;
+    /* Muted text is mostly 12px captions and notes, so it sits
+       where small text is still comfortably readable. */
+    --text-muted: #70747a;
+    --bg-main: #faf9f6;
     --bg-card: #ffffff;
-    --border-light: #e2e8f0;
+    --border-light: #e7e3db;
     
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
     --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.06), 0 12px 24px -8px rgba(16, 24, 40, 0.10);
@@ -310,7 +314,7 @@ textarea:focus-visible,
     left: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-size: 0.875rem;
 }
 .search-input {
@@ -379,7 +383,7 @@ textarea:focus-visible,
     background: #f1f8f7; color: var(--primary-dark); border: 1px solid #c3ded9;
     padding: 0.2rem 0.6rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 600;
 }
-.chip-muted { color: var(--gray-400); font-size: 0.72rem; font-style: italic; }
+.chip-muted { color: var(--text-muted); font-size: 0.72rem; font-style: italic; }
 .date-cell { color: var(--gray-500); font-size: 0.875rem; white-space: nowrap; }
 
 .action-buttons { display: flex; gap: 0.5rem; align-items: center; }

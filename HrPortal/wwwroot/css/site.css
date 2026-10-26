@@ -75,14 +75,18 @@ body {
 
 .card {
     background: var(--bg-card);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    border-radius: 0.625rem;
+    box-shadow: none;
     border: 1px solid var(--border-light);
     overflow: hidden;
 }
 
+/* Views ask for .shadow-sm on cards; a hairline reads cleaner on a
+   near-white page than a drop shadow, so the card keeps its edge. */
+.card.shadow-sm { box-shadow: none; }
+
 .card-header {
-    padding: 1.25rem 1.5rem;
+    padding: 1.35rem 1.6rem;
     border-bottom: 1px solid var(--border-light);
     background: var(--bg-card);
     font-weight: 600;
@@ -91,7 +95,7 @@ body {
 }
 
 .card-body {
-    padding: 1.5rem;
+    padding: 1.6rem;
 }
 
 .card-body.is-table {
@@ -192,22 +196,20 @@ body {
 
 .btn-primary,
 .btn-success {
-    background: linear-gradient(135deg,
-                var(--accent-gold), var(--accent-gold-dark));
+    background: var(--accent-gold);
     color: #fff;
-    border: none;
-    box-shadow: 0 4px 12px rgba(126, 110, 30, 0.28);
+    border: 1px solid var(--accent-gold);
+    box-shadow: none;
 }
 
 .btn-primary:hover,
 .btn-success:hover,
 .btn-primary:active,
 .btn-success:active {
-    background: linear-gradient(135deg,
-                var(--accent-gold-dark), var(--accent-gold-dark)) !important;
+    background: var(--accent-gold-dark) !important;
+    border-color: var(--accent-gold-dark);
     color: #fff !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(126, 110, 30, 0.34);
+    box-shadow: none;
 }
 
 .btn-secondary,
@@ -251,36 +253,40 @@ body {
     white-space: nowrap;
 }
 
+/* Badge text sits on its own tint, so each one takes a deeper shade
+   than the status colour it is named for -- the status colour itself
+   is too close to its tint to read at 12px. */
 .badge.bg-success {
     background: var(--success-light) !important;
-    color: var(--success) !important;
+    color: #1f7a55 !important;
     border: 1px solid #c6e0c9;
 }
 
 .badge.bg-warning {
     background: #fff5e6 !important;
-    color: #b45309 !important;
+    color: #96480a !important;
     border: 1px solid #ffe0b3;
 }
 
 .badge.bg-danger {
     background: #fff5f5 !important;
-    color: var(--danger) !important;
+    color: #c02b2b !important;
     border: 1px solid #fed7d7;
 }
 
 .badge.bg-primary,
 .badge.bg-info {
-    background: #fceaeb !important;
+    background: #e8f3f1 !important;
     color: var(--primary-dark) !important;
-    border: 1px solid #f4ced0;
+    border: 1px solid #c3ded9;
 }
 
 .badge.bg-secondary,
 .badge.bg-light {
     background: var(--gray-100) !important;
-    color: var(--gray-500) !important;
+    color: var(--gray-600) !important;
     border: 1px solid var(--gray-300);
+}
 }
 
 .form-label {
@@ -320,7 +326,7 @@ body {
 .form-control:disabled,
 .form-control[disabled] {
     background: var(--gray-50);
-    color: var(--gray-400);
+    color: var(--text-muted);
 }
 
 .form-section {
@@ -348,7 +354,7 @@ body {
 }
 
 .field-value.is-empty {
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-style: italic;
 }
 
@@ -402,9 +408,9 @@ body {
 .stat-tile {
     position: relative;
     background: var(--bg-card);
-    padding: 1.15rem 1.25rem;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    padding: 1.3rem 1.4rem;
+    border-radius: 0.625rem;
+    box-shadow: none;
     border: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
@@ -464,17 +470,13 @@ a.stat-tile:hover .stat-icon {
 }
 
 .stat-tile .stat-note {
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-size: 0.78rem;
     line-height: 1.35;
     margin-top: auto;
     padding-top: 0.5rem;
 }
 
-.stat-tile.is-action   { border-left: 3px solid var(--primary); }
-.stat-tile.is-good     { border-left: 3px solid var(--success); }
-.stat-tile.is-warning  { border-left: 3px solid var(--warning); }
-.stat-tile.is-critical { border-left: 3px solid var(--danger); }
 .stat-tile.is-critical .stat-value { color: var(--danger); }
 
 .stat-tile.is-good .stat-icon {
@@ -675,7 +677,7 @@ a.stat-tile:hover .stat-icon {
     align-items: center;
     gap: 0.75rem;
     margin: 1.25rem 0;
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-size: 0.8rem;
 }
 
@@ -694,7 +696,7 @@ a.stat-tile:hover .stat-icon {
 }
 
 .auth-foot {
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-size: 0.8rem;
     margin: 0;
 }
@@ -705,11 +707,26 @@ a.stat-tile:hover .stat-icon {
 .auth-card hr { border-color: var(--border-light); }
 
 .sidebar .nav-item {
-    color: #cbd5e1;
+    color: var(--text-secondary);
 }
 
+.sidebar .nav-item.active {
+    color: var(--primary-dark);
+}
+
+/* Small uppercase labels need more contrast than body text, not
+   less, so these do not take the muted token. */
 .sidebar .nav-group {
-    color: #a7c4bf;
+    color: #6b6f74;
+}
+
+.sidebar .nav-item i {
+    color: #797d82;
+}
+
+.sidebar .nav-item.active i,
+.sidebar .nav-item:hover i {
+    color: var(--brand-teal);
 }
 
 .account-identity {
@@ -898,7 +915,7 @@ a.stat-tile:hover .stat-icon {
 
 .assignment-avatar.is-empty {
     background: var(--gray-100);
-    color: var(--gray-400);
+    color: var(--text-muted);
     font-size: .95rem;
 }
 
@@ -926,7 +943,6 @@ a.stat-tile:hover .stat-icon {
     padding: .85rem 1rem;
     background: var(--bg-card);
     border: 1px solid var(--border-light);
-    border-left: 3px solid var(--accent);
     border-radius: var(--radius-md);
 }
 
@@ -959,7 +975,7 @@ a.stat-tile:hover .stat-icon {
 
 .report-stat-note {
     font-size: .75rem;
-    color: var(--gray-400);
+    color: var(--text-muted);
 }
 
 .report-card {
@@ -1152,7 +1168,7 @@ a.stat-tile:hover .stat-icon {
 
 .breakdown-share {
     font-size: .72rem;
-    color: var(--gray-400);
+    color: var(--text-muted);
 }
 
 @media print {
@@ -1450,8 +1466,7 @@ a.stat-tile:hover .stat-icon {
     border-radius: var(--radius-md);
     background: var(--bg-card);
     border: 1px solid var(--border-light);
-    border-left: 4px solid var(--primary);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     color: inherit;
     text-decoration: none;
     transition: var(--transition-smooth);
@@ -1504,7 +1519,7 @@ a.focus-tile:hover {
 
 .focus-tile .focus-note {
     font-size: 0.8rem;
-    color: var(--gray-400);
+    color: var(--text-muted);
     line-height: 1.35;
     margin-top: auto;
     padding-top: 0.7rem;
@@ -1519,14 +1534,10 @@ a.focus-tile:hover {
     padding-top: 0.15rem;
 }
 
-.focus-tile.is-warning { border-left-color: var(--warning); }
-
 .focus-tile.is-warning .focus-icon {
     background: var(--warning-light);
     color: var(--warning-ink);
 }
-
-.focus-tile.is-critical { border-left-color: var(--danger); }
 
 .focus-tile.is-critical .focus-figure { color: var(--danger); }
 
@@ -1542,8 +1553,7 @@ a.focus-tile:hover {
     padding: 1.2rem 1.5rem;
     border-radius: var(--radius-md);
     background: var(--success-light);
-    border: 1px solid var(--border-light);
-    border-left: 4px solid var(--success);
+    border: 1px solid rgba(44, 158, 110, 0.25);
 }
 
 .focus-clear i {
@@ -1623,7 +1633,7 @@ a.strip-item:hover {
 
 .strip-item .strip-note {
     font-size: 0.72rem;
-    color: var(--gray-400);
+    color: var(--text-muted);
     line-height: 1.3;
 }
 
@@ -1639,4 +1649,15 @@ a.strip-item:hover {
     .focus-tile .focus-figure {
         font-size: 2.1rem;
     }
+}
+
+/* Alerts sit on a tint, which takes the teal link just below a
+   readable contrast. The darker green clears it comfortably. */
+.alert a {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+.alert a:hover {
+    color: var(--primary-dark);
 }
