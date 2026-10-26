@@ -1,6 +1,165 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
-}
-<h1>@ViewData["Title"]</h1>
+    ViewData["Title"] = "Privacy notice";
 
-<p>Use this page to detail your site's privacy policy.</p>
+    var signedIn = User.Identity?.IsAuthenticated == true;
+
+    Layout = signedIn
+        ? "~/Views/Shared/_Layout.cshtml"
+        : "~/Views/Shared/_PublicLayout.cshtml";
+}
+
+<section class="band">
+
+    <div class="band-inner prose">
+
+        <span class="eyebrow">Privacy</span>
+
+        <h1 class="prose-title">How this portal uses your information</h1>
+
+        <p class="prose-lede">
+            My Intellego is the staff portal of Intellego Investment
+            Consultants (Pvt) Ltd. It holds employment records for
+            people who work here, so that leave, training, documents
+            and related requests can be handled in one place.
+        </p>
+
+        <h2>What the portal holds about you</h2>
+
+        <p>
+            Your record is created by HR when you join, and is added
+            to as you use the portal.
+        </p>
+
+        <ul>
+            <li>
+                <strong>Who you are.</strong> Name, employee number,
+                work email, phone number, national identity number,
+                date of birth, gender, marital status and home
+                address.
+            </li>
+            <li>
+                <strong>Your job.</strong> Job title, department,
+                employment type, the date you joined, and where
+                relevant a contract end date or leaving date and
+                reason.
+            </li>
+            <li>
+                <strong>Your next of kin.</strong> The name,
+                relationship, phone number and address of the person
+                to contact in an emergency, together with the date you
+                last confirmed those details.
+            </li>
+            <li>
+                <strong>What you have asked for.</strong> Leave
+                requests and balances, loan applications and any
+                receipts or quotations attached to them, course
+                applications, and the decisions taken on each.
+            </li>
+            <li>
+                <strong>Your training and documents.</strong> Training
+                assigned to you and any feedback you give,
+                certifications recorded against your name, documents
+                HR holds for you, and policies you have acknowledged.
+            </li>
+            <li>
+                <strong>Company property.</strong> Assets issued to
+                you.
+            </li>
+            <li>
+                <strong>Your sign-in.</strong> Your account, the roles
+                it carries, and a protected form of your password. The
+                portal never stores your password itself.
+            </li>
+        </ul>
+
+        <h2>Why it is held</h2>
+
+        <p>
+            To administer your employment: to pay and account for
+            leave, to route approvals to the right people, to meet the
+            company's record-keeping obligations, and to reach
+            somebody on your behalf in an emergency.
+        </p>
+
+        <h2>Who can see it</h2>
+
+        <ul>
+            <li>
+                <strong>You</strong> can see your own record and
+                everything you have submitted.
+            </li>
+            <li>
+                <strong>HR</strong> can see staff records, requests
+                and documents, in order to administer them.
+            </li>
+            <li>
+                <strong>Approvers</strong> see the requests put in
+                front of them for a decision, and the applicant's
+                name and department alongside.
+            </li>
+            <li>
+                <strong>Administrators</strong> can see records and
+                settings in order to keep the portal running.
+            </li>
+            <li>
+                <strong>Colleagues</strong> see only what the staff
+                directory shows: name, job title, department and work
+                contact details.
+            </li>
+        </ul>
+
+        <p>
+            Nothing in the portal is sold, and nothing is shared
+            outside the company except where the company is required
+            to do so by law or by a regulator.
+        </p>
+
+        <h2>What is recorded about your use</h2>
+
+        <p>
+            Actions that change a record are written to an audit log
+            with your name and the time, so that decisions can be
+            traced afterwards. Approval steps are also kept on the
+            request itself, showing who decided what and when, and any
+            comment they left.
+        </p>
+
+        <h2>How long it is kept</h2>
+
+        <p>
+            Records are kept for as long as you work here and
+            afterwards for as long as the company is required to keep
+            employment records. Documents with an expiry date are kept
+            until they are superseded or no longer needed.
+        </p>
+
+        <h2>Keeping it accurate</h2>
+
+        <p>
+            You can correct most of your own details on My Profile.
+            Anything you cannot change yourself, including your name,
+            employee number and employment dates, is maintained by HR
+            on request.
+        </p>
+
+        <h2>Who to ask</h2>
+
+        <p>
+            Questions about this notice, about what is held about you,
+            or a request to see or correct it should go to HR. If you
+            are not satisfied with the answer, raise it with the
+            Managing Director.
+        </p>
+
+        <p class="prose-note">
+            This notice describes how the portal works today. It is
+            not legal advice and has not been reviewed by a legal
+            adviser. The company should have whoever is responsible
+            for data protection check it against the Data Protection
+            Act [Chapter 11:12] and its own policies before relying
+            on it.
+        </p>
+
+    </div>
+
+</section>

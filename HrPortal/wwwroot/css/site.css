@@ -1976,7 +1976,9 @@ a.stat-tile:hover .stat-icon {
 .public-foot {
     border-top: 1px solid var(--border-light);
     background: var(--bg-main);
-    color: var(--text-muted);
+    /* The muted grey is tuned against white; on the warm canvas it
+       lands just under a readable contrast, so this steps down. */
+    color: var(--text-secondary);
     font-size: 0.8rem;
 }
 
@@ -2296,4 +2298,81 @@ a.strip-item:hover {
 .auth-card .form-control {
     padding-top: 0.7rem;
     padding-bottom: 0.7rem;
+}
+
+/* Running text on a page of its own: a narrow measure, and
+   headings that step down clearly from the one above. */
+.prose {
+    max-width: 48rem;
+}
+
+.prose-title {
+    font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.3rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--primary-dark);
+    margin: 0 0 1.1rem;
+}
+
+.prose-lede {
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+    line-height: 1.7;
+    color: var(--text-primary);
+    margin-bottom: 2.25rem;
+}
+
+.prose h2 {
+    font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2.25rem 0 0.75rem;
+}
+
+.prose p,
+.prose li {
+    color: var(--text-secondary);
+    font-size: clamp(0.95rem, 0.9rem + 0.22vw, 1.03rem);
+    line-height: 1.75;
+}
+
+.prose p {
+    margin-bottom: 1rem;
+}
+
+.prose ul {
+    margin: 0 0 1rem;
+    padding-left: 1.15rem;
+}
+
+.prose li {
+    margin-bottom: 0.65rem;
+}
+
+.prose strong {
+    color: var(--text-primary);
+}
+
+/* The standing caveat at the foot of the notice. */
+.prose-note {
+    margin-top: 2.5rem;
+    padding: 1.1rem 1.25rem;
+    border-left: 3px solid var(--brand-beige);
+    background: var(--paper);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.auth-privacy {
+    margin: 0.9rem 0 0;
+    text-align: center;
+    font-size: 0.78rem;
+}
+
+.auth-privacy a {
+    color: var(--text-muted);
+    text-decoration: underline;
+}
+
+.auth-privacy a:hover {
+    color: var(--primary-dark);
 }

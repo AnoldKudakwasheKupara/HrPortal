@@ -27,17 +27,31 @@
 
             <div class="public-topbar-inner">
 
-                <a class="public-brand" href="#top" aria-label="Intellego, back to top">
+                <a class="public-brand" href="@Url.Content("~/")" aria-label="Intellego home">
                     <img src="~/images/intellego-logo.png"
                          alt="Intellego Investment Consultants"
                          class="brand-logo" />
                 </a>
 
+                @{
+                    // The sections live on the front page, so the links
+                    // carry its address as well as the anchor and work
+                    // from any page this layout is used on.
+                    var front = Url.Content("~/");
+
+                    var onFront =
+                        (ViewContext.RouteData.Values["controller"] as string)
+                            == "Home" &&
+                        (ViewContext.RouteData.Values["action"] as string)
+                            == "Index";
+                }
+
                 <nav class="public-nav" aria-label="Sections of this page">
-                    <a href="#home" class="is-active">Home</a>
-                    <a href="#about">About Intellego</a>
-                    <a href="#services">Our Services</a>
-                    <a href="#values">Our Values</a>
+                    <a href="@(front)#home"
+                       class="@(onFront ? "is-active" : "")">Home</a>
+                    <a href="@(front)#about">About Intellego</a>
+                    <a href="@(front)#services">Our Services</a>
+                    <a href="@(front)#values">Our Values</a>
                 </nav>
 
                 <a class="btn btn-outline-primary public-signin"
