@@ -1,0 +1,13 @@
+@*
+    The download button every details page carries. It points at the
+    Form action on whatever controller rendered the page, so a page
+    only has to say which record it is showing.
+*@
+@model int
+
+<a class="btn btn-outline-secondary"
+   asp-action="Form"
+   asp-route-id="@Model">
+    <i class="fas fa-download" aria-hidden="true"></i>
+    Download (PDF)
+</a>
