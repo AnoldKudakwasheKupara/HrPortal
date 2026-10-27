@@ -22,6 +22,7 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
 
         private readonly NextOfKinPdfService _nextOfKinPdf;
+        private readonly RecordDocumentPdfService _pdf;
 
         public EmployeeController(
             ApplicationDbContext context,
@@ -29,7 +30,8 @@ namespace HrPortal.Controllers
             UserManager<ApplicationUser> userManager,
             AuditService audit,
             FileStorageService fileStorage,
-            NextOfKinPdfService nextOfKinPdf)
+            NextOfKinPdfService nextOfKinPdf,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _records = records;
@@ -37,6 +39,7 @@ namespace HrPortal.Controllers
             _audit = audit;
             _fileStorage = fileStorage;
             _nextOfKinPdf = nextOfKinPdf;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -67,6 +70,77 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             return View(employee);
+        }
+
+        /// <summary>
+        /// The whole employee record as a printable document: the
+        /// employment particulars, the personal ones, and the
+        /// emergency contact. The next of kin form stays separate --
+        /// that one is a form somebody signs, this is the record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .AsNoTracking()
+                .Include(e => e.Department)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            var who = $"{employee.FirstName} {employee.LastName}";
+
+            var record = new RecordDocument(
+                "Employee Record",
+                employee.EmployeeNumber)
+            {
+                Headline = who,
+                Caption = employee.Department?.Name,
+                Chip = employee.IsActive ? "Active" : "Left"
+            };
+
+            record.Section("Employment", "Post, department and dates")
+                .Add("Employee number", employee.EmployeeNumber)
+                .Add("Job title", employee.JobTitle)
+                .Add("Department", employee.Department?.Name)
+                .Add("Employment type", employee.EmploymentType.ToString())
+                .Add("Date joined", employee.DateJoined)
+                .Add("Contract end date", employee.ContractEndDate)
+                .Add("Active", employee.IsActive)
+                .Add("End date", employee.EndDate)
+                .Add("Leaving reason", employee.LeavingReason);
+
+            record.Section("Personal", "What the record holds")
+                .Add("First name(s)", employee.FirstName)
+                .Add("Surname", employee.LastName)
+                .Add("National ID", employee.NationalId)
+                .Add("Date of birth", employee.DateOfBirth)
+                .Add("Gender", employee.Gender.ToString())
+                .Add("Marital status", employee.MaritalStatus.ToString())
+                .Add("Address", employee.Address);
+
+            record.Section("Contact", "How to reach them")
+                .Add("Email", employee.Email)
+                .Add("Phone number", employee.PhoneNumber);
+
+            record.Section("In an emergency", "Who we call")
+                .Add("Name", employee.EmergencyContactName)
+                .Add(
+                    "Relationship",
+                    employee.EmergencyContactRelationship)
+                .Add("Phone number", employee.EmergencyContactPhone)
+                .Add("Address", employee.EmergencyContactAddress)
+                .AddStamp(
+                    "Confirmed by the employee",
+                    employee.NextOfKinConfirmedAt);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> NextOfKinForm(int? id)
