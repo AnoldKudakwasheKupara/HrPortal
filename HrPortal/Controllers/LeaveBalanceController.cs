@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -15,12 +16,68 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly RecordScope _scope;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public LeaveBalanceController(
             ApplicationDbContext context,
-            RecordScope scope)
+            RecordScope scope,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _scope = scope;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// An employee's balance for one leave type and year, as a
+        /// printable record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var balance = await _context.LeaveBalances
+                .AsNoTracking()
+                .Include(b => b.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(b => b.LeaveType)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (balance == null)
+                return NotFound();
+
+            var who = $"{balance.Employee.FirstName} " +
+                      $"{balance.Employee.LastName}";
+
+            var record = new RecordDocument(
+                "Leave Balance",
+                balance.Employee.EmployeeNumber)
+            {
+                Headline = who,
+                Caption = balance.Employee.Department?.Name,
+                Chip = $"{balance.LeaveType.Name} {balance.Year}"
+            };
+
+            record.Section("Employee", "Whose balance this is")
+                .Add("Name", who)
+                .Add("Employee number", balance.Employee.EmployeeNumber)
+                .Add("Department", balance.Employee.Department?.Name);
+
+            record.Section(
+                    "Balance",
+                    $"{balance.LeaveType.Name}, {balance.Year}")
+                .Add("Leave type", balance.LeaveType.Name)
+                .Add("Year", balance.Year)
+                .Add("Days allocated", balance.AllocatedDays)
+                .Add("Days used", balance.UsedDays)
+                .Add("Days pending approval", balance.PendingDays)
+                .Add("Days remaining", balance.RemainingDays);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(int? year)
