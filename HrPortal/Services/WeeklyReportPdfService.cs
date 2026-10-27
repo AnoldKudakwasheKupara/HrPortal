@@ -10,17 +10,25 @@ namespace HrPortal.Services
     {
         private readonly WeeklyReportBranding _branding;
 
-        private const string Ink = "#1f2933";
-        private const string Muted = "#6b7280";
-        private const string Rule = "#d9dee5";
-        private const string Accent = "#1a3a6b";
+        private readonly BrandAssets _brand;
 
-        public WeeklyReportPdfService(IOptions<WeeklyReportBranding> branding)
+        public WeeklyReportPdfService(
+            IOptions<WeeklyReportBranding> branding,
+            BrandAssets brand)
         {
             _branding = branding.Value;
+            _brand = brand;
         }
 
-        public byte[] Render(WeeklyReport report)
+        public byte[] Render(WeeklyReport report) =>
+            Build(report).GeneratePdf();
+
+        /// <summary>
+        /// The document itself, kept separate from how it is
+        /// rendered so it can also be exported as images for a
+        /// visual check.
+        /// </summary>
+        public IDocument Build(WeeklyReport report)
         {
             var issued = report.PeriodEnd;
 
@@ -32,16 +40,11 @@ namespace HrPortal.Services
                 .OrderBy(p => p.Order)
                 .ToList();
 
-            var document = Document.Create(container =>
+            return Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(2, Unit.Centimetre);
-                    page.DefaultTextStyle(t => t
-                        .FontSize(10)
-                        .FontColor(Ink)
-                        .FontFamily("Lato"));
+                    DocumentStyle.Apply(page, 10);
 
                     page.Header().Element(e => Header(e, issued));
 
@@ -51,8 +54,6 @@ namespace HrPortal.Services
                     page.Footer().Element(Footer);
                 });
             });
-
-            return document.GeneratePdf();
         }
 
         private void Header(IContainer container, DateTime issued)
@@ -60,13 +61,13 @@ namespace HrPortal.Services
             container
                 .PaddingBottom(14)
                 .BorderBottom(1)
-                .BorderColor(Rule)
+                .BorderColor(DocumentStyle.Rule)
                 .PaddingBottom(6)
                 .AlignRight()
                 .Text($"{_branding.DepartmentName.ToUpperInvariant()} REPORT " +
                       $"| {issued:d MMMM yyyy}")
                 .FontSize(8)
-                .FontColor(Muted)
+                .FontColor(DocumentStyle.Muted)
                 .LetterSpacing(0.05f);
         }
 
@@ -75,7 +76,7 @@ namespace HrPortal.Services
             container
                 .PaddingTop(10)
                 .BorderTop(1)
-                .BorderColor(Rule)
+                .BorderColor(DocumentStyle.Rule)
                 .PaddingTop(6)
                 .Row(row =>
                 {
@@ -83,13 +84,13 @@ namespace HrPortal.Services
                         .Text($"{_branding.OrganisationName} | " +
                               $"{_branding.DepartmentName}")
                         .FontSize(8)
-                        .FontColor(Muted);
+                        .FontColor(DocumentStyle.Muted);
 
                     row.ConstantItem(80).AlignRight().Text(text =>
                     {
                         text.DefaultTextStyle(t => t
                             .FontSize(8)
-                            .FontColor(Muted));
+                            .FontColor(DocumentStyle.Muted));
 
                         text.Span("Page ");
                         text.CurrentPageNumber();
@@ -151,7 +152,7 @@ namespace HrPortal.Services
                           $"— {_branding.OrganisationName} " +
                           $"| {issued:dd MMMM yyyy}")
                     .FontSize(8)
-                    .FontColor(Muted);
+                    .FontColor(DocumentStyle.Muted);
             });
         }
 
@@ -169,10 +170,17 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
+                if (_brand.HasLogo)
+                {
+                    column.Item().PaddingBottom(10)
+                        .Width(150)
+                        .Image(_brand.Logo!);
+                }
+
                 column.Item()
                     .Text(_branding.DepartmentName.ToUpperInvariant())
                     .FontSize(11)
-                    .FontColor(Accent)
+                    .FontColor(DocumentStyle.Green)
                     .SemiBold()
                     .LetterSpacing(0.2f);
 
@@ -180,13 +188,13 @@ namespace HrPortal.Services
                     .Text(_branding.DocumentTitle)
                     .FontSize(28)
                     .Bold()
-                    .FontColor(Ink)
+                    .FontColor(DocumentStyle.Ink)
                     .LineHeight(1.1f);
 
                 column.Item().PaddingTop(6)
                     .Text(_branding.Subtitle)
                     .FontSize(10)
-                    .FontColor(Muted)
+                    .FontColor(DocumentStyle.Muted)
                     .LetterSpacing(0.1f);
             });
         }
@@ -198,17 +206,17 @@ namespace HrPortal.Services
                 column.Item()
                     .Text($"Prepared by: {report.PreparedBy}")
                     .FontSize(9)
-                    .FontColor(Muted);
+                    .FontColor(DocumentStyle.Muted);
 
                 column.Item().PaddingTop(2)
                     .Text($"{_branding.OrganisationName} | " +
                           $"{_branding.Classification}")
                     .FontSize(9)
-                    .FontColor(Muted);
+                    .FontColor(DocumentStyle.Muted);
 
                 column.Item().PaddingTop(10)
                     .BorderTop(2)
-                    .BorderColor(Accent)
+                    .BorderColor(DocumentStyle.Green)
                     .PaddingTop(6)
                     .Text($"Reporting Period: " +
                           $"{report.PeriodStart:dd MMMM} – " +
@@ -228,7 +236,7 @@ namespace HrPortal.Services
                 .Text(text)
                 .FontSize(13)
                 .SemiBold()
-                .FontColor(Accent);
+                .FontColor(DocumentStyle.Green);
         }
 
         private void Section(IContainer container, WeeklyReportSection section)
@@ -254,7 +262,7 @@ namespace HrPortal.Services
                         if (status != null)
                         {
                             text.Span($": {status}")
-                                .FontColor(Accent);
+                                .FontColor(DocumentStyle.Green);
                         }
                     });
                 }
@@ -276,9 +284,12 @@ namespace HrPortal.Services
                 {
                     column.Item().PaddingLeft(10).Row(row =>
                     {
-                        row.ConstantItem(12)
-                            .Text("•")
-                            .FontColor(Accent);
+                        // Drawn rather than typed. Montserrat's bullet
+                        // is faint at this size, and a shape cannot go
+                        // missing from a font.
+                        row.ConstantItem(12).PaddingTop(5).AlignLeft()
+                            .Width(3.5f).Height(3.5f)
+                            .Background(DocumentStyle.Teal);
 
                         row.RelativeItem()
                             .Text(line)
