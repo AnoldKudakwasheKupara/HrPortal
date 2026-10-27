@@ -46,7 +46,12 @@ namespace HrPortal.Services
                 {
                     DocumentStyle.Apply(page, 10);
 
-                    page.Header().Element(e => Header(e, issued));
+                    page.Header().Element(e => DocumentStyle.Head(
+                        e,
+                        _brand,
+                        _branding.DocumentTitle,
+                        $"{report.PeriodStart:d MMM} – " +
+                        $"{report.PeriodEnd:d MMM yyyy}"));
 
                     page.Content().Element(e =>
                         Content(e, report, sections, priorities, issued));
@@ -54,25 +59,6 @@ namespace HrPortal.Services
                     page.Footer().Element(Footer);
                 });
             });
-        }
-
-        private void Header(IContainer container, DateTime issued)
-        {
-            // The page has no margin of its own -- the forms run their
-            // banner to the paper's edge -- so every band here puts
-            // the gutter back.
-            DocumentStyle.Gutters(container)
-                .PaddingTop(20)
-                .PaddingBottom(14)
-                .BorderBottom(1)
-                .BorderColor(DocumentStyle.Rule)
-                .PaddingBottom(6)
-                .AlignRight()
-                .Text($"{_branding.DepartmentName.ToUpperInvariant()} REPORT " +
-                      $"| {issued:d MMMM yyyy}")
-                .FontSize(8)
-                .FontColor(DocumentStyle.Muted)
-                .LetterSpacing(0.05f);
         }
 
         private void Footer(IContainer container)
@@ -175,23 +161,12 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
-                if (_brand.HasLogo)
-                {
-                    column.Item().PaddingBottom(10)
-                        .Width(150)
-                        .Image(_brand.Logo!);
-                }
-
+                // The banner already says what this document is, so
+                // the cover names the department producing it rather
+                // than repeating the title underneath itself.
                 column.Item()
                     .Text(_branding.DepartmentName.ToUpperInvariant())
-                    .FontSize(11)
-                    .FontColor(DocumentStyle.Green)
-                    .SemiBold()
-                    .LetterSpacing(0.2f);
-
-                column.Item().PaddingTop(2)
-                    .Text(_branding.DocumentTitle)
-                    .FontSize(28)
+                    .FontSize(26)
                     .Bold()
                     .FontColor(DocumentStyle.Ink)
                     .LineHeight(1.1f);
