@@ -43,6 +43,8 @@
             <a asp-action="Edit" asp-route-id="@Model.Id"
                class="btn btn-primary">Edit</a>
 
+            <partial name="_DownloadPdf" model="Model.Id" />
+
             <a asp-action="Index" class="btn btn-secondary">Back</a>
         </div>
 

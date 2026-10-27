@@ -15,13 +15,71 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
+        private readonly RecordDocumentPdfService _pdf;
 
         public AssetController(
             ApplicationDbContext context,
-            AuditService audit)
+            AuditService audit,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _audit = audit;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The asset record as a printable document, for a handover
+        /// note or an audit file.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var asset = await _context.Assets
+                .AsNoTracking()
+                .Include(a => a.AssignedToEmployee)
+                    .ThenInclude(e => e!.Department)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (asset == null)
+                return NotFound();
+
+            var holder = asset.AssignedToEmployee;
+
+            var record = new RecordDocument(
+                "Asset Record",
+                asset.SerialNumber)
+            {
+                Headline = asset.DeviceModel,
+                Caption = asset.Company,
+                Chip = asset.IsInUse ? "In use" : "Not in use"
+            };
+
+            record.Section("Device", "What the asset is and its condition")
+                .Add("Device model", asset.DeviceModel)
+                .Add("Serial number", asset.SerialNumber)
+                .Add("Processor", asset.Processor)
+                .Add("Company", asset.Company)
+                .Add("Condition", asset.Condition.ToString())
+                .Add("In use", asset.IsInUse)
+                .Add("Procured on", asset.ProcuredOn);
+
+            record.Section("Assignment", "Who holds it, and since when")
+                .Add(
+                    "Assigned to",
+                    holder == null
+                        ? null
+                        : $"{holder.FirstName} {holder.LastName}")
+                .Add("Department", holder?.Department?.Name)
+                .Add("Assigned on", asset.AssignedOn);
+
+            record.Note(asset.Notes);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(
