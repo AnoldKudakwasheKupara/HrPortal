@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +14,73 @@ namespace HrPortal.Controllers
     public class TrainingFeedbackController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
         public TrainingFeedbackController(
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// One person's verdict on one course, as a printable
+        /// record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var feedback = await _context.TrainingFeedbacks
+                .AsNoTracking()
+                .Include(f => f.TrainingAssignment)
+                    .ThenInclude(a => a.TrainingCourse)
+                .Include(f => f.TrainingAssignment)
+                    .ThenInclude(a => a.Employee)
+                        .ThenInclude(e => e.Department)
+                .FirstOrDefaultAsync(f => f.Id == id);
+
+            if (feedback == null)
+                return NotFound();
+
+            var assignment = feedback.TrainingAssignment;
+
+            var who = $"{assignment.Employee.FirstName} " +
+                      $"{assignment.Employee.LastName}";
+
+            var record = new RecordDocument("Training Feedback")
+            {
+                Headline = assignment.TrainingCourse.Title,
+                Caption = who,
+                Chip = $"{feedback.Rating} out of 5"
+            };
+
+            record.Section("Course", "What was attended")
+                .Add("Title", assignment.TrainingCourse.Title)
+                .Add("Trainer", assignment.TrainingCourse.Trainer)
+                .Add(
+                    "Training date",
+                    assignment.TrainingCourse.TrainingDate);
+
+            record.Section("Respondent", "Who gave the feedback")
+                .Add("Name", who)
+                .Add(
+                    "Employee number",
+                    assignment.Employee.EmployeeNumber)
+                .Add("Department", assignment.Employee.Department?.Name);
+
+            record.Section("Verdict", "What they said")
+                .Add("Rating", $"{feedback.Rating} out of 5")
+                .AddStamp("Submitted", feedback.SubmittedAt);
+
+            record.Note(feedback.Comments);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
