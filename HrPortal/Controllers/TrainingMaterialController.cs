@@ -22,14 +22,69 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
         private readonly CurrentUserService _currentUser;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public TrainingMaterialController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// What is known about the material, as a printable record.
+        /// This is the card, not the file -- Download still fetches
+        /// the material itself.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var material = await _context.TrainingMaterials
+                .AsNoTracking()
+                .Include(m => m.TrainingCourse)
+                .Include(m => m.UploadedByEmployee)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (material == null)
+                return NotFound();
+
+            var uploader = material.UploadedByEmployee;
+
+            var record = new RecordDocument("Training Material")
+            {
+                Headline = material.OriginalFileName,
+                Caption = material.TrainingCourse.Title
+            };
+
+            record.Section("Material", "The file held against the course")
+                .Add("File name", material.OriginalFileName)
+                .Add("Stored as", material.FileName);
+
+            record.Section("Course", "What it belongs to")
+                .Add("Title", material.TrainingCourse.Title)
+                .Add("Trainer", material.TrainingCourse.Trainer);
+
+            record.Section("Provenance", "Who put it there, and when")
+                .Add(
+                    "Uploaded by",
+                    uploader == null
+                        ? null
+                        : $"{uploader.FirstName} {uploader.LastName}")
+                .AddStamp("Uploaded", material.UploadedAt);
+
+            record.Note(material.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(int? courseId)
