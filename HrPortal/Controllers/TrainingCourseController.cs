@@ -18,12 +18,80 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public TrainingCourseController(
             ApplicationDbContext context,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _currentUser = currentUser;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The course and how far its assignments have got, as a
+        /// printable record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var course = await _context.TrainingCourses
+                .AsNoTracking()
+                .Include(c => c.CreatedByEmployee)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (course == null)
+                return NotFound();
+
+            var assignments = await _context.TrainingAssignments
+                .AsNoTracking()
+                .Where(a => a.TrainingCourseId == course.Id)
+                .ToListAsync();
+
+            var done = assignments.Count(a => a.IsCompleted);
+
+            var overdue = assignments.Count(a =>
+                !a.IsCompleted &&
+                a.DueDate != null &&
+                a.DueDate < DateTime.Today);
+
+            var author = course.CreatedByEmployee;
+
+            var record = new RecordDocument("Training Course")
+            {
+                Headline = course.Title,
+                Caption = course.Trainer,
+                Chip = course.IsActive ? "Active" : "Inactive"
+            };
+
+            record.Section("Course", "What is taught, and by whom")
+                .Add("Title", course.Title)
+                .Add("Trainer", course.Trainer)
+                .Add("Training date", course.TrainingDate)
+                .Add("Active", course.IsActive)
+                .Add(
+                    "Created by",
+                    author == null
+                        ? null
+                        : $"{author.FirstName} {author.LastName}")
+                .AddStamp("Created", course.CreatedAt);
+
+            record.Section("Take-up", "How far the assignments have got")
+                .Add("Assigned to", assignments.Count)
+                .Add("Completed", done)
+                .Add("Outstanding", assignments.Count - done)
+                .Add("Past the due date", overdue);
+
+            record.Note(course.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
