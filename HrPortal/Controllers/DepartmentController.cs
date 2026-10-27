@@ -2,6 +2,7 @@
 using HrPortal.Entities;
 using HrPortal.ViewModels;
 using HrPortal.Security;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,71 @@ namespace HrPortal.Controllers
     public class DepartmentController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
-        public DepartmentController(ApplicationDbContext context)
+        public DepartmentController(
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The department and everyone currently in it, as a
+        /// printable record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var department = await _context.Departments
+                .AsNoTracking()
+                .Include(d => d.Employees)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
+            if (department == null)
+                return NotFound();
+
+            var active = department.Employees
+                .Where(e => e.IsActive)
+                .OrderBy(e => e.LastName)
+                .ThenBy(e => e.FirstName)
+                .ToList();
+
+            var record = new RecordDocument("Department Record")
+            {
+                Headline = department.Name,
+                Chip = department.IsActive ? "Active" : "Inactive"
+            };
+
+            record.Section("Department", "How the department is set up")
+                .Add("Name", department.Name)
+                .Add("Active", department.IsActive)
+                .Add("People on strength", active.Count)
+                .Add("People on record", department.Employees.Count);
+
+            var people = record.Section(
+                "People",
+                "Everyone currently on strength");
+
+            foreach (var employee in active)
+            {
+                people.Add(
+                    $"{employee.FirstName} {employee.LastName}",
+                    employee.JobTitle);
+            }
+
+            if (active.Count == 0)
+                people.Add("Nobody", "This department has no active staff");
+
+            record.Note(department.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
