@@ -18,12 +18,81 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public LicenseController(
             ApplicationDbContext context,
-            AuditService audit)
+            AuditService audit,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _audit = audit;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The licence and when it runs out, as a printable record
+        /// for a renewal file.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var licence = await _context.Licenses
+                .AsNoTracking()
+                .Include(l => l.Vendor)
+                .Include(l => l.AssignedToEmployee)
+                .FirstOrDefaultAsync(l => l.Id == id);
+
+            if (licence == null)
+                return NotFound();
+
+            var holder = licence.AssignedToEmployee;
+
+            var days = (licence.ExpiryDate.Date - DateTime.Today).Days;
+
+            var record = new RecordDocument(
+                "Licence Record",
+                licence.Reference)
+            {
+                Headline = licence.Name,
+                Caption = licence.Vendor?.Name,
+                Chip = licence.Status.ToString()
+            };
+
+            record.Section("Licence", "What is held and under what terms")
+                .Add("Name", licence.Name)
+                .Add("Type", licence.Type.ToString())
+                .Add("Reference", licence.Reference)
+                .Add("Status", licence.Status.ToString())
+                .Add("Seats", licence.Seats)
+                .Add("Cost", licence.Cost)
+                .Add("Renews automatically", licence.AutoRenews);
+
+            record.Section("Term", "When it runs, and how long is left")
+                .Add("Start date", licence.StartDate)
+                .Add("Expiry date", licence.ExpiryDate)
+                .Add(
+                    "Days remaining",
+                    days < 0
+                        ? $"Expired {Math.Abs(days):N0} days ago"
+                        : $"{days:N0}");
+
+            record.Section("Held by", "Vendor and holder")
+                .Add("Vendor", licence.Vendor?.Name)
+                .Add(
+                    "Assigned to",
+                    holder == null
+                        ? null
+                        : $"{holder.FirstName} {holder.LastName}");
+
+            record.Note(licence.Notes);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(
