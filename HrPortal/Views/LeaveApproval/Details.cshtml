@@ -18,6 +18,8 @@
             </p>
         </div>
 
+        <partial name="_DownloadPdf" model="@Model.Request.Id" />
+
         <a asp-action="@(Model.CanActAsMd ? "FinalApproval" : "Index")"
            class="btn btn-secondary">
 

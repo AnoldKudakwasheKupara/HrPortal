@@ -16,14 +16,40 @@ namespace HrPortal.Controllers
         private readonly LeaveWorkflowService _workflow;
         private readonly CurrentUserService _currentUser;
 
+        private readonly LeaveApplicationPdfService _pdf;
+
         public LeaveApprovalController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            LeaveApplicationPdfService pdf)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The leave application form behind the request being
+        /// approved. The same document the applicant can download,
+        /// so an approver prints what they are deciding on rather
+        /// than a summary of it.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var request = await LoadRequest(id.Value);
+
+            if (request == null)
+                return NotFound();
+
+            return File(
+                await _pdf.RenderAsync(request),
+                "application/pdf",
+                $"Leave application - {request.RequestNumber}.pdf");
         }
 
         [Authorize(Roles = Roles.HrOnly)]
