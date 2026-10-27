@@ -26,18 +26,94 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly RecordScope _scope;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public EmployeeDocumentController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             CurrentUserService currentUser,
             AuditService audit,
-            RecordScope scope)
+            RecordScope scope,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
             _audit = audit;
             _scope = scope;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// What is known about the document, as a printable record.
+        /// This is the cover sheet, not the file -- Download still
+        /// fetches the document itself.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var document = await _context.EmployeeDocuments
+                .AsNoTracking()
+                .Include(d => d.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(d => d.DocumentCategory)
+                .Include(d => d.UploadedByEmployee)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
+            if (document == null)
+                return NotFound();
+
+            var who = $"{document.Employee.FirstName} " +
+                      $"{document.Employee.LastName}";
+
+            var expired =
+                document.ExpiryDate != null &&
+                document.ExpiryDate < DateTime.Today;
+
+            var uploader = document.UploadedByEmployee;
+
+            var record = new RecordDocument(
+                "Employee Document",
+                document.Employee.EmployeeNumber)
+            {
+                Headline = document.OriginalFileName,
+                Caption = who,
+                Chip = expired
+                    ? "Expired"
+                    : document.DocumentCategory.Name
+            };
+
+            record.Section("Document", "The file held on the record")
+                .Add("File name", document.OriginalFileName)
+                .Add("Category", document.DocumentCategory.Name)
+                .Add(
+                    "Restricted",
+                    document.DocumentCategory.IsRestricted)
+                .Add("Expiry date", document.ExpiryDate);
+
+            record.Section("Employee", "Whose record it sits on")
+                .Add("Name", who)
+                .Add(
+                    "Employee number",
+                    document.Employee.EmployeeNumber)
+                .Add("Department", document.Employee.Department?.Name);
+
+            record.Section("Provenance", "Who filed it, and when")
+                .Add(
+                    "Uploaded by",
+                    uploader == null
+                        ? document.UploadedByName
+                        : $"{uploader.FirstName} {uploader.LastName}")
+                .AddStamp("Uploaded", document.UploadedAt);
+
+            record.Note(document.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(
