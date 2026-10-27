@@ -1,19 +1,20 @@
 using HrPortal.Entities;
 using QuestPDF.Fluent;
-using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace HrPortal.Services
 {
     /// <summary>
     /// Renders a loan application as the company's form, so a printed
-    /// copy reads like the paper one it replaced.
+    /// copy reads like the paper one it replaced. The chrome comes
+    /// from <see cref="DocumentStyle"/>.
+    ///
+    /// This one is a letter rather than a questionnaire, so the
+    /// sections frame the request instead of numbering questions.
     /// </summary>
     public class LoanApplicationPdfService
     {
-        private const string Ink = "#1f2933";
-        private const string Muted = "#6b7280";
-        private const string Rule = "#d9dee5";
+        private const string Title = "Loan Application";
 
         private readonly BrandAssets _brand;
 
@@ -22,26 +23,28 @@ namespace HrPortal.Services
             _brand = brand;
         }
 
-        public byte[] Render(LoanApplication application)
+        public byte[] Render(LoanApplication application) =>
+            Build(application).GeneratePdf();
+
+        /// <summary>
+        /// The document itself, kept separate from how it is
+        /// rendered so it can also be exported as images for a
+        /// visual check.
+        /// </summary>
+        public IDocument Build(LoanApplication application)
         {
-            var document = Document.Create(container =>
+            return Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(2, Unit.Centimetre);
-                    page.DefaultTextStyle(t => t
-                        .FontSize(10)
-                        .FontColor(Ink)
-                        .FontFamily("Lato"));
+                    DocumentStyle.Apply(page);
 
                     page.Content().Element(e => Content(e, application));
 
-                    page.Footer().Element(e => Footer(e, application));
+                    page.Footer().Element(e => DocumentStyle.Footer(
+                        e, application.ApplicationNumber));
                 });
             });
-
-            return document.GeneratePdf();
         }
 
         private void Content(
@@ -53,34 +56,39 @@ namespace HrPortal.Services
 
             container.Column(column =>
             {
-                column.Spacing(11);
+                column.Spacing(6);
 
-                column.Item().Element(Letterhead);
+                column.Item().Element(e => DocumentStyle.Letterhead(
+                    e, _brand, Title, application.ApplicationNumber));
+
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "1", "Existing commitments"));
 
                 column.Item().Element(e => Standing(e, application));
 
-                column.Item().AlignRight().Element(e => Field(
-                    e,
-                    "DATE",
-                    application.CreatedAt.ToLocalTime()
-                        .ToString("d MMMM yyyy"),
-                    140));
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "2", "The request"));
 
-                column.Item().PaddingTop(2)
-                    .Text("RE: LOAN APPLICATION FORM")
-                    .Bold()
-                    .LetterSpacing(0.03f);
+                column.Item().AlignRight().Width(150)
+                    .Element(e => DocumentStyle.Field(
+                        e,
+                        "Date",
+                        application.CreatedAt.ToLocalTime()
+                            .ToString("d MMMM yyyy")));
 
                 column.Item().Text(text =>
                 {
+                    text.DefaultTextStyle(s => s.LineHeight(1.45f));
+
                     text.Span("I, ");
-                    text.Span(who).Bold();
+                    text.Span(who).SemiBold();
                     text.Span(" hereby request you to grant to me a " +
                               "loan of ");
                     text.Span(LoanCurrencies.Format(
                             application.Currency,
                             application.AmountRequested))
-                        .Bold();
+                        .SemiBold()
+                        .FontColor(DocumentStyle.Green);
                     text.Span(" (");
                     text.Span(LoanCurrencies.InWords(
                         application.Currency,
@@ -97,22 +105,26 @@ namespace HrPortal.Services
                     "whatsoever, I am fully liable to repay the " +
                     "remaining amount of the loan after adjustment of " +
                     "all dues to me by the company before my " +
-                    "departure.");
+                    "departure.")
+                    .LineHeight(1.45f);
 
-                column.Item().PaddingTop(2).Row(row =>
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "3", "Amount and repayment"));
+
+                column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(e => Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
-                        "AMOUNT REQUIRED",
+                        "Amount required",
                         LoanCurrencies.Format(
                             application.Currency,
                             application.AmountRequested)));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
-                        "AMOUNT AUTHORIZED",
+                        "Amount authorized",
                         application.AmountAuthorised == null
                             ? null
                             : LoanCurrencies.Format(
@@ -122,45 +134,46 @@ namespace HrPortal.Services
 
                 column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(e => Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
-                        "REPAYMENT PERIOD",
+                        "Repayment period",
                         $"{application.RepaymentMonths} months"));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
-                        "WITH EFFECT FROM",
+                        "With effect from",
                         application.RepaymentStartDate?
                             .ToString("d MMMM yyyy")));
                 });
 
-                column.Item().Element(e => Field(
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
-                    "PURPOSE (ATTACH RECEIPTS OR QUOTATIONS)",
+                    "Purpose (attach receipts or quotations)",
                     application.Purpose));
 
                 if (application.Attachments.Any())
                 {
-                    column.Item().Text(
+                    column.Item().Element(e => DocumentStyle.Note(
+                        e,
                         "Attached: " +
                         string.Join(
                             ", ",
                             application.Attachments
                                 .OrderBy(a => a.UploadedAt)
-                                .Select(a => a.OriginalFileName)))
-                        .FontSize(8)
-                        .FontColor(Muted);
+                                .Select(a => a.OriginalFileName))));
                 }
 
-                column.Item().PaddingTop(6).Text("Thanking You.");
+                column.Item().PaddingTop(4).Text("Thanking You.");
                 column.Item().Text("Yours Faithfully,");
 
                 column.Item().Element(e => Signature(e, application, who));
 
-                column.Item().PaddingTop(6).Element(e =>
-                    Sanction(e, application));
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "4", "Sanction"));
+
+                column.Item().Element(e => Sanction(e, application));
             });
         }
 
@@ -180,24 +193,24 @@ namespace HrPortal.Services
                 column.Item().Row(row =>
                 {
                     row.RelativeItem().Element(e =>
-                        Blank(e, "OUTSTANDING LOAN"));
+                        DocumentStyle.Blank(e, "Outstanding loan"));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e =>
-                        Blank(e, "DATE TO CLEAR OUTSTANDING LOAN"));
+                    row.RelativeItem().Element(e => DocumentStyle.Blank(
+                        e, "Date to clear outstanding loan"));
                 });
 
                 column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(e =>
-                        Blank(e, "CURRENT DEDUCTION P.M."));
+                    row.RelativeItem().Element(e => DocumentStyle.Blank(
+                        e, "Current deduction p.m."));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
-                        "NEW INSTALLMENT PER MONTH",
+                        "New installment per month",
                         application.MonthlyInstalment == null
                             ? null
                             : LoanCurrencies.Format(
@@ -205,12 +218,11 @@ namespace HrPortal.Services
                                 application.MonthlyInstalment.Value)));
                 });
 
-                column.Item()
-                    .Text("Outstanding loan, the date it clears and " +
-                          "the current deduction are completed by " +
-                          "payroll, which holds them.")
-                    .FontSize(8)
-                    .FontColor(Muted);
+                column.Item().Element(e => DocumentStyle.Note(
+                    e,
+                    "Outstanding loan, the date it clears and the " +
+                    "current deduction are completed by payroll, " +
+                    "which holds them."));
             });
         }
 
@@ -221,18 +233,19 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
-                column.Item().PaddingTop(10).Element(e =>
-                    Blank(e, "NAME & SIGNATURE OF THE EMPLOYEE", 320));
+                column.Item().PaddingTop(8).Width(320).Element(e =>
+                    DocumentStyle.Blank(
+                        e, "Name & signature of the employee"));
 
                 if (application.SubmittedAt == null)
                     return;
 
-                column.Item()
-                    .Text($"Submitted in the portal by {who} on " +
-                          application.SubmittedAt.Value.ToLocalTime()
-                              .ToString("d MMMM yyyy"))
-                    .FontSize(8)
-                    .FontColor(Muted);
+                column.Item().PaddingTop(4).Element(e =>
+                    DocumentStyle.Note(
+                        e,
+                        $"Submitted in the portal by {who} on " +
+                        application.SubmittedAt.Value.ToLocalTime()
+                            .ToString("d MMMM yyyy")));
             });
         }
 
@@ -253,160 +266,59 @@ namespace HrPortal.Services
 
                 if (decision == null)
                 {
-                    column.Item().Element(e =>
-                        Blank(e, "LOAN SANCTIONED BY", 320));
+                    column.Item().Width(320).Element(e =>
+                        DocumentStyle.Blank(e, "Loan sanctioned by"));
 
-                    column.Item().Element(e =>
-                        Blank(e, "SIGNATURE", 320));
+                    column.Item().Width(320).Element(e =>
+                        DocumentStyle.Blank(e, "Signature"));
 
-                    column.Item()
-                        .Text("Not yet sanctioned.")
-                        .FontSize(8)
-                        .FontColor(Muted);
+                    column.Item().Element(e => DocumentStyle.Note(
+                        e, "Not yet sanctioned."));
 
                     return;
                 }
+
+                var approved =
+                    decision.Action == LoanApplicationAction.Approved;
 
                 var sanctionedBy = decision.ActionedByEmployee == null
                     ? null
                     : $"{decision.ActionedByEmployee.FirstName} " +
                       $"{decision.ActionedByEmployee.LastName}";
 
-                column.Item().Element(e => Field(
-                    e,
-                    decision.Action == LoanApplicationAction.Approved
-                        ? "LOAN SANCTIONED BY"
-                        : "DECLINED BY",
-                    sanctionedBy,
-                    320));
-
-                column.Item().Element(e => Blank(e, "SIGNATURE", 320));
-
-                column.Item()
-                    .Text(
-                        (decision.Action == LoanApplicationAction.Approved
-                            ? "Sanctioned in the portal on "
-                            : "Declined in the portal on ") +
-                        decision.ActionDate.ToLocalTime()
-                            .ToString("d MMMM yyyy") +
-                        (string.IsNullOrWhiteSpace(decision.Comment)
-                            ? "."
-                            : $". {decision.Comment}"))
-                    .FontSize(8)
-                    .FontColor(Muted);
-            });
-        }
-
-
-        /// <summary>
-        /// The company logo at the head of the form, falling back to
-        /// the name in text where the artwork cannot be read.
-        /// </summary>
-        private void Letterhead(IContainer container)
-        {
-            if (!_brand.HasLogo)
-            {
-                container
-                    .AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(11)
-                    .Bold();
-
-                return;
-            }
-
-            container
-                .AlignCenter()
-                .Width(190)
-                .Image(_brand.Logo!);
-        }
-
-        private void Field(
-            IContainer container,
-            string label,
-            string? value,
-            float? width = null)
-        {
-            var target = width == null
-                ? container
-                : container.Width(width.Value);
-
-            target.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .BorderBottom(1)
-                    .BorderColor(Rule)
-                    .PaddingBottom(3)
-                    .Text(string.IsNullOrWhiteSpace(value) ? "--" : value);
-            });
-        }
-
-        /// <summary>
-        /// A ruled line with nothing on it, to be completed by hand.
-        /// </summary>
-        private void Blank(
-            IContainer container,
-            string label,
-            float? width = null)
-        {
-            var target = width == null
-                ? container
-                : container.Width(width.Value);
-
-            target.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .MinHeight(16)
-                    .BorderBottom(1)
-                    .BorderColor(Rule);
-            });
-        }
-
-        private void Footer(
-            IContainer container,
-            LoanApplication application)
-        {
-            container
-                .PaddingTop(10)
-                .BorderTop(1)
-                .BorderColor(Rule)
-                .PaddingTop(6)
-                .Row(row =>
+                column.Item().Row(row =>
                 {
-                    row.RelativeItem()
-                        .Text($"{application.ApplicationNumber} - " +
-                              $"printed {DateTime.Now:d MMMM yyyy}")
-                        .FontSize(8)
-                        .FontColor(Muted);
+                    row.RelativeItem().Element(e =>
+                        DocumentStyle.TickBox(
+                            e, "Sanctioned", approved));
 
-                    row.RelativeItem()
-                        .AlignRight()
-                        .Text(t =>
-                        {
-                            t.DefaultTextStyle(s => s
-                                .FontSize(8)
-                                .FontColor(Muted));
+                    row.ConstantItem(18);
 
-                            t.Span("Page ");
-                            t.CurrentPageNumber();
-                            t.Span(" of ");
-                            t.TotalPages();
-                        });
+                    row.RelativeItem().Element(e =>
+                        DocumentStyle.TickBox(
+                            e, "Declined", !approved));
                 });
+
+                column.Item().Width(320).Element(e =>
+                    DocumentStyle.Field(
+                        e,
+                        approved ? "Loan sanctioned by" : "Declined by",
+                        sanctionedBy));
+
+                column.Item().Width(320).Element(e =>
+                    DocumentStyle.Blank(e, "Signature"));
+
+                column.Item().Element(e => DocumentStyle.Note(
+                    e,
+                    (approved
+                        ? "Sanctioned in the portal on "
+                        : "Declined in the portal on ") +
+                    decision.ActionDate.ToLocalTime()
+                        .ToString("d MMMM yyyy") +
+                    (string.IsNullOrWhiteSpace(decision.Comment)
+                        ? "."
+                        : $". {decision.Comment}")));
+            });
         }
     }
 }

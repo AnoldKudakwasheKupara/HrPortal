@@ -46,13 +46,19 @@ namespace HrPortal.Services
         /// <summary>
         /// Applies the shared page setup: A4, margins, Montserrat.
         /// </summary>
-        public static void Apply(PageDescriptor page)
+        /// <summary>
+        /// Takes the body size because the report sets a larger one
+        /// than the forms. It has to come through here: a second
+        /// DefaultTextStyle call replaces this one outright rather
+        /// than adding to it, and silently drops the typeface.
+        /// </summary>
+        public static void Apply(PageDescriptor page, float fontSize = 9)
         {
             page.Size(PageSizes.A4);
             page.Margin(1.25f, Unit.Centimetre);
 
             page.DefaultTextStyle(t => t
-                .FontSize(9)
+                .FontSize(fontSize)
                 .FontColor(Ink)
                 .FontFamily(DocumentFonts.Family, "Lato"));
         }
@@ -181,7 +187,7 @@ namespace HrPortal.Services
                     .PaddingBottom(3)
                     .Text(string.IsNullOrWhiteSpace(value)
                         ? NotRecorded
-                        : value)
+                        : Lines(value))
                     .FontSize(9.5f);
             });
         }
@@ -290,6 +296,33 @@ namespace HrPortal.Services
                         .FontColor(marked ? Green : Muted)
                         .LetterSpacing(0.05f);
                 });
+        }
+
+        /// <summary>
+        /// Addresses and free text arrive with whatever line endings
+        /// the browser sent. QuestPDF honours a bare newline, so
+        /// normalise to that rather than printing a stray glyph.
+        /// </summary>
+        private static string Lines(string value) =>
+            value.Replace("\r\n", "\n").Replace('\r', '\n');
+
+        /// <summary>
+        /// Something the reader must not skip, such as the standing
+        /// instruction on the next of kin form. Louder than a note
+        /// and quieter than a heading.
+        /// </summary>
+        public static void Callout(IContainer container, string text)
+        {
+            container
+                .Background(Wash)
+                .BorderLeft(2.5f)
+                .BorderColor(Teal)
+                .PaddingVertical(7)
+                .PaddingHorizontal(9)
+                .Text(text)
+                .FontSize(8.5f)
+                .FontColor(Ink)
+                .LineHeight(1.4f);
         }
 
         /// <summary>

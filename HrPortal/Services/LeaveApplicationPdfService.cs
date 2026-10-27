@@ -10,13 +10,11 @@ namespace HrPortal.Services
     /// <summary>
     /// Renders a leave request as the company's leave application
     /// form, so a printed copy reads like the paper one it replaced.
+    /// The chrome comes from <see cref="DocumentStyle"/>.
     /// </summary>
     public class LeaveApplicationPdfService
     {
-        private const string Ink = "#1f2933";
-        private const string Muted = "#6b7280";
-        private const string Rule = "#d9dee5";
-        private const string Box = "#f3f5f7";
+        private const string Title = "Leave Application";
 
         private readonly ApplicationDbContext _context;
 
@@ -50,33 +48,32 @@ namespace HrPortal.Services
                     b.LeaveTypeId == request.LeaveTypeId &&
                     b.Year == request.StartDate.Year);
 
-            return Render(request, leaveTypes, balance);
+            return Build(request, leaveTypes, balance).GeneratePdf();
         }
 
-        private byte[] Render(
+        /// <summary>
+        /// The document itself, kept separate from how it is
+        /// rendered so it can also be exported as images for a
+        /// visual check.
+        /// </summary>
+        public IDocument Build(
             LeaveRequest request,
             IReadOnlyList<LeaveType> leaveTypes,
             LeaveBalance? balance)
         {
-            var document = Document.Create(container =>
+            return Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(2, Unit.Centimetre);
-                    page.DefaultTextStyle(t => t
-                        .FontSize(10)
-                        .FontColor(Ink)
-                        .FontFamily("Lato"));
+                    DocumentStyle.Apply(page);
 
                     page.Content().Element(e =>
                         Content(e, request, leaveTypes, balance));
 
-                    page.Footer().Element(e => Footer(e, request));
+                    page.Footer().Element(e => DocumentStyle.Footer(
+                        e, request.RequestNumber));
                 });
             });
-
-            return document.GeneratePdf();
         }
 
         private void Content(
@@ -85,109 +82,101 @@ namespace HrPortal.Services
             IReadOnlyList<LeaveType> leaveTypes,
             LeaveBalance? balance)
         {
+            var who = $"{request.Employee.FirstName} " +
+                      $"{request.Employee.LastName}";
+
             container.Column(column =>
             {
-                column.Spacing(12);
+                column.Spacing(6);
 
-                column.Item().Element(Letterhead);
+                column.Item().Element(e => DocumentStyle.Letterhead(
+                    e, _brand, Title, request.RequestNumber));
 
-                column.Item().AlignCenter()
-                    .Text("LEAVE APPLICATION FORM")
-                    .FontSize(13)
-                    .Bold()
-                    .LetterSpacing(0.04f);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "1", "Applicant"));
 
-                column.Item().PaddingTop(4).Row(row =>
-                {
-                    row.RelativeItem().Element(e => Field(e,
-                        "FIRST NAME", request.Employee.FirstName));
+                column.Item().Element(e => DocumentStyle.DetailTable(
+                    e, new (string, string?)[]
+                    {
+                        ("First name", request.Employee.FirstName),
+                        ("Surname", request.Employee.LastName),
+                        ("Employee number",
+                            request.Employee.EmployeeNumber),
+                        ("Department",
+                            request.Employee.Department?.Name)
+                    }));
 
-                    row.ConstantItem(16);
-
-                    row.RelativeItem().Element(e => Field(e,
-                        "SURNAME", request.Employee.LastName));
-                });
-
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem().Element(e => Field(e,
-                        "EMPLOYEE NUMBER",
-                        request.Employee.EmployeeNumber));
-
-                    row.ConstantItem(16);
-
-                    row.RelativeItem().Element(e => Field(e,
-                        "DEPARTMENT",
-                        request.Employee.Department?.Name));
-                });
-
-                column.Item().PaddingTop(6)
-                    .Text("TYPE OF LEAVE - USE APPROPRIATE BOX (IN DAYS)")
-                    .Bold()
-                    .FontSize(9)
-                    .LetterSpacing(0.03f);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "2", "Type of leave  (in days)"));
 
                 column.Item().Element(e =>
                     Boxes(e, request, leaveTypes, balance));
 
-                column.Item().PaddingTop(4).Row(row =>
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "3", "Period applied for"));
+
+                column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(e => Field(e,
-                        "DATE FROM",
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "Date from",
                         request.StartDate.ToString("d MMMM yyyy")));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Field(e,
-                        "TO",
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "To",
                         request.EndDate.ToString("d MMMM yyyy")));
                 });
 
                 if (!string.IsNullOrWhiteSpace(request.Reason))
                 {
-                    column.Item().Element(e =>
-                        Field(e, "REASON", request.Reason));
+                    column.Item().Element(e => DocumentStyle.Field(
+                        e, "Reason", request.Reason));
                 }
 
-                column.Item().PaddingTop(6).Row(row =>
+                column.Item().Row(row =>
                 {
-                    row.RelativeItem(2).Element(e =>
-                        Field(e, "SIGNATURE OF APPLICANT",
-                            $"Submitted in the portal by " +
-                            $"{request.Employee.FirstName} " +
-                            $"{request.Employee.LastName}"));
+                    row.RelativeItem(2).Element(e => DocumentStyle.Field(
+                        e, "Signature of applicant", who));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Field(e, "DATE",
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "Date",
                         request.SubmittedAt.ToLocalTime()
                             .ToString("d MMMM yyyy")));
                 });
 
-                column.Item().PaddingTop(6)
-                    .Text("AUTHORISED BY (H.O.D OR MANAGER)")
-                    .Bold()
-                    .FontSize(9)
-                    .LetterSpacing(0.03f);
+                column.Item().Element(e => DocumentStyle.Note(
+                    e, $"Submitted in the portal by {who}."));
+
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "4", "Authorised by (H.O.D or manager)"));
 
                 column.Item().Element(e => Authorisations(e, request));
 
-                column.Item().PaddingTop(6)
-                    .Text("For official use")
-                    .Bold()
-                    .FontSize(9);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "5", "For official use"));
 
-                column.Item().Element(e => Blank(e,
-                    "Does the applicant qualify to go on leave? Yes or no"));
+                column.Item().Element(e => DocumentStyle.Blank(
+                    e,
+                    "Does the applicant qualify to go on leave? " +
+                    "Yes or no"));
 
-                column.Item().Element(e => Blank(e, "Reason"));
+                column.Item().Element(e => DocumentStyle.Blank(
+                    e, "Reason"));
             });
         }
 
         /// <summary>
         /// The leave type boxes. Only the type applied for carries a
         /// figure, since an application covers one type; the rest are
-        /// left blank as they are on the paper form.
+        /// left blank as they are on the paper form. The row applied
+        /// for is set in the brand green so the eye finds it without
+        /// having to read every label.
         /// </summary>
         private void Boxes(
             IContainer container,
@@ -197,47 +186,74 @@ namespace HrPortal.Services
         {
             var rows = leaveTypes
                 .Select(t => (
-                    Label: t.Name.ToUpperInvariant(),
+                    Label: t.Name,
                     Value: t.Id == request.LeaveTypeId
                         ? request.NumberOfDays.ToString("0.##")
-                        : null))
+                        : null,
+                    Summary: false))
                 .ToList();
 
-            rows.Add(("TOTAL LEAVE DAYS TAKEN",
-                balance?.UsedDays.ToString("0.##")));
+            rows.Add(("Total leave days taken",
+                balance?.UsedDays.ToString("0.##"), true));
 
-            rows.Add(("TOTAL LEAVE DAYS ACCRUED",
-                balance?.AllocatedDays.ToString("0.##")));
+            rows.Add(("Total leave days accrued",
+                balance?.AllocatedDays.ToString("0.##"), true));
 
-            rows.Add(("LEAVE DAYS BALANCE",
-                balance?.RemainingDays.ToString("0.##")));
+            rows.Add(("Leave days balance",
+                balance?.RemainingDays.ToString("0.##"), true));
 
             container.Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
                     columns.RelativeColumn();
-                    columns.ConstantColumn(70);
+                    columns.ConstantColumn(74);
                 });
 
-                foreach (var row in rows)
+                var firstSummary = rows.FindIndex(r => r.Summary);
+
+                for (var i = 0; i < rows.Count; i++)
                 {
-                    table.Cell()
-                        .BorderBottom(1)
-                        .BorderColor(Rule)
-                        .PaddingVertical(5)
-                        .Text(row.Label)
-                        .FontSize(9);
+                    var row = rows[i];
+                    var applied = row.Value != null && !row.Summary;
+
+                    // A heavier rule where the leave types end and the
+                    // running totals begin, so the two are not read as
+                    // one list.
+                    var divider = i == firstSummary;
 
                     table.Cell()
-                        .Border(1)
-                        .BorderColor(Rule)
-                        .Background(row.Value == null ? Colors.White : Box)
-                        .PaddingVertical(5)
+                        .BorderTop(divider ? 1.2f : 0)
+                        .BorderBottom(0.6f)
+                        .BorderColor(DocumentStyle.Rule)
+                        .PaddingVertical(4)
+                        .Text(row.Label.ToUpperInvariant())
+                        .FontSize(8)
+                        .SemiBold()
+                        .FontColor(applied || row.Summary
+                            ? DocumentStyle.Green
+                            : DocumentStyle.Muted)
+                        .LetterSpacing(0.05f);
+
+                    table.Cell()
+                        .BorderTop(divider ? 1.2f : 0.6f)
+                        .BorderBottom(0.6f)
+                        .BorderLeft(0.6f)
+                        .BorderRight(0.6f)
+                        .BorderColor(applied
+                            ? DocumentStyle.Green
+                            : DocumentStyle.Rule)
+                        .Background(row.Value == null
+                            ? Colors.White
+                            : DocumentStyle.Wash)
+                        .PaddingVertical(4)
                         .AlignCenter()
                         .Text(row.Value ?? " ")
-                        .FontSize(9)
-                        .Bold();
+                        .FontSize(9.5f)
+                        .Bold()
+                        .FontColor(applied
+                            ? DocumentStyle.Green
+                            : DocumentStyle.Ink);
                 }
             });
         }
@@ -264,23 +280,21 @@ namespace HrPortal.Services
             {
                 container.Column(column =>
                 {
-                    column.Spacing(14);
+                    column.Spacing(6);
 
                     column.Item().Row(row =>
                     {
                         row.RelativeItem(2).Element(e =>
-                            Blank(e, "NAME & SIGNATURE"));
+                            DocumentStyle.Blank(e, "Name & signature"));
 
-                        row.ConstantItem(16);
+                        row.ConstantItem(18);
 
                         row.RelativeItem().Element(e =>
-                            Blank(e, "DATE"));
+                            DocumentStyle.Blank(e, "Date"));
                     });
 
-                    column.Item()
-                        .Text("Not yet authorised.")
-                        .FontSize(8)
-                        .FontColor(Muted);
+                    column.Item().Element(e => DocumentStyle.Note(
+                        e, "Not yet authorised."));
                 });
 
                 return;
@@ -288,12 +302,12 @@ namespace HrPortal.Services
 
             container.Column(column =>
             {
-                column.Spacing(8);
+                column.Spacing(6);
 
                 foreach (var decision in decisions)
                 {
                     var who = decision.ActionedByEmployee == null
-                        ? "--"
+                        ? null
                         : $"{decision.ActionedByEmployee.FirstName} " +
                           $"{decision.ActionedByEmployee.LastName}";
 
@@ -309,119 +323,25 @@ namespace HrPortal.Services
                     column.Item().Row(row =>
                     {
                         row.RelativeItem(2).Element(e =>
-                            Field(e, stage.ToUpperInvariant(), who));
+                            DocumentStyle.Field(e, stage, who));
 
-                        row.ConstantItem(16);
+                        row.ConstantItem(18);
 
-                        row.RelativeItem().Element(e => Field(e, "DATE",
-                            decision.ActionDate.ToLocalTime()
-                                .ToString("d MMMM yyyy")));
+                        row.RelativeItem().Element(e =>
+                            DocumentStyle.Field(
+                                e,
+                                "Date",
+                                decision.ActionDate.ToLocalTime()
+                                    .ToString("d MMMM yyyy")));
                     });
 
                     if (!string.IsNullOrWhiteSpace(decision.Comment))
                     {
-                        column.Item()
-                            .Text(decision.Comment)
-                            .FontSize(8)
-                            .FontColor(Muted);
+                        column.Item().Element(e => DocumentStyle.Note(
+                            e, decision.Comment!));
                     }
                 }
             });
-        }
-
-
-        /// <summary>
-        /// The company logo at the head of the form, falling back to
-        /// the name in text where the artwork cannot be read.
-        /// </summary>
-        private void Letterhead(IContainer container)
-        {
-            if (!_brand.HasLogo)
-            {
-                container
-                    .AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(11)
-                    .Bold();
-
-                return;
-            }
-
-            container
-                .AlignCenter()
-                .Width(190)
-                .Image(_brand.Logo!);
-        }
-
-        private void Field(IContainer container, string label, string? value)
-        {
-            container.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .BorderBottom(1)
-                    .BorderColor(Rule)
-                    .PaddingBottom(3)
-                    .Text(string.IsNullOrWhiteSpace(value) ? "--" : value);
-            });
-        }
-
-        /// <summary>
-        /// A ruled line with nothing on it, to be completed by hand.
-        /// </summary>
-        private void Blank(IContainer container, string label)
-        {
-            container.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .MinHeight(16)
-                    .BorderBottom(1)
-                    .BorderColor(Rule);
-            });
-        }
-
-        private void Footer(IContainer container, LeaveRequest request)
-        {
-            container
-                .PaddingTop(10)
-                .BorderTop(1)
-                .BorderColor(Rule)
-                .PaddingTop(6)
-                .Row(row =>
-                {
-                    row.RelativeItem()
-                        .Text($"{request.RequestNumber} - " +
-                              $"printed {DateTime.Now:d MMMM yyyy}")
-                        .FontSize(8)
-                        .FontColor(Muted);
-
-                    row.RelativeItem()
-                        .AlignRight()
-                        .Text(t =>
-                        {
-                            t.DefaultTextStyle(s => s
-                                .FontSize(8)
-                                .FontColor(Muted));
-
-                            t.Span("Page ");
-                            t.CurrentPageNumber();
-                            t.Span(" of ");
-                            t.TotalPages();
-                        });
-                });
         }
     }
 }
