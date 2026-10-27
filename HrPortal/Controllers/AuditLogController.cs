@@ -1,4 +1,5 @@
 ﻿using HrPortal.DbContexts;
+using HrPortal.Services;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,67 @@ namespace HrPortal.Controllers
         private const int PageSize = 50;
 
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
-        public AuditLogController(ApplicationDbContext context)
+        public AuditLogController(
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// One audit entry as a printable record, for when a single
+        /// action has to be evidenced outside the system.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var log = await _context.AuditLogs
+                .AsNoTracking()
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e!.Department)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (log == null)
+                return NotFound();
+
+            var actor = log.Employee;
+
+            var record = new RecordDocument(
+                "Audit Entry",
+                log.Id.ToString())
+            {
+                Headline = log.Action,
+                Caption = log.EntityName,
+                Chip = log.Timestamp.ToLocalTime().ToString("d MMM yyyy")
+            };
+
+            record.Section("Entry", "What was done")
+                .Add("Action", log.Action)
+                .Add("Entity", log.EntityName)
+                .Add("Entity reference", log.EntityId)
+                .AddStamp("When", log.Timestamp)
+                .Add("From address", log.IpAddress);
+
+            record.Section("Who", "The account behind it")
+                .Add(
+                    "Name",
+                    actor == null
+                        ? "Not recorded against an employee"
+                        : $"{actor.FirstName} {actor.LastName}")
+                .Add("Employee number", actor?.EmployeeNumber)
+                .Add("Department", actor?.Department?.Name);
+
+            record.Note(log.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(
