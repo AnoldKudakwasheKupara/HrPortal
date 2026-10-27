@@ -9,16 +9,18 @@ namespace HrPortal.Services
     {
         private readonly Lazy<byte[]?> _logo;
 
+        private readonly Lazy<byte[]?> _markOnDark;
+
         public BrandAssets(
             IWebHostEnvironment environment,
             ILogger<BrandAssets> logger)
         {
-            _logo = new Lazy<byte[]?>(() =>
+            Lazy<byte[]?> Read(string file) => new(() =>
             {
                 var path = Path.Combine(
                     environment.WebRootPath ?? string.Empty,
                     "images",
-                    "intellego-logo.png");
+                    file);
 
                 try
                 {
@@ -26,9 +28,9 @@ namespace HrPortal.Services
                         return File.ReadAllBytes(path);
 
                     logger.LogWarning(
-                        "No logo was found at {Path}, so printed " +
-                        "forms will show the company name as text " +
-                        "instead.",
+                        "No artwork was found at {Path}, so printed " +
+                        "documents will show the company name as " +
+                        "text instead.",
                         path);
 
                     return null;
@@ -37,14 +39,17 @@ namespace HrPortal.Services
                 {
                     logger.LogWarning(
                         ex,
-                        "The logo at {Path} could not be read, so " +
-                        "printed forms will show the company name as " +
-                        "text instead.",
+                        "The artwork at {Path} could not be read, so " +
+                        "printed documents will show the company " +
+                        "name as text instead.",
                         path);
 
                     return null;
                 }
             });
+
+            _logo = Read("intellego-logo.png");
+            _markOnDark = Read("intellego-logo-on-dark.png");
         }
 
         /// <summary>
@@ -53,5 +58,13 @@ namespace HrPortal.Services
         public byte[]? Logo => _logo.Value;
 
         public bool HasLogo => Logo != null;
+
+        /// <summary>
+        /// The same mark recoloured for the green banner, or null
+        /// when it could not be read.
+        /// </summary>
+        public byte[]? MarkOnDark => _markOnDark.Value;
+
+        public bool HasMarkOnDark => MarkOnDark != null;
     }
 }
