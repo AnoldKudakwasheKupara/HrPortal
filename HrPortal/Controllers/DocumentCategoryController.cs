@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,49 @@ namespace HrPortal.Controllers
     public class DocumentCategoryController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
-        public DocumentCategoryController(ApplicationDbContext context)
+        public DocumentCategoryController(
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The category and how it is governed, as a printable
+        /// record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var category = await _context.DocumentCategories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category == null)
+                return NotFound();
+
+            var record = new RecordDocument("Document Category")
+            {
+                Headline = category.Name,
+                Chip = category.IsRestricted ? "Restricted" : "Open"
+            };
+
+            record.Section("Category", "How the category is governed")
+                .Add("Name", category.Name)
+                .Add("Active", category.IsActive)
+                .Add("Restricted", category.IsRestricted);
+
+            record.Note(category.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
