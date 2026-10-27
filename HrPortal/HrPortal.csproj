@@ -20,6 +20,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="QuestPDF" Version="2026.9.1" />
+    <!--
+      Pinned, not used directly. MailKit drags in 10.0.0, which carries
+      a high-severity advisory (GHSA-846f-f764-76mx). A direct
+      reference wins over the transitive one and lifts it to the same
+      10.0.14 the rest of the runtime is on.
+    -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
 </Project>
