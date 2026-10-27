@@ -130,6 +130,8 @@ builder.Services.Configure<EmailOptions>(
 
 builder.Services.AddSingleton<BrandAssets>();
 builder.Services.AddSingleton<WeeklyReportPdfService>();
+builder.Services.AddSingleton<RecordDocumentPdfService>();
+
 builder.Services.AddSingleton<NextOfKinPdfService>();
 builder.Services.AddScoped<LeaveApplicationPdfService>();
 builder.Services.AddSingleton<LoanApplicationPdfService>();
