@@ -14,13 +14,60 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
+        private readonly RecordDocumentPdfService _pdf;
 
         public VendorController(
             ApplicationDbContext context,
-            AuditService audit)
+            AuditService audit,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _audit = audit;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The vendor and how to reach them, as a printable record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var vendor = await _context.Vendors
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vendor == null)
+                return NotFound();
+
+            var record = new RecordDocument("Vendor Record")
+            {
+                Headline = vendor.Name,
+                Caption = vendor.ProductOrService,
+                Chip = vendor.IsActive ? "Active" : "Inactive"
+            };
+
+            record.Section("Vendor", "What they supply")
+                .Add("Name", vendor.Name)
+                .Add("Product or service", vendor.ProductOrService)
+                .Add("Category", vendor.Category)
+                .Add("Active", vendor.IsActive);
+
+            record.Section("Contact", "How to reach them")
+                .Add("Contact person", vendor.ContactPerson)
+                .Add("Email", vendor.Email)
+                .Add("Phone number", vendor.PhoneNumber)
+                .Add("Alternate phone", vendor.AlternatePhone)
+                .Add("Website", vendor.Website)
+                .Add("Address", vendor.Address);
+
+            record.Note(vendor.Notes);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(
