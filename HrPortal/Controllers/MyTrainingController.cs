@@ -19,19 +19,22 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly AuditService _audit;
         private readonly IAuthorizationService _authorization;
+        private readonly RecordDocumentPdfService _pdf;
 
         public MyTrainingController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             CurrentUserService currentUser,
             AuditService audit,
-            IAuthorizationService authorization)
+            IAuthorizationService authorization,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _fileStorage = fileStorage;
             _currentUser = currentUser;
             _audit = audit;
             _authorization = authorization;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -65,6 +68,63 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             return View(assignment);
+        }
+
+        /// <summary>
+        /// The employee's own copy of their assignment, as a
+        /// printable record. Goes through the same authorisation the
+        /// details page does, so nobody prints somebody else's.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var assignment = await LoadAuthorizedAssignment(
+                id.Value,
+                Operations.View);
+
+            if (assignment == null)
+                return NotFound();
+
+            var who = $"{assignment.Employee.FirstName} " +
+                      $"{assignment.Employee.LastName}";
+
+            var late =
+                !assignment.IsCompleted &&
+                assignment.DueDate != null &&
+                assignment.DueDate < DateTime.Today;
+
+            var record = new RecordDocument(
+                "My Training",
+                assignment.Employee.EmployeeNumber)
+            {
+                Headline = assignment.TrainingCourse.Title,
+                Caption = who,
+                Chip = assignment.IsCompleted
+                    ? "Completed"
+                    : late ? "Overdue" : "Outstanding"
+            };
+
+            record.Section("Course", "What you were assigned")
+                .Add("Title", assignment.TrainingCourse.Title)
+                .Add("Trainer", assignment.TrainingCourse.Trainer)
+                .Add(
+                    "Training date",
+                    assignment.TrainingCourse.TrainingDate);
+
+            record.Section("Progress", "Where it stands")
+                .AddStamp("Assigned", assignment.AssignedAt)
+                .Add("Due date", assignment.DueDate)
+                .Add("Completed", assignment.IsCompleted)
+                .AddStamp("Completed on", assignment.CompletedAt);
+
+            record.Note(assignment.TrainingCourse.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Material(int? id)
