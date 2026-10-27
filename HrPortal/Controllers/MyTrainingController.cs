@@ -87,8 +87,18 @@ namespace HrPortal.Controllers
             if (assignment == null)
                 return NotFound();
 
-            var who = $"{assignment.Employee.FirstName} " +
-                      $"{assignment.Employee.LastName}";
+            // LoadAuthorizedAssignment does not include the employee
+            // -- the details page has no need of it, since the
+            // employee is whoever is looking. The printed copy names
+            // them, so fetch them here rather than widening a loader
+            // the rest of the controller shares.
+            var employee = await _context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == assignment.EmployeeId);
+
+            var who = employee == null
+                ? null
+                : $"{employee.FirstName} {employee.LastName}";
 
             var late =
                 !assignment.IsCompleted &&
@@ -97,7 +107,7 @@ namespace HrPortal.Controllers
 
             var record = new RecordDocument(
                 "My Training",
-                assignment.Employee.EmployeeNumber)
+                employee?.EmployeeNumber)
             {
                 Headline = assignment.TrainingCourse.Title,
                 Caption = who,
