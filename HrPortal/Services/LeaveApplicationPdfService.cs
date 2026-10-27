@@ -155,8 +155,8 @@ namespace HrPortal.Services
                     row.RelativeItem().Element(e => DocumentStyle.Field(
                         e,
                         "Date",
-                        request.SubmittedAt.ToLocalTime()
-                            .ToString("d MMMM yyyy")));
+                        DocumentStyle.Stamp(request.SubmittedAt),
+                        icon: Icons.Calendar));
                 });
 
                 column.Item().Element(e => DocumentStyle.Note(
@@ -348,8 +348,8 @@ namespace HrPortal.Services
                             DocumentStyle.Field(
                                 e,
                                 "Date",
-                                decision.ActionDate.ToLocalTime()
-                                    .ToString("d MMMM yyyy")));
+                                DocumentStyle.Stamp(decision.ActionDate),
+                                icon: Icons.Calendar));
                     });
 
                     if (!string.IsNullOrWhiteSpace(decision.Comment))

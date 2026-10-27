@@ -75,12 +75,14 @@ namespace HrPortal.Services
                     "The request",
                     "The amount applied for and the undertaking"));
 
-                column.Item().AlignRight().Width(150)
+                column.Item().AlignRight().Width(170)
                     .Element(e => DocumentStyle.Field(
                         e,
                         "Date",
-                        application.CreatedAt.ToLocalTime()
-                            .ToString("d MMMM yyyy")));
+                        DocumentStyle.Stamp(
+                            application.SubmittedAt
+                            ?? application.CreatedAt),
+                        icon: Icons.Calendar));
 
                 column.Item().Text(text =>
                 {
@@ -257,8 +259,7 @@ namespace HrPortal.Services
                     DocumentStyle.Note(
                         e,
                         $"Submitted in the portal by {who} on " +
-                        application.SubmittedAt.Value.ToLocalTime()
-                            .ToString("d MMMM yyyy")));
+                        DocumentStyle.Stamp(application.SubmittedAt)));
             });
         }
 
@@ -326,8 +327,7 @@ namespace HrPortal.Services
                     (approved
                         ? "Sanctioned in the portal on "
                         : "Declined in the portal on ") +
-                    decision.ActionDate.ToLocalTime()
-                        .ToString("d MMMM yyyy") +
+                    DocumentStyle.Stamp(decision.ActionDate) +
                     (string.IsNullOrWhiteSpace(decision.Comment)
                         ? "."
                         : $". {decision.Comment}")));

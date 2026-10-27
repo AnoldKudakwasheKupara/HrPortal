@@ -619,7 +619,7 @@ namespace HrPortal.Services
                 .Padding(5)
                 .Row(row =>
                 {
-                    row.ConstantItem(126).AlignMiddle().PaddingLeft(3)
+                    row.ConstantItem(118).AlignMiddle().PaddingLeft(3)
                         .Text(role)
                         .FontSize(9)
                         .Bold()
@@ -633,7 +633,7 @@ namespace HrPortal.Services
                         .FontSize(8.5f)
                         .FontColor(Muted);
 
-                    row.ConstantItem(132).Element(e => Box(
+                    row.ConstantItem(152).Element(e => Box(
                         e, date, "Select date", Icons.Calendar));
                 });
         }
@@ -762,6 +762,17 @@ namespace HrPortal.Services
         }
 
         // ---- helpers --------------------------------------------
+
+        /// <summary>
+        /// When something was done, to the minute. A signature block
+        /// stands in for someone putting pen to paper, so the date
+        /// alone is not enough to tell two decisions apart on the
+        /// same day -- the time is what makes the record an audit
+        /// trail rather than a formality.
+        /// </summary>
+        public static string? Stamp(DateTime? moment) =>
+            moment?.ToLocalTime().ToString("d MMMM yyyy, HH:mm");
+
 
         /// <summary>
         /// Addresses and free text arrive with whatever line endings

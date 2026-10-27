@@ -248,20 +248,39 @@ namespace HrPortal.Services
                                   "by the Intellego Educational Policy.");
                     }));
 
-                column.Item().PaddingTop(10).PaddingLeft(37).Row(row =>
+                column.Item().PaddingTop(10).PaddingLeft(37).Row(labels =>
                 {
-                    row.RelativeItem().Element(e => DocumentStyle.Blank(
-                        e, "Signature", required: true));
+                    labels.RelativeItem().Element(e =>
+                        DocumentStyle.Label(e, "Signature", true));
+
+                    labels.ConstantItem(24);
+
+                    labels.RelativeItem().Element(e =>
+                        DocumentStyle.Label(e, "Date", true));
+                });
+
+                column.Item().PaddingTop(4).PaddingLeft(37).Row(row =>
+                {
+                    // Pledging in the portal is the applicant's
+                    // signature, so their name stands in it. An
+                    // application that was never pledged leaves the
+                    // box empty for a pen, rather than printing a
+                    // name nobody put there.
+                    row.RelativeItem().Element(e => DocumentStyle.Box(
+                        e,
+                        application.PledgedAt == null ? null : who,
+                        "Sign here",
+                        Icons.Pen));
 
                     row.ConstantItem(24);
 
-                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                    row.RelativeItem().Element(e => DocumentStyle.Box(
                         e,
-                        "Date",
-                        application.PledgedAt?.ToLocalTime()
-                            .ToString("d MMMM yyyy"),
-                        required: true,
-                        icon: Icons.Calendar));
+                        DocumentStyle.Stamp(
+                            application.SubmittedAt
+                            ?? application.PledgedAt),
+                        "Select date",
+                        Icons.Calendar));
                 });
             });
         }
@@ -341,8 +360,7 @@ namespace HrPortal.Services
                 : $"{decision.ActionedByEmployee.FirstName} " +
                   $"{decision.ActionedByEmployee.LastName}";
 
-            var date = decision?.ActionDate.ToLocalTime()
-                .ToString("d MMMM yyyy");
+            var date = DocumentStyle.Stamp(decision?.ActionDate);
 
             DocumentStyle.SignatureRow(container, role, signedBy, date);
         }
