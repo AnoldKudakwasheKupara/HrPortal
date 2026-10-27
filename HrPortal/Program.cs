@@ -235,13 +235,22 @@ using (var scope = app.Services.CreateScope())
         var roleManager =
             services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
+        var adminSeed = AdminSeed.From(
+            app.Configuration,
+            app.Environment.IsDevelopment());
+
         await DbSeeder.SeedAdministratorAsync(
             userManager,
-            roleManager);
+            roleManager,
+            adminSeed,
+            app.Services
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger(nameof(DbSeeder)));
 
         await DbSeeder.SeedAdministratorEmployeeAsync(
             userManager,
-            db);
+            db,
+            adminSeed.Email);
 
         await DbSeeder.BackfillEmployeeRoleAsync(
             userManager,

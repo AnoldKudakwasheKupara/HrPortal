@@ -5,6 +5,57 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Data
 {
+    /// <summary>
+    /// Where the first administrator's credentials come from.
+    ///
+    /// They used to be written into the source, which meant anybody
+    /// who could read the repository could sign in to any deployment
+    /// of it. Now they are configuration: set SeedAdministrator:Email
+    /// and SeedAdministrator:Password, through user secrets or
+    /// environment variables rather than a file in the repository.
+    ///
+    /// Development keeps the old pair so a fresh clone still runs,
+    /// and nowhere else does: without configuration, no account is
+    /// created at all.
+    /// </summary>
+    public sealed record AdminSeed(string Email, string? Password)
+    {
+        public const string Section = "SeedAdministrator";
+
+        public const string DevelopmentEmail = "admin@hrportal.local";
+
+        private const string DevelopmentPassword = "Admin@12345";
+
+        /// <summary>
+        /// Null when no account should be created, which is what
+        /// happens outside Development if nobody configured one.
+        /// </summary>
+        public bool CanCreate => !string.IsNullOrWhiteSpace(Password);
+
+        public static AdminSeed From(
+            IConfiguration configuration,
+            bool isDevelopment)
+        {
+            var email = configuration[$"{Section}:Email"];
+            var password = configuration[$"{Section}:Password"];
+
+            if (!string.IsNullOrWhiteSpace(email) &&
+                !string.IsNullOrWhiteSpace(password))
+            {
+                return new AdminSeed(email, password);
+            }
+
+            if (isDevelopment)
+                return new AdminSeed(DevelopmentEmail, DevelopmentPassword);
+
+            return new AdminSeed(
+                string.IsNullOrWhiteSpace(email)
+                    ? DevelopmentEmail
+                    : email,
+                null);
+        }
+    }
+
     public static class DbSeeder
     {
         private static readonly string[] Roles =
@@ -17,7 +68,9 @@ namespace HrPortal.Data
 
         public static async Task SeedAdministratorAsync(
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole<int>> roleManager)
+            RoleManager<IdentityRole<int>> roleManager,
+            AdminSeed seed,
+            ILogger logger)
         {
             foreach (var role in Roles)
             {
@@ -38,13 +91,26 @@ namespace HrPortal.Data
 
             const string roleName = "Administrator";
 
-            const string email = "admin@hrportal.local";
-            const string password = "Admin@12345";
+            var email = seed.Email;
 
             var existingUser = await userManager.FindByEmailAsync(email);
 
             if (existingUser == null)
             {
+                if (!seed.CanCreate)
+                {
+                    logger.LogWarning(
+                        "No administrator account was created. Set " +
+                        "{Section}:Email and {Section}:Password to " +
+                        "create one; outside Development there is no " +
+                        "default, so that nobody can sign in with " +
+                        "credentials taken from the source.",
+                        AdminSeed.Section,
+                        AdminSeed.Section);
+
+                    return;
+                }
+
                 var admin = new ApplicationUser
                 {
                     UserName = email,
@@ -55,7 +121,7 @@ namespace HrPortal.Data
 
                 var result = await userManager.CreateAsync(
                     admin,
-                    password);
+                    seed.Password!);
 
                 if (!result.Succeeded)
                 {
@@ -73,9 +139,9 @@ namespace HrPortal.Data
 
         public static async Task SeedAdministratorEmployeeAsync(
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            string email)
         {
-            const string email = "admin@hrportal.local";
 
             var admin = await userManager.FindByEmailAsync(email);
 
