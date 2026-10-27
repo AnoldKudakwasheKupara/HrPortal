@@ -22,19 +22,74 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
         private readonly PolicyService _policies;
+        private readonly RecordDocumentPdfService _pdf;
 
         public PolicyController(
             ApplicationDbContext context,
             FileStorageService fileStorage,
             AuditService audit,
             CurrentUserService currentUser,
-            PolicyService policies)
+            PolicyService policies,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _fileStorage = fileStorage;
             _audit = audit;
             _currentUser = currentUser;
             _policies = policies;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// What is known about the policy, as a printable record.
+        /// This is the cover sheet, not the policy itself -- Download
+        /// still fetches the document.
+        ///
+        /// Reach goes through the same ReadableAsync the details page
+        /// uses, so a policy somebody may not see is not one they can
+        /// print the particulars of either.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            var policy = await _policies.ReadableAsync(id, User);
+
+            if (policy == null)
+                return NotFound();
+
+            var record = new RecordDocument(
+                "Policy Record",
+                policy.Reference)
+            {
+                Headline = policy.Title,
+                Caption = policy.Category,
+                Chip = $"{policy.Status} · v{policy.Version}"
+            };
+
+            record.Section("Policy", "What it is and where it stands")
+                .Add("Title", policy.Title)
+                .Add("Reference", policy.Reference)
+                .Add("Category", policy.Category)
+                .Add("Version", policy.Version)
+                .Add("Status", policy.Status.ToString())
+                .Add("Audience", policy.Audience.ToString())
+                .Add("Owner", policy.Owner);
+
+            record.Section("Dates", "When it applies and when it is due")
+                .Add("Effective date", policy.EffectiveDate)
+                .Add("Review date", policy.ReviewDate)
+                .Add(
+                    "Acknowledgement required",
+                    policy.RequiresAcknowledgement);
+
+            record.Section("Document", "The file staff are given")
+                .Add("File name", policy.OriginalFileName);
+
+            record.Note(policy.Summary);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(string? category, string? search)

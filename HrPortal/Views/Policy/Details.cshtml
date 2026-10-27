@@ -60,6 +60,8 @@
             <a asp-action="Download" asp-route-id="@p.Id"
                class="btn btn-outline-primary">Download</a>
 
+            <partial name="_DownloadPdf" model="@Model.Policy.Id" />
+
             <a asp-action="Index" class="btn btn-secondary">Back</a>
         </div>
     </div>
