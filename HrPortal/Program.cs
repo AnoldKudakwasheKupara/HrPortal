@@ -252,7 +252,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseResponseCompression();
+// Browser Link and Hot Reload inject their own script tags into the
+// HTML on the way out, and cannot do that through a compressed body:
+// they log a warning and give up, which leaves the response at the
+// mercy of whichever middleware wrote it. Compression buys nothing
+// over localhost, so leave it to the environments that travel.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseResponseCompression();
+}
 
 app.UseStaticFiles(new StaticFileOptions
 {
