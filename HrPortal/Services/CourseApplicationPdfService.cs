@@ -1,6 +1,5 @@
 using HrPortal.Entities;
 using QuestPDF.Fluent;
-using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace HrPortal.Services
@@ -8,14 +7,12 @@ namespace HrPortal.Services
     /// <summary>
     /// Renders a course application as the company's CFAI courses
     /// form, which HR prints once it is approved and takes to
-    /// Finance.
+    /// Finance. The chrome comes from <see cref="DocumentStyle"/>;
+    /// what is here is only what this particular form says.
     /// </summary>
     public class CourseApplicationPdfService
     {
-        private const string Ink = "#1f2933";
-        private const string Muted = "#6b7280";
-        private const string Rule = "#d9dee5";
-        private const string Wash = "#f3f5f7";
+        private const string Title = "Courses Application";
 
         private readonly BrandAssets _brand;
 
@@ -24,26 +21,28 @@ namespace HrPortal.Services
             _brand = brand;
         }
 
-        public byte[] Render(CourseApplication application)
+        public byte[] Render(CourseApplication application) =>
+            Build(application).GeneratePdf();
+
+        /// <summary>
+        /// The document itself, kept separate from how it is
+        /// rendered so it can also be exported as images for a
+        /// visual check.
+        /// </summary>
+        public IDocument Build(CourseApplication application)
         {
-            var document = Document.Create(container =>
+            return Document.Create(container =>
             {
                 container.Page(page =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(1.4f, Unit.Centimetre);
-                    page.DefaultTextStyle(t => t
-                        .FontSize(9)
-                        .FontColor(Ink)
-                        .FontFamily("Lato"));
+                    DocumentStyle.Apply(page);
 
                     page.Content().Element(e => Content(e, application));
 
-                    page.Footer().Element(e => Footer(e, application));
+                    page.Footer().Element(e => DocumentStyle.Footer(
+                        e, application.ApplicationNumber));
                 });
             });
-
-            return document.GeneratePdf();
         }
 
         private void Content(
@@ -55,39 +54,36 @@ namespace HrPortal.Services
 
             container.Column(column =>
             {
-                column.Spacing(7);
+                column.Spacing(6);
 
-                column.Item().Element(Letterhead);
+                column.Item().Element(e => DocumentStyle.Letterhead(
+                    e, _brand, Title, application.ApplicationNumber));
 
-                column.Item().AlignCenter()
-                    .Text("COURSES APPLICATION FORM")
-                    .FontSize(12)
-                    .Bold()
-                    .LetterSpacing(0.04f);
-
-                column.Item().Element(Heading1);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "1", "Employee details"));
 
                 column.Item().Element(e => Details(e, application));
 
-                column.Item().Element(e => Field(
-                    e,
-                    "2. PROGRAM INTENDED",
-                    application.ProgramIntended));
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "2", "Program intended"));
 
-                column.Item().Element(e => Field(
+                column.Item().Element(e => Headline(
+                    e, application.ProgramIntended));
+
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
-                    "2.1 JUSTIFICATION AND RELEVANCE",
+                    "2.1  Justification and relevance",
                     application.Justification));
 
-                column.Item().Element(e => Field(
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
-                    "2.2 HAVE YOU SAT FOR THE PROGRAM BEFORE?",
-                    application.HasSatBefore ? "YES" : "NO"));
+                    "2.2  Have you sat for the program before?",
+                    application.HasSatBefore ? "Yes" : "No"));
 
-                column.Item().Element(e => Field(
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
-                    "2.2.1 IF YES, PROCEEDING TO THE NEXT LEVEL OR " +
-                    "RE-WRITING?",
+                    "2.2.1  If yes, proceeding to the next level or " +
+                    "re-writing?",
                     application.HasSatBefore
                         ? application.Sitting switch
                         {
@@ -98,21 +94,21 @@ namespace HrPortal.Services
                         }
                         : "Not applicable"));
 
-                column.Item().Element(e => Field(
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
-                    "2.3 TARGET DATE TO SIT FOR EXAM",
+                    "2.3  Target date to sit for exam",
                     application.TargetExamDate?
                         .ToString("d MMMM yyyy")));
 
-                column.Item().PaddingTop(4)
-                    .Text("3. PLEDGE")
-                    .Bold()
-                    .LetterSpacing(0.03f);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "3", "Pledge"));
 
                 column.Item().Text(text =>
                 {
+                    text.DefaultTextStyle(s => s.LineHeight(1.4f));
+
                     text.Span("I, ");
-                    text.Span(who).Bold();
+                    text.Span(who).SemiBold();
                     text.Span(", confirm that I will dedicate the " +
                               "requisite hours and effort towards the " +
                               "selected studies and will abide by the " +
@@ -121,10 +117,8 @@ namespace HrPortal.Services
 
                 column.Item().Element(e => Pledge(e, application, who));
 
-                column.Item().PaddingTop(4)
-                    .Text("4. APPROVAL SECTION")
-                    .Bold()
-                    .LetterSpacing(0.03f);
+                column.Item().Element(e => DocumentStyle.Section(
+                    e, "4", "Approval"));
 
                 column.Item().Element(e => Outcome(e, application));
 
@@ -132,12 +126,22 @@ namespace HrPortal.Services
             });
         }
 
-        private void Heading1(IContainer container)
+        /// <summary>
+        /// The one answer the whole form turns on, set larger than
+        /// the fields around it so it is the first thing read.
+        /// </summary>
+        private void Headline(IContainer container, string? value)
         {
             container
-                .Text("1. EMPLOYEE DETAILS")
-                .Bold()
-                .LetterSpacing(0.03f);
+                .BorderBottom(0.8f)
+                .BorderColor(DocumentStyle.Rule)
+                .PaddingBottom(5)
+                .Text(string.IsNullOrWhiteSpace(value)
+                    ? DocumentStyle.NotRecorded
+                    : value)
+                .FontSize(12)
+                .SemiBold()
+                .FontColor(DocumentStyle.Ink);
         }
 
         private void Details(
@@ -146,44 +150,15 @@ namespace HrPortal.Services
         {
             var employee = application.Employee;
 
-            var rows = new (string Label, string? Value)[]
+            DocumentStyle.DetailTable(container, new (string, string?)[]
             {
-                ("FIRST NAME(S)", employee.FirstName),
-                ("SURNAME", employee.LastName),
-                ("I.D NO.", employee.NationalId),
-                ("DEPARTMENT", employee.Department?.Name),
-                ("POSITION", employee.JobTitle),
-                ("ADDRESS", employee.Address),
-                ("PHONE NUMBER", employee.PhoneNumber)
-            };
-
-            container.Table(table =>
-            {
-                table.ColumnsDefinition(columns =>
-                {
-                    columns.ConstantColumn(130);
-                    columns.RelativeColumn();
-                });
-
-                foreach (var row in rows)
-                {
-                    table.Cell()
-                        .Border(1)
-                        .BorderColor(Rule)
-                        .Background(Wash)
-                        .Padding(3.5f)
-                        .Text(row.Label)
-                        .FontSize(8)
-                        .FontColor(Muted);
-
-                    table.Cell()
-                        .Border(1)
-                        .BorderColor(Rule)
-                        .Padding(3.5f)
-                        .Text(string.IsNullOrWhiteSpace(row.Value)
-                            ? "--"
-                            : row.Value);
-                }
+                ("First name(s)", employee.FirstName),
+                ("Surname", employee.LastName),
+                ("I.D no.", employee.NationalId),
+                ("Department", employee.Department?.Name),
+                ("Position", employee.JobTitle),
+                ("Address", employee.Address),
+                ("Phone number", employee.PhoneNumber)
             });
         }
 
@@ -194,27 +169,27 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
-                column.Spacing(4);
+                column.Spacing(5);
 
                 column.Item().Row(row =>
                 {
                     row.RelativeItem(2).Element(e =>
-                        Blank(e, "SIGNATURE"));
+                        DocumentStyle.Blank(e, "Signature"));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Blank(e, "DATE"));
+                    row.RelativeItem().Element(e =>
+                        DocumentStyle.Blank(e, "Date"));
                 });
 
                 if (application.PledgedAt == null)
                     return;
 
-                column.Item()
-                    .Text($"Pledged in the portal by {who} on " +
-                          application.PledgedAt.Value.ToLocalTime()
-                              .ToString("d MMMM yyyy"))
-                    .FontSize(8)
-                    .FontColor(Muted);
+                column.Item().Element(e => DocumentStyle.Note(
+                    e,
+                    $"Pledged in the portal by {who} on " +
+                    application.PledgedAt.Value.ToLocalTime()
+                        .ToString("d MMMM yyyy")));
             });
         }
 
@@ -236,33 +211,13 @@ namespace HrPortal.Services
             container.Row(row =>
             {
                 row.RelativeItem().Element(e =>
-                    Box(e, "APPROVED", approved));
+                    DocumentStyle.TickBox(e, "Approved", approved));
 
-                row.ConstantItem(16);
+                row.ConstantItem(18);
 
                 row.RelativeItem().Element(e =>
-                    Box(e, "NOT APPROVED", declined));
+                    DocumentStyle.TickBox(e, "Not approved", declined));
             });
-        }
-
-        private void Box(IContainer container, string label, bool marked)
-        {
-            container
-                .Border(1)
-                .BorderColor(Rule)
-                .Background(marked ? Wash : Colors.White)
-                .Padding(6)
-                .Row(row =>
-                {
-                    row.ConstantItem(16)
-                        .Text(marked ? "X" : " ")
-                        .Bold();
-
-                    row.RelativeItem()
-                        .Text(label)
-                        .FontSize(9)
-                        .Bold();
-                });
         }
 
         /// <summary>
@@ -291,18 +246,19 @@ namespace HrPortal.Services
                 column.Item().Row(row =>
                 {
                     row.RelativeItem(2).Element(e =>
-                        Blank(e, "MANAGER/SUPERVISOR"));
+                        DocumentStyle.Blank(e, "Manager / supervisor"));
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => Blank(e, "DATE"));
+                    row.RelativeItem().Element(e =>
+                        DocumentStyle.Blank(e, "Date"));
                 });
 
                 column.Item().Element(e => Approver(
-                    e, "HUMAN RESOURCES", hr));
+                    e, "Human resources", hr));
 
                 column.Item().Element(e => Approver(
-                    e, "MANAGING CONSULTANT", consultant));
+                    e, "Managing consultant", consultant));
             });
         }
 
@@ -322,12 +278,14 @@ namespace HrPortal.Services
         {
             container.ShowEntire().Column(column =>
             {
-                column.Spacing(3);
+                column.Spacing(4);
 
                 column.Item()
-                    .Text(label + ":")
-                    .FontSize(9)
-                    .Bold();
+                    .Text(label.ToUpperInvariant())
+                    .FontSize(8.5f)
+                    .Bold()
+                    .FontColor(DocumentStyle.Green)
+                    .LetterSpacing(0.05f);
 
                 column.Item().Row(row =>
                 {
@@ -335,30 +293,31 @@ namespace HrPortal.Services
                     {
                         if (decision?.ActionedByEmployee == null)
                         {
-                            Blank(e, "APPROVER'S SIGNATURE");
+                            DocumentStyle.Blank(
+                                e, "Approver's signature");
                             return;
                         }
 
-                        Field(
+                        DocumentStyle.Field(
                             e,
-                            "APPROVER'S SIGNATURE",
+                            "Approver's signature",
                             $"{decision.ActionedByEmployee.FirstName} " +
                             $"{decision.ActionedByEmployee.LastName}");
                     });
 
-                    row.ConstantItem(16);
+                    row.ConstantItem(18);
 
                     row.RelativeItem().Element(e =>
                     {
                         if (decision == null)
                         {
-                            Blank(e, "DATE");
+                            DocumentStyle.Blank(e, "Date");
                             return;
                         }
 
-                        Field(
+                        DocumentStyle.Field(
                             e,
-                            "DATE",
+                            "Date",
                             decision.ActionDate.ToLocalTime()
                                 .ToString("d MMMM yyyy"));
                     });
@@ -366,109 +325,10 @@ namespace HrPortal.Services
 
                 if (!string.IsNullOrWhiteSpace(decision?.Comment))
                 {
-                    column.Item()
-                        .Text(decision!.Comment)
-                        .FontSize(8)
-                        .FontColor(Muted);
+                    column.Item().Element(e => DocumentStyle.Note(
+                        e, decision!.Comment!));
                 }
             });
-        }
-
-
-        /// <summary>
-        /// The company logo at the head of the form, falling back to
-        /// the name in text where the artwork cannot be read.
-        /// </summary>
-        private void Letterhead(IContainer container)
-        {
-            if (!_brand.HasLogo)
-            {
-                container
-                    .AlignCenter()
-                    .Text("INTELLEGO INVESTMENT CONSULTANTS (PVT) LTD")
-                    .FontSize(11)
-                    .Bold();
-
-                return;
-            }
-
-            container
-                .AlignCenter()
-                .Width(190)
-                .Image(_brand.Logo!);
-        }
-
-        private void Field(
-            IContainer container,
-            string label,
-            string? value)
-        {
-            container.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .BorderBottom(1)
-                    .BorderColor(Rule)
-                    .PaddingBottom(3)
-                    .Text(string.IsNullOrWhiteSpace(value) ? "--" : value);
-            });
-        }
-
-        private void Blank(IContainer container, string label)
-        {
-            container.Column(column =>
-            {
-                column.Item()
-                    .Text(label)
-                    .FontSize(8)
-                    .FontColor(Muted)
-                    .LetterSpacing(0.05f);
-
-                column.Item()
-                    .PaddingTop(2)
-                    .MinHeight(16)
-                    .BorderBottom(1)
-                    .BorderColor(Rule);
-            });
-        }
-
-        private void Footer(
-            IContainer container,
-            CourseApplication application)
-        {
-            container
-                .PaddingTop(8)
-                .BorderTop(1)
-                .BorderColor(Rule)
-                .PaddingTop(5)
-                .Row(row =>
-                {
-                    row.RelativeItem()
-                        .Text($"{application.ApplicationNumber} - " +
-                              $"printed {DateTime.Now:d MMMM yyyy}")
-                        .FontSize(8)
-                        .FontColor(Muted);
-
-                    row.RelativeItem()
-                        .AlignRight()
-                        .Text(t =>
-                        {
-                            t.DefaultTextStyle(s => s
-                                .FontSize(8)
-                                .FontColor(Muted));
-
-                            t.Span("Page ");
-                            t.CurrentPageNumber();
-                            t.Span(" of ");
-                            t.TotalPages();
-                        });
-                });
         }
     }
 }
