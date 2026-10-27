@@ -18,16 +18,88 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly RecordScope _scope;
 
+        private readonly RecordDocumentPdfService _pdf;
+
         public TrainingAssignmentController(
             ApplicationDbContext context,
             NotificationService notifications,
             AuditService audit,
-            RecordScope scope)
+            RecordScope scope,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
             _notifications = notifications;
             _audit = audit;
             _scope = scope;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// One person's assignment to one course, as a printable
+        /// record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var assignment = await _context.TrainingAssignments
+                .AsNoTracking()
+                .Include(a => a.TrainingCourse)
+                .Include(a => a.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(a => a.Feedback)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (assignment == null)
+                return NotFound();
+
+            var who = $"{assignment.Employee.FirstName} " +
+                      $"{assignment.Employee.LastName}";
+
+            var late =
+                !assignment.IsCompleted &&
+                assignment.DueDate != null &&
+                assignment.DueDate < DateTime.Today;
+
+            var record = new RecordDocument(
+                "Training Assignment",
+                assignment.Employee.EmployeeNumber)
+            {
+                Headline = who,
+                Caption = assignment.TrainingCourse.Title,
+                Chip = assignment.IsCompleted
+                    ? "Completed"
+                    : late ? "Overdue" : "Outstanding"
+            };
+
+            record.Section("Employee", "Who was assigned the course")
+                .Add("Name", who)
+                .Add(
+                    "Employee number",
+                    assignment.Employee.EmployeeNumber)
+                .Add("Department", assignment.Employee.Department?.Name);
+
+            record.Section("Course", "What they were assigned")
+                .Add("Title", assignment.TrainingCourse.Title)
+                .Add("Trainer", assignment.TrainingCourse.Trainer)
+                .Add(
+                    "Training date",
+                    assignment.TrainingCourse.TrainingDate);
+
+            record.Section("Progress", "Where the assignment stands")
+                .AddStamp("Assigned", assignment.AssignedAt)
+                .Add("Due date", assignment.DueDate)
+                .Add("Completed", assignment.IsCompleted)
+                .AddStamp("Completed on", assignment.CompletedAt)
+                .Add(
+                    "Feedback given",
+                    assignment.Feedback != null);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index(int? courseId)
