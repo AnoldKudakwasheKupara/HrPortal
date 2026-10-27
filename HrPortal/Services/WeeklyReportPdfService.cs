@@ -58,7 +58,11 @@ namespace HrPortal.Services
 
         private void Header(IContainer container, DateTime issued)
         {
-            container
+            // The page has no margin of its own -- the forms run their
+            // banner to the paper's edge -- so every band here puts
+            // the gutter back.
+            DocumentStyle.Gutters(container)
+                .PaddingTop(20)
                 .PaddingBottom(14)
                 .BorderBottom(1)
                 .BorderColor(DocumentStyle.Rule)
@@ -73,7 +77,8 @@ namespace HrPortal.Services
 
         private void Footer(IContainer container)
         {
-            container
+            DocumentStyle.Gutters(container)
+                .PaddingBottom(16)
                 .PaddingTop(10)
                 .BorderTop(1)
                 .BorderColor(DocumentStyle.Rule)
@@ -105,7 +110,7 @@ namespace HrPortal.Services
             List<WeeklyReportPriority> priorities,
             DateTime issued)
         {
-            container.Column(column =>
+            DocumentStyle.Gutters(container).Column(column =>
             {
                 column.Spacing(14);
 

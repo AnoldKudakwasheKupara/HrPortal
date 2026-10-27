@@ -7,12 +7,15 @@ namespace HrPortal.Services
     /// <summary>
     /// Renders a course application as the company's CFAI courses
     /// form, which HR prints once it is approved and takes to
-    /// Finance. The chrome comes from <see cref="DocumentStyle"/>;
-    /// what is here is only what this particular form says.
+    /// Finance. Laid out the way the portal shows it, so the printed
+    /// copy and the screen read as one document.
     /// </summary>
     public class CourseApplicationPdfService
     {
         private const string Title = "Courses Application";
+
+        /// <summary>Matches the limit the portal puts on the box.</summary>
+        private const int JustificationLimit = 500;
 
         private readonly BrandAssets _brand;
 
@@ -37,6 +40,9 @@ namespace HrPortal.Services
                 {
                     DocumentStyle.Apply(page);
 
+                    page.Header().Element(e => DocumentStyle.Head(
+                        e, _brand, Title, application.ApplicationNumber));
+
                     page.Content().Element(e => Content(e, application));
 
                     page.Footer().Element(e => DocumentStyle.Footer(
@@ -49,116 +55,178 @@ namespace HrPortal.Services
             IContainer container,
             CourseApplication application)
         {
-            var who = $"{application.Employee.FirstName} " +
-                      $"{application.Employee.LastName}";
+            var employee = application.Employee;
 
-            container.Column(column =>
-            {
-                column.Spacing(6);
+            var who = $"{employee.FirstName} {employee.LastName}";
 
-                column.Item().Element(e => DocumentStyle.Letterhead(
-                    e, _brand, Title, application.ApplicationNumber));
-
-                column.Item().Element(e => DocumentStyle.Section(
-                    e, "1", "Employee details"));
-
-                column.Item().Element(e => Details(e, application));
-
-                column.Item().Element(e => DocumentStyle.Section(
-                    e, "2", "Program intended"));
-
-                column.Item().Element(e => Headline(
-                    e, application.ProgramIntended));
-
-                column.Item().Element(e => DocumentStyle.Field(
-                    e,
-                    "2.1  Justification and relevance",
-                    application.Justification));
-
-                column.Item().Element(e => DocumentStyle.Field(
-                    e,
-                    "2.2  Have you sat for the program before?",
-                    application.HasSatBefore ? "Yes" : "No"));
-
-                column.Item().Element(e => DocumentStyle.Field(
-                    e,
-                    "2.2.1  If yes, proceeding to the next level or " +
-                    "re-writing?",
-                    application.HasSatBefore
-                        ? application.Sitting switch
-                        {
-                            CourseSitting.NextLevel =>
-                                "Proceeding to the next level",
-                            CourseSitting.Rewriting => "Re-writing",
-                            _ => null
-                        }
-                        : "Not applicable"));
-
-                column.Item().Element(e => DocumentStyle.Field(
-                    e,
-                    "2.3  Target date to sit for exam",
-                    application.TargetExamDate?
-                        .ToString("d MMMM yyyy")));
-
-                column.Item().Element(e => DocumentStyle.Section(
-                    e, "3", "Pledge"));
-
-                column.Item().Text(text =>
+            DocumentStyle.Gutters(container)
+                .PaddingTop(8)
+                .Column(column =>
                 {
-                    text.DefaultTextStyle(s => s.LineHeight(1.4f));
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e,
+                        "01",
+                        "Employee details",
+                        "Your current employment information"));
 
-                    text.Span("I, ");
-                    text.Span(who).SemiBold();
-                    text.Span(", confirm that I will dedicate the " +
-                              "requisite hours and effort towards the " +
-                              "selected studies and will abide by the " +
-                              "Intellego Educational Policy.");
+                    column.Item().PaddingTop(5).Element(e =>
+                        Employee(e, employee, who));
+
+                    column.Item().Element(DocumentStyle.Divider);
+
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e,
+                        "02",
+                        "Program intended",
+                        "Details of the course or certification you " +
+                        "intend to pursue"));
+
+                    column.Item().PaddingTop(5).Element(e =>
+                        Program(e, application));
+
+                    column.Item().Element(DocumentStyle.Divider);
+
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e,
+                        "03",
+                        "Pledge",
+                        "Agreement to commit to the programme"));
+
+                    column.Item().PaddingTop(5).Element(e =>
+                        Pledge(e, application, who));
+
+                    column.Item().Element(DocumentStyle.Divider);
+
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e,
+                        "04",
+                        "Approval",
+                        "To be completed by the relevant approvers"));
+
+                    column.Item().PaddingTop(5).Element(e =>
+                        Approval(e, application));
                 });
-
-                column.Item().Element(e => Pledge(e, application, who));
-
-                column.Item().Element(e => DocumentStyle.Section(
-                    e, "4", "Approval"));
-
-                column.Item().Element(e => Outcome(e, application));
-
-                column.Item().Element(e => Signatures(e, application));
-            });
         }
 
         /// <summary>
-        /// The one answer the whole form turns on, set larger than
-        /// the fields around it so it is the first thing read.
+        /// Who the form is about: the card on the left names them,
+        /// the table on the right carries what the record holds.
         /// </summary>
-        private void Headline(IContainer container, string? value)
+        private void Employee(
+            IContainer container,
+            Employee employee,
+            string who)
         {
-            container
-                .BorderBottom(0.8f)
-                .BorderColor(DocumentStyle.Rule)
-                .PaddingBottom(5)
-                .Text(string.IsNullOrWhiteSpace(value)
-                    ? DocumentStyle.NotRecorded
-                    : value)
-                .FontSize(12)
-                .SemiBold()
-                .FontColor(DocumentStyle.Ink);
+            container.Row(row =>
+            {
+                row.RelativeItem(42).AlignTop().Element(e =>
+                    DocumentStyle.PersonCard(
+                        e,
+                        who,
+                        employee.Department?.Name,
+                        string.IsNullOrWhiteSpace(employee.JobTitle)
+                            ? "Employee"
+                            : employee.JobTitle));
+
+                row.ConstantItem(24);
+
+                row.RelativeItem(58).Element(e =>
+                    DocumentStyle.DetailTable(e, new (string, string?)[]
+                    {
+                        ("First name(s)", employee.FirstName),
+                        ("Surname", employee.LastName),
+                        ("I.D No.", employee.NationalId),
+                        ("Department", employee.Department?.Name),
+                        ("Position", employee.JobTitle),
+                        ("Address", employee.Address),
+                        ("Phone number", employee.PhoneNumber)
+                    }));
+            });
         }
 
-        private void Details(
+        private void Program(
             IContainer container,
             CourseApplication application)
         {
-            var employee = application.Employee;
-
-            DocumentStyle.DetailTable(container, new (string, string?)[]
+            container.Column(column =>
             {
-                ("First name(s)", employee.FirstName),
-                ("Surname", employee.LastName),
-                ("I.D no.", employee.NationalId),
-                ("Department", employee.Department?.Name),
-                ("Position", employee.JobTitle),
-                ("Address", employee.Address),
-                ("Phone number", employee.PhoneNumber)
+                column.Spacing(9);
+
+                column.Item().Element(e => DocumentStyle.Field(
+                    e,
+                    "Program / Course",
+                    application.ProgramIntended,
+                    required: true,
+                    trailingIcon: Icons.Chevron));
+
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Column(left =>
+                    {
+                        left.Item().Element(e => DocumentStyle.Label(
+                            e,
+                            "2.1 Justification and relevance",
+                            required: true));
+
+                        left.Item().PaddingTop(4).Element(e =>
+                            DocumentStyle.Box(
+                                e,
+                                application.Justification,
+                                minHeight: 42));
+
+                        left.Item().Element(e => DocumentStyle.Counter(
+                            e,
+                            application.Justification,
+                            JustificationLimit));
+                    });
+
+                    row.ConstantItem(24);
+
+                    row.RelativeItem().Column(right =>
+                    {
+                        right.Item().Element(e => DocumentStyle.Label(
+                            e,
+                            "2.2 Have you sat for the program before?",
+                            required: true));
+
+                        right.Item().PaddingTop(10).Element(e =>
+                            DocumentStyle.Choice(e, new[]
+                            {
+                                ("Yes", application.HasSatBefore),
+                                ("No", !application.HasSatBefore)
+                            }));
+                    });
+                });
+
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "2.2.1 If yes, proceeding to the next level " +
+                        "or re-writing?",
+                        application.HasSatBefore
+                            ? application.Sitting switch
+                            {
+                                CourseSitting.NextLevel =>
+                                    "Proceeding to the next level",
+                                CourseSitting.Rewriting => "Re-writing",
+                                _ => null
+                            }
+                            : null,
+                        // The portal greys this out when the answer
+                        // above is no, and so does the paper.
+                        dead: !application.HasSatBefore));
+
+                    row.ConstantItem(24);
+
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "2.3 Target date to sit for exam",
+                        application.TargetExamDate?
+                            .ToString("d MMMM yyyy"),
+                        required: true,
+                        icon: Icons.Calendar));
+                });
             });
         }
 
@@ -169,35 +237,42 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
-                column.Spacing(5);
+                column.Item().PaddingLeft(37).Element(e =>
+                    DocumentStyle.Callout(e, text =>
+                    {
+                        text.Span("I, ");
+                        text.Span(who).Bold().FontColor(DocumentStyle.Green);
+                        text.Span(", confirm that I will dedicate the " +
+                                  "requisite hours and effort towards " +
+                                  "the selected studies and will abide " +
+                                  "by the Intellego Educational Policy.");
+                    }));
 
-                column.Item().Row(row =>
+                column.Item().PaddingTop(10).PaddingLeft(37).Row(row =>
                 {
-                    row.RelativeItem(2).Element(e =>
-                        DocumentStyle.Blank(e, "Signature"));
+                    row.RelativeItem().Element(e => DocumentStyle.Blank(
+                        e, "Signature", required: true));
 
-                    row.ConstantItem(18);
+                    row.ConstantItem(24);
 
-                    row.RelativeItem().Element(e =>
-                        DocumentStyle.Blank(e, "Date"));
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e,
+                        "Date",
+                        application.PledgedAt?.ToLocalTime()
+                            .ToString("d MMMM yyyy"),
+                        required: true,
+                        icon: Icons.Calendar));
                 });
-
-                if (application.PledgedAt == null)
-                    return;
-
-                column.Item().Element(e => DocumentStyle.Note(
-                    e,
-                    $"Pledged in the portal by {who} on " +
-                    application.PledgedAt.Value.ToLocalTime()
-                        .ToString("d MMMM yyyy")));
             });
         }
 
         /// <summary>
-        /// The approved and not approved boxes on the form, with the
-        /// one that applies marked.
+        /// The outcome boxes and the three signature lines. The
+        /// manager's has no counterpart in the portal and always
+        /// prints blank; the other two carry whoever decided, where
+        /// they have.
         /// </summary>
-        private void Outcome(
+        private void Approval(
             IContainer container,
             CourseApplication application)
         {
@@ -208,27 +283,6 @@ namespace HrPortal.Services
                 application.Status is CourseApplicationStatus.Rejected
                     or CourseApplicationStatus.HrRejected;
 
-            container.Row(row =>
-            {
-                row.RelativeItem().Element(e =>
-                    DocumentStyle.TickBox(e, "Approved", approved));
-
-                row.ConstantItem(18);
-
-                row.RelativeItem().Element(e =>
-                    DocumentStyle.TickBox(e, "Not approved", declined));
-            });
-        }
-
-        /// <summary>
-        /// The form's three signature blocks. The manager's has no
-        /// counterpart in the portal and always prints blank; the
-        /// other two carry whoever decided, where they have.
-        /// </summary>
-        private void Signatures(
-            IContainer container,
-            CourseApplication application)
-        {
             var hr = Decision(
                 application,
                 CourseApplicationAction.ApprovedByHr,
@@ -241,25 +295,56 @@ namespace HrPortal.Services
 
             container.Column(column =>
             {
-                column.Spacing(7);
+                column.Spacing(4);
 
                 column.Item().Row(row =>
                 {
-                    row.RelativeItem(2).Element(e =>
-                        DocumentStyle.Blank(e, "Manager / supervisor"));
-
-                    row.ConstantItem(18);
-
                     row.RelativeItem().Element(e =>
-                        DocumentStyle.Blank(e, "Date"));
+                        DocumentStyle.Outcome(e, "Approved", approved));
+
+                    row.ConstantItem(24);
+
+                    row.RelativeItem().Element(e => DocumentStyle.Outcome(
+                        e, "Not approved", declined, adverse: true));
                 });
 
-                column.Item().Element(e => Approver(
-                    e, "Human resources", hr));
+                column.Item().PaddingTop(3).Element(e =>
+                    DocumentStyle.SignatureRow(
+                        e, "Manager / Supervisor", null, null));
 
                 column.Item().Element(e => Approver(
-                    e, "Managing consultant", consultant));
+                    e, "Human Resources", hr));
+
+                column.Item().Element(e => Approver(
+                    e, "Managing Consultant", consultant));
+
+                var comments = new[] { hr, consultant }
+                    .Where(d => !string.IsNullOrWhiteSpace(d?.Comment))
+                    .Select(d => d!.Comment!)
+                    .ToList();
+
+                foreach (var comment in comments)
+                {
+                    column.Item().PaddingTop(2).Element(e =>
+                        DocumentStyle.Note(e, comment));
+                }
             });
+        }
+
+        private void Approver(
+            IContainer container,
+            string role,
+            CourseApplicationHistory? decision)
+        {
+            var signedBy = decision?.ActionedByEmployee == null
+                ? null
+                : $"{decision.ActionedByEmployee.FirstName} " +
+                  $"{decision.ActionedByEmployee.LastName}";
+
+            var date = decision?.ActionDate.ToLocalTime()
+                .ToString("d MMMM yyyy");
+
+            DocumentStyle.SignatureRow(container, role, signedBy, date);
         }
 
         private CourseApplicationHistory? Decision(
@@ -270,65 +355,5 @@ namespace HrPortal.Services
                 .Where(h => h.Action == approved || h.Action == rejected)
                 .OrderByDescending(h => h.ActionDate)
                 .FirstOrDefault();
-
-        private void Approver(
-            IContainer container,
-            string label,
-            CourseApplicationHistory? decision)
-        {
-            container.ShowEntire().Column(column =>
-            {
-                column.Spacing(4);
-
-                column.Item()
-                    .Text(label.ToUpperInvariant())
-                    .FontSize(8.5f)
-                    .Bold()
-                    .FontColor(DocumentStyle.Green)
-                    .LetterSpacing(0.05f);
-
-                column.Item().Row(row =>
-                {
-                    row.RelativeItem(2).Element(e =>
-                    {
-                        if (decision?.ActionedByEmployee == null)
-                        {
-                            DocumentStyle.Blank(
-                                e, "Approver's signature");
-                            return;
-                        }
-
-                        DocumentStyle.Field(
-                            e,
-                            "Approver's signature",
-                            $"{decision.ActionedByEmployee.FirstName} " +
-                            $"{decision.ActionedByEmployee.LastName}");
-                    });
-
-                    row.ConstantItem(18);
-
-                    row.RelativeItem().Element(e =>
-                    {
-                        if (decision == null)
-                        {
-                            DocumentStyle.Blank(e, "Date");
-                            return;
-                        }
-
-                        DocumentStyle.Field(
-                            e,
-                            "Date",
-                            decision.ActionDate.ToLocalTime()
-                                .ToString("d MMMM yyyy"));
-                    });
-                });
-
-                if (!string.IsNullOrWhiteSpace(decision?.Comment))
-                {
-                    column.Item().Element(e => DocumentStyle.Note(
-                        e, decision!.Comment!));
-                }
-            });
-        }
     }
 }

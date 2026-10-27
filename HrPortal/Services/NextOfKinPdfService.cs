@@ -36,6 +36,9 @@ namespace HrPortal.Services
                 {
                     DocumentStyle.Apply(page);
 
+                    page.Header().Element(e => DocumentStyle.Head(
+                        e, _brand, Title, employee.EmployeeNumber));
+
                     page.Content().Element(e => Content(e, employee));
 
                     page.Footer().Element(e => DocumentStyle.Footer(
@@ -46,12 +49,9 @@ namespace HrPortal.Services
 
         private void Content(IContainer container, Employee employee)
         {
-            container.Column(column =>
+            DocumentStyle.Gutters(container).PaddingTop(20).Column(column =>
             {
                 column.Spacing(7);
-
-                column.Item().Element(e => DocumentStyle.Letterhead(
-                    e, _brand, Title, employee.EmployeeNumber));
 
                 column.Item().Element(e => DocumentStyle.Callout(
                     e,
@@ -60,7 +60,10 @@ namespace HrPortal.Services
                     "This is what we will use in an emergency."));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "1", "Employee"));
+                    e,
+                    "01",
+                    "Employee",
+                    "Your current employment information"));
 
                 column.Item().Element(e => DocumentStyle.DetailTable(
                     e, new (string, string?)[]
@@ -76,7 +79,10 @@ namespace HrPortal.Services
                     }));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "2", "Emergency contact"));
+                    e,
+                    "02",
+                    "Emergency contact",
+                    "Who we call, and how to reach them"));
 
                 column.Item().Element(e => DocumentStyle.DetailTable(
                     e, new (string, string?)[]
@@ -92,7 +98,10 @@ namespace HrPortal.Services
                     }));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "3", "Acknowledgement"));
+                    e,
+                    "03",
+                    "Acknowledgement",
+                    "Your confirmation that this is current"));
 
                 column.Item().Element(e =>
                     Acknowledgement(e, employee));

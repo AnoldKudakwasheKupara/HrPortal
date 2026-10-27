@@ -67,6 +67,9 @@ namespace HrPortal.Services
                 {
                     DocumentStyle.Apply(page);
 
+                    page.Header().Element(e => DocumentStyle.Head(
+                        e, _brand, Title, request.RequestNumber));
+
                     page.Content().Element(e =>
                         Content(e, request, leaveTypes, balance));
 
@@ -85,15 +88,15 @@ namespace HrPortal.Services
             var who = $"{request.Employee.FirstName} " +
                       $"{request.Employee.LastName}";
 
-            container.Column(column =>
+            DocumentStyle.Gutters(container).PaddingTop(12).Column(column =>
             {
-                column.Spacing(6);
-
-                column.Item().Element(e => DocumentStyle.Letterhead(
-                    e, _brand, Title, request.RequestNumber));
+                column.Spacing(4);
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "1", "Applicant"));
+                    e,
+                    "01",
+                    "Applicant",
+                    "Who the leave is for"));
 
                 column.Item().Element(e => DocumentStyle.DetailTable(
                     e, new (string, string?)[]
@@ -107,13 +110,19 @@ namespace HrPortal.Services
                     }));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "2", "Type of leave  (in days)"));
+                    e,
+                    "02",
+                    "Type of leave",
+                    "In days, against the balance held"));
 
                 column.Item().Element(e =>
                     Boxes(e, request, leaveTypes, balance));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "3", "Period applied for"));
+                    e,
+                    "03",
+                    "Period applied for",
+                    "The dates away and the reason"));
 
                 column.Item().Row(row =>
                 {
@@ -154,20 +163,26 @@ namespace HrPortal.Services
                     e, $"Submitted in the portal by {who}."));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "4", "Authorised by (H.O.D or manager)"));
+                    e,
+                    "04",
+                    "Authorisation",
+                    "To be completed by the H.O.D or manager"));
 
                 column.Item().Element(e => Authorisations(e, request));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "5", "For official use"));
+                    e,
+                    "05",
+                    "For official use",
+                    "Completed by Human Resources"));
 
-                column.Item().Element(e => DocumentStyle.Blank(
+                column.Item().Element(e => DocumentStyle.Field(
                     e,
                     "Does the applicant qualify to go on leave? " +
-                    "Yes or no"));
+                    "Yes or no",
+                    null));
 
-                column.Item().Element(e => DocumentStyle.Blank(
-                    e, "Reason"));
+                column.Item().Element(e => DocumentStyle.Field(e, "Reason", null));
             });
         }
 
@@ -226,7 +241,7 @@ namespace HrPortal.Services
                         .BorderTop(divider ? 1.2f : 0)
                         .BorderBottom(0.6f)
                         .BorderColor(DocumentStyle.Rule)
-                        .PaddingVertical(4)
+                        .PaddingVertical(3)
                         .Text(row.Label.ToUpperInvariant())
                         .FontSize(8)
                         .SemiBold()
@@ -246,7 +261,7 @@ namespace HrPortal.Services
                         .Background(row.Value == null
                             ? Colors.White
                             : DocumentStyle.Wash)
-                        .PaddingVertical(4)
+                        .PaddingVertical(3)
                         .AlignCenter()
                         .Text(row.Value ?? " ")
                         .FontSize(9.5f)
@@ -280,7 +295,7 @@ namespace HrPortal.Services
             {
                 container.Column(column =>
                 {
-                    column.Spacing(6);
+                    column.Spacing(4);
 
                     column.Item().Row(row =>
                     {
@@ -290,7 +305,9 @@ namespace HrPortal.Services
                         row.ConstantItem(18);
 
                         row.RelativeItem().Element(e =>
-                            DocumentStyle.Blank(e, "Date"));
+                            DocumentStyle.Blank(
+                                e, "Date", "Select date",
+                                icon: Icons.Calendar));
                     });
 
                     column.Item().Element(e => DocumentStyle.Note(
@@ -302,7 +319,7 @@ namespace HrPortal.Services
 
             container.Column(column =>
             {
-                column.Spacing(6);
+                column.Spacing(4);
 
                 foreach (var decision in decisions)
                 {

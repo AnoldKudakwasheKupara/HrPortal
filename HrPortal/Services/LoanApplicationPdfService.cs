@@ -39,6 +39,9 @@ namespace HrPortal.Services
                 {
                     DocumentStyle.Apply(page);
 
+                    page.Header().Element(e => DocumentStyle.Head(
+                        e, _brand, Title, application.ApplicationNumber));
+
                     page.Content().Element(e => Content(e, application));
 
                     page.Footer().Element(e => DocumentStyle.Footer(
@@ -54,20 +57,23 @@ namespace HrPortal.Services
             var who = $"{application.Employee.FirstName} " +
                       $"{application.Employee.LastName}";
 
-            container.Column(column =>
+            DocumentStyle.Gutters(container).PaddingTop(20).Column(column =>
             {
                 column.Spacing(6);
 
-                column.Item().Element(e => DocumentStyle.Letterhead(
-                    e, _brand, Title, application.ApplicationNumber));
-
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "1", "Existing commitments"));
+                    e,
+                    "01",
+                    "Existing commitments",
+                    "Completed by payroll, which holds these"));
 
                 column.Item().Element(e => Standing(e, application));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "2", "The request"));
+                    e,
+                    "02",
+                    "The request",
+                    "The amount applied for and the undertaking"));
 
                 column.Item().AlignRight().Width(150)
                     .Element(e => DocumentStyle.Field(
@@ -109,7 +115,10 @@ namespace HrPortal.Services
                     .LineHeight(1.45f);
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "3", "Amount and repayment"));
+                    e,
+                    "03",
+                    "Amount and repayment",
+                    "What is authorised and how it is recovered"));
 
                 column.Item().Row(row =>
                 {
@@ -171,7 +180,10 @@ namespace HrPortal.Services
                 column.Item().Element(e => Signature(e, application, who));
 
                 column.Item().Element(e => DocumentStyle.Section(
-                    e, "4", "Sanction"));
+                    e,
+                    "04",
+                    "Sanction",
+                    "To be completed by the relevant approvers"));
 
                 column.Item().Element(e => Sanction(e, application));
             });
@@ -193,18 +205,19 @@ namespace HrPortal.Services
                 column.Item().Row(row =>
                 {
                     row.RelativeItem().Element(e =>
-                        DocumentStyle.Blank(e, "Outstanding loan"));
+                        DocumentStyle.Field(e, "Outstanding loan", null));
 
                     row.ConstantItem(18);
 
-                    row.RelativeItem().Element(e => DocumentStyle.Blank(
-                        e, "Date to clear outstanding loan"));
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e, "Date to clear outstanding loan", null,
+                        icon: Icons.Calendar));
                 });
 
                 column.Item().Row(row =>
                 {
-                    row.RelativeItem().Element(e => DocumentStyle.Blank(
-                        e, "Current deduction p.m."));
+                    row.RelativeItem().Element(e => DocumentStyle.Field(
+                        e, "Current deduction p.m.", null));
 
                     row.ConstantItem(18);
 
@@ -289,14 +302,14 @@ namespace HrPortal.Services
                 column.Item().Row(row =>
                 {
                     row.RelativeItem().Element(e =>
-                        DocumentStyle.TickBox(
+                        DocumentStyle.Outcome(
                             e, "Sanctioned", approved));
 
                     row.ConstantItem(18);
 
                     row.RelativeItem().Element(e =>
-                        DocumentStyle.TickBox(
-                            e, "Declined", !approved));
+                        DocumentStyle.Outcome(
+                            e, "Declined", !approved, adverse: true));
                 });
 
                 column.Item().Width(320).Element(e =>
