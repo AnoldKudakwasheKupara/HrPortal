@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +14,66 @@ namespace HrPortal.Controllers
     public class ApprovalConfigurationController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
         public ApprovalConfigurationController(
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// Who currently holds an approval role, as a printable
+        /// record. Worth a signed copy on file, since it decides
+        /// whose name ends up on everyone else's paperwork.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var configuration = await _context.ApprovalConfigurations
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                    .ThenInclude(e => e.Department)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (configuration == null)
+                return NotFound();
+
+            var employee = configuration.Employee;
+
+            var who = $"{employee.FirstName} {employee.LastName}";
+
+            var role = configuration.Role == ApprovalRole.HROfficer
+                ? "HR Officer"
+                : "Managing Director";
+
+            var record = new RecordDocument("Approval Role")
+            {
+                Headline = who,
+                Caption = role,
+                Chip = configuration.IsActive ? "Active" : "Inactive"
+            };
+
+            record.Section("Role", "What this person may approve")
+                .Add("Role", role)
+                .Add("Active", configuration.IsActive);
+
+            record.Section("Holder", "Who holds it")
+                .Add("Name", who)
+                .Add("Employee number", employee.EmployeeNumber)
+                .Add("Job title", employee.JobTitle)
+                .Add("Department", employee.Department?.Name)
+                .Add("Email", employee.Email)
+                .Add("Phone number", employee.PhoneNumber);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
