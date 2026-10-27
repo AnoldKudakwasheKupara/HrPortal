@@ -140,8 +140,23 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
 
-    options.MimeTypes = ResponseCompressionDefaults.MimeTypes
-        .Concat(new[] { "image/svg+xml" });
+    // Deliberately not the framework's default list, which includes
+    // text/html and application/json. Compressing a response that
+    // holds a secret alongside anything an attacker can influence
+    // lets them read the secret back out of the compressed size --
+    // the BREACH attack -- and every page here carries an antiforgery
+    // token a few lines away from a search box. Stylesheets, scripts
+    // and fonts keep no secrets and echo nothing back, and they are
+    // where the weight is anyway.
+    options.MimeTypes = new[]
+    {
+        "text/css",
+        "text/javascript",
+        "application/javascript",
+        "image/svg+xml",
+        "font/woff",
+        "font/woff2"
+    };
 });
 
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
