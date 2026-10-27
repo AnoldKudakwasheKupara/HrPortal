@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,63 @@ namespace HrPortal.Controllers
     public class LeaveTypeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RecordDocumentPdfService _pdf;
 
-        public LeaveTypeController(ApplicationDbContext context)
+        public LeaveTypeController(
+            ApplicationDbContext context,
+            RecordDocumentPdfService pdf)
         {
             _context = context;
+            _pdf = pdf;
+        }
+
+        /// <summary>
+        /// The leave type and what it is currently costing the
+        /// company, as a printable record.
+        /// </summary>
+        public async Task<IActionResult> Form(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var type = await _context.LeaveTypes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (type == null)
+                return NotFound();
+
+            var year = DateTime.Today.Year;
+
+            var balances = await _context.LeaveBalances
+                .AsNoTracking()
+                .Where(b => b.LeaveTypeId == type.Id && b.Year == year)
+                .ToListAsync();
+
+            var record = new RecordDocument("Leave Type")
+            {
+                Headline = type.Name,
+                Chip = type.IsActive ? "Active" : "Inactive"
+            };
+
+            record.Section("Leave type", "How the type is set up")
+                .Add("Name", type.Name)
+                .Add("Active", type.IsActive);
+
+            record.Section($"Balances for {year}", "Across all staff")
+                .Add("Employees with a balance", balances.Count)
+                .Add(
+                    "Days allocated",
+                    balances.Sum(b => b.AllocatedDays))
+                .Add("Days used", balances.Sum(b => b.UsedDays))
+                .Add("Days remaining", balances.Sum(b => b.RemainingDays));
+
+            record.Note(type.Description);
+
+            return File(
+                _pdf.Render(record),
+                "application/pdf",
+                record.FileName);
         }
 
         public async Task<IActionResult> Index()
