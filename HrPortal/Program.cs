@@ -17,6 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
+// Since QuestPDF 2026.9 a glyph missing from every registered font
+// stops generation outright. These are HR forms carrying names,
+// addresses and free-text comments, and an employee whose name holds
+// one unusual character should not be unable to print their own
+// paperwork. The documents fall back from Montserrat to the Lato
+// QuestPDF ships with, and anything neither font has prints as a
+// replacement mark rather than failing the download.
+QuestPDF.Settings.ThrowOnMissingTextGlyphs = false;
+
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -187,6 +196,12 @@ builder.Services.AddRazorPages(options =>
 });
 
 var app = builder.Build();
+
+HrPortal.Services.DocumentFonts.Register(
+    app.Environment,
+    app.Services
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger(nameof(HrPortal.Services.DocumentFonts)));
 
 if (DatabaseConfigurationProvider.LastLoadError != null)
 {
