@@ -12,27 +12,10 @@
     string Ago(DateTime when)
     {
         var span = DateTime.UtcNow - when;
-
         if (span.TotalMinutes < 1) return "Just now";
-
-        if (span.TotalMinutes < 60)
-        {
-            var m = (int)span.TotalMinutes;
-            return m == 1 ? "1 min ago" : $"{m} mins ago";
-        }
-
-        if (span.TotalHours < 24)
-        {
-            var h = (int)span.TotalHours;
-            return h == 1 ? "1 hour ago" : $"{h} hours ago";
-        }
-
-        if (span.TotalDays < 30)
-        {
-            var d = (int)span.TotalDays;
-            return d == 1 ? "Yesterday" : $"{d} days ago";
-        }
-
+        if (span.TotalMinutes < 60) { var m = (int)span.TotalMinutes; return m == 1 ? "1 min ago" : $"{m} mins ago"; }
+        if (span.TotalHours < 24) { var h = (int)span.TotalHours; return h == 1 ? "1 hour ago" : $"{h} hours ago"; }
+        if (span.TotalDays < 30) { var d = (int)span.TotalDays; return d == 1 ? "Yesterday" : $"{d} days ago"; }
         return when.ToLocalTime().ToString("d MMM yyyy");
     }
 
@@ -51,210 +34,218 @@
         _ => "fa-circle-dot"
     };
 
-    // One row of uniform tiles, chosen by the strongest role the
-    // person holds, and one slim column of quick actions.
-    var tiles = new List<(string Icon, string Label, string Value,
-                          string Note, string Ctrl, string Act, string Tone)>();
-    var actions = new List<(string Icon, string Title, string Ctrl, string Act)>();
-    (string Title, string Ctrl, string Act)? primary = null;
+    // Headline figures: one tile each, the tone following meaning so a
+    // quiet day reads green and only what needs attention is amber or rose.
+    var tiles = new List<(string Badge, string Icon, string Title, string Value,
+                          string Note, string Cta, string Tone, string Ctrl, string Act)>();
+
+    // The "Jump to" mosaic: a hero, a dark tile and four tinted ones.
+    var jumps = new List<(string Badge, string Icon, string Title, string Desc,
+                          string? Figure, string? FigureLabel, string Cta,
+                          string Tone, string Ctrl, string Act)>();
+
+    string lede;
+    string metaNote;
+    (string Title, string Ctrl, string Act) primary;
+    var showReports = Model.Admin != null || Model.Hr != null || Model.Md != null;
 
     if (Model.Admin != null)
     {
         var a = Model.Admin;
-
-        tiles.Add(("fa-users", "Employees", a.ActiveEmployees.ToString("N0"),
-            a.EmployeesWithoutLogin == 0
-                ? "All have a login"
-                : $"{a.EmployeesWithoutLogin:N0} without a login",
-            "Employee", "Index", ""));
-
-        tiles.Add(("fa-laptop", "Assets", a.Assets.ToString("N0"),
-            $"{a.UnassignedAssets:N0} unassigned",
-            "Asset", "Index", ""));
-
-        tiles.Add(("fa-certificate", "Licences",
-            (a.LicensesExpired + a.LicensesExpiringSoon).ToString("N0"),
-            a.LicensesExpired > 0
-                ? $"{a.LicensesExpired:N0} lapsed"
-                : "Due within 60 days",
-            "License", "Index",
-            a.LicensesExpired > 0 ? "is-critical"
-                : a.LicensesExpiringSoon > 0 ? "is-warning" : ""));
-
-        tiles.Add(("fa-screwdriver-wrench", "Maintenance",
-            (a.MaintenanceOverdue + a.MaintenanceDueSoon).ToString("N0"),
-            a.MaintenanceOverdue > 0
-                ? $"{a.MaintenanceOverdue:N0} overdue"
-                : "Due within 30 days",
-            "AssetMaintenance", "Index",
-            a.MaintenanceOverdue > 0 ? "is-critical"
-                : a.MaintenanceDueSoon > 0 ? "is-warning" : ""));
-
-        tiles.Add(("fa-headset", "IT activity", a.ActivitiesThisWeek.ToString("N0"),
-            a.ActivitiesOutstanding == 0
-                ? "Nothing outstanding"
-                : $"{a.ActivitiesOutstanding:N0} still open",
-            "ItActivity", "Index",
-            a.ActivitiesOutstanding > 0 ? "is-warning" : ""));
-
-        tiles.Add(("fa-file-lines", "Weekly report",
-            a.WeeklyReportDue ? "Due" : "Done",
-            a.WeeklyReportDue ? "This week's is not drafted" : "This week is covered",
-            "WeeklyReport", "Index",
-            a.WeeklyReportDue ? "is-warning" : "is-good"));
-
+        lede = "Here's what's happening across the portal today.";
+        metaNote = $"{a.Departments:N0} departments";
         primary = ("Add employee", "Employee", "Create");
-        actions.Add(("fa-user-plus", "Add employee", "Employee", "Create"));
-        actions.Add(("fa-laptop", "Register asset", "Asset", "Create"));
-        actions.Add(("fa-file-arrow-up", "Upload document", "Repository", "Upload"));
-        actions.Add(("fa-headset", "Log IT activity", "ItActivity", "Create"));
-        actions.Add(("fa-file-lines", "Weekly report", "WeeklyReport", "Index"));
-        actions.Add(("fa-chart-column", "Reports", "Reports", "Index"));
+
+        tiles.Add(("People", "fa-users", "Employees", a.ActiveEmployees.ToString("N0"),
+            a.EmployeesWithoutLogin == 0 ? "all have a login" : $"{a.EmployeesWithoutLogin:N0} without a login",
+            "Open the register", "tone-slate", "Employee", "Index"));
+        tiles.Add(("Estate", "fa-laptop", "Assets", a.Assets.ToString("N0"),
+            $"{a.UnassignedAssets:N0} unassigned", "Open", "tone-violet", "Asset", "Index"));
+        tiles.Add(("Risk", "fa-certificate", "Licences", (a.LicensesExpired + a.LicensesExpiringSoon).ToString("N0"),
+            a.LicensesExpired > 0 ? $"{a.LicensesExpired:N0} lapsed" : "due within 60 days", "Review",
+            a.LicensesExpired > 0 ? "tone-rose" : a.LicensesExpiringSoon > 0 ? "tone-amber" : "tone-green",
+            "License", "Index"));
+        tiles.Add(("Upkeep", "fa-screwdriver-wrench", "Maintenance", (a.MaintenanceOverdue + a.MaintenanceDueSoon).ToString("N0"),
+            a.MaintenanceOverdue > 0 ? $"{a.MaintenanceOverdue:N0} overdue" : "due within 30 days", "See jobs",
+            a.MaintenanceOverdue > 0 ? "tone-rose" : a.MaintenanceDueSoon > 0 ? "tone-amber" : "tone-green",
+            "AssetMaintenance", "Index"));
+        tiles.Add(("Helpdesk", "fa-headset", "IT activity", a.ActivitiesThisWeek.ToString("N0"),
+            a.ActivitiesOutstanding == 0 ? "nothing outstanding" : $"{a.ActivitiesOutstanding:N0} still open",
+            "Open the log", a.ActivitiesOutstanding > 0 ? "tone-amber" : "tone-teal", "ItActivity", "Index"));
+        tiles.Add(("Report", "fa-file-lines", "Weekly report", a.WeeklyReportDue ? "Due" : "Done",
+            a.WeeklyReportDue ? "this week's is not drafted" : "this week is covered", "Open",
+            a.WeeklyReportDue ? "tone-gold" : "tone-green", "WeeklyReport", "Index"));
+
+        jumps.Add(("This week", "fa-headset", "IT activity log",
+            "Everything raised and resolved this week, and what is still open against a machine or a person.",
+            a.ActivitiesThisWeek.ToString("N0"), a.ActivitiesOutstanding == 0 ? "logged, nothing outstanding" : $"logged, {a.ActivitiesOutstanding:N0} outstanding",
+            "Log activity", "is-hero", "ItActivity", "Create"));
+        jumps.Add(("Estate", "fa-laptop", "Asset register", "Every machine the business holds, and who is holding it.",
+            a.Assets.ToString("N0"), "assets tracked", "Open", "tone-ink", "Asset", "Index"));
+        jumps.Add(("People", "fa-user-plus", "Add an employee", "Create the record and, if needed, a sign-in account.",
+            null, null, "New employee", "tone-teal", "Employee", "Create"));
+        jumps.Add(("Estate", "fa-box", "Register an asset", "Bring new hardware into the register.",
+            null, null, "New asset", "tone-green", "Asset", "Create"));
+        jumps.Add(("Report", "fa-file-lines", "Weekly IT report", "Draft, issue and share this week's report.",
+            null, null, "Open reports", "tone-gold", "WeeklyReport", "Index"));
+        jumps.Add(("Insight", "fa-chart-column", "Reports", "Assets, vendors, licences, activity and the audit trail.",
+            null, null, "See reports", "tone-violet", "Reports", "Index"));
     }
     else if (Model.Hr != null)
     {
         var h = Model.Hr;
-
-        tiles.Add(("fa-inbox", "Awaiting review", h.AwaitingReview.ToString("N0"),
-            h.AwaitingReview == 0 ? "Nothing to review" : "Waiting on HR",
-            "LeaveApproval", "Index", h.AwaitingReview > 0 ? "is-warning" : "is-good"));
-
-        tiles.Add(("fa-stamp", "With the MD", h.WithMd.ToString("N0"),
-            "Cleared HR, awaiting sign-off",
-            "LeaveRequest", "Index", ""));
-
-        tiles.Add(("fa-rotate-left", "Returned", h.ReturnedToEmployees.ToString("N0"),
-            "Sent back and not resubmitted",
-            "LeaveRequest", "Index", h.ReturnedToEmployees > 0 ? "is-warning" : ""));
-
-        tiles.Add(("fa-users", "Staff", h.ActiveEmployees.ToString("N0"),
-            $"{h.OnLeaveToday:N0} on leave today",
-            "Employee", "Index", ""));
-
-        tiles.Add(("fa-graduation-cap", "Overdue training", h.OverdueTrainingOrgWide.ToString("N0"),
-            h.OverdueTrainingOrgWide == 0 ? "Everyone is up to date" : "Past the due date",
-            "Reports", "Training", h.OverdueTrainingOrgWide > 0 ? "is-critical" : "is-good"));
-
-        tiles.Add(("fa-calendar-check", "Approved this month", h.ApprovedThisMonth.ToString("N0"),
-            "Leave requests completed",
-            "Reports", "LeaveRequests", ""));
-
+        lede = "Here's where the people work stands today.";
+        metaNote = $"{h.OnLeaveToday:N0} on leave today";
         primary = ("Review leave", "LeaveApproval", "Index");
-        actions.Add(("fa-inbox", "Review leave", "LeaveApproval", "Index"));
-        actions.Add(("fa-user-plus", "Add employee", "Employee", "Create"));
-        actions.Add(("fa-file-arrow-up", "File a document", "EmployeeDocument", "Create"));
-        actions.Add(("fa-clipboard-check", "Add a course", "TrainingCourse", "Create"));
-        actions.Add(("fa-user-graduate", "Course applications", "CourseApproval", "Index"));
-        actions.Add(("fa-chart-column", "Reports", "Reports", "Index"));
+
+        tiles.Add(("Queue", "fa-inbox", "Awaiting review", h.AwaitingReview.ToString("N0"),
+            h.AwaitingReview == 0 ? "nothing to review" : "waiting on HR", "Review",
+            h.AwaitingReview > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "Index"));
+        tiles.Add(("Pipeline", "fa-stamp", "With the MD", h.WithMd.ToString("N0"),
+            "cleared HR, awaiting sign-off", "See them", "tone-violet", "LeaveRequest", "Index"));
+        tiles.Add(("Follow-up", "fa-rotate-left", "Returned", h.ReturnedToEmployees.ToString("N0"),
+            "sent back and not resubmitted", "See them", h.ReturnedToEmployees > 0 ? "tone-amber" : "tone-slate",
+            "LeaveRequest", "Index"));
+        tiles.Add(("People", "fa-users", "Staff", h.ActiveEmployees.ToString("N0"),
+            $"{h.EmployeesWithoutLogin:N0} without a login", "Open", "tone-teal", "Employee", "Index"));
+        tiles.Add(("Learning", "fa-graduation-cap", "Overdue training", h.OverdueTrainingOrgWide.ToString("N0"),
+            h.OverdueTrainingOrgWide == 0 ? "everyone is up to date" : "past the due date", "Review",
+            h.OverdueTrainingOrgWide > 0 ? "tone-rose" : "tone-green", "Reports", "Training"));
+        tiles.Add(("Done", "fa-calendar-check", "Approved this month", h.ApprovedThisMonth.ToString("N0"),
+            "leave requests completed", "Open", "tone-green", "Reports", "LeaveRequests"));
+
+        jumps.Add(("Queue", "fa-inbox", "Leave to review",
+            "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to the MD.",
+            h.AwaitingReview.ToString("N0"), h.AwaitingReview == 1 ? "request waiting" : "requests waiting",
+            "Review leave", "is-hero", "LeaveApproval", "Index"));
+        jumps.Add(("People", "fa-id-card", "Employee records", "Every record, document and certification on file.",
+            h.ActiveEmployees.ToString("N0"), "active employees", "Open", "tone-ink", "Employee", "Index"));
+        jumps.Add(("People", "fa-user-plus", "Add an employee", "Create the record and a sign-in account.",
+            null, null, "New employee", "tone-teal", "Employee", "Create"));
+        jumps.Add(("Learning", "fa-clipboard-check", "Add a course", "Put a course in front of everyone at once.",
+            null, null, "New course", "tone-green", "TrainingCourse", "Create"));
+        jumps.Add(("Records", "fa-file-arrow-up", "File a document", "Attach a contract or letter to a record.",
+            null, null, "Upload", "tone-gold", "EmployeeDocument", "Create"));
+        jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what, and where each one stands.",
+            null, null, "Open", "tone-violet", "CourseApproval", "Index"));
     }
     else if (Model.Md != null)
     {
         var m = Model.Md;
-
-        tiles.Add(("fa-stamp", "To sanction", m.AwaitingFinalApproval.ToString("N0"),
-            m.AwaitingFinalApproval == 0 ? "Nothing waiting" : "Leave waiting on you",
-            "LeaveApproval", "FinalApproval",
-            m.AwaitingFinalApproval > 0 ? "is-warning" : "is-good"));
-
-        tiles.Add(("fa-calendar-check", "Approved", m.ApprovedThisMonth.ToString("N0"),
-            $"{m.DaysApprovedThisMonth:0.#} days this month",
-            "LeaveRequest", "Index", ""));
-
-        tiles.Add(("fa-ban", "Rejected", m.RejectedThisMonth.ToString("N0"),
-            "This month",
-            "LeaveRequest", "Index", ""));
-
-        tiles.Add(("fa-umbrella-beach", "On leave today", m.OnLeaveToday.ToString("N0"),
-            "Staff away right now",
-            "Reports", "Absence", ""));
-
+        lede = "Here's what is waiting on your decision.";
+        metaNote = $"{m.OnLeaveToday:N0} on leave today";
         primary = ("Final approval", "LeaveApproval", "FinalApproval");
-        actions.Add(("fa-stamp", "Final approval", "LeaveApproval", "FinalApproval"));
-        actions.Add(("fa-hand-holding-dollar", "Sanction a loan", "LoanApproval", "Index"));
-        actions.Add(("fa-user-graduate", "Course applications", "CourseApproval", "Index"));
-        actions.Add(("fa-chart-column", "Reports", "Reports", "Index"));
+
+        tiles.Add(("Decide", "fa-stamp", "To sanction", m.AwaitingFinalApproval.ToString("N0"),
+            m.AwaitingFinalApproval == 0 ? "nothing waiting" : "leave waiting on you", "Review",
+            m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "FinalApproval"));
+        tiles.Add(("Done", "fa-calendar-check", "Approved", m.ApprovedThisMonth.ToString("N0"),
+            $"{m.DaysApprovedThisMonth:0.#} days this month", "See them", "tone-green", "LeaveRequest", "Index"));
+        tiles.Add(("Done", "fa-ban", "Rejected", m.RejectedThisMonth.ToString("N0"),
+            "this month", "See them", "tone-slate", "LeaveRequest", "Index"));
+        tiles.Add(("Today", "fa-umbrella-beach", "On leave today", m.OnLeaveToday.ToString("N0"),
+            "staff away right now", "Absence report", "tone-teal", "Reports", "Absence"));
+
+        jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
+            "Requests that have cleared the supervisor and HR and now wait on the Managing Director.",
+            m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
+            "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
+        jumps.Add(("Finance", "fa-hand-holding-dollar", "Loan applications", "Staff loans to sanction, return or decline.",
+            null, null, "Open", "tone-ink", "LoanApproval", "Index"));
+        jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what.",
+            null, null, "Decide", "tone-teal", "CourseApproval", "Index"));
+        jumps.Add(("Insight", "fa-chart-column", "Reports", "Leave, absence and how the portal is used.",
+            null, null, "See reports", "tone-green", "Reports", "Index"));
+        jumps.Add(("Leave", "fa-list", "All leave requests", "Every request at every stage.",
+            null, null, "Open", "tone-gold", "LeaveRequest", "Index"));
+        jumps.Add(("People", "fa-address-book", "Staff directory", "Who is who, and how to reach them.",
+            null, null, "Open", "tone-violet", "Directory", "Index"));
     }
-    else if (Model.Mine != null)
+    else
     {
-        var me = Model.Mine;
+        var me = Model.Mine ?? new HrPortal.ViewModels.MyDashboardSection();
+        lede = "Here's where your leave, training and requests stand.";
+        metaNote = me.HasBalances ? $"{me.RemainingDays:0.#} leave days left" : "no leave balance set up yet";
+        primary = Model.ShowsOwnLeave ? ("Request leave", "MyLeave", "Create") : ("My training", "MyTraining", "Index");
 
-        tiles.Add(("fa-calendar-days", "Leave remaining",
-            me.HasBalances ? me.RemainingDays.ToString("0.#") : "—",
-            me.HasBalances
-                ? (me.HeadlineLeaveType ?? "days available")
-                : "No balance set up yet",
-            "MyLeave", "Index", ""));
+        tiles.Add(("Leave", "fa-calendar-days", "Leave remaining", me.HasBalances ? me.RemainingDays.ToString("0.#") : "—",
+            me.HasBalances ? (me.HeadlineLeaveType ?? "days available").ToLower() : "no balance set up yet",
+            "My leave", "tone-green", "MyLeave", "Index"));
+        tiles.Add(("Leave", "fa-umbrella-beach", "Leave taken", me.HasBalances ? me.DaysTakenThisYear.ToString("0.#") : "—",
+            $"days used in {DateTime.Today.Year}", "History", "tone-slate", "MyLeave", "Index"));
+        tiles.Add(("Requests", "fa-hourglass-half", "In progress", me.RequestsInProgress.ToString("N0"),
+            me.RequestsInProgress == 0 ? "no open requests" : "awaiting a decision", "See them",
+            me.RequestsInProgress > 0 ? "tone-amber" : "tone-slate", "MyLeave", "Index"));
+        tiles.Add(("Learning", "fa-graduation-cap", "Training to do", me.OutstandingTraining.ToString("N0"),
+            me.OverdueTraining > 0 ? $"{me.OverdueTraining:N0} overdue" : me.OutstandingTraining == 0 ? "all caught up" : "none overdue",
+            "Open", me.OverdueTraining > 0 ? "tone-rose" : me.OutstandingTraining == 0 ? "tone-green" : "tone-violet",
+            "MyTraining", "Index"));
+        tiles.Add(("Estate", "fa-laptop", "My assets", me.MyAssets.ToString("N0"),
+            me.MyAssets == 0 ? "nothing issued" : "issued to you", "See them", "tone-teal", "MyAssets", "Index"));
+        tiles.Add(("Inbox", "fa-bell", "Notices", me.UnreadNotifications.ToString("N0"),
+            me.UnreadNotifications == 0 ? "nothing new" : "unread", "Read",
+            me.UnreadNotifications > 0 ? "tone-gold" : "tone-slate", "MyNotifications", "Index"));
 
-        tiles.Add(("fa-umbrella-beach", "Leave taken",
-            me.HasBalances ? me.DaysTakenThisYear.ToString("0.#") : "—",
-            $"Days used in {DateTime.Today.Year}",
-            "MyLeave", "Index", ""));
-
-        tiles.Add(("fa-hourglass-half", "In progress", me.RequestsInProgress.ToString("N0"),
-            me.RequestsInProgress == 0 ? "No open requests" : "Awaiting a decision",
-            "MyLeave", "Index", ""));
-
-        tiles.Add(("fa-graduation-cap", "Training to do", me.OutstandingTraining.ToString("N0"),
-            me.OverdueTraining > 0
-                ? $"{me.OverdueTraining:N0} overdue"
-                : me.OutstandingTraining == 0 ? "All caught up" : "None overdue",
-            "MyTraining", "Index",
-            me.OverdueTraining > 0 ? "is-critical" : me.OutstandingTraining == 0 ? "is-good" : ""));
-
-        tiles.Add(("fa-laptop", "My assets", me.MyAssets.ToString("N0"),
-            me.MyAssets == 0 ? "Nothing issued" : "Issued to you",
-            "MyAssets", "Index", ""));
-
-        tiles.Add(("fa-bell", "Notices", me.UnreadNotifications.ToString("N0"),
-            me.UnreadNotifications == 0 ? "Nothing new" : "Unread",
-            "MyNotifications", "Index", me.UnreadNotifications > 0 ? "is-warning" : ""));
-
-        primary = Model.ShowsOwnLeave ? ("Request leave", "MyLeave", "Create") : null;
-        actions.Add(("fa-calendar-plus", "Request leave", "MyLeave", "Create"));
-        actions.Add(("fa-graduation-cap", "My training", "MyTraining", "Index"));
-        actions.Add(("fa-id-badge", "My record", "MyProfile", "Index"));
-        actions.Add(("fa-user-graduate", "Apply for a course", "MyCourses", "Create"));
-        actions.Add(("fa-hand-holding-dollar", "Apply for a loan", "MyLoans", "Create"));
-        actions.Add(("fa-book", "Policies", "Policy", "Index"));
+        jumps.Add(("Leave", "fa-calendar-plus", "Book time off",
+            "Your request goes to your supervisor first where you have one, then to HR, then to the Managing Director.",
+            me.HasBalances ? me.RemainingDays.ToString("0.#") : null, me.HasBalances ? "days available" : null,
+            "Request leave", "is-hero", "MyLeave", "Create"));
+        jumps.Add(("Learning", "fa-graduation-cap", "My training", "Courses assigned to you, with their materials and due dates.",
+            me.OutstandingTraining.ToString("N0"), me.OutstandingTraining == 1 ? "course to complete" : "courses to complete",
+            "Open", "tone-ink", "MyTraining", "Index"));
+        jumps.Add(("Records", "fa-id-badge", "My record", "Your details, documents and next of kin.",
+            null, null, "Open", "tone-teal", "MyProfile", "Index"));
+        jumps.Add(("Learning", "fa-user-graduate", "Apply for a course", "Ask to study a programme.",
+            null, null, "Apply", "tone-green", "MyCourses", "Create"));
+        jumps.Add(("Finance", "fa-hand-holding-dollar", "Apply for a loan", "Put in a staff loan application.",
+            null, null, "Apply", "tone-gold", "MyLoans", "Create"));
+        jumps.Add(("Company", "fa-book", "Policies", "Read and acknowledge company policies.",
+            null, null, "Open", "tone-violet", "Policy", "Index"));
     }
 
     var hasAttention = Model.Focus.Any() || Model.Upcoming.Any();
-
     var queue = Model.Hr?.ReviewQueue ?? Model.Md?.ApprovalQueue ?? new List<LeaveRequest>();
     var queueTitle = Model.Hr != null ? "Leave to review" : "Leave to sign off";
-    var queueCtrl = "LeaveApproval";
+    var queueIcon = Model.Hr != null ? "fa-inbox" : "fa-stamp";
     var queueAct = Model.Hr != null ? "Index" : "FinalApproval";
     var startingSoon = Model.Hr?.StartingSoon ?? Model.Md?.StartingSoon ?? new List<LeaveRequest>();
+    var mine = Model.Mine;
+    var showMine = mine != null && (Model.ShowsOwnLeave || mine.TrainingToDo.Any());
 
-    var charts = Model.Trends
-        .Where(t => t.Points.Count > 1 && t.Total > 0)
-        .ToList();
+    var charts = Model.Trends.Where(t => t.Points.Count > 1 && t.Total > 0).ToList();
 }
 
-<div class="container-fluid dash">
+<div class="dash">
 
-    <div class="dash-head">
+    <div class="dash-masthead">
         <div>
-            <span class="eyebrow">@DateTime.Today.ToString("dddd, d MMMM yyyy")</span>
+            <div class="dash-eyebrow"><i class="fas fa-gauge-high" aria-hidden="true"></i> Dashboard</div>
             <h1>@greeting, <span class="dash-name">@Model.GreetingName</span></h1>
+            <p class="dash-lede">@lede</p>
+            <div class="dash-meta">
+                <span><i class="fas fa-calendar me-1" aria-hidden="true"></i>@DateTime.Today.ToString("dddd, d MMMM yyyy")</span>
+                <span class="dot"></span>
+                <span>@metaNote</span>
+            </div>
         </div>
-        @if (primary != null)
-        {
-            <a class="btn btn-primary dash-primary"
-               asp-controller="@primary.Value.Ctrl"
-               asp-action="@primary.Value.Act">
-                <i class="fas fa-plus" aria-hidden="true"></i>
-                @primary.Value.Title
+        <div class="dash-actions">
+            @if (showReports)
+            {
+                <a class="dash-btn" asp-controller="Reports" asp-action="Index">
+                    <i class="fas fa-chart-pie" aria-hidden="true"></i> Reports
+                </a>
+            }
+            <a class="dash-btn primary" asp-controller="@primary.Ctrl" asp-action="@primary.Act">
+                <i class="fas fa-plus" aria-hidden="true"></i> @primary.Title
             </a>
-        }
+        </div>
     </div>
 
     @if (!Model.HasEmployeeRecord)
     {
         <div class="alert alert-info dash-alert">
             <strong>No employee record is linked to your account.</strong>
-            Leave, training and other personal sections stay hidden until an
-            administrator links one.
+            Leave, training and other personal sections stay hidden until an administrator links one.
         </div>
     }
 
@@ -269,56 +260,47 @@
         </div>
     }
 
-    <div class="dash-kpis" data-count="@tiles.Count">
-        @foreach (var tile in tiles)
+    <h2 class="sr-only">Key figures</h2>
+    <div class="stat-grid" data-count="@tiles.Count">
+        @foreach (var t in tiles)
         {
-            <a class="kpi @tile.Tone"
-               asp-controller="@tile.Ctrl"
-               asp-action="@tile.Act">
-                <span class="kpi-icon"><i class="fas @tile.Icon" aria-hidden="true"></i></span>
-                <span class="kpi-label">@tile.Label</span>
-                <span class="kpi-value">@tile.Value</span>
-                <span class="kpi-note">@tile.Note</span>
+            <a class="bento-card is-compact @t.Tone" asp-controller="@t.Ctrl" asp-action="@t.Act">
+                <span class="bento-badge"><i class="fas @t.Icon" aria-hidden="true"></i> @t.Badge</span>
+                <h3 class="bento-title">@t.Title</h3>
+                <div class="bento-figure">
+                    <span class="bento-stat">@t.Value</span>
+                    <span class="bento-stat-label">@t.Note</span>
+                </div>
+                <span class="bento-cta">@t.Cta <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
             </a>
         }
     </div>
 
-    <div class="dash-body">
+    <div class="dash-grid">
 
-        <div class="dash-main">
+        <div class="dash-col">
 
-            <section class="card dash-card">
-                <header class="dash-card-head">
-                    <h2>Needs your attention</h2>
-                    @if (hasAttention)
-                    {
-                        <span class="dash-count">@(Model.Focus.Count + Model.Upcoming.Count)</span>
-                    }
-                </header>
-
+            <section class="panel">
+                <div class="panel-header">
+                    <i class="fas fa-bell" aria-hidden="true"></i>
+                    <span>Needs your attention</span>
+                    @if (hasAttention) { <span class="panel-count">@(Model.Focus.Count + Model.Upcoming.Count)</span> }
+                </div>
                 @if (hasAttention)
                 {
                     <ul class="dash-list">
                         @foreach (var item in Model.Focus)
                         {
                             <li>
-                                <a class="dash-row @item.Tone"
-                                   asp-controller="@item.Controller"
-                                   asp-action="@item.Action"
-                                   asp-all-route-data="@item.RouteData">
-                                    <span class="dash-row-icon">
-                                        <i class="fas @item.Icon" aria-hidden="true"></i>
-                                    </span>
+                                <a class="dash-row @item.Tone" asp-controller="@item.Controller" asp-action="@item.Action" asp-all-route-data="@item.RouteData">
+                                    <span class="dash-row-icon"><i class="fas @item.Icon" aria-hidden="true"></i></span>
                                     <span class="dash-row-main">
                                         <span class="dash-row-title">@item.Label</span>
                                         <span class="dash-row-meta">@item.Note</span>
                                     </span>
                                     @if (item.Figure != null)
                                     {
-                                        <span class="dash-row-figure">
-                                            @item.Figure
-                                            @if (item.Unit != null) { <small>@item.Unit</small> }
-                                        </span>
+                                        <span class="dash-row-figure">@item.Figure @if (item.Unit != null) { <small>@item.Unit</small> }</span>
                                     }
                                     <i class="fas fa-chevron-right dash-row-chevron" aria-hidden="true"></i>
                                 </a>
@@ -327,12 +309,8 @@
                         @foreach (var item in Model.Upcoming)
                         {
                             <li>
-                                <a class="dash-row @(item.IsLate ? "is-critical" : "")"
-                                   asp-controller="@item.Controller"
-                                   asp-action="@item.Action">
-                                    <span class="dash-row-icon">
-                                        <i class="fas @item.Icon" aria-hidden="true"></i>
-                                    </span>
+                                <a class="dash-row @(item.IsLate ? "is-critical" : "")" asp-controller="@item.Controller" asp-action="@item.Action">
+                                    <span class="dash-row-icon"><i class="fas @item.Icon" aria-hidden="true"></i></span>
                                     <span class="dash-row-main">
                                         <span class="dash-row-title">@item.Title</span>
                                         <span class="dash-row-meta">@item.Detail</span>
@@ -350,8 +328,7 @@
                         <span class="dash-empty-icon"><i class="fas fa-check" aria-hidden="true"></i></span>
                         <span>
                             <strong>You're all caught up.</strong>
-                            Nothing is waiting on you. Approvals, overdue training and
-                            upcoming dates will appear here.
+                            Nothing is waiting on you. Approvals, overdue training and upcoming dates will appear here.
                         </span>
                     </div>
                 }
@@ -359,26 +336,22 @@
 
             @if (Model.Hr != null || Model.Md != null)
             {
-                <section class="card dash-card">
-                    <header class="dash-card-head">
-                        <h2>@queueTitle</h2>
-                        <a class="dash-link" asp-controller="@queueCtrl" asp-action="@queueAct">
-                            Open queue <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas @queueIcon" aria-hidden="true"></i>
+                        <span>@queueTitle</span>
+                        <a class="dash-btn" asp-controller="LeaveApproval" asp-action="@queueAct">
+                            <i class="fas fa-list" aria-hidden="true"></i> Open queue
                         </a>
-                    </header>
+                    </div>
                     @if (queue.Any())
                     {
                         <ul class="dash-list">
                             @foreach (var request in queue)
                             {
                                 <li>
-                                    <a class="dash-row"
-                                       asp-controller="LeaveApproval"
-                                       asp-action="Details"
-                                       asp-route-id="@request.Id">
-                                        <span class="dash-avatar">
-                                            @request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)
-                                        </span>
+                                    <a class="dash-row" asp-controller="LeaveApproval" asp-action="Details" asp-route-id="@request.Id">
+                                        <span class="dash-avatar">@request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)</span>
                                         <span class="dash-row-main">
                                             <span class="dash-row-title">
                                                 @request.Employee.FirstName @request.Employee.LastName
@@ -386,8 +359,7 @@
                                             </span>
                                             <span class="dash-row-meta">
                                                 @request.LeaveType.Name &middot;
-                                                @request.StartDate.ToString("d MMM") &ndash;
-                                                @request.EndDate.ToString("d MMM") &middot;
+                                                @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM") &middot;
                                                 @request.NumberOfDays.ToString("0.##") days
                                             </span>
                                         </span>
@@ -400,37 +372,26 @@
                     }
                     else
                     {
-                        <div class="dash-empty">
-                            <span>Nothing is waiting in the queue.</span>
-                        </div>
+                        <div class="dash-empty"><span>Nothing is waiting in the queue.</span></div>
                     }
                 </section>
 
                 @if (startingSoon.Any())
                 {
-                    <section class="card dash-card">
-                        <header class="dash-card-head">
-                            <h2>Leave starting soon</h2>
-                        </header>
+                    <section class="panel">
+                        <div class="panel-header">
+                            <i class="fas fa-calendar" aria-hidden="true"></i>
+                            <span>Leave starting soon</span>
+                        </div>
                         <ul class="dash-list">
                             @foreach (var request in startingSoon)
                             {
                                 <li>
-                                    <a class="dash-row"
-                                       asp-controller="LeaveRequest"
-                                       asp-action="Details"
-                                       asp-route-id="@request.Id">
-                                        <span class="dash-avatar">
-                                            @request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)
-                                        </span>
+                                    <a class="dash-row" asp-controller="LeaveRequest" asp-action="Details" asp-route-id="@request.Id">
+                                        <span class="dash-avatar">@request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)</span>
                                         <span class="dash-row-main">
-                                            <span class="dash-row-title">
-                                                @request.Employee.FirstName @request.Employee.LastName
-                                            </span>
-                                            <span class="dash-row-meta">
-                                                @request.LeaveType.Name &middot;
-                                                @request.NumberOfDays.ToString("0.##") days
-                                            </span>
+                                            <span class="dash-row-title">@request.Employee.FirstName @request.Employee.LastName</span>
+                                            <span class="dash-row-meta">@request.LeaveType.Name &middot; @request.NumberOfDays.ToString("0.##") days</span>
                                         </span>
                                         <span class="dash-row-when">@request.StartDate.ToString("d MMM")</span>
                                     </a>
@@ -441,84 +402,33 @@
                 }
             }
 
-            @if (Model.Mine != null && Model.Admin == null && (Model.ShowsOwnLeave || Model.Mine.TrainingToDo.Any()))
+            @if (Model.Admin == null && showMine && mine != null)
             {
-                <div class="dash-pair">
-                    @if (Model.ShowsOwnLeave)
-                    {
-                        <section class="card dash-card">
-                            <header class="dash-card-head">
-                                <h2>My recent leave</h2>
-                                <a class="dash-link" asp-controller="MyLeave" asp-action="Index">
-                                    All requests <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                                </a>
-                            </header>
-                            @if (Model.Mine.RecentRequests.Any())
-                            {
-                                <ul class="dash-list">
-                                    @foreach (var request in Model.Mine.RecentRequests)
-                                    {
-                                        <li>
-                                            <a class="dash-row"
-                                               asp-controller="MyLeave"
-                                               asp-action="Details"
-                                               asp-route-id="@request.Id">
-                                                <span class="dash-row-main">
-                                                    <span class="dash-row-title">@request.LeaveType.Name</span>
-                                                    <span class="dash-row-meta">
-                                                        @request.StartDate.ToString("d MMM") &ndash;
-                                                        @request.EndDate.ToString("d MMM yyyy") &middot;
-                                                        @request.NumberOfDays.ToString("0.##") days
-                                                    </span>
-                                                </span>
-                                                <partial name="_LeaveStatusBadge" model="request.Status" />
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <div class="dash-empty">
-                                    <span>You have not requested any leave yet.</span>
-                                </div>
-                            }
-                        </section>
-                    }
-
-                    <section class="card dash-card">
-                        <header class="dash-card-head">
-                            <h2>Training to complete</h2>
-                            <a class="dash-link" asp-controller="MyTraining" asp-action="Index">
-                                All training <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                @if (Model.ShowsOwnLeave)
+                {
+                    <section class="panel">
+                        <div class="panel-header">
+                            <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
+                            <span>My recent leave</span>
+                            <a class="dash-btn" asp-controller="MyLeave" asp-action="Index">
+                                <i class="fas fa-list" aria-hidden="true"></i> All requests
                             </a>
-                        </header>
-                        @if (Model.Mine.TrainingToDo.Any())
+                        </div>
+                        @if (mine.RecentRequests.Any())
                         {
                             <ul class="dash-list">
-                                @foreach (var assignment in Model.Mine.TrainingToDo)
+                                @foreach (var request in mine.RecentRequests)
                                 {
-                                    var late = assignment.DueDate.HasValue &&
-                                               assignment.DueDate.Value.Date < DateTime.Today;
                                     <li>
-                                        <a class="dash-row @(late ? "is-critical" : "")"
-                                           asp-controller="MyTraining"
-                                           asp-action="Details"
-                                           asp-route-id="@assignment.Id">
-                                            <span class="dash-row-icon">
-                                                <i class="fas fa-graduation-cap" aria-hidden="true"></i>
-                                            </span>
+                                        <a class="dash-row" asp-controller="MyLeave" asp-action="Details" asp-route-id="@request.Id">
                                             <span class="dash-row-main">
-                                                <span class="dash-row-title">@assignment.TrainingCourse.Title</span>
+                                                <span class="dash-row-title">@request.LeaveType.Name</span>
                                                 <span class="dash-row-meta">
-                                                    @(assignment.DueDate.HasValue
-                                                        ? "Due " + assignment.DueDate.Value.ToString("d MMM yyyy")
-                                                        : "No due date")
+                                                    @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM yyyy") &middot;
+                                                    @request.NumberOfDays.ToString("0.##") days
                                                 </span>
                                             </span>
-                                            <span class="dash-row-when @(late ? "is-late" : "")">
-                                                @(late ? "Overdue" : "Open")
-                                            </span>
+                                            <partial name="_LeaveStatusBadge" model="request.Status" />
                                         </a>
                                     </li>
                                 }
@@ -526,67 +436,39 @@
                         }
                         else
                         {
-                            <div class="dash-empty">
-                                <span>No outstanding training.</span>
-                            </div>
+                            <div class="dash-empty"><span>You have not requested any leave yet.</span></div>
                         }
                     </section>
-                </div>
+                }
             }
         </div>
 
-        <aside class="dash-side">
-
-            <section class="card dash-card">
-                <header class="dash-card-head">
-                    <h2>Quick actions</h2>
-                </header>
-                <div class="dash-actions">
-                    @foreach (var action in actions)
-                    {
-                        <a class="dash-action"
-                           asp-controller="@action.Ctrl"
-                           asp-action="@action.Act">
-                            <i class="fas @action.Icon" aria-hidden="true"></i>
-                            <span>@action.Title</span>
-                            <i class="fas fa-chevron-right dash-row-chevron" aria-hidden="true"></i>
-                        </a>
-                    }
-                </div>
-            </section>
+        <div class="dash-col">
 
             @if (Model.Admin != null)
             {
-                <section class="card dash-card">
-                    <header class="dash-card-head">
-                        <h2>Recent activity</h2>
-                        <a class="dash-link" asp-controller="AuditLog" asp-action="Index">
-                            Audit log <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+                        <span>Recent activity</span>
+                        <a class="dash-btn" asp-controller="AuditLog" asp-action="Index">
+                            <i class="fas fa-list" aria-hidden="true"></i> Audit log
                         </a>
-                    </header>
+                    </div>
                     @if (Model.Admin.RecentActivity.Any())
                     {
                         <ul class="dash-list is-feed">
                             @foreach (var entry in Model.Admin.RecentActivity)
                             {
                                 <li>
-                                    <a class="dash-row"
-                                       asp-controller="AuditLog"
-                                       asp-action="Details"
-                                       asp-route-id="@entry.Id">
-                                        <span class="dash-row-icon is-small">
-                                            <i class="fas @AuditIcon(entry.Action)" aria-hidden="true"></i>
-                                        </span>
+                                    <a class="dash-row" asp-controller="AuditLog" asp-action="Details" asp-route-id="@entry.Id">
+                                        <span class="dash-row-icon is-small"><i class="fas @AuditIcon(entry.Action)" aria-hidden="true"></i></span>
                                         <span class="dash-row-main">
                                             <span class="dash-row-title">
-                                                @(string.IsNullOrWhiteSpace(entry.Description)
-                                                    ? entry.Action + " · " + entry.EntityName
-                                                    : entry.Description)
+                                                @(string.IsNullOrWhiteSpace(entry.Description) ? entry.Action + " · " + entry.EntityName : entry.Description)
                                             </span>
                                             <span class="dash-row-meta">
-                                                @(entry.Employee != null
-                                                    ? entry.Employee.FirstName + " " + entry.Employee.LastName
-                                                    : "System")
+                                                @(entry.Employee != null ? entry.Employee.FirstName + " " + entry.Employee.LastName : "System")
                                                 &middot; @Ago(entry.Timestamp)
                                             </span>
                                         </span>
@@ -597,76 +479,104 @@
                     }
                     else
                     {
-                        <div class="dash-empty">
-                            <span>No activity has been recorded yet.</span>
-                        </div>
+                        <div class="dash-empty"><span>No activity has been recorded yet.</span></div>
                     }
                 </section>
 
-                <section class="card dash-card">
-                    <header class="dash-card-head">
-                        <h2>Setup</h2>
-                    </header>
-                    <ul class="dash-facts">
-                        <li><span>Departments</span><strong>@Model.Admin.Departments</strong></li>
-                        <li><span>Sign-in accounts</span><strong>@Model.Admin.SignInAccounts</strong></li>
-                        <li><span>Document categories</span><strong>@Model.Admin.DocumentCategories</strong></li>
-                        <li><span>Ageing machines</span><strong>@Model.Admin.AssetsNeedingAttention</strong></li>
-                        <li>
-                            <span>Approvers</span>
-                            <strong class="@(Model.Admin.HasHrOfficer && Model.Admin.HasMd ? "" : "text-danger")">
-                                @((Model.Admin.HasHrOfficer ? 1 : 0) + (Model.Admin.HasMd ? 1 : 0)) / 2
-                            </strong>
-                        </li>
-                    </ul>
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-sliders" aria-hidden="true"></i>
+                        <span>Setup</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="summary-grid">
+                            <div class="summary-item"><span class="summary-label">Departments</span><span class="summary-value">@Model.Admin.Departments</span></div>
+                            <div class="summary-item"><span class="summary-label">Sign-in accounts</span><span class="summary-value">@Model.Admin.SignInAccounts</span></div>
+                            <div class="summary-item"><span class="summary-label">Doc categories</span><span class="summary-value">@Model.Admin.DocumentCategories</span></div>
+                            <div class="summary-item"><span class="summary-label">Ageing machines</span><span class="summary-value">@Model.Admin.AssetsNeedingAttention</span></div>
+                            <div class="summary-item">
+                                <span class="summary-label">Approvers</span>
+                                <span class="summary-value @(Model.Admin.HasHrOfficer && Model.Admin.HasMd ? "" : "text-danger")">
+                                    @((Model.Admin.HasHrOfficer ? 1 : 0) + (Model.Admin.HasMd ? 1 : 0)) / 2
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </section>
             }
 
-            @if (Model.Admin != null && Model.Mine != null && Model.Mine.TrainingToDo.Any())
+            @if (mine != null && (Model.Admin != null ? mine.TrainingToDo.Any() : showMine))
             {
-                <section class="card dash-card">
-                    <header class="dash-card-head">
-                        <h2>My training</h2>
-                        <a class="dash-link" asp-controller="MyTraining" asp-action="Index">
-                            All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                        <span>Training to complete</span>
+                        <a class="dash-btn" asp-controller="MyTraining" asp-action="Index">
+                            <i class="fas fa-list" aria-hidden="true"></i> All training
                         </a>
-                    </header>
-                    <ul class="dash-list">
-                        @foreach (var assignment in Model.Mine.TrainingToDo)
-                        {
-                            var late = assignment.DueDate.HasValue &&
-                                       assignment.DueDate.Value.Date < DateTime.Today;
-                            <li>
-                                <a class="dash-row @(late ? "is-critical" : "")"
-                                   asp-controller="MyTraining"
-                                   asp-action="Details"
-                                   asp-route-id="@assignment.Id">
-                                    <span class="dash-row-main">
-                                        <span class="dash-row-title">@assignment.TrainingCourse.Title</span>
-                                        <span class="dash-row-meta">
-                                            @(assignment.DueDate.HasValue
-                                                ? "Due " + assignment.DueDate.Value.ToString("d MMM yyyy")
-                                                : "No due date")
+                    </div>
+                    @if (mine.TrainingToDo.Any())
+                    {
+                        <ul class="dash-list">
+                            @foreach (var assignment in mine.TrainingToDo)
+                            {
+                                var late = assignment.DueDate.HasValue && assignment.DueDate.Value.Date < DateTime.Today;
+                                <li>
+                                    <a class="dash-row @(late ? "is-critical" : "")" asp-controller="MyTraining" asp-action="Details" asp-route-id="@assignment.Id">
+                                        <span class="dash-row-icon"><i class="fas fa-graduation-cap" aria-hidden="true"></i></span>
+                                        <span class="dash-row-main">
+                                            <span class="dash-row-title">@assignment.TrainingCourse.Title</span>
+                                            <span class="dash-row-meta">
+                                                @(assignment.DueDate.HasValue ? "Due " + assignment.DueDate.Value.ToString("d MMM yyyy") : "No due date")
+                                            </span>
                                         </span>
-                                    </span>
-                                    <span class="dash-row-when @(late ? "is-late" : "")">
-                                        @(late ? "Overdue" : "Open")
-                                    </span>
-                                </a>
-                            </li>
-                        }
-                    </ul>
+                                        <span class="dash-row-when @(late ? "is-late" : "")">@(late ? "Overdue" : "Open")</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><span>No outstanding training.</span></div>
+                    }
                 </section>
             }
-        </aside>
+        </div>
+    </div>
+
+    <div class="dash-section-head">
+        <h2>Jump to</h2>
+        <span class="rule"></span>
+    </div>
+    <div class="dash-bento">
+        @for (var i = 0; i < jumps.Count; i++)
+        {
+            var j = jumps[i];
+            var span = i == 0 ? "is-hero span-2 tall-2" : j.Tone;
+            <a class="bento-card @span" asp-controller="@j.Ctrl" asp-action="@j.Act">
+                <span class="bento-badge"><i class="fas @j.Icon" aria-hidden="true"></i> @j.Badge</span>
+                <h3 class="bento-title">@j.Title</h3>
+                <p class="bento-desc">@j.Desc</p>
+                @if (j.Figure != null)
+                {
+                    <div class="bento-figure">
+                        <span class="bento-stat">@j.Figure</span>
+                        <span class="bento-stat-label">@j.FigureLabel</span>
+                    </div>
+                }
+                <span class="bento-cta">@j.Cta <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+            </a>
+        }
     </div>
 
     @if (charts.Any())
     {
         <section class="dash-trends">
-            <header class="dash-section-head">
+            <div class="dash-section-head">
                 <h2>Last twelve months</h2>
-            </header>
+                <span class="rule"></span>
+            </div>
             <partial name="_ReportTrends" model="charts" />
         </section>
     }
