@@ -30,19 +30,22 @@ namespace HrPortal.Controllers
         private readonly FileStorageService _fileStorage;
 
         private readonly LoanApplicationPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
 
         public LoanApprovalController(
             ApplicationDbContext context,
             LoanWorkflowService workflow,
             CurrentUserService currentUser,
             FileStorageService fileStorage,
-            LoanApplicationPdfService pdf)
+            LoanApplicationPdfService pdf,
+            ListDocumentPdfService lists)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _fileStorage = fileStorage;
             _pdf = pdf;
+            _lists = lists;
         }
 
         /// <summary>
@@ -77,28 +80,153 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>
+        /// Which queue an application is sitting in. The name
+        /// travels in the URL of a download, so it is spelled the
+        /// way an approver would say it.
+        /// </summary>
+        public enum Stage
+        {
+            Supervisor,
+            Md
+        }
+
+        /// <summary>
+        /// What a queue is waiting on, oldest first. The pages and
+        /// their downloads all ask this, so a printed queue can
+        /// never hold a different set of applications from the
+        /// screen it came from.
+        /// </summary>
+        private IQueryable<LoanApplication> Queue(
+            Stage stage,
+            int? me,
+            bool settled)
+        {
+            var query = _context.LoanApplications
+                .AsNoTracking()
+                .Include(l => l.Employee)
+                    .ThenInclude(e => e.Department)
+                .AsQueryable();
+
+            query = stage == Stage.Supervisor
+                // Compared as a plain int rather than the nullable:
+                // somebody with no employee record would otherwise
+                // match every employee who has no supervisor.
+                ? query.Where(l =>
+                    l.Status == LoanApplicationStatus.SupervisorReview &&
+                    l.Employee.SupervisorId == me.GetValueOrDefault())
+                : settled
+                    ? query.Where(l =>
+                        l.Status != LoanApplicationStatus.Submitted)
+                    : query.Where(l =>
+                        l.Status == LoanApplicationStatus.Submitted);
+
+            return query.OrderBy(l => l.SubmittedAt ?? l.CreatedAt);
+        }
+
+        /// <summary>
         /// What the people reporting to me have sent up.
         /// </summary>
         public async Task<IActionResult> MyTeam()
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
-            var applications = me == null
-                ? new List<LoanApplication>()
-                : await _context.LoanApplications
-                    .AsNoTracking()
-                    .Include(a => a.Employee)
-                    .Where(a =>
-                        a.Status ==
-                            LoanApplicationStatus.SupervisorReview &&
-                        a.Employee.SupervisorId == me.Value)
-                    .OrderBy(a => a.SubmittedAt)
-                    .ToListAsync();
+            var applications = await Queue(Stage.Supervisor, me, false)
+                .ToListAsync();
 
             ViewData["Title"] = "Loans Awaiting Your Approval";
             ViewBag.Stage = "Supervisor";
+            ViewBag.Queue = Stage.Supervisor;
 
             return View("Index", applications);
+        }
+
+        /// <summary>
+        /// A queue as a printable list, for taking into a meeting or
+        /// filing alongside the decisions.
+        ///
+        /// The pages carry their guard in an attribute. This one
+        /// serves both, so it has to ask in the body -- and it asks
+        /// for the same thing the page does, because a download
+        /// nobody checks is how a queue leaves the building.
+        /// </summary>
+        public async Task<IActionResult> List(
+            Stage stage,
+            bool settled = false)
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            var allowed = stage == Stage.Md
+                ? User.IsInRole(Roles.Md)
+                : me != null;
+
+            if (!allowed)
+                return Forbid();
+
+            var applications = await Queue(stage, me, settled)
+                .ToListAsync();
+
+            var list = new ListDocument(
+                "Loan Applications",
+                stage == Stage.Supervisor
+                    ? "Awaiting your approval as supervisor. " +
+                      "Oldest first."
+                    : settled
+                        ? "Sanctioned, declined, returned and " +
+                          "cancelled applications."
+                        : "Awaiting the Managing Director's " +
+                          "decision. Oldest first.");
+
+            list.Column("Reference", 1.2f)
+                .Column("Employee", 1.5f)
+                .Column("Department", 1.3f)
+                .Column("Purpose", 2f)
+                .Column("Requested", 1.1f, alignRight: true)
+                .Column("Authorised", 1.1f, alignRight: true)
+                .Column("Months", 0.7f, alignRight: true)
+                .Column("Submitted", 1.3f)
+                .Column("Stage", 1.3f);
+
+            foreach (var application in applications)
+            {
+                var currency = application.Currency.ToString()
+                    .ToUpperInvariant();
+
+                list.Row(
+                    ListDocument.Text(application.ApplicationNumber),
+                    $"{application.Employee.FirstName} " +
+                    $"{application.Employee.LastName}",
+                    ListDocument.Text(
+                        application.Employee.Department?.Name),
+                    ListDocument.Text(application.Purpose),
+                    $"{currency} " +
+                    $"{application.AmountRequested:N2}",
+                    application.AmountAuthorised == null
+                        ? null
+                        : $"{currency} " +
+                          $"{application.AmountAuthorised.Value:N2}",
+                    application.RepaymentMonths.ToString("N0"),
+                    ListDocument.Stamp(application.SubmittedAt),
+                    StatusNames.Of(application.Status).Label);
+            }
+
+            list.Total("Applications", applications.Count)
+                .Total(
+                    "Requested",
+                    applications
+                        .Sum(a => a.AmountRequested)
+                        .ToString("N2"))
+                .Total(
+                    "Authorised",
+                    applications
+                        .Sum(a => a.AmountAuthorised ?? 0m)
+                        .ToString("N2"));
+
+            list.EmptyMessage = "Nothing is waiting at this stage.";
+
+            return File(
+                _lists.Render(list),
+                "application/pdf",
+                list.FileName);
         }
 
         [HttpPost]
@@ -178,23 +306,11 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> Index(bool settled = false)
         {
-            var query = _context.LoanApplications
-                .AsNoTracking()
-                .Include(l => l.Employee)
-                    .ThenInclude(e => e.Department)
-                .AsQueryable();
-
-            query = settled
-                ? query.Where(l =>
-                    l.Status != LoanApplicationStatus.Submitted)
-                : query.Where(l =>
-                    l.Status == LoanApplicationStatus.Submitted);
+            var applications = await Queue(Stage.Md, null, settled)
+                .ToListAsync();
 
             ViewBag.Settled = settled;
-
-            var applications = await query
-                .OrderBy(l => l.SubmittedAt ?? l.CreatedAt)
-                .ToListAsync();
+            ViewBag.Queue = Stage.Md;
 
             return View(applications);
         }

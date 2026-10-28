@@ -28,17 +28,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
 
         private readonly CourseApplicationPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
 
         public CourseApprovalController(
             ApplicationDbContext context,
             CourseApplicationWorkflowService workflow,
             CurrentUserService currentUser,
-            CourseApplicationPdfService pdf)
+            CourseApplicationPdfService pdf,
+            ListDocumentPdfService lists)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _pdf = pdf;
+            _lists = lists;
         }
 
         /// <summary>
@@ -73,29 +76,153 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>
+        /// Which queue an application is sitting in. The name
+        /// travels in the URL of a download, so it is spelled the
+        /// way an approver would say it.
+        /// </summary>
+        public enum Stage
+        {
+            Supervisor,
+            Hr,
+            Md,
+            Approved
+        }
+
+        /// <summary>
+        /// What a queue is waiting on. The pages and their downloads
+        /// all ask this, so a printed queue can never hold a
+        /// different set of applications from the screen it came
+        /// from.
+        /// </summary>
+        private IQueryable<CourseApplication> Queue(Stage stage, int? me)
+        {
+            var query = _context.CourseApplications
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                    .ThenInclude(e => e.Department)
+                .AsQueryable();
+
+            if (stage == Stage.Approved)
+            {
+                return query
+                    .Where(c =>
+                        c.Status == CourseApplicationStatus.Approved)
+                    .OrderByDescending(c => c.CompletedAt);
+            }
+
+            query = stage switch
+            {
+                // Compared as a plain int rather than the nullable:
+                // somebody with no employee record would otherwise
+                // match every employee who has no supervisor.
+                Stage.Supervisor => query.Where(c =>
+                    c.Status ==
+                        CourseApplicationStatus.SupervisorReview &&
+                    c.Employee.SupervisorId == me.GetValueOrDefault()),
+
+                Stage.Hr => query.Where(c =>
+                    c.Status == CourseApplicationStatus.Submitted),
+
+                _ => query.Where(c =>
+                    c.Status == CourseApplicationStatus.HrApproved)
+            };
+
+            return query.OrderBy(c => c.SubmittedAt ?? c.CreatedAt);
+        }
+
+        /// <summary>
         /// What the people reporting to me have sent up.
         /// </summary>
         public async Task<IActionResult> MyTeam()
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
-            var applications = me == null
-                ? new List<CourseApplication>()
-                : await _context.CourseApplications
-                    .AsNoTracking()
-                    .Include(a => a.Employee)
-                    .Where(a =>
-                        a.Status ==
-                            CourseApplicationStatus.SupervisorReview &&
-                        a.Employee.SupervisorId == me.Value)
-                    .OrderBy(a => a.SubmittedAt)
-                    .ToListAsync();
+            var applications = await Queue(Stage.Supervisor, me)
+                .ToListAsync();
 
             ViewData["Title"] = "Courses Awaiting Your Approval";
 
             ViewBag.Stage = "supervisor approval";
+            ViewBag.Queue = Stage.Supervisor;
 
             return View("Index", applications);
+        }
+
+        /// <summary>
+        /// A queue as a printable list, for taking into a meeting or
+        /// filing alongside the decisions.
+        ///
+        /// The pages carry their guard in an attribute. This one
+        /// serves all of them, so it has to ask in the body -- and
+        /// it asks for the same thing the page does, because a
+        /// download nobody checks is how a queue leaves the
+        /// building.
+        /// </summary>
+        public async Task<IActionResult> List(Stage stage)
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            var allowed = stage switch
+            {
+                Stage.Hr or Stage.Approved =>
+                    User.IsInRole(Roles.HrOfficer),
+                Stage.Md => User.IsInRole(Roles.Md),
+                _ => me != null
+            };
+
+            if (!allowed)
+                return Forbid();
+
+            var applications = await Queue(stage, me).ToListAsync();
+
+            var list = new ListDocument(
+                "Course Applications",
+                stage switch
+                {
+                    Stage.Hr =>
+                        "Awaiting HR review. Oldest first.",
+                    Stage.Md =>
+                        "Awaiting the Managing Consultant. " +
+                        "Oldest first.",
+                    Stage.Approved =>
+                        "Approved applications, most recent first.",
+                    _ =>
+                        "Awaiting your approval as supervisor. " +
+                        "Oldest first."
+                });
+
+            list.Column("Reference", 1.2f)
+                .Column("Employee", 1.5f)
+                .Column("Department", 1.3f)
+                .Column("Programme", 2.2f)
+                .Column("Sat before", 0.9f)
+                .Column("Exam date", 1.1f)
+                .Column("Submitted", 1.3f)
+                .Column("Stage", 1.4f);
+
+            foreach (var application in applications)
+            {
+                list.Row(
+                    ListDocument.Text(application.ApplicationNumber),
+                    $"{application.Employee.FirstName} " +
+                    $"{application.Employee.LastName}",
+                    ListDocument.Text(
+                        application.Employee.Department?.Name),
+                    ListDocument.Text(application.ProgramIntended),
+                    ListDocument.Yes(application.HasSatBefore),
+                    ListDocument.Date(application.TargetExamDate),
+                    ListDocument.Stamp(application.SubmittedAt),
+                    StatusNames.Of(application.Status).Label);
+            }
+
+            list.Total("Applications", applications.Count);
+
+            list.EmptyMessage = "Nothing is waiting at this stage.";
+
+            return File(
+                _lists.Render(list),
+                "application/pdf",
+                list.FileName);
         }
 
         [HttpPost]
@@ -179,21 +306,17 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.HrOrMd)]
         public async Task<IActionResult> Index()
         {
-            var waitingFor = User.IsInRole(Roles.HrOfficer)
-                ? CourseApplicationStatus.Submitted
-                : CourseApplicationStatus.HrApproved;
+            var stage = User.IsInRole(Roles.HrOfficer)
+                ? Stage.Hr
+                : Stage.Md;
 
-            ViewBag.Stage = User.IsInRole(Roles.HrOfficer)
+            ViewBag.Stage = stage == Stage.Hr
                 ? "HR review"
                 : "Managing Consultant";
 
-            var applications = await _context.CourseApplications
-                .AsNoTracking()
-                .Include(c => c.Employee)
-                    .ThenInclude(e => e.Department)
-                .Where(c => c.Status == waitingFor)
-                .OrderBy(c => c.SubmittedAt ?? c.CreatedAt)
-                .ToListAsync();
+            ViewBag.Queue = stage;
+
+            var applications = await Queue(stage, null).ToListAsync();
 
             return View(applications);
         }
@@ -205,17 +328,13 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Approved()
         {
-            var applications = await _context.CourseApplications
-                .AsNoTracking()
-                .Include(c => c.Employee)
-                    .ThenInclude(e => e.Department)
-                .Where(c => c.Status == CourseApplicationStatus.Approved)
-                .OrderByDescending(c => c.CompletedAt)
+            var applications = await Queue(Stage.Approved, null)
                 .ToListAsync();
+
+            ViewBag.Queue = Stage.Approved;
 
             return View(applications);
         }
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)

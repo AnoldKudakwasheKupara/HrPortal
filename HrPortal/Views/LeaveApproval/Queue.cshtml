@@ -6,27 +6,54 @@
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>@ViewData["Title"]</h2>
+        <div>
 
-        <p class="text-muted">
-            @if (stage == "HR")
-            {
-                <text>
-                    Requests submitted by employees, waiting for your
-                    review. Approving sends the request to the
-                    Managing Director.
-                </text>
-            }
-            else
-            {
-                <text>
-                    Requests that have cleared HR review and need your
-                    final decision.
-                </text>
-            }
-        </p>
+            <h2>@ViewData["Title"]</h2>
+
+            @*
+                One branch per stage, each asked for by name. This
+                used to be "HR, or else the MD", which was true
+                until a supervisor could reach the page -- then
+                "not HR" meant the MD, and a supervisor was told
+                their queue had already cleared HR review.
+            *@
+            <p class="text-muted">
+                @if (stage == "HR")
+                {
+                    <text>
+                        Requests submitted by employees, waiting for
+                        your review. Approving sends the request to
+                        the Managing Director.
+                    </text>
+                }
+                else if (stage == "Supervisor")
+                {
+                    <text>
+                        Requests from the people who report to you.
+                        Approving sends the request on to HR.
+                    </text>
+                }
+                else
+                {
+                    <text>
+                        Requests that have cleared HR review and need
+                        your final decision.
+                    </text>
+                }
+            </p>
+
+        </div>
+
+        <div class="page-head-actions">
+            <a asp-action="List"
+               asp-route-stage="@ViewBag.Queue"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Download
+            </a>
+        </div>
 
     </div>
 

@@ -17,9 +17,20 @@
             </p>
         </div>
 
-        <a class="btn btn-outline-secondary" asp-action="Index">
-            Waiting on me
-        </a>
+        <div class="page-head-actions">
+
+            <a class="btn btn-outline-secondary"
+               asp-action="List"
+               asp-route-stage="@ViewBag.Queue">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Download
+            </a>
+
+            <a class="btn btn-outline-secondary" asp-action="Index">
+                Waiting on me
+            </a>
+
+        </div>
 
     </div>
 

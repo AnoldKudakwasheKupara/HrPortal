@@ -25,17 +25,20 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
 
         private readonly LeaveApplicationPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
 
         public LeaveApprovalController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
             CurrentUserService currentUser,
-            LeaveApplicationPdfService pdf)
+            LeaveApplicationPdfService pdf,
+            ListDocumentPdfService lists)
         {
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
             _pdf = pdf;
+            _lists = lists;
         }
 
         /// <summary>
@@ -88,21 +91,62 @@ namespace HrPortal.Controllers
                 $"Leave application - {request.RequestNumber}.pdf");
         }
 
+        /// <summary>
+        /// Which queue a request is sitting in. The name travels in
+        /// the URL of a download, so it is spelled the way an
+        /// approver would say it.
+        /// </summary>
+        public enum Stage
+        {
+            Supervisor,
+            Hr,
+            Md
+        }
+
+        /// <summary>
+        /// What a queue is waiting on, oldest first. The pages and
+        /// their downloads all ask this, so a printed queue can never
+        /// hold a different set of requests from the screen it came
+        /// from.
+        /// </summary>
+        private IQueryable<LeaveRequest> Queue(Stage stage, int? me)
+        {
+            var requests = _context.LeaveRequests
+                .AsNoTracking()
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(r => r.LeaveType)
+                .AsQueryable();
+
+            requests = stage switch
+            {
+                // Compared as a plain int rather than the nullable:
+                // somebody with no employee record would otherwise
+                // match every employee who has no supervisor.
+                Stage.Supervisor => requests.Where(r =>
+                    r.Status == LeaveRequestStatus.SupervisorReview &&
+                    r.Employee.SupervisorId == me.GetValueOrDefault()),
+
+                Stage.Hr => requests.Where(r =>
+                    r.Status == LeaveRequestStatus.Submitted ||
+                    r.Status == LeaveRequestStatus.HRReview),
+
+                _ => requests.Where(r =>
+                    r.Status == LeaveRequestStatus.HRApproved ||
+                    r.Status == LeaveRequestStatus.MDReview)
+            };
+
+            return requests.OrderBy(r => r.SubmittedAt);
+        }
+
         [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Index()
         {
-            var requests = await _context.LeaveRequests
-                .AsNoTracking()
-                .Include(r => r.Employee)
-                .Include(r => r.LeaveType)
-                .Where(r =>
-                    r.Status == LeaveRequestStatus.Submitted ||
-                    r.Status == LeaveRequestStatus.HRReview)
-                .OrderBy(r => r.SubmittedAt)
-                .ToListAsync();
+            var requests = await Queue(Stage.Hr, null).ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting HR Review";
             ViewBag.Stage = "HR";
+            ViewBag.Queue = Stage.Hr;
 
             return View("Queue", requests);
         }
@@ -117,20 +161,12 @@ namespace HrPortal.Controllers
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
-            var requests = me == null
-                ? new List<LeaveRequest>()
-                : await _context.LeaveRequests
-                    .AsNoTracking()
-                    .Include(r => r.Employee)
-                    .Include(r => r.LeaveType)
-                    .Where(r =>
-                        r.Status == LeaveRequestStatus.SupervisorReview &&
-                        r.Employee.SupervisorId == me.Value)
-                    .OrderBy(r => r.SubmittedAt)
-                    .ToListAsync();
+            var requests = await Queue(Stage.Supervisor, me)
+                .ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting Your Approval";
             ViewBag.Stage = "Supervisor";
+            ViewBag.Queue = Stage.Supervisor;
 
             return View("Queue", requests);
         }
@@ -138,19 +174,87 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> FinalApproval()
         {
-            var requests = await _context.LeaveRequests
-                .Include(r => r.Employee)
-                .Include(r => r.LeaveType)
-                .Where(r =>
-                    r.Status == LeaveRequestStatus.HRApproved ||
-                    r.Status == LeaveRequestStatus.MDReview)
-                .OrderBy(r => r.SubmittedAt)
-                .ToListAsync();
+            var requests = await Queue(Stage.Md, null).ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting Final Approval";
             ViewBag.Stage = "MD";
+            ViewBag.Queue = Stage.Md;
 
             return View("Queue", requests);
+        }
+
+        /// <summary>
+        /// A queue as a printable list, for taking into a meeting or
+        /// filing alongside the decisions.
+        ///
+        /// The three pages carry their guard in an attribute. This
+        /// one serves all three, so it has to ask in the body -- and
+        /// it asks for the same thing the page does, because a
+        /// download nobody checks is how a queue leaves the building.
+        /// </summary>
+        public async Task<IActionResult> List(Stage stage)
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            var allowed = stage switch
+            {
+                Stage.Hr => User.IsInRole(Roles.HrOfficer),
+                Stage.Md => User.IsInRole(Roles.Md),
+                _ => me != null
+            };
+
+            if (!allowed)
+                return Forbid();
+
+            var requests = await Queue(stage, me).ToListAsync();
+
+            var list = new ListDocument(
+                "Leave Approvals",
+                stage switch
+                {
+                    Stage.Hr =>
+                        "Awaiting HR review. Oldest first.",
+                    Stage.Md =>
+                        "Awaiting the Managing Director. Oldest first.",
+                    _ =>
+                        "Awaiting your approval as supervisor. " +
+                        "Oldest first."
+                });
+
+            list.Column("Reference", 1.2f)
+                .Column("Employee", 1.6f)
+                .Column("Department", 1.4f)
+                .Column("Leave type", 1.3f)
+                .Column("From", 1f)
+                .Column("To", 1f)
+                .Column("Days", 0.6f, alignRight: true)
+                .Column("Submitted", 1.5f);
+
+            foreach (var request in requests)
+            {
+                list.Row(
+                    ListDocument.Text(request.RequestNumber),
+                    $"{request.Employee.FirstName} " +
+                    $"{request.Employee.LastName}",
+                    ListDocument.Text(request.Employee.Department?.Name),
+                    ListDocument.Text(request.LeaveType?.Name),
+                    ListDocument.Date(request.StartDate),
+                    ListDocument.Date(request.EndDate),
+                    request.NumberOfDays.ToString("0.##"),
+                    ListDocument.Stamp(request.SubmittedAt));
+            }
+
+            list.Total("Waiting", requests.Count)
+                .Total(
+                    "Days requested",
+                    requests.Sum(r => r.NumberOfDays).ToString("0.##"));
+
+            list.EmptyMessage = "Nothing is waiting at this stage.";
+
+            return File(
+                _lists.Render(list),
+                "application/pdf",
+                list.FileName);
         }
 
         public async Task<IActionResult> Details(int? id)

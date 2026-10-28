@@ -18,12 +18,24 @@
             </p>
         </div>
 
-        @if (User.IsInRole(HrPortal.Security.Roles.HrOfficer))
-        {
-            <a class="btn btn-outline-secondary" asp-action="Approved">
-                Approved, to print
+        <div class="page-head-actions">
+
+            <a class="btn btn-outline-secondary"
+               asp-action="List"
+               asp-route-stage="@ViewBag.Queue">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Download
             </a>
-        }
+
+            @if (User.IsInRole(HrPortal.Security.Roles.HrOfficer))
+            {
+                <a class="btn btn-outline-secondary"
+                   asp-action="Approved">
+                    Approved, to print
+                </a>
+            }
+
+        </div>
 
     </div>
 
