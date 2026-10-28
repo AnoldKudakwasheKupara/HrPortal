@@ -16,15 +16,18 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
 
         public AssetController(
             ApplicationDbContext context,
             AuditService audit,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            ListDocumentPdfService lists)
         {
             _context = context;
             _audit = audit;
             _pdf = pdf;
+            _lists = lists;
         }
 
         /// <summary>
@@ -82,7 +85,13 @@ namespace HrPortal.Controllers
                 record.FileName);
         }
 
-        public async Task<IActionResult> Index(
+        /// <summary>
+        /// The register, narrowed the way the page is. The list and
+        /// the download ask this the same question, so what comes out
+        /// of the printer can never be a different set of assets from
+        /// the screen it was asked for.
+        /// </summary>
+        private IQueryable<Asset> Filtered(
             int? employeeId,
             AssetCondition? condition,
             bool? inUse,
@@ -108,7 +117,17 @@ namespace HrPortal.Controllers
             if (inUse.HasValue)
                 query = query.Where(a => a.IsInUse == inUse.Value);
 
-            var assets = await query
+            return query;
+        }
+
+        public async Task<IActionResult> Index(
+            int? employeeId,
+            AssetCondition? condition,
+            bool? inUse,
+            string? company)
+        {
+            var assets = await Filtered(
+                    employeeId, condition, inUse, company)
                 .OrderBy(a => a.AssignedToEmployee == null)
                 .ThenBy(a => a.AssignedToEmployee!.FirstName)
                 .ThenBy(a => a.DeviceModel)
@@ -122,6 +141,98 @@ namespace HrPortal.Controllers
             ViewBag.CompanyFilter = company;
 
             return View(assets);
+        }
+
+        /// <summary>
+        /// The register as a printable document, narrowed the same
+        /// way the page is. The filter is named on the sheet: six
+        /// assets on a page that does not say it is showing only the
+        /// ones in use is a register that reads as the whole estate.
+        /// </summary>
+        public async Task<IActionResult> List(
+            int? employeeId,
+            AssetCondition? condition,
+            bool? inUse,
+            string? company)
+        {
+            var assets = await Filtered(
+                    employeeId, condition, inUse, company)
+                .OrderBy(a => a.AssignedToEmployee == null)
+                .ThenBy(a => a.AssignedToEmployee!.FirstName)
+                .ThenBy(a => a.DeviceModel)
+                .ToListAsync();
+
+            var narrowed = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(company))
+                narrowed.Add(company);
+
+            if (employeeId.HasValue)
+            {
+                var holder = await _context.Employees
+                    .AsNoTracking()
+                    .Where(e => e.Id == employeeId.Value)
+                    .Select(e => e.FirstName + " " + e.LastName)
+                    .FirstOrDefaultAsync();
+
+                narrowed.Add($"held by {holder ?? "one employee"}");
+            }
+
+            if (condition.HasValue)
+                narrowed.Add($"{condition.Value} condition");
+
+            if (inUse.HasValue)
+                narrowed.Add(inUse.Value ? "in use" : "not in use");
+
+            var total = narrowed.Count == 0
+                ? assets.Count
+                : await _context.Assets.CountAsync();
+
+            var list = new ListDocument(
+                "Asset Register",
+                narrowed.Count == 0
+                    ? "Every machine on the register."
+                    : $"Filtered to {string.Join(", ", narrowed)}. " +
+                      $"{assets.Count:N0} of {total:N0} assets.");
+
+            list.Column("Serial", 1.3f)
+                .Column("Device / model", 1.8f)
+                .Column("Processor", 1.6f)
+                .Column("Company", 1.4f)
+                .Column("Held by", 1.4f)
+                .Column("Procured", 1f)
+                .Column("Condition", 1f)
+                .Column("In use", 0.8f);
+
+            foreach (var asset in assets)
+            {
+                var holder = asset.AssignedToEmployee;
+
+                list.Row(
+                    ListDocument.Text(asset.SerialNumber),
+                    ListDocument.Text(asset.DeviceModel),
+                    ListDocument.Text(asset.Processor),
+                    ListDocument.Text(asset.Company),
+                    holder == null
+                        ? null
+                        : $"{holder.FirstName} {holder.LastName}",
+                    ListDocument.Date(asset.ProcuredOn),
+                    asset.Condition.ToString(),
+                    ListDocument.Yes(asset.IsInUse));
+            }
+
+            list.Total("Assets", assets.Count)
+                .Total("In use", assets.Count(a => a.IsInUse))
+                .Total(
+                    "Unassigned",
+                    assets.Count(a => a.AssignedToEmployeeId == null));
+
+            list.EmptyMessage = "No assets match this filter.";
+
+            return File(
+                _lists.Render(list),
+                "application/pdf",
+                list.FileName);
         }
 
         public async Task<IActionResult> Details(int? id)

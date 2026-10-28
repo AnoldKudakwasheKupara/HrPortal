@@ -15,9 +15,24 @@
             </p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">
-            Add Asset
-        </a>
+        <div class="d-flex gap-2">
+
+            @* Carries the filter, so the download is the page. *@
+            <a asp-action="List"
+               asp-route-employeeId="@ViewBag.EmployeeFilter"
+               asp-route-condition="@ViewBag.ConditionFilter"
+               asp-route-inUse="@ViewBag.InUseFilter"
+               asp-route-company="@ViewBag.CompanyFilter"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Download
+            </a>
+
+            <a asp-action="Create" class="btn btn-primary">
+                Add Asset
+            </a>
+
+        </div>
     </div>
 
     @if (TempData["Success"] != null)
