@@ -2475,12 +2475,6 @@ a.strip-item:hover {
     border: 2px solid var(--bg-card);
 }
 
-.profile-caret {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-left: 0.35rem;
-}
-
 /* The role reads as a label rather than a second line of name. */
 .user-role {
     display: inline-block;
