@@ -106,9 +106,8 @@
                     <span class="field-label">Status</span>
 
                     <div class="field-value">
-                        <span class="badge bg-secondary">
-                            @Model.Status
-                        </span>
+                        <partial name="_LeaveStatusBadge"
+                                 model="Model.Status" />
                     </div>
 
                 </div>

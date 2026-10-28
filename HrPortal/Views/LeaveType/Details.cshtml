@@ -143,9 +143,8 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge bg-secondary">
-                                        @request.Status
-                                    </span>
+                                    <partial name="_LeaveStatusBadge"
+                                             model="request.Status" />
                                 </td>
 
                             </tr>
