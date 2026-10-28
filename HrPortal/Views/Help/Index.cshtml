@@ -27,36 +27,40 @@
 
                 <div class="card-body">
 
-                    @if (Model.Hr.IsKnown)
+                    @if (Model.Hr.Any())
                     {
-                        <div class="detail-rows">
+                        <div class="row-list">
 
-                            <div class="detail-row">
-                                <span class="detail-icon">
-                                    <i class="fas fa-user" aria-hidden="true"></i>
-                                </span>
-                                <span class="detail-text">@Model.Hr.Name</span>
-                            </div>
-
-                            @if (!string.IsNullOrWhiteSpace(Model.Hr.Email))
+                            @foreach (var person in Model.Hr)
                             {
-                                <div class="detail-row">
-                                    <span class="detail-icon">
-                                        <i class="fas fa-envelope" aria-hidden="true"></i>
-                                    </span>
-                                    <span class="detail-text">
-                                        <a href="mailto:@Model.Hr.Email">@Model.Hr.Email</a>
-                                    </span>
-                                </div>
-                            }
+                                <div class="row-item">
 
-                            @if (!string.IsNullOrWhiteSpace(Model.Hr.Phone))
-                            {
-                                <div class="detail-row">
-                                    <span class="detail-icon">
-                                        <i class="fas fa-phone" aria-hidden="true"></i>
+                                    <span class="row-icon">
+                                        <i class="fas fa-user"
+                                           aria-hidden="true"></i>
                                     </span>
-                                    <span class="detail-text">@Model.Hr.Phone</span>
+
+                                    <span class="row-main">
+                                        <span class="row-title">@person.Name</span>
+
+                                        <span class="row-meta">
+                                            @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                            {
+                                                @person.JobTitle<text> &middot; </text>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(person.Email))
+                                            {
+                                                <a href="mailto:@person.Email">@person.Email</a>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(person.Phone))
+                                            {
+                                                <text> &middot; </text>@person.Phone
+                                            }
+                                        </span>
+                                    </span>
+
                                 </div>
                             }
 
@@ -71,10 +75,9 @@
                     {
                         <p class="empty-state mb-0">
                             <span class="empty-icon">&#128100;</span>
-                            No HR officer is set up yet. An
-                            administrator can name one on the approval
-                            settings page, and their details will show
-                            here.
+                            Nobody holds the HR Officer role yet. An
+                            administrator can grant it on the roles
+                            page, and their details will show here.
                         </p>
                     }
 
