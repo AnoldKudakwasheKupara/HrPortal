@@ -11,7 +11,6 @@ namespace HrPortal.Services
         private readonly LeaveBalanceService _balances;
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
-        private readonly LeaveOptions _options;
         private readonly WorkingCalendar _calendar;
 
         private readonly SupervisorService _supervisors;
@@ -21,7 +20,6 @@ namespace HrPortal.Services
             LeaveBalanceService balances,
             NotificationService notifications,
             AuditService audit,
-            IOptionsSnapshot<LeaveOptions> options,
             WorkingCalendar calendar,
             SupervisorService supervisors)
         {
@@ -29,7 +27,6 @@ namespace HrPortal.Services
             _balances = balances;
             _notifications = notifications;
             _audit = audit;
-            _options = options.Value;
             _calendar = calendar;
             _supervisors = supervisors;
         }
@@ -43,23 +40,10 @@ namespace HrPortal.Services
         {
             var result = new LeaveValidationResult();
 
-            var earliest = DateTime.Today.AddDays(
-                -_options.BackdateGraceDays);
-
-            if (startDate.Date < earliest)
-            {
-                result.Add(
-                    LeaveValidationResult.StartDateField,
-                    _options.BackdateGraceDays == 0
-                        ? "Leave cannot start before today."
-                        : $"Leave cannot start more than " +
-                          $"{_options.BackdateGraceDays} day(s) in " +
-                          "the past. Ask HR to record leave taken " +
-                          "earlier than that.");
-
-                return result;
-            }
-
+            // No limit on how far back leave may start. Sick leave
+            // gets recorded after the fact and the grace period only
+            // ever decided how late was too late, which is a rule
+            // nobody asked for.
             if (endDate.Date < startDate.Date)
             {
                 result.Add(
@@ -104,17 +88,14 @@ namespace HrPortal.Services
                 return result;
             }
 
-            var balanceError =
-                await _balances.ValidateAgainstBalanceAsync(
-                    employeeId,
-                    leaveTypeId,
-                    startDate.Year,
-                    result.NumberOfDays,
-                    excludeRequestId);
-
-            if (balanceError != null)
-                result.Add(LeaveValidationResult.FormField, balanceError);
-
+            // No entitlement check. A request is not refused for want
+            // of a balance somebody has to set up first -- that made
+            // leave unusable until HR had worked through every
+            // employee and every leave type for the year.
+            //
+            // Where a balance does exist it is still kept accurate:
+            // the hold, release and consume steps run on submission
+            // and decision, and do nothing when there is no row.
             return result;
         }
 
