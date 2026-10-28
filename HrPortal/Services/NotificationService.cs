@@ -46,24 +46,70 @@ namespace HrPortal.Services
             _pending.Add(new PendingEmail(employeeId, title, message, link));
         }
 
+        /// <summary>
+        /// Tells everybody who could act on this: whoever holds the
+        /// matching sign-in role, and the person named in the
+        /// approval settings if somebody is.
+        ///
+        /// It used to tell only the latter, so a company that had
+        /// granted the HR Officer role but never filled in the
+        /// approval setting got no notification at all -- a request
+        /// would arrive in the queue and nobody would be told it was
+        /// there.
+        /// </summary>
         public async Task NotifyApproverAsync(
             ApprovalRole role,
             string title,
             string message,
             string? link = null)
         {
-            var approverEmployeeId = await GetApproverEmployeeId(role);
-
-            if (approverEmployeeId == null)
-                return;
-
-            Notify(
-                approverEmployeeId.Value,
-                title,
-                message,
-                link);
+            foreach (var employeeId in await ApproverEmployeeIdsAsync(role))
+                Notify(employeeId, title, message, link);
         }
 
+        /// <summary>
+        /// Everybody who can act in this role, by sign-in role or by
+        /// the approval setting, without repeating anybody who is
+        /// both.
+        /// </summary>
+        public async Task<List<int>> ApproverEmployeeIdsAsync(
+            ApprovalRole role)
+        {
+            var signInRole = role switch
+            {
+                ApprovalRole.HROfficer => Roles.HrOfficer,
+                ApprovalRole.MD => Roles.Md,
+                _ => null
+            };
+
+            var holders = signInRole == null
+                ? new List<int>()
+                : await _context.Employees
+                    .AsNoTracking()
+                    .Where(e =>
+                        e.IsActive &&
+                        e.UserId != null &&
+                        _context.UserRoles.Any(ur =>
+                            ur.UserId == e.UserId.Value &&
+                            _context.Roles.Any(r =>
+                                r.Id == ur.RoleId &&
+                                r.Name == signInRole)))
+                    .Select(e => e.Id)
+                    .ToListAsync();
+
+            var configured = await GetApproverEmployeeId(role);
+
+            if (configured != null && !holders.Contains(configured.Value))
+                holders.Add(configured.Value);
+
+            return holders;
+        }
+
+        /// <summary>
+        /// The one person named in the approval settings, where
+        /// somebody is. Still used to tell whose own request should
+        /// skip a stage rather than be reviewed by themselves.
+        /// </summary>
         public async Task<int?> GetApproverEmployeeId(ApprovalRole role)
         {
             return await _context.ApprovalConfigurations
