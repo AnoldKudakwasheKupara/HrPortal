@@ -100,9 +100,8 @@
                     <span class="field-label">Status</span>
 
                     <div class="field-value">
-                        <span class="badge bg-warning text-dark">
-                            @request.Status
-                        </span>
+                        <partial name="_LeaveStatusBadge"
+                                 model="request.Status" />
                     </div>
 
                 </div>
@@ -208,6 +207,11 @@
 
                     </div>
 
+                    @* One branch per actor, each asked for by name.
+                       These used to be an if/else on HR, which was
+                       safe while only HR and the MD could get here:
+                       once a supervisor could, "not HR" meant the MD,
+                       so a supervisor was shown the MD's buttons. *@
                     @if (Model.CanActAsSupervisor)
                     {
                         <button type="submit"
@@ -225,7 +229,7 @@
                         <button type="submit"
                                 class="btn btn-danger"
                                 asp-action="SupervisorReject">
-                            Decline
+                            Reject
                         </button>
                     }
 
@@ -249,7 +253,8 @@
                             Reject
                         </button>
                     }
-                    else
+
+                    @if (Model.CanActAsMd)
                     {
                         <button type="submit"
                                 class="btn btn-success"
@@ -275,7 +280,7 @@
         <div class="alert alert-secondary">
 
             This request is not waiting on you. It is currently
-            <strong>@request.Status</strong>.
+            <partial name="_LeaveStatusBadge" model="request.Status" />
 
         </div>
     }
