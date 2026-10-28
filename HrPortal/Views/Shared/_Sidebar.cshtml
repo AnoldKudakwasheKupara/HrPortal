@@ -114,15 +114,22 @@
 
     @if (supervises)
     {
-        <div class="nav-group">My team</div>
-
-        <a class="nav-item @OnAction("LeaveApproval", "MyTeam")"
-           asp-controller="LeaveApproval" asp-action="MyTeam">
-            <i class="fas fa-user-check"></i> Awaiting My Approval
+        <div class="nav-group">
+            My team
             @if (awaitingMe > 0)
             {
                 <span class="nav-badge">@awaitingMe</span>
             }
+        </div>
+
+        <a class="nav-item @OnAction("LeaveApproval", "MyTeam")"
+           asp-controller="LeaveApproval" asp-action="MyTeam">
+            <i class="fas fa-user-check"></i> Leave to Approve
+        </a>
+
+        <a class="nav-item @OnAction("LoanApproval", "MyTeam")"
+           asp-controller="LoanApproval" asp-action="MyTeam">
+            <i class="fas fa-hand-holding-dollar"></i> Loans to Approve
         </a>
     }
 

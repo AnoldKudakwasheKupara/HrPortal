@@ -13,14 +13,25 @@ namespace HrPortal.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly NotificationService _notifications;
+        private readonly SupervisorService _supervisors;
 
         public LoanWorkflowService(
             ApplicationDbContext context,
-            NotificationService notifications)
+            NotificationService notifications,
+            SupervisorService supervisors)
         {
             _context = context;
             _notifications = notifications;
+            _supervisors = supervisors;
         }
+
+        /// <summary>
+        /// Sitting with the applicant's own supervisor, which is
+        /// where an application starts when they have one.
+        /// </summary>
+        public static bool IsAwaitingSupervisor(
+            LoanApplicationStatus status) =>
+            status is LoanApplicationStatus.SupervisorReview;
 
         public static bool IsWithApplicant(LoanApplicationStatus status) =>
             status is LoanApplicationStatus.Draft
@@ -32,6 +43,7 @@ namespace HrPortal.Services
         public static bool IsFinal(LoanApplicationStatus status) =>
             status is LoanApplicationStatus.Approved
                 or LoanApplicationStatus.Rejected
+                or LoanApplicationStatus.SupervisorRejected
                 or LoanApplicationStatus.Cancelled;
 
         /// <summary>
@@ -46,6 +58,11 @@ namespace HrPortal.Services
                 LoanApplicationAction.Submitted or
                 LoanApplicationAction.Resubmitted =>
                     IsWithApplicant(status),
+
+                LoanApplicationAction.ApprovedBySupervisor or
+                LoanApplicationAction.RejectedBySupervisor or
+                LoanApplicationAction.ReturnedBySupervisor =>
+                    IsAwaitingSupervisor(status),
 
                 LoanApplicationAction.Approved or
                 LoanApplicationAction.Rejected or
@@ -84,7 +101,15 @@ namespace HrPortal.Services
 
             var previous = application.Status;
 
-            application.Status = LoanApplicationStatus.Submitted;
+            // The applicant's own supervisor sees it first, where
+            // they have one. Nobody named means nothing to wait for.
+            var supervisor = await _supervisors
+                .SupervisorOfAsync(application.EmployeeId);
+
+            application.Status = supervisor != null
+                ? LoanApplicationStatus.SupervisorReview
+                : LoanApplicationStatus.Submitted;
+
             application.SubmittedAt = DateTime.UtcNow;
 
             AddHistory(
@@ -94,17 +119,138 @@ namespace HrPortal.Services
                     ? LoanApplicationAction.Resubmitted
                     : LoanApplicationAction.Submitted,
                 previous,
-                null);
+                supervisor == null
+                    ? null
+                    : $"Sent to {supervisor.FirstName} " +
+                      $"{supervisor.LastName} for supervisor approval.");
+
+            if (supervisor != null)
+            {
+                _notifications.Notify(
+                    supervisor.Id,
+                    "Loan application awaiting your approval",
+                    $"{application.ApplicationNumber} from " +
+                    $"{Who(application)} is waiting for your approval " +
+                    "as supervisor.",
+                    $"/LoanApproval/Details/{application.Id}");
+            }
+            else
+            {
+                await _notifications.NotifyApproverAsync(
+                    ApprovalRole.MD,
+                    "Loan application to sanction",
+                    $"{application.ApplicationNumber} from " +
+                    $"{Who(application)} for " +
+                    LoanCurrencies.Format(
+                        application.Currency,
+                        application.AmountRequested) + ".",
+                    $"/LoanApproval/Details/{application.Id}");
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// The supervisor signs off and the application carries on to
+        /// the Managing Director, where it would have gone anyway.
+        /// </summary>
+        public async Task SupervisorApproveAsync(
+            LoanApplication application,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(
+                LoanApplicationAction.ApprovedBySupervisor,
+                application);
+
+            var previous = application.Status;
+
+            application.Status = LoanApplicationStatus.Submitted;
+
+            AddHistory(
+                application,
+                actedByEmployeeId,
+                LoanApplicationAction.ApprovedBySupervisor,
+                previous,
+                comment);
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.MD,
                 "Loan application to sanction",
                 $"{application.ApplicationNumber} from " +
-                $"{Who(application)} for " +
-                LoanCurrencies.Format(
-                    application.Currency,
-                    application.AmountRequested) + ".",
+                $"{Who(application)} has been approved by their " +
+                "supervisor and is waiting for you.",
                 $"/LoanApproval/Details/{application.Id}");
+
+            _notifications.Notify(
+                application.EmployeeId,
+                "Loan application approved by your supervisor",
+                $"{application.ApplicationNumber} has gone on to the " +
+                "Managing Director.",
+                $"/MyLoans/Details/{application.Id}");
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SupervisorRejectAsync(
+            LoanApplication application,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(
+                LoanApplicationAction.RejectedBySupervisor,
+                application);
+
+            var previous = application.Status;
+
+            application.Status = LoanApplicationStatus.SupervisorRejected;
+            application.CompletedAt = DateTime.UtcNow;
+
+            AddHistory(
+                application,
+                actedByEmployeeId,
+                LoanApplicationAction.RejectedBySupervisor,
+                previous,
+                comment);
+
+            _notifications.Notify(
+                application.EmployeeId,
+                "Loan application declined by your supervisor",
+                $"{application.ApplicationNumber} was declined." +
+                (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
+                $"/MyLoans/Details/{application.Id}");
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SupervisorReturnAsync(
+            LoanApplication application,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(
+                LoanApplicationAction.ReturnedBySupervisor,
+                application);
+
+            var previous = application.Status;
+
+            application.Status =
+                LoanApplicationStatus.ReturnedToApplicant;
+
+            AddHistory(
+                application,
+                actedByEmployeeId,
+                LoanApplicationAction.ReturnedBySupervisor,
+                previous,
+                comment);
+
+            _notifications.Notify(
+                application.EmployeeId,
+                "Loan application returned by your supervisor",
+                $"{application.ApplicationNumber} needs a change " +
+                "before it can go on." +
+                (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
+                $"/MyLoans/Details/{application.Id}");
 
             await _context.SaveChangesAsync();
         }

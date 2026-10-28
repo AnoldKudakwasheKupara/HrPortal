@@ -14,7 +14,14 @@ namespace HrPortal.Controllers
     /// Loans are sanctioned by the Managing Director, so this is the
     /// only place a loan decision is taken.
     /// </summary>
-    [Authorize(Roles = Roles.MdOnly)]
+/// <summary>
+/// A supervisor is a relationship, not a role, so this controller
+/// cannot be gated on roles alone. The class guard asks only for a
+/// signed-in user; the Managing Director's queue and decisions keep
+/// their role attribute, and anything to do with one application is
+/// gated on whether the person asking has standing on it.
+/// </summary>
+    [Authorize]
     public class LoanApprovalController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -38,6 +45,137 @@ namespace HrPortal.Controllers
             _pdf = pdf;
         }
 
+        /// <summary>
+        /// Whether the person asking has any business with this
+        /// application: the Managing Director, or the applicant's own
+        /// supervisor.
+        /// </summary>
+        private async Task<bool> HasStandingAsync(
+            LoanApplication application)
+        {
+            if (User.IsInRole(Roles.Md))
+                return true;
+
+            return await IsSupervisorOfAsync(application);
+        }
+
+        private async Task<bool> IsSupervisorOfAsync(
+            LoanApplication application)
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return false;
+
+            var supervisorId = await _context.Employees
+                .AsNoTracking()
+                .Where(e => e.Id == application.EmployeeId)
+                .Select(e => e.SupervisorId)
+                .FirstOrDefaultAsync();
+
+            return supervisorId == me.Value;
+        }
+
+        /// <summary>
+        /// What the people reporting to me have sent up.
+        /// </summary>
+        public async Task<IActionResult> MyTeam()
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            var applications = me == null
+                ? new List<LoanApplication>()
+                : await _context.LoanApplications
+                    .AsNoTracking()
+                    .Include(a => a.Employee)
+                    .Where(a =>
+                        a.Status ==
+                            LoanApplicationStatus.SupervisorReview &&
+                        a.Employee.SupervisorId == me.Value)
+                    .OrderBy(a => a.SubmittedAt)
+                    .ToListAsync();
+
+            ViewData["Title"] = "Loans Awaiting Your Approval";
+            ViewBag.Stage = "Supervisor";
+
+            return View("Index", applications);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorApprove(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorApproveAsync(
+                        application, actorId, comment),
+                "Approved and sent to the Managing Director.");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorReject(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorRejectAsync(
+                        application, actorId, comment),
+                "Application declined.");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorReturn(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorReturnAsync(
+                        application, actorId, comment),
+                "Application returned to the applicant.");
+
+        /// <summary>
+        /// Checked on the application rather than on a role: being
+        /// somebody's supervisor is the whole permission.
+        /// </summary>
+        private async Task<IActionResult> ActAsSupervisorAsync(
+            int id,
+            Func<LoanApplication, int, Task> act,
+            string success)
+        {
+            var application = await LoadAsync(id);
+
+            if (application == null ||
+                !await IsSupervisorOfAsync(application))
+            {
+                return NotFound();
+            }
+
+            if (!LoanWorkflowService.IsAwaitingSupervisor(
+                application.Status))
+            {
+                TempData["Error"] =
+                    "This application is not waiting for your approval.";
+
+                return RedirectToAction(nameof(MyTeam));
+            }
+
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return Forbid();
+
+            await act(application, me.Value);
+
+            TempData["Success"] = success;
+
+            return RedirectToAction(nameof(MyTeam));
+        }
+
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> Index(bool settled = false)
         {
             var query = _context.LoanApplications
@@ -68,8 +206,11 @@ namespace HrPortal.Controllers
 
             var application = await LoadAsync(id.Value);
 
-            if (application == null)
+            if (application == null || !await HasStandingAsync(application))
                 return NotFound();
+
+            ViewBag.CanActAsSupervisor =
+                await IsSupervisorOfAsync(application);
 
             ViewBag.Decision = new LoanDecisionViewModel
             {
@@ -83,6 +224,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> Approve(
             int id,
             LoanDecisionViewModel model)
@@ -136,6 +278,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> Reject(int id, string? comment)
         {
             return await DecideAsync(
@@ -147,6 +290,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> Return(int id, string? comment)
         {
             return await DecideAsync(
@@ -164,7 +308,7 @@ namespace HrPortal.Controllers
 
             var application = await LoadAsync(id.Value);
 
-            if (application == null)
+            if (application == null || !await HasStandingAsync(application))
                 return NotFound();
 
             return File(
@@ -179,7 +323,7 @@ namespace HrPortal.Controllers
         {
             var application = await LoadAsync(id);
 
-            if (application == null)
+            if (application == null || !await HasStandingAsync(application))
                 return NotFound();
 
             var attachment = application.Attachments

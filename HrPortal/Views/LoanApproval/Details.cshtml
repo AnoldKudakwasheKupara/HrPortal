@@ -9,7 +9,15 @@
         as HrPortal.ViewModels.LoanDecisionViewModel
         ?? new HrPortal.ViewModels.LoanDecisionViewModel();
 
-    var awaiting = LoanWorkflowService.IsAwaitingMd(Model.Status);
+    // The Managing Director's panel, and only for them: a supervisor
+    // reaching this page before the MD sees their own panel instead.
+    var awaiting =
+        LoanWorkflowService.IsAwaitingMd(Model.Status) &&
+        User.IsInRole(HrPortal.Security.Roles.Md);
+
+    var asSupervisor =
+        LoanWorkflowService.IsAwaitingSupervisor(Model.Status) &&
+        (bool)(ViewBag.CanActAsSupervisor ?? false);
 }
 
 <div class="container">
@@ -198,6 +206,59 @@
         }
 
     </div>
+
+    @if (asSupervisor)
+    {
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header">Supervisor Approval</div>
+
+            <div class="card-body">
+
+                <form method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="mb-3">
+
+                        <label for="supComment" class="form-label">
+                            Comment
+                        </label>
+
+                        <textarea id="supComment"
+                                  name="comment"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Required when declining or returning"></textarea>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-success"
+                            asp-action="SupervisorApprove">
+                        Approve and send to the MD
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-warning"
+                            asp-action="SupervisorReturn">
+                        Return to applicant
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger"
+                            asp-action="SupervisorReject">
+                        Decline
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    }
 
     @if (awaiting)
     {

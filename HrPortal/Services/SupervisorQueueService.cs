@@ -40,11 +40,19 @@ namespace HrPortal.Services
                 return 0;
             }
 
-            _count = await _context.LeaveRequests
+            var leave = await _context.LeaveRequests
                 .AsNoTracking()
                 .CountAsync(r =>
                     r.Status == LeaveRequestStatus.SupervisorReview &&
                     r.Employee.SupervisorId == me.Value);
+
+            var loans = await _context.LoanApplications
+                .AsNoTracking()
+                .CountAsync(a =>
+                    a.Status == LoanApplicationStatus.SupervisorReview &&
+                    a.Employee.SupervisorId == me.Value);
+
+            _count = leave + loans;
 
             return _count.Value;
         }
