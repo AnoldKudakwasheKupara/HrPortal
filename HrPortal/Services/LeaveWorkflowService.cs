@@ -14,6 +14,7 @@ namespace HrPortal.Services
         private readonly WorkingCalendar _calendar;
 
         private readonly SupervisorService _supervisors;
+        private readonly ApproverDirectory _approvers;
 
         public LeaveWorkflowService(
             ApplicationDbContext context,
@@ -21,7 +22,8 @@ namespace HrPortal.Services
             NotificationService notifications,
             AuditService audit,
             WorkingCalendar calendar,
-            SupervisorService supervisors)
+            SupervisorService supervisors,
+            ApproverDirectory approvers)
         {
             _context = context;
             _balances = balances;
@@ -29,6 +31,7 @@ namespace HrPortal.Services
             _audit = audit;
             _calendar = calendar;
             _supervisors = supervisors;
+            _approvers = approvers;
         }
 
         public async Task<LeaveValidationResult> ValidateRequestAsync(
@@ -189,12 +192,12 @@ namespace HrPortal.Services
 
             var previous = request.Status;
 
-            var hrApproverId = await _notifications
-                .GetApproverEmployeeId(ApprovalRole.HROfficer);
-
-            var isHrOfficersOwn =
-                hrApproverId != null &&
-                hrApproverId.Value == request.EmployeeId;
+            // Whether the applicant is one of the people who
+            // hold the HR Officer role, rather than whether they
+            // are the one person a setting named. Either way, a
+            // request is not left waiting on its own applicant.
+            var isHrOfficersOwn = await _approvers.HoldsAsync(
+                ApprovalRole.HROfficer, request.EmployeeId);
 
             // A request starts with the employee's own supervisor,
             // where they have one. Nobody named means nothing to wait
@@ -282,12 +285,12 @@ namespace HrPortal.Services
 
             var previous = request.Status;
 
-            var hrApproverId = await _notifications
-                .GetApproverEmployeeId(ApprovalRole.HROfficer);
-
-            var isHrOfficersOwn =
-                hrApproverId != null &&
-                hrApproverId.Value == request.EmployeeId;
+            // Whether the applicant is one of the people who
+            // hold the HR Officer role, rather than whether they
+            // are the one person a setting named. Either way, a
+            // request is not left waiting on its own applicant.
+            var isHrOfficersOwn = await _approvers.HoldsAsync(
+                ApprovalRole.HROfficer, request.EmployeeId);
 
             request.Status = isHrOfficersOwn
                 ? LeaveRequestStatus.HRApproved

@@ -1,4 +1,5 @@
 using HrPortal.DbContexts;
+using HrPortal.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -21,10 +22,14 @@ namespace HrPortal.Services
     public class SupportContactsService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ApproverDirectory _approvers;
 
-        public SupportContactsService(ApplicationDbContext context)
+        public SupportContactsService(
+            ApplicationDbContext context,
+            ApproverDirectory approvers)
         {
             _context = context;
+            _approvers = approvers;
         }
 
         public async Task<SupportContacts> GetAsync()
@@ -35,34 +40,20 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Everybody holding the HR Officer role.
-        ///
-        /// The role, not the approval setting: the setting names the
-        /// one person who signs leave off, which is a different
-        /// question from who an employee may ring about their pay.
-        /// A company with two HR officers should see both here.
+        /// Everybody holding the HR Officer role, from the one place
+        /// that answers who holds a role. An employee ringing about
+        /// their pay should reach whoever can help, not whichever one
+        /// of them a second list happened to name.
         /// </summary>
         private async Task<List<SupportPerson>> HrAsync()
         {
-            const string role = Security.Roles.HrOfficer;
+            var people = await _approvers.PeopleAsync(
+                ApprovalRole.HROfficer);
 
-            return await _context.Employees
-                .AsNoTracking()
-                .Where(e =>
-                    e.IsActive &&
-                    e.UserId != null &&
-                    _context.UserRoles.Any(ur =>
-                        ur.UserId == e.UserId.Value &&
-                        _context.Roles.Any(r =>
-                            r.Id == ur.RoleId && r.Name == role)))
-                .OrderBy(e => e.LastName)
-                .ThenBy(e => e.FirstName)
-                .Select(e => new SupportPerson(
-                    e.FirstName + " " + e.LastName,
-                    e.JobTitle,
-                    e.Email,
-                    e.PhoneNumber))
-                .ToListAsync();
+            return people
+                .Select(p => new SupportPerson(
+                    p.Name, p.JobTitle, p.Email, p.Phone))
+                .ToList();
         }
 
         /// <summary>

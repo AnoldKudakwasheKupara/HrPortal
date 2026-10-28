@@ -7,10 +7,11 @@ namespace HrPortal.Services
     /// <summary>
     /// Who reports to whom, and what that is allowed to look like.
     ///
-    /// Everybody has a supervisor except the Managing Director, who
-    /// is identified by holding the MD approval role rather than by
-    /// job title -- the title is free text and nobody signs anything
-    /// because of it.
+    /// Nearly everybody has a supervisor. Whoever sits at the top
+    /// has none, which the record says by leaving it empty rather
+    /// than by naming the post: a request from somebody with no
+    /// supervisor goes straight on to the stage it would have
+    /// reached anyway.
     /// </summary>
     public class SupervisorService
     {
@@ -19,30 +20,6 @@ namespace HrPortal.Services
         public SupervisorService(ApplicationDbContext context)
         {
             _context = context;
-        }
-
-        /// <summary>
-        /// The employee holding the MD approval role, or null where
-        /// nobody does.
-        /// </summary>
-        public Task<int?> ManagingDirectorIdAsync() =>
-            _context.ApprovalConfigurations
-                .AsNoTracking()
-                .Where(a =>
-                    a.Role == ApprovalRole.MD &&
-                    a.IsActive &&
-                    a.Employee.IsActive)
-                .Select(a => (int?)a.EmployeeId)
-                .FirstOrDefaultAsync();
-
-        /// <summary>
-        /// Everybody needs one except whoever sits at the top.
-        /// </summary>
-        public async Task<bool> RequiresSupervisorAsync(int employeeId)
-        {
-            var md = await ManagingDirectorIdAsync();
-
-            return md != employeeId;
         }
 
         /// <summary>

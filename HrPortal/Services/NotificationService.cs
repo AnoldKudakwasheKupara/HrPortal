@@ -11,17 +11,20 @@ namespace HrPortal.Services
         private readonly ApplicationDbContext _context;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<NotificationService> _logger;
+        private readonly ApproverDirectory _approvers;
 
         private readonly List<PendingEmail> _pending = new();
 
         public NotificationService(
             ApplicationDbContext context,
             IServiceScopeFactory scopeFactory,
-            ILogger<NotificationService> logger)
+            ILogger<NotificationService> logger,
+            ApproverDirectory approvers)
         {
             _context = context;
             _scopeFactory = scopeFactory;
             _logger = logger;
+            _approvers = approvers;
 
             _context.SavedChanges += OnSavedChanges;
         }
@@ -47,15 +50,10 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Tells everybody who could act on this: whoever holds the
-        /// matching sign-in role, and the person named in the
-        /// approval settings if somebody is.
-        ///
-        /// It used to tell only the latter, so a company that had
-        /// granted the HR Officer role but never filled in the
-        /// approval setting got no notification at all -- a request
-        /// would arrive in the queue and nobody would be told it was
-        /// there.
+        /// Tells everybody who holds the role, not one person named
+        /// on a settings page. A company with two HR officers has
+        /// two people who may act, and a request either of them can
+        /// decide should reach both.
         /// </summary>
         public async Task NotifyApproverAsync(
             ApprovalRole role,
@@ -63,60 +61,10 @@ namespace HrPortal.Services
             string message,
             string? link = null)
         {
-            foreach (var employeeId in await ApproverEmployeeIdsAsync(role))
+            var approvers = await _approvers.EmployeeIdsAsync(role);
+
+            foreach (var employeeId in approvers)
                 Notify(employeeId, title, message, link);
-        }
-
-        /// <summary>
-        /// Everybody who can act in this role, by sign-in role or by
-        /// the approval setting, without repeating anybody who is
-        /// both.
-        /// </summary>
-        public async Task<List<int>> ApproverEmployeeIdsAsync(
-            ApprovalRole role)
-        {
-            var signInRole = role switch
-            {
-                ApprovalRole.HROfficer => Roles.HrOfficer,
-                ApprovalRole.MD => Roles.Md,
-                _ => null
-            };
-
-            var holders = signInRole == null
-                ? new List<int>()
-                : await _context.Employees
-                    .AsNoTracking()
-                    .Where(e =>
-                        e.IsActive &&
-                        e.UserId != null &&
-                        _context.UserRoles.Any(ur =>
-                            ur.UserId == e.UserId.Value &&
-                            _context.Roles.Any(r =>
-                                r.Id == ur.RoleId &&
-                                r.Name == signInRole)))
-                    .Select(e => e.Id)
-                    .ToListAsync();
-
-            var configured = await GetApproverEmployeeId(role);
-
-            if (configured != null && !holders.Contains(configured.Value))
-                holders.Add(configured.Value);
-
-            return holders;
-        }
-
-        /// <summary>
-        /// The one person named in the approval settings, where
-        /// somebody is. Still used to tell whose own request should
-        /// skip a stage rather than be reviewed by themselves.
-        /// </summary>
-        public async Task<int?> GetApproverEmployeeId(ApprovalRole role)
-        {
-            return await _context.ApprovalConfigurations
-                .AsNoTracking()
-                .Where(a => a.Role == role && a.IsActive)
-                .Select(a => (int?)a.EmployeeId)
-                .FirstOrDefaultAsync();
         }
 
         private void OnSavedChanges(object? sender, SavedChangesEventArgs e)

@@ -16,13 +16,16 @@ namespace HrPortal.Services
 
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
+        private readonly ApproverDirectory _approvers;
 
         public DashboardService(
             ApplicationDbContext context,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            ApproverDirectory approvers)
         {
             _context = context;
             _currentUser = currentUser;
+            _approvers = approvers;
         }
 
         public async Task<DashboardViewModel> BuildAsync(ClaimsPrincipal user)
@@ -344,17 +347,10 @@ namespace HrPortal.Services
                     !await _context.WeeklyReports
                         .AnyAsync(r => r.PeriodStart == weekStart),
 
-                HrApproverConfigured =
-                    await _context.ApprovalConfigurations
-                        .AnyAsync(a =>
-                            a.Role == ApprovalRole.HROfficer &&
-                            a.IsActive),
+                HasHrOfficer = await _approvers.AnybodyAsync(
+                    ApprovalRole.HROfficer),
 
-                MdApproverConfigured =
-                    await _context.ApprovalConfigurations
-                        .AnyAsync(a =>
-                            a.Role == ApprovalRole.MD &&
-                            a.IsActive),
+                HasMd = await _approvers.AnybodyAsync(ApprovalRole.MD),
 
                 RecentActivity = await _context.AuditLogs
                     .Include(a => a.Employee)

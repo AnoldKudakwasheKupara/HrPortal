@@ -75,29 +75,28 @@
     }
 
     @if (Model.Admin != null &&
-         (!Model.Admin.HrApproverConfigured ||
-          !Model.Admin.MdApproverConfigured))
+         (!Model.Admin.HasHrOfficer || !Model.Admin.HasMd))
     {
         <div class="alert alert-warning">
 
-            <span class="field-label">Leave approval is not fully configured.</span>
+            <span class="field-label">Nobody can approve at every stage.</span>
 
             <div class="field-value">
-                @if (!Model.Admin.HrApproverConfigured)
+                @if (!Model.Admin.HasHrOfficer)
                 {
-                    <text>No active HR Officer approver. </text>
+                    <text>Nobody holds the HR Officer role. </text>
                 }
 
-                @if (!Model.Admin.MdApproverConfigured)
+                @if (!Model.Admin.HasMd)
                 {
-                    <text>No active MD approver. </text>
+                    <text>Nobody holds the MD role. </text>
                 }
 
                 Requests will still be raised, but nobody is
                 notified to act on them.
 
-                <a asp-controller="ApprovalConfiguration"
-                   asp-action="Index">Set the approvers</a>.
+                <a asp-controller="Role"
+                   asp-action="Index">Grant the roles</a>.
             </div>
 
         </div>
@@ -128,7 +127,7 @@
             cards.Add(("fa-file-circle-check", "Pending approvals",
                 pending.ToString("N0"),
                 pending == 0 ? "No items pending" : "Waiting on a decision",
-                "ApprovalConfiguration", "Index"));
+                "LeaveApproval", "Index"));
 
             cards.Add(("fa-laptop", "Assets",
                 Model.Admin.Assets.ToString("N0"),
@@ -146,7 +145,7 @@
 
             actions.Add(("fa-circle-check", "Review approvals",
                 "View and action pending requests",
-                "ApprovalConfiguration", "Index"));
+                "LeaveApproval", "Index"));
 
             actions.Add(("fa-file-arrow-up", "Upload document",
                 "Add a document to the system", "Repository", "Upload"));
@@ -1459,20 +1458,20 @@
 
             </a>
 
-            <a class="strip-item @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured ? "" : "is-warning")"
-               asp-controller="ApprovalConfiguration"
+            <a class="strip-item @(Model.Admin.HasHrOfficer && Model.Admin.HasMd ? "" : "is-warning")"
+               asp-controller="Role"
                asp-action="Index">
 
                 <span class="strip-label">Approvers</span>
 
                 <span class="strip-value">
-                    @((Model.Admin.HrApproverConfigured ? 1 : 0) + (Model.Admin.MdApproverConfigured ? 1 : 0)) / 2
+                    @((Model.Admin.HasHrOfficer ? 1 : 0) + (Model.Admin.HasMd ? 1 : 0)) / 2
                 </span>
 
                 <span class="strip-note">
-                    @(Model.Admin.HrApproverConfigured && Model.Admin.MdApproverConfigured
-                        ? "HR and MD both set"
-                        : "Roles still to fill")
+                    @(Model.Admin.HasHrOfficer && Model.Admin.HasMd
+                        ? "HR and MD both granted"
+                        : "Roles still to grant")
                 </span>
 
             </a>

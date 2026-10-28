@@ -121,39 +121,50 @@
 
                 <span class="section-eyebrow">HR contact</span>
 
-                @if (Model.HrContact.IsKnown)
+                @if (Model.HrContacts.Any())
                 {
                     <div class="detail-rows">
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-user" aria-hidden="true"></i>
-                            </span>
-                            <span class="detail-text">@Model.HrContact.Name</span>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(Model.HrContact.Email))
+                        @foreach (var person in Model.HrContacts)
                         {
                             <div class="detail-row">
                                 <span class="detail-icon">
-                                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                                    <i class="fas fa-user" aria-hidden="true"></i>
                                 </span>
                                 <span class="detail-text">
-                                    <a href="mailto:@Model.HrContact.Email">
-                                        @Model.HrContact.Email
-                                    </a>
+                                    @person.Name
+                                    @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                    {
+                                        <span class="text-muted">
+                                            &middot; @person.JobTitle
+                                        </span>
+                                    }
                                 </span>
                             </div>
-                        }
 
-                        @if (!string.IsNullOrWhiteSpace(Model.HrContact.Phone))
-                        {
-                            <div class="detail-row">
-                                <span class="detail-icon">
-                                    <i class="fas fa-phone" aria-hidden="true"></i>
-                                </span>
-                                <span class="detail-text">@Model.HrContact.Phone</span>
-                            </div>
+                            @if (!string.IsNullOrWhiteSpace(person.Email))
+                            {
+                                <div class="detail-row">
+                                    <span class="detail-icon">
+                                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                                    </span>
+                                    <span class="detail-text">
+                                        <a href="mailto:@person.Email">
+                                            @person.Email
+                                        </a>
+                                    </span>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(person.Phone))
+                            {
+                                <div class="detail-row">
+                                    <span class="detail-icon">
+                                        <i class="fas fa-phone" aria-hidden="true"></i>
+                                    </span>
+                                    <span class="detail-text">@person.Phone</span>
+                                </div>
+                            }
                         }
 
                     </div>
@@ -161,8 +172,8 @@
                 else
                 {
                     <p class="field-value is-empty mb-0">
-                        No HR officer is set up yet. An administrator
-                        can name one on the approval settings page,
+                        Nobody holds the HR Officer role yet. An
+                        administrator can grant it on the roles page,
                         and their details will show here.
                     </p>
                 }

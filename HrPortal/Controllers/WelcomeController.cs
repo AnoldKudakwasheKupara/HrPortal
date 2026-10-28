@@ -1,3 +1,4 @@
+using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -9,14 +10,14 @@ namespace HrPortal.Controllers
     public class WelcomeController : Controller
     {
         private readonly CurrentUserService _currentUser;
-        private readonly HrContactService _hrContact;
+        private readonly ApproverDirectory _approvers;
 
         public WelcomeController(
             CurrentUserService currentUser,
-            HrContactService hrContact)
+            ApproverDirectory approvers)
         {
             _currentUser = currentUser;
-            _hrContact = hrContact;
+            _approvers = approvers;
         }
 
         public async Task<IActionResult> Index()
@@ -26,7 +27,8 @@ namespace HrPortal.Controllers
             return View(new WelcomeViewModel
             {
                 FirstName = employee?.FirstName,
-                HrContact = await _hrContact.GetAsync()
+                HrContacts = await _approvers.PeopleAsync(
+                    ApprovalRole.HROfficer)
             });
         }
     }

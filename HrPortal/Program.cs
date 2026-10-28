@@ -100,10 +100,10 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<LeaveBalanceService>();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<NotificationBadgeService>();
-builder.Services.AddScoped<HrContactService>();
 
 builder.Services.AddScoped<SupportContactsService>();
 
+builder.Services.AddScoped<ApproverDirectory>();
 builder.Services.AddScoped<SupervisorService>();
 
 builder.Services.AddScoped<SupervisorQueueService>();

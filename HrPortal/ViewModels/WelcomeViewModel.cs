@@ -6,6 +6,11 @@ namespace HrPortal.ViewModels
     {
         public string? FirstName { get; set; }
 
-        public HrContact HrContact { get; set; } = HrContact.Unknown;
+        /// <summary>
+        /// Everybody holding the HR Officer role. A list, because a
+        /// company may have more than one and a new employee being
+        /// shown only one of them has been told half the answer.
+        /// </summary>
+        public List<ApproverPerson> HrContacts { get; set; } = new();
     }
 }

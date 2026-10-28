@@ -188,9 +188,13 @@ namespace HrPortal.ViewModels
 
         public bool WeeklyReportDue { get; set; }
 
-        public bool HrApproverConfigured { get; set; }
+        /// <summary>
+        /// Whether anybody holds the role. Nobody means requests
+        /// will reach that stage and sit there with nobody told.
+        /// </summary>
+        public bool HasHrOfficer { get; set; }
 
-        public bool MdApproverConfigured { get; set; }
+        public bool HasMd { get; set; }
 
         public List<AuditLog> RecentActivity { get; set; } = new();
     }
