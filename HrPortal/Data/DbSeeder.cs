@@ -1,4 +1,5 @@
 ﻿using HrPortal.Entities;
+using HrPortal.Services;
 using HrPortal.DbContexts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -193,25 +194,13 @@ namespace HrPortal.Data
                 await context.SaveChangesAsync();
         }
 
-        private static readonly string[] ItDepartmentNames =
-        {
-            "IT", "ICT", "I.T.", "I.T", "IT DEPARTMENT", "ICT DEPARTMENT",
-            "INFORMATION TECHNOLOGY",
-            "INFORMATION TECHNOLOGY DEPARTMENT",
-            "INFORMATION AND COMMUNICATION TECHNOLOGY",
-            "INFORMATION & COMMUNICATION TECHNOLOGY",
-            "INFORMATION COMMUNICATION TECHNOLOGY",
-            "IT SUPPORT", "IT SERVICES", "TECHNOLOGY"
-        };
-
         private static async Task<Department> FindOrCreateItDepartmentAsync(
             ApplicationDbContext context)
         {
             var departments = await context.Departments.ToListAsync();
 
             var existing = departments
-                .Where(d => ItDepartmentNames.Contains(
-                    d.Name.Trim().ToUpperInvariant()))
+                .Where(d => ItDepartment.Matches(d.Name))
                 .OrderByDescending(d => d.IsActive)
                 .FirstOrDefault();
 

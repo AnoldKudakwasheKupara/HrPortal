@@ -101,6 +101,8 @@ builder.Services.AddScoped<LeaveBalanceService>();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<NotificationBadgeService>();
 builder.Services.AddScoped<HrContactService>();
+
+builder.Services.AddScoped<SupportContactsService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<WorkingCalendar>();
 builder.Services.AddScoped<PolicyService>();

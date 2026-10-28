@@ -4,22 +4,23 @@ using Microsoft.AspNetCore.Mvc;
 namespace HrPortal.Controllers
 {
     /// <summary>
-    /// Answers "who do I ask". It points at the HR officer named in
-    /// the approval settings rather than a hard-coded address, so it
-    /// follows whoever currently holds the role.
+    /// Answers "who do I ask". Human Resources comes from whoever
+    /// currently holds the role in the approval settings, and IT from
+    /// whoever is currently in the IT department, so neither is a
+    /// hard-coded address that goes stale when somebody leaves.
     /// </summary>
     public class HelpController : Controller
     {
-        private readonly HrContactService _hrContact;
+        private readonly SupportContactsService _contacts;
 
-        public HelpController(HrContactService hrContact)
+        public HelpController(SupportContactsService contacts)
         {
-            _hrContact = hrContact;
+            _contacts = contacts;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _hrContact.GetAsync());
+            return View(await _contacts.GetAsync());
         }
     }
 }

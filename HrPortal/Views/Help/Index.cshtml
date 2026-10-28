@@ -1,4 +1,4 @@
-@model HrPortal.Services.HrContact
+@model HrPortal.Services.SupportContacts
 
 @{
     ViewData["Title"] = "Help & Support";
@@ -10,8 +10,8 @@
     <div class="page-head-simple">
         <h2>Help &amp; Support</h2>
         <p class="text-muted">
-            Where to look first, and who to ask when the answer is
-            not here.
+            Any queries, contact Human Resources. Anything to do with
+            the portal, your computer or your account, contact IT.
         </p>
     </div>
 
@@ -21,11 +21,13 @@
 
             <div class="card shadow-sm h-100">
 
-                <div class="card-header">Talk to HR</div>
+                <div class="card-header">
+                    Any queries &mdash; contact HR
+                </div>
 
                 <div class="card-body">
 
-                    @if (Model.IsKnown)
+                    @if (Model.Hr.IsKnown)
                     {
                         <div class="detail-rows">
 
@@ -33,36 +35,36 @@
                                 <span class="detail-icon">
                                     <i class="fas fa-user" aria-hidden="true"></i>
                                 </span>
-                                <span class="detail-text">@Model.Name</span>
+                                <span class="detail-text">@Model.Hr.Name</span>
                             </div>
 
-                            @if (!string.IsNullOrWhiteSpace(Model.Email))
+                            @if (!string.IsNullOrWhiteSpace(Model.Hr.Email))
                             {
                                 <div class="detail-row">
                                     <span class="detail-icon">
                                         <i class="fas fa-envelope" aria-hidden="true"></i>
                                     </span>
                                     <span class="detail-text">
-                                        <a href="mailto:@Model.Email">@Model.Email</a>
+                                        <a href="mailto:@Model.Hr.Email">@Model.Hr.Email</a>
                                     </span>
                                 </div>
                             }
 
-                            @if (!string.IsNullOrWhiteSpace(Model.Phone))
+                            @if (!string.IsNullOrWhiteSpace(Model.Hr.Phone))
                             {
                                 <div class="detail-row">
                                     <span class="detail-icon">
                                         <i class="fas fa-phone" aria-hidden="true"></i>
                                     </span>
-                                    <span class="detail-text">@Model.Phone</span>
+                                    <span class="detail-text">@Model.Hr.Phone</span>
                                 </div>
                             }
 
                         </div>
 
                         <p class="field-value mt-3 mb-0">
-                            Questions about your pay, leave, records or
-                            anything else people-related start here.
+                            Your pay, leave, records, training and
+                            anything else people-related starts here.
                         </p>
                     }
                     else
@@ -85,6 +87,71 @@
         <div class="col-lg-7">
 
             <div class="card shadow-sm h-100">
+
+                <div class="card-header">
+                    Portal, device or account &mdash; contact IT
+                </div>
+
+                <div class="card-body">
+
+                    @if (Model.It.Any())
+                    {
+                        <div class="row-list">
+
+                            @foreach (var person in Model.It)
+                            {
+                                <div class="row-item">
+
+                                    <span class="row-icon">
+                                        <i class="fas fa-headset"
+                                           aria-hidden="true"></i>
+                                    </span>
+
+                                    <span class="row-main">
+                                        <span class="row-title">@person.Name</span>
+
+                                        <span class="row-meta">
+                                            @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                            {
+                                                @person.JobTitle<text> &middot; </text>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(person.Email))
+                                            {
+                                                <a href="mailto:@person.Email">@person.Email</a>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(person.Phone))
+                                            {
+                                                <text> &middot; </text>@person.Phone
+                                            }
+                                        </span>
+                                    </span>
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="empty-state mb-0">
+                            <span class="empty-icon">&#128187;</span>
+                            Nobody is on record in the IT department
+                            yet. Once somebody is, their details will
+                            show here.
+                        </p>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-12">
+
+            <div class="card shadow-sm">
 
                 <div class="card-header">Look here first</div>
 
