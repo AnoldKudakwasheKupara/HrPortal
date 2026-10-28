@@ -167,10 +167,6 @@ namespace HrPortal.Controllers
 
             if (mine != null)
             {
-                // The courses themselves, not just what has been
-                // posted to them. A course with nothing posted yet
-                // is the one the trainer most needs to see, and it
-                // has no material to appear under.
                 ViewBag.MyCourses = await _context.TrainingCourses
                     .AsNoTracking()
                     .Include(c => c.Materials)
@@ -309,9 +305,6 @@ namespace HrPortal.Controllers
 
             if (!IsHr)
             {
-                // The trainer posts as themselves. The form offers
-                // the choice to HR, who files material on somebody
-                // else's behalf.
                 model.UploadedByEmployeeId =
                     await _currentUser.GetEmployeeIdAsync() ?? 0;
             }
@@ -419,9 +412,6 @@ namespace HrPortal.Controllers
                 return NotFound();
             }
 
-            // Where it is being moved to is asked about as well as
-            // where it is: otherwise a trainer could post material
-            // onto somebody else's course by editing their own.
             if (!await MayPostToAsync(model.TrainingCourseId))
                 return Forbid();
 

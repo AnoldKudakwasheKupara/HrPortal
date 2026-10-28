@@ -33,8 +33,6 @@ namespace HrPortal.Services
         protected override async Task ExecuteAsync(
             CancellationToken stoppingToken)
         {
-            // Long enough for the migrations that run at startup to
-            // have finished with the database.
             await Delay(SettleOnStart, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -58,10 +56,6 @@ namespace HrPortal.Services
             }
             catch (Exception ex)
             {
-                // A failed run must not take the worker down with
-                // it: tomorrow's reminders are still worth sending,
-                // and the log means today's will be retried rather
-                // than doubled.
                 _logger.LogError(
                     ex,
                     "Could not send today's training reminders.");
@@ -93,7 +87,6 @@ namespace HrPortal.Services
             }
             catch (OperationCanceledException)
             {
-                // The portal is shutting down.
             }
         }
     }
