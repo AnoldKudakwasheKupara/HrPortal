@@ -632,6 +632,9 @@ namespace HrPortal.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("SupervisorId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
@@ -646,6 +649,8 @@ namespace HrPortal.Migrations
 
                     b.HasIndex("EmployeeNumber")
                         .IsUnique();
+
+                    b.HasIndex("SupervisorId");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -2047,12 +2052,19 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("HrPortal.Entities.Employee", "Supervisor")
+                        .WithMany("DirectReports")
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("HrPortal.Data.ApplicationUser", "User")
                         .WithOne("Employee")
                         .HasForeignKey("HrPortal.Entities.Employee", "UserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Department");
+
+                    b.Navigation("Supervisor");
 
                     b.Navigation("User");
                 });
@@ -2439,6 +2451,8 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("HrPortal.Entities.Employee", b =>
                 {
+                    b.Navigation("DirectReports");
+
                     b.Navigation("Documents");
 
                     b.Navigation("LeaveRequests");

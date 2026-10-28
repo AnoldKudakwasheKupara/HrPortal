@@ -127,6 +127,17 @@ namespace HrPortal.DbContexts
                     .WithOne(u => u.Employee)
                     .HasForeignKey<Employee>(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
+
+                // Restrict rather than cascade: deleting a manager
+                // must not take their reports with them, and must not
+                // silently orphan the chain either. Whoever removes
+                // them has to say who takes the reports on.
+                entity.HasOne(e => e.Supervisor)
+                    .WithMany(e => e.DirectReports)
+                    .HasForeignKey(e => e.SupervisorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.SupervisorId);
             });
 
             builder.Entity<Department>(entity =>

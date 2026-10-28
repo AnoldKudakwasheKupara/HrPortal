@@ -56,11 +56,27 @@ namespace HrPortal.Entities
 
         public int DepartmentId { get; set; }
 
+        /// <summary>
+        /// Who signs this person's requests off first. Null where
+        /// nobody has been named yet, and for whoever sits at the top
+        /// -- the Managing Director reports to nobody here.
+        ///
+        /// A request from somebody with no supervisor goes straight
+        /// to HR, so an unset value delays nobody.
+        /// </summary>
+        public int? SupervisorId { get; set; }
+
         public int? UserId { get; set; }
 
         public bool IsActive { get; set; } = true;
 
         public Department Department { get; set; } = null!;
+
+        public Employee? Supervisor { get; set; }
+
+        /// <summary>The people whose requests this person sees.</summary>
+        public ICollection<Employee> DirectReports { get; set; }
+            = new List<Employee>();
 
         public ApplicationUser? User { get; set; }
 
