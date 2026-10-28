@@ -1,7 +1,17 @@
 ﻿@inject HrPortal.Services.NotificationBadgeService Notifications
+@inject HrPortal.Services.SupervisorQueueService TeamQueue
 
 @{
     var unread = await Notifications.UnreadCountAsync();
+
+    // Being a supervisor is a relationship, not a role, so the menu
+    // asks whether this person actually has reports rather than what
+    // they are called.
+    var supervises = await TeamQueue.SupervisesAnyoneAsync();
+
+    var awaitingMe = supervises
+        ? await TeamQueue.PendingCountAsync()
+        : 0;
 
     var ctrl = ViewContext.RouteData.Values["controller"] as string;
     var act = ViewContext.RouteData.Values["action"] as string;
@@ -101,6 +111,20 @@
        asp-controller="WeeklyReport" asp-action="Index">
         <i class="fas fa-file-contract"></i> Weekly Reports
     </a>
+
+    @if (supervises)
+    {
+        <div class="nav-group">My team</div>
+
+        <a class="nav-item @OnAction("LeaveApproval", "MyTeam")"
+           asp-controller="LeaveApproval" asp-action="MyTeam">
+            <i class="fas fa-user-check"></i> Awaiting My Approval
+            @if (awaitingMe > 0)
+            {
+                <span class="nav-badge">@awaitingMe</span>
+            }
+        </a>
+    }
 
     @if (isHr || isMd)
     {

@@ -14,13 +14,16 @@ namespace HrPortal.Services
         private readonly LeaveOptions _options;
         private readonly WorkingCalendar _calendar;
 
+        private readonly SupervisorService _supervisors;
+
         public LeaveWorkflowService(
             ApplicationDbContext context,
             LeaveBalanceService balances,
             NotificationService notifications,
             AuditService audit,
             IOptionsSnapshot<LeaveOptions> options,
-            WorkingCalendar calendar)
+            WorkingCalendar calendar,
+            SupervisorService supervisors)
         {
             _context = context;
             _balances = balances;
@@ -28,6 +31,7 @@ namespace HrPortal.Services
             _audit = audit;
             _options = options.Value;
             _calendar = calendar;
+            _supervisors = supervisors;
         }
 
         public async Task<LeaveValidationResult> ValidateRequestAsync(
@@ -114,6 +118,15 @@ namespace HrPortal.Services
             return result;
         }
 
+        /// <summary>
+        /// Sitting with the employee's own supervisor, which is
+        /// where a request starts when they have one.
+        /// </summary>
+        public static bool IsAwaitingSupervisor(LeaveRequestStatus status)
+        {
+            return status == LeaveRequestStatus.SupervisorReview;
+        }
+
         public static bool IsAwaitingHr(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Submitted
@@ -131,6 +144,7 @@ namespace HrPortal.Services
             return status == LeaveRequestStatus.Approved
                 || status == LeaveRequestStatus.Rejected
                 || status == LeaveRequestStatus.HRRejected
+                || status == LeaveRequestStatus.SupervisorRejected
                 || status == LeaveRequestStatus.Cancelled;
         }
 
@@ -147,6 +161,11 @@ namespace HrPortal.Services
                 LeaveRequestAction.Submitted or
                 LeaveRequestAction.Resubmitted =>
                     IsWithEmployee(status),
+
+                LeaveRequestAction.ApprovedBySupervisor or
+                LeaveRequestAction.RejectedBySupervisor or
+                LeaveRequestAction.ReturnedBySupervisor =>
+                    IsAwaitingSupervisor(status),
 
                 LeaveRequestAction.ApprovedByHR or
                 LeaveRequestAction.RejectedByHR or
@@ -196,9 +215,17 @@ namespace HrPortal.Services
                 hrApproverId != null &&
                 hrApproverId.Value == request.EmployeeId;
 
-            request.Status = isHrOfficersOwn
-                ? LeaveRequestStatus.HRApproved
-                : LeaveRequestStatus.Submitted;
+            // A request starts with the employee's own supervisor,
+            // where they have one. Nobody named means nothing to wait
+            // for, so it goes where it always went.
+            var supervisor = await _supervisors
+                .SupervisorOfAsync(request.EmployeeId);
+
+            request.Status = supervisor != null
+                ? LeaveRequestStatus.SupervisorReview
+                : isHrOfficersOwn
+                    ? LeaveRequestStatus.HRApproved
+                    : LeaveRequestStatus.Submitted;
 
             request.SubmittedAt = DateTime.UtcNow;
             request.CompletedAt = null;
@@ -212,12 +239,24 @@ namespace HrPortal.Services
                     ? LeaveRequestAction.Resubmitted
                     : LeaveRequestAction.Submitted,
                 previous,
-                isHrOfficersOwn
-                    ? "Sent straight to the Managing Director: the " +
-                      "request belongs to the HR Officer."
-                    : comment);
+                supervisor != null
+                    ? $"Sent to {supervisor.FirstName} " +
+                      $"{supervisor.LastName} for supervisor approval."
+                    : isHrOfficersOwn
+                        ? "Sent straight to the Managing Director: the " +
+                          "request belongs to the HR Officer."
+                        : comment);
 
-            if (isHrOfficersOwn)
+            if (supervisor != null)
+            {
+                _notifications.Notify(
+                    supervisor.Id,
+                    "Leave request awaiting your approval",
+                    $"{request.RequestNumber} is waiting for your " +
+                    "approval as supervisor.",
+                    $"/LeaveApproval/Details/{request.Id}");
+            }
+            else if (isHrOfficersOwn)
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.MD,
@@ -245,6 +284,143 @@ namespace HrPortal.Services
                 (isHrOfficersOwn
                     ? "straight to the MD."
                     : "for review."));
+        }
+
+        /// <summary>
+        /// The supervisor signs off and the request carries on into
+        /// the flow it would have taken had there been no supervisor
+        /// -- including the rule that sends the HR Officer's own
+        /// request straight to the Managing Director.
+        /// </summary>
+        public async Task SupervisorApproveAsync(
+            LeaveRequest request,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(LeaveRequestAction.ApprovedBySupervisor, request);
+
+            var previous = request.Status;
+
+            var hrApproverId = await _notifications
+                .GetApproverEmployeeId(ApprovalRole.HROfficer);
+
+            var isHrOfficersOwn =
+                hrApproverId != null &&
+                hrApproverId.Value == request.EmployeeId;
+
+            request.Status = isHrOfficersOwn
+                ? LeaveRequestStatus.HRApproved
+                : LeaveRequestStatus.Submitted;
+
+            AddHistory(
+                request,
+                actedByEmployeeId,
+                LeaveRequestAction.ApprovedBySupervisor,
+                previous,
+                comment);
+
+            await _notifications.NotifyApproverAsync(
+                isHrOfficersOwn ? ApprovalRole.MD : ApprovalRole.HROfficer,
+                "Leave request approved by supervisor",
+                $"{request.RequestNumber} has been approved by the " +
+                "employee's supervisor and is waiting for you.",
+                $"/LeaveApproval/Details/{request.Id}");
+
+            _notifications.Notify(
+                request.EmployeeId,
+                "Leave request approved by your supervisor",
+                $"{request.RequestNumber} has gone on for review.",
+                $"/MyLeave/Details/{request.Id}");
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.LeaveSubmitted,
+                nameof(LeaveRequest),
+                request.RequestNumber,
+                "Approved by the employee's supervisor.");
+        }
+
+        public async Task SupervisorRejectAsync(
+            LeaveRequest request,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(LeaveRequestAction.RejectedBySupervisor, request);
+
+            var previous = request.Status;
+
+            request.Status = LeaveRequestStatus.SupervisorRejected;
+            request.CompletedAt = DateTime.UtcNow;
+
+            await _balances.ReleaseAsync(request);
+
+            AddHistory(
+                request,
+                actedByEmployeeId,
+                LeaveRequestAction.RejectedBySupervisor,
+                previous,
+                comment);
+
+            _notifications.Notify(
+                request.EmployeeId,
+                "Leave request declined by your supervisor",
+                $"{request.RequestNumber} was declined." +
+                (string.IsNullOrWhiteSpace(comment)
+                    ? ""
+                    : $" {comment}"),
+                $"/MyLeave/Details/{request.Id}");
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.LeaveSubmitted,
+                nameof(LeaveRequest),
+                request.RequestNumber,
+                "Declined by the employee's supervisor.");
+        }
+
+        /// <summary>
+        /// Sends it back for the employee to correct and resubmit,
+        /// which is usually what a supervisor actually wants.
+        /// </summary>
+        public async Task SupervisorReturnAsync(
+            LeaveRequest request,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            EnsureCanAct(LeaveRequestAction.ReturnedBySupervisor, request);
+
+            var previous = request.Status;
+
+            request.Status = LeaveRequestStatus.ReturnedToEmployee;
+
+            await _balances.ReleaseAsync(request);
+
+            AddHistory(
+                request,
+                actedByEmployeeId,
+                LeaveRequestAction.ReturnedBySupervisor,
+                previous,
+                comment);
+
+            _notifications.Notify(
+                request.EmployeeId,
+                "Leave request returned by your supervisor",
+                $"{request.RequestNumber} needs a change before it can " +
+                "go on." +
+                (string.IsNullOrWhiteSpace(comment)
+                    ? ""
+                    : $" {comment}"),
+                $"/MyLeave/Details/{request.Id}");
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.LeaveSubmitted,
+                nameof(LeaveRequest),
+                request.RequestNumber,
+                "Returned by the employee's supervisor.");
         }
 
         public async Task HrApproveAsync(

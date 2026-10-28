@@ -173,11 +173,17 @@
         </div>
     }
 
-    @if (Model.CanActAsHr || Model.CanActAsMd)
+    @if (Model.CanActAsHr || Model.CanActAsMd || Model.CanActAsSupervisor)
     {
         <div class="card shadow-sm mb-4">
 
-            <div class="card-header">@(Model.CanActAsMd ? "Final Decision" : "HR Decision")</div>
+            <div class="card-header">
+                @(Model.CanActAsSupervisor
+                    ? "Supervisor Approval"
+                    : Model.CanActAsMd
+                        ? "Final Decision"
+                        : "HR Decision")
+            </div>
 
             <div class="card-body">
 
@@ -201,6 +207,27 @@
                                   placeholder="Required when rejecting or returning"></textarea>
 
                     </div>
+
+                    @if (Model.CanActAsSupervisor)
+                    {
+                        <button type="submit"
+                                class="btn btn-success"
+                                asp-action="SupervisorApprove">
+                            Approve and send to HR
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-warning"
+                                asp-action="SupervisorReturn">
+                            Return to employee
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-danger"
+                                asp-action="SupervisorReject">
+                            Decline
+                        </button>
+                    }
 
                     @if (Model.CanActAsHr)
                     {

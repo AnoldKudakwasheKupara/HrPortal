@@ -13,6 +13,12 @@ namespace HrPortal.ViewModels
 
         public bool CanActAsMd { get; set; }
 
+        /// <summary>
+        /// The person looking is this employee's supervisor and the
+        /// request is waiting on them.
+        /// </summary>
+        public bool CanActAsSupervisor { get; set; }
+
         [Display(Name = "Comment")]
         [StringLength(2000)]
         public string? Comment { get; set; }

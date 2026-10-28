@@ -9,6 +9,9 @@
         ReturnedByHR,
         ApprovedByMD,
         RejectedByMD,
-        Cancelled
+        Cancelled,
+        ApprovedBySupervisor,
+        RejectedBySupervisor,
+        ReturnedBySupervisor
     }
 }
