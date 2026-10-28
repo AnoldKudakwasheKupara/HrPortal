@@ -142,18 +142,10 @@ namespace HrPortal.Controllers
             if (employeeId == null)
                 return View("NoEmployeeRecord");
 
-            var material = await _context.TrainingMaterials
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var material = await AssignedMaterialAsync(
+                id.Value, employeeId.Value);
 
             if (material == null)
-                return NotFound();
-
-            var isAssigned = await _context.TrainingAssignments
-                .AnyAsync(a =>
-                    a.EmployeeId == employeeId.Value &&
-                    a.TrainingCourseId == material.TrainingCourseId);
-
-            if (!isAssigned)
                 return NotFound();
 
             var fullPath =
@@ -174,6 +166,76 @@ namespace HrPortal.Controllers
                 fullPath,
                 contentType ?? "application/octet-stream",
                 material.OriginalFileName);
+        }
+
+        /// <summary>
+        /// The content in the browser rather than in the downloads
+        /// folder. Only the kinds a browser renders itself are
+        /// offered here; anything else falls back to the download.
+        /// </summary>
+        public async Task<IActionResult> MaterialPreview(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var employeeId = await _currentUser.GetEmployeeIdAsync();
+
+            if (employeeId == null)
+                return NotFound();
+
+            var material = await AssignedMaterialAsync(
+                id.Value, employeeId.Value);
+
+            if (material == null)
+                return NotFound();
+
+            if (!FileStorageService.CanPreview(material.OriginalFileName))
+                return RedirectToAction(nameof(Material), new { id });
+
+            var fullPath =
+                _fileStorage.ResolveExistingPath(material.FilePath);
+
+            if (fullPath == null)
+            {
+                TempData["Error"] =
+                    "That file is no longer on the server.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            new FileExtensionContentTypeProvider()
+                .TryGetContentType(fullPath, out var contentType);
+
+            Response.Headers.ContentDisposition =
+                "inline; filename=\"" +
+                Path.GetFileName(material.OriginalFileName) + "\"";
+
+            return PhysicalFile(
+                fullPath,
+                contentType ?? "application/octet-stream");
+        }
+
+        /// <summary>
+        /// The material, but only where this person was assigned the
+        /// course it belongs to. Course content is not public: it is
+        /// read by the people put on the course.
+        /// </summary>
+        private async Task<TrainingMaterial?> AssignedMaterialAsync(
+            int id,
+            int employeeId)
+        {
+            var material = await _context.TrainingMaterials
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (material == null)
+                return null;
+
+            var isAssigned = await _context.TrainingAssignments
+                .AnyAsync(a =>
+                    a.EmployeeId == employeeId &&
+                    a.TrainingCourseId == material.TrainingCourseId);
+
+            return isAssigned ? material : null;
         }
 
         [HttpPost]

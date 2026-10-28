@@ -203,6 +203,52 @@ namespace HrPortal.Controllers
             return View(material);
         }
 
+        /// <summary>
+        /// The file in the browser rather than in the downloads
+        /// folder. Only the kinds a browser can render itself are
+        /// offered; anything else falls back to the download, which
+        /// is what the Documents and Policy pages do.
+        /// </summary>
+        public async Task<IActionResult> Preview(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var material = await _context.TrainingMaterials
+                .FindAsync(id);
+
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
+                return NotFound();
+            }
+
+            if (!FileStorageService.CanPreview(material.OriginalFileName))
+                return RedirectToAction(nameof(Download), new { id });
+
+            var previewPath =
+                _fileStorage.ResolveExistingPath(material.FilePath);
+
+            if (previewPath == null)
+            {
+                TempData["Error"] =
+                    "That file is no longer on the server.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            new FileExtensionContentTypeProvider()
+                .TryGetContentType(previewPath, out var previewType);
+
+            Response.Headers.ContentDisposition =
+                "inline; filename=\"" +
+                Path.GetFileName(material.OriginalFileName) + "\"";
+
+            return PhysicalFile(
+                previewPath,
+                previewType ?? "application/octet-stream");
+        }
+
         public async Task<IActionResult> Download(int? id)
         {
             if (id == null)

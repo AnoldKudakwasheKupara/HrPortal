@@ -253,6 +253,19 @@
 
                                     </a>
 
+                                    @if (HrPortal.Services.FileStorageService
+                                        .CanPreview(material.OriginalFileName))
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           asp-action="Preview"
+                                           asp-route-id="@material.Id"
+                                           target="_blank">
+
+                                            Preview
+
+                                        </a>
+                                    }
+
                                     <a class="btn btn-sm btn-outline-secondary"
                                        asp-action="Download"
                                        asp-route-id="@material.Id">

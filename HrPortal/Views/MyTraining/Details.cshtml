@@ -136,6 +136,17 @@
 
                         </div>
 
+                        @if (HrPortal.Services.FileStorageService
+                            .CanPreview(material.OriginalFileName))
+                        {
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="MaterialPreview"
+                               asp-route-id="@material.Id"
+                               target="_blank">
+                                Preview
+                            </a>
+                        }
+
                         <a class="btn btn-sm btn-outline-primary"
                            asp-action="Material"
                            asp-route-id="@material.Id">
