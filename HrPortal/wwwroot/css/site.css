@@ -2616,3 +2616,172 @@ a.strip-item:hover {
     color: var(--danger);
     font-weight: 600;
 }
+
+/* ------------------------------------------------------------------
+   Phone comfort: no auto-zoom on inputs, comfortable tap targets,
+   and lists that stack into cards instead of scrolling sideways.
+   The stacking is switched on by js/ux.js, which copies each column
+   heading into data-label on the cells. Add data-no-stack to a
+   .table-responsive wrapper to keep a table as a table.
+   ------------------------------------------------------------------ */
+@media (max-width: 767.98px) {
+    .form-control,
+    .form-select,
+    .search-input,
+    .filter-select {
+        font-size: 16px;
+        min-height: 44px;
+    }
+
+    .btn:not(.btn-sm):not(.btn-close) {
+        min-height: 44px;
+    }
+
+    .table-responsive > .table.table-stack {
+        display: block;
+        border: 0;
+    }
+
+    .table-stack thead {
+        display: none;
+    }
+
+    .table-responsive > .table.table-stack td.col-actions,
+    .table-responsive > .table.table-stack th.col-actions {
+        width: 100%;
+        white-space: normal;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .table-stack tbody,
+    .table-stack tr,
+    .table-stack td,
+    .table-stack th[scope="row"] {
+        display: block;
+        width: 100%;
+    }
+
+    .table-stack tbody tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 0.5rem 0.9rem;
+        margin: 0 0 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .table-stack td,
+    .table-stack th[scope="row"] {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.45rem 0;
+        border: 0;
+        border-bottom: 1px dashed var(--border-light);
+        text-align: right;
+    }
+
+    .table-stack tr > :last-child {
+        border-bottom: 0;
+    }
+
+    .table-stack td[data-label]::before,
+    .table-stack th[scope="row"][data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 40%;
+        text-align: left;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    .table-stack td,
+    .table-stack th {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        min-width: 0;
+    }
+
+    .table-stack td.stack-actions {
+        display: block;
+        text-align: left;
+        padding-top: 0.6rem;
+    }
+
+    .table-stack td.stack-actions .table-actions,
+    .table-stack td.stack-actions .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .table-stack td.stack-actions .btn {
+        min-height: 40px;
+        padding: 0.5rem 0.9rem;
+        font-size: 0.85rem;
+    }
+
+    .table-stack td.stack-actions::before {
+        display: none;
+    }
+
+    .table-stack td[colspan] {
+        display: block;
+        text-align: left;
+    }
+
+    .table-stack td[colspan]::before {
+        display: none;
+    }
+}
+
+/* Feedback while a form submits or the next page loads. */
+.btn.is-submitting {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn.is-submitting::after {
+    content: "";
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-left: 0.5em;
+    vertical-align: -0.15em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: ux-spin 0.7s linear infinite;
+}
+
+@keyframes ux-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ux-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    background: var(--accent-gold, #7e6e1e);
+    z-index: 2000;
+    opacity: 0;
+    transition: width 0.4s ease, opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.ux-progress.active {
+    opacity: 1;
+    width: 85%;
+    transition: width 6s cubic-bezier(0.1, 0.6, 0.2, 1), opacity 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn.is-submitting::after { animation: none; }
+    .ux-progress.active { transition: none; }
+}

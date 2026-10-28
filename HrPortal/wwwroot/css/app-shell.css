@@ -606,19 +606,16 @@
                 }
 
             .fade-in {
-                animation: fadeInUp 0.5s ease-out;
+                animation: fadeIn 0.16s ease-out;
             }
 
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
+            @keyframes fadeIn {
+                from { opacity: 0.4; }
+                to { opacity: 1; }
+            }
 
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            @media (prefers-reduced-motion: reduce) {
+                .fade-in { animation: none; }
             }
 
             @media (max-width: 992px) {

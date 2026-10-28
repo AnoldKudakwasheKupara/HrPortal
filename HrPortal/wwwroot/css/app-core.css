@@ -301,7 +301,7 @@ textarea:focus-visible,
     border-radius: 0.5rem;
     font-size: 0.875rem;
     transition: all 0.2s;
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
     background: #fff;
     cursor: pointer;
 }
@@ -326,7 +326,7 @@ textarea:focus-visible,
     border-radius: 0.5rem;
     font-size: 0.875rem;
     transition: all 0.2s;
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
 }
 .search-input:focus {
     outline: none;
