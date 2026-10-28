@@ -299,10 +299,6 @@ namespace HrPortal.Services
 
                 column.Item().Row(row =>
                 {
-                    // Nothing decided yet leaves a box that says to
-                    // sign it, the way the sanction below does: this
-                    // form is also filled in by hand where somebody
-                    // has no supervisor on record.
                     row.RelativeItem(2).Element(e =>
                     {
                         if (decision == null)
@@ -355,11 +351,6 @@ namespace HrPortal.Services
             {
                 column.Spacing(6);
 
-                // The supervisor sees the application before the
-                // Managing Director does, and the form showed no
-                // sign of it: a sanctioned loan printed as though
-                // nobody between the applicant and the MD had ever
-                // looked at it.
                 column.Item().Element(e =>
                     Recommendation(e, application));
 

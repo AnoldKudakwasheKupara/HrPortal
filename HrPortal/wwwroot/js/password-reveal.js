@@ -1,7 +1,3 @@
-// Lets someone check what they typed into a password field. The
-// button only appears where the markup asks for one, and the field
-// goes back to hidden on submit so a password is never left on
-// screen after the form is sent.
 (function () {
     'use strict';
 
@@ -40,9 +36,6 @@
         apply(button, field, field.type === 'password');
     });
 
-    // Listening on the way down. Validation runs on the form itself
-    // and returns false when the form is not valid, which stops the
-    // event before it would reach a listener bubbling up here.
     document.addEventListener('submit', function (event) {
         var form = event.target;
 

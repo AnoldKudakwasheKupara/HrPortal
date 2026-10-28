@@ -98,8 +98,6 @@ namespace HrPortal.Services
                     "/MyTraining");
             }
 
-            // Saved even where there was nobody to assign: the
-            // trainer still has to be told on a one-person company.
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(

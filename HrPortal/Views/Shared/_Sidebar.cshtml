@@ -4,9 +4,6 @@
 @{
     var unread = await Notifications.UnreadCountAsync();
 
-    // Being a supervisor is a relationship, not a role, so the menu
-    // asks whether this person actually has reports rather than what
-    // they are called.
     var supervises = await TeamQueue.SupervisesAnyoneAsync();
 
     var awaitingMe = supervises
@@ -27,11 +24,6 @@
             ? "active"
             : "";
 
-    // One controller serves more than one item in this menu: a
-    // supervisor's queue and the manager's are the same pages with
-    // a different question asked of them. The item that takes
-    // everything else has to say what it does not take, or both of
-    // them light up at once and neither tells you where you are.
     string OnExcept(string controller, params string[] others) =>
         string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase) &&
         !others.Any(other =>

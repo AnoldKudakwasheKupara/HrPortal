@@ -207,11 +207,6 @@
 
                     </div>
 
-                    @* One branch per actor, each asked for by name.
-                       These used to be an if/else on HR, which was
-                       safe while only HR and the MD could get here:
-                       once a supervisor could, "not HR" meant the MD,
-                       so a supervisor was shown the MD's buttons. *@
                     @if (Model.CanActAsSupervisor)
                     {
                         <button type="submit"

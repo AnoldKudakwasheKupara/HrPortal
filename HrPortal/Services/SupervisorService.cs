@@ -110,8 +110,6 @@ namespace HrPortal.Services
                 foreach (var report in people.Where(e =>
                     e.SupervisorId == current))
                 {
-                    // Already-seen guards against a loop that somehow
-                    // exists in the data from running forever.
                     if (!beneath.Add(report.Id))
                         continue;
 

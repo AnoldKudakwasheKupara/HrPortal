@@ -11,21 +11,14 @@ namespace HrPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // The approval role is stored as text. Left behind, it no
-            // longer maps to anything in the enum and every read of the
-            // approval settings would throw.
             migrationBuilder.Sql(
                 "DELETE FROM [ApprovalConfigurations] " +
                 "WHERE [Role] = 'RequisitionReviewer';");
 
-            // The two settings the requisition form was configured with.
             migrationBuilder.Sql(
                 "DELETE FROM [AppSettings] " +
                 "WHERE [Key] LIKE 'Requisitions:%';");
 
-            // Notifications raised by the requisition workflow point at
-            // pages that no longer exist, so anyone clicking one would
-            // land on a 404.
             migrationBuilder.Sql(
                 "DELETE FROM [Notifications] " +
                 "WHERE [Link] LIKE '/MyRequisitions/%' " +

@@ -31,9 +31,6 @@ namespace HrPortal.Services
             {
                 container.Page(page =>
                 {
-                    // Landscape. A register is wide, and squeezing
-                    // nine columns into portrait wraps every date
-                    // and every reference onto two lines.
                     DocumentStyle.Apply(page, landscape: true);
 
                     page.Header().Element(e => DocumentStyle.Head(
@@ -58,10 +55,6 @@ namespace HrPortal.Services
                 {
                     if (!string.IsNullOrWhiteSpace(list.Caption))
                     {
-                        // Only on the first sheet. The caption says
-                        // which filter produced the list, and a
-                        // continuation sheet repeating it would read
-                        // as a second, narrower list.
                         column.Item().ShowOnce()
                             .PaddingBottom(10)
                             .Text(list.Caption)

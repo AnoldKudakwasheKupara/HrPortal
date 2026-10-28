@@ -87,11 +87,6 @@ namespace HrPortal.Controllers
             if (assignment == null)
                 return NotFound();
 
-            // LoadAuthorizedAssignment does not include the employee
-            // -- the details page has no need of it, since the
-            // employee is whoever is looking. The printed copy names
-            // them, so fetch them here rather than widening a loader
-            // the rest of the controller shares.
             var employee = await _context.Employees
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == assignment.EmployeeId);

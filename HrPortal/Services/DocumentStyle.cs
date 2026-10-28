@@ -16,7 +16,6 @@ namespace HrPortal.Services
     /// </summary>
     public static class DocumentStyle
     {
-        // ---- brand ----------------------------------------------
 
         /// <summary>The leading accent from intellego-ic.com.</summary>
         public const string Teal = "#018080";
@@ -35,8 +34,6 @@ namespace HrPortal.Services
 
         /// <summary>Labels, sub-headings and anything secondary.</summary>
         public const string Muted = "#6b6f74";
-
-        // ---- form furniture -------------------------------------
 
         /// <summary>The outline around an input box.</summary>
         public const string FieldLine = "#dfe3e6";
@@ -67,8 +64,6 @@ namespace HrPortal.Services
         public const string NotRecorded = "—";
 
         private const float Gutter = 28f;
-
-        // ---- page -----------------------------------------------
 
         /// <summary>
         /// No page margin: the banner runs to the paper's edge, so
@@ -108,8 +103,6 @@ namespace HrPortal.Services
         public static IContainer Gutters(IContainer container) =>
             container.PaddingHorizontal(Gutter);
 
-        // ---- banner ---------------------------------------------
-
         /// <summary>
         /// The green band across the head of every document: the
         /// company mark reversed out of it on the left, what this
@@ -124,16 +117,9 @@ namespace HrPortal.Services
             string? reference,
             bool landscape = false)
         {
-            // The flat colour is painted rather than drawn: QuestPDF's
-            // SVG reader does not resolve a url(#...) gradient fill and
-            // silently renders nothing, which leaves white text on
-            // white paper. Only the shapes come from the vector.
             container.Height(BannerHeight).Background(BannerBase)
                 .Layers(layers =>
             {
-                // Sized explicitly. An Extend()ed layer gives the
-                // vector nothing to measure against and it draws
-                // nothing at all, silently.
                 layers.Layer()
                     .Width(PaperWidth(landscape))
                     .Height(BannerHeight)
@@ -144,14 +130,6 @@ namespace HrPortal.Services
                     .PaddingVertical(8)
                     .Row(row =>
                     {
-                        // The mark is a fixed 120pt wide, so it
-                        // takes only what it needs and the title
-                        // gets the rest. Splitting the row in half
-                        // left the title a column it could not fit
-                        // a document name in, and a title that
-                        // wrapped to two lines pushed the strapline
-                        // off the band and threw a layout error
-                        // rather than printing smaller.
                         row.AutoItem().AlignLeft().AlignMiddle()
                             .Element(e => Mark(e, brand));
 
@@ -281,8 +259,6 @@ namespace HrPortal.Services
             });
         }
 
-        // ---- sections -------------------------------------------
-
         /// <summary>
         /// A numbered section heading: the numeral large and in gold,
         /// then a rule, then what the section is and a line saying
@@ -333,8 +309,6 @@ namespace HrPortal.Services
                 .LineHorizontal(0.7f)
                 .LineColor(Rule);
         }
-
-        // ---- fields ---------------------------------------------
 
         /// <summary>
         /// A field label. The red mark means the portal would not let
@@ -554,8 +528,6 @@ namespace HrPortal.Services
                 });
         }
 
-        // ---- choices --------------------------------------------
-
         /// <summary>
         /// The yes/no the portal asks with radio buttons, printed the
         /// same way so the answer is read at a glance.
@@ -661,8 +633,6 @@ namespace HrPortal.Services
                 });
         }
 
-        // ---- asides ---------------------------------------------
-
         /// <summary>
         /// Something the reader must not skip: the pledge, or the
         /// standing instruction on the next of kin form.
@@ -724,8 +694,6 @@ namespace HrPortal.Services
                 .FontSize(7.5f)
                 .FontColor(Placeholder);
         }
-
-        // ---- lists ----------------------------------------------
 
         /// <summary>
         /// A register: headings reversed out of the green band, rows
@@ -798,11 +766,6 @@ namespace HrPortal.Services
 
                         for (var c = 0; c < columns.Count; c++)
                         {
-                            // Read the row by position rather than
-                            // walking it: a row that came in short
-                            // leaves a blank cell, where walking it
-                            // would pull the next row's first value
-                            // up into this one.
                             var value = c < row.Count ? row[c] : null;
 
                             var cell = table.Cell()
@@ -868,8 +831,6 @@ namespace HrPortal.Services
             });
         }
 
-        // ---- footer ---------------------------------------------
-
         /// <summary>
         /// Company on the left, what this page is in the middle, page
         /// count on the right, under a gold rule. The reference
@@ -926,8 +887,6 @@ namespace HrPortal.Services
                     });
                 });
         }
-
-        // ---- helpers --------------------------------------------
 
         /// <summary>
         /// When something was done, to the minute. A signature block

@@ -10,8 +10,6 @@
         : hour < 18 ? "Good afternoon"
         : "Good evening";
 
-    // "2 hours ago" reads faster than a timestamp on a feed that is
-    // only ever about the last few days.
     string Ago(DateTime when)
     {
         var span = DateTime.UtcNow - when;
@@ -103,9 +101,6 @@
     }
 
     @{
-        // Four headline figures and four common tasks, chosen for
-        // whoever is looking. The layout does not change; what it
-        // counts does.
         var cards =
             new List<(string Icon, string Label, string Value,
                       string Note, string Ctrl, string Act)>();
@@ -187,8 +182,6 @@
                 "File a document for somebody",
                 "EmployeeDocument", "Create"));
 
-            // Creating a course is what puts it in front of staff:
-            // saving one assigns it to everybody.
             actions.Add(("fa-clipboard-check", "Add a course",
                 "Put a course in front of staff",
                 "TrainingCourse", "Create"));

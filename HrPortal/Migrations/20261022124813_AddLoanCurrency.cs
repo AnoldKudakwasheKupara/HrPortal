@@ -16,8 +16,6 @@ namespace HrPortal.Migrations
                 type: "nvarchar(10)",
                 maxLength: 10,
                 nullable: false,
-                // existing loans predate the choice and were all in
-                // US dollars, which is what the enum falls back to
                 defaultValue: "Usd");
         }
 

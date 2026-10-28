@@ -120,9 +120,6 @@ namespace HrPortal.Controllers
 
             requests = stage switch
             {
-                // Compared as a plain int rather than the nullable:
-                // somebody with no employee record would otherwise
-                // match every employee who has no supervisor.
                 Stage.Supervisor => requests.Where(r =>
                     r.Status == LeaveRequestStatus.SupervisorReview &&
                     r.Employee.SupervisorId == me.GetValueOrDefault()),

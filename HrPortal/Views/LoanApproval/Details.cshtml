@@ -9,8 +9,6 @@
         as HrPortal.ViewModels.LoanDecisionViewModel
         ?? new HrPortal.ViewModels.LoanDecisionViewModel();
 
-    // The Managing Director's panel, and only for them: a supervisor
-    // reaching this page before the MD sees their own panel instead.
     var awaiting =
         LoanWorkflowService.IsAwaitingMd(Model.Status) &&
         User.IsInRole(HrPortal.Security.Roles.Md);

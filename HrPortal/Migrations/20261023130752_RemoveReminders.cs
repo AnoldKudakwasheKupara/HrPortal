@@ -11,7 +11,6 @@ namespace HrPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // The five settings the reminder run was configured with.
             migrationBuilder.Sql(
                 "DELETE FROM [AppSettings] " +
                 "WHERE [Key] LIKE 'Reminders:%';");

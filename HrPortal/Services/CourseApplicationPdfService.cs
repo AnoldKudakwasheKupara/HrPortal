@@ -213,8 +213,6 @@ namespace HrPortal.Services
                                 _ => null
                             }
                             : null,
-                        // The portal greys this out when the answer
-                        // above is no, and so does the paper.
                         dead: !application.HasSatBefore));
 
                     row.ConstantItem(24);
@@ -261,11 +259,6 @@ namespace HrPortal.Services
 
                 column.Item().PaddingTop(4).PaddingLeft(37).Row(row =>
                 {
-                    // Pledging in the portal is the applicant's
-                    // signature, so their name stands in it. An
-                    // application that was never pledged leaves the
-                    // box empty for a pen, rather than printing a
-                    // name nobody put there.
                     row.RelativeItem().Element(e => DocumentStyle.Box(
                         e,
                         application.PledgedAt == null ? null : who,
@@ -332,11 +325,6 @@ namespace HrPortal.Services
                         e, "Not approved", declined, adverse: true));
                 });
 
-                // Filled from the supervisor's own decision. This
-                // row was passed nothing at all, so a form printed
-                // after the supervisor had approved it still read
-                // "Sign here" -- the one approval the form asks for
-                // by name was the one it never showed.
                 column.Item().PaddingTop(3).Element(e => Approver(
                     e, "Manager / Supervisor", supervisor));
 

@@ -154,11 +154,6 @@
                                 @request.NumberOfDays.ToString("0.##")
                             </td>
 
-                            @* The shared badge, not a second copy of
-                               the same switch: the copy that used to
-                               live here had its own catch-all and so
-                               told an employee their request was with
-                               HR while it sat with their supervisor. *@
                             <td>
                                 <partial name="_LeaveStatusBadge"
                                          model="request.Status" />

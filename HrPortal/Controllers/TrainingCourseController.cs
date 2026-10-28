@@ -191,9 +191,6 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Everybody on the staff list as it stands, without
-            // being asked. The course had to be saved first: an
-            // assignment needs a course to point at.
             var outcome = await _assignments.AssignNewCourseAsync(
                 course, model.AssignmentDueDate);
 

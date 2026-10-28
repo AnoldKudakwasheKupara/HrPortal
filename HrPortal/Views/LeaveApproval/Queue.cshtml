@@ -12,13 +12,6 @@
 
             <h2>@ViewData["Title"]</h2>
 
-            @*
-                One branch per stage, each asked for by name. This
-                used to be "HR, or else the MD", which was true
-                until a supervisor could reach the page -- then
-                "not HR" meant the MD, and a supervisor was told
-                their queue had already cleared HR review.
-            *@
             <p class="text-muted">
                 @if (stage == "HR")
                 {

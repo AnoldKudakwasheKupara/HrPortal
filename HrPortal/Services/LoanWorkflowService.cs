@@ -101,8 +101,6 @@ namespace HrPortal.Services
 
             var previous = application.Status;
 
-            // The applicant's own supervisor sees it first, where
-            // they have one. Nobody named means nothing to wait for.
             var supervisor = await _supervisors
                 .SupervisorOfAsync(application.EmployeeId);
 

@@ -4,8 +4,6 @@
 @{
     ViewData["Title"] = "Weekly Reports";
 
-    // Everybody reads this page; only the people who write the
-    // reports see the drafting apparatus.
     var canManage = (bool)(ViewBag.CanManage ?? false);
 
     var nextStart = canManage

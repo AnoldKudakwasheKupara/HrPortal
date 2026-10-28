@@ -41,7 +41,6 @@ namespace HrPortal.Services
                 (amount - whole) * 100,
                 MidpointRounding.AwayFromZero);
 
-            // rounding the cents can carry into the whole part
             if (cents == 100)
             {
                 whole += 1;
@@ -82,8 +81,6 @@ namespace HrPortal.Services
 
             if (value >= 1)
             {
-                // "and" reads naturally before a trailing part under
-                // a hundred, as it would be said aloud
                 if (parts.Count > 0 && value < 100)
                     parts.Add("and " + UnderThousand((int)value));
                 else

@@ -92,11 +92,6 @@ namespace HrPortal.Services
         public string FileName =>
             $"{Title} - {DateTime.Today:yyyy-MM-dd}.pdf";
 
-        // ---- cell helpers ---------------------------------------
-        //
-        // A blank cell in a table reads as "we hold nothing here",
-        // which is worth knowing, so these never collapse a row.
-
         public static string Text(string? value) =>
             string.IsNullOrWhiteSpace(value)
                 ? DocumentStyle.NotRecorded

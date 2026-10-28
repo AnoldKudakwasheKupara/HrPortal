@@ -43,10 +43,6 @@ namespace HrPortal.Services
         {
             var result = new LeaveValidationResult();
 
-            // No limit on how far back leave may start. Sick leave
-            // gets recorded after the fact and the grace period only
-            // ever decided how late was too late, which is a rule
-            // nobody asked for.
             if (endDate.Date < startDate.Date)
             {
                 result.Add(
@@ -91,14 +87,6 @@ namespace HrPortal.Services
                 return result;
             }
 
-            // No entitlement check. A request is not refused for want
-            // of a balance somebody has to set up first -- that made
-            // leave unusable until HR had worked through every
-            // employee and every leave type for the year.
-            //
-            // Where a balance does exist it is still kept accurate:
-            // the hold, release and consume steps run on submission
-            // and decision, and do nothing when there is no row.
             return result;
         }
 
@@ -192,16 +180,9 @@ namespace HrPortal.Services
 
             var previous = request.Status;
 
-            // Whether the applicant is one of the people who
-            // hold the HR Officer role, rather than whether they
-            // are the one person a setting named. Either way, a
-            // request is not left waiting on its own applicant.
             var isHrOfficersOwn = await _approvers.HoldsAsync(
                 ApprovalRole.HROfficer, request.EmployeeId);
 
-            // A request starts with the employee's own supervisor,
-            // where they have one. Nobody named means nothing to wait
-            // for, so it goes where it always went.
             var supervisor = await _supervisors
                 .SupervisorOfAsync(request.EmployeeId);
 
@@ -285,10 +266,6 @@ namespace HrPortal.Services
 
             var previous = request.Status;
 
-            // Whether the applicant is one of the people who
-            // hold the HR Officer role, rather than whether they
-            // are the one person a setting named. Either way, a
-            // request is not left waiting on its own applicant.
             var isHrOfficersOwn = await _approvers.HoldsAsync(
                 ApprovalRole.HROfficer, request.EmployeeId);
 

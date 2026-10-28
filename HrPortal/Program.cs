@@ -17,13 +17,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
-// Since QuestPDF 2026.9 a glyph missing from every registered font
-// stops generation outright. These are HR forms carrying names,
-// addresses and free-text comments, and an employee whose name holds
-// one unusual character should not be unable to print their own
-// paperwork. The documents fall back from Montserrat to the Lato
-// QuestPDF ships with, and anything neither font has prints as a
-// replacement mark rather than failing the download.
 QuestPDF.Settings.ThrowOnMissingTextGlyphs = false;
 
 var connectionString =
@@ -156,14 +149,6 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
 
-    // Deliberately not the framework's default list, which includes
-    // text/html and application/json. Compressing a response that
-    // holds a secret alongside anything an attacker can influence
-    // lets them read the secret back out of the compressed size --
-    // the BREACH attack -- and every page here carries an antiforgery
-    // token a few lines away from a search box. Stylesheets, scripts
-    // and fonts keep no secrets and echo nothing back, and they are
-    // where the weight is anyway.
     options.MimeTypes = new[]
     {
         "text/css",

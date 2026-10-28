@@ -108,9 +108,6 @@ namespace HrPortal.Controllers
                 .AsQueryable();
 
             query = stage == Stage.Supervisor
-                // Compared as a plain int rather than the nullable:
-                // somebody with no employee record would otherwise
-                // match every employee who has no supervisor.
                 ? query.Where(l =>
                     l.Status == LoanApplicationStatus.SupervisorReview &&
                     l.Employee.SupervisorId == me.GetValueOrDefault())

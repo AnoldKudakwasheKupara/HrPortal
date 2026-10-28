@@ -10,16 +10,6 @@ namespace HrPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // An approver is now whoever holds the sign-in role.
-            // Anybody the settings page named gets granted it here,
-            // or a company that filled the page in but never granted
-            // the role would come out of this migration with nobody
-            // able to approve anything and no sign that anything had
-            // changed.
-            //
-            // Somebody named but with no account to sign in with is
-            // skipped: there is no role to grant them, and they
-            // could not have opened the page either way.
             migrationBuilder.Sql(
                 "INSERT INTO [AspNetUserRoles] ([UserId], [RoleId]) " +
                 "SELECT e.[UserId], r.[Id] " +
@@ -45,10 +35,6 @@ namespace HrPortal.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // The table comes back empty, and the roles granted above
-            // stay granted: there is no record of which of them were
-            // already held, so taking any of them away would be a
-            // guess at somebody's access.
             migrationBuilder.CreateTable(
                 name: "ApprovalConfigurations",
                 columns: table => new

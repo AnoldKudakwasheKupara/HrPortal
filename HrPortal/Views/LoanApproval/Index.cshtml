@@ -4,11 +4,6 @@
 @{
     var settled = ViewBag.Settled as bool? ?? false;
 
-    // Both the Managing Director's queue and a supervisor's own
-    // come through this page. It used to assume the first, so a
-    // supervisor was shown "Loans to sanction", a description of
-    // somebody else's decision, and a toggle that led to a page
-    // they are not allowed to open.
     var queue = ViewBag.Queue?.ToString() ?? "Md";
     var isSupervisor = queue == "Supervisor";
 

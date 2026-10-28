@@ -478,9 +478,6 @@ namespace HrPortal.Controllers
                 ModelState.AddModelError(error.Field, error.Message);
             }
 
-            // Checked on the way in as well as filtered out of the
-            // list, because the list is only what the form offered
-            // and a posted id need not have come from it.
             var supervisorProblem = await _supervisors
                 .RejectionReasonAsync(id, model.SupervisorId);
 
@@ -534,9 +531,6 @@ namespace HrPortal.Controllers
             employee.EmergencyContactAddress =
                 model.EmergencyContactAddress?.Trim();
 
-            // The confirmation belongs to the employee. If HR changes
-            // these details it no longer describes what was confirmed,
-            // so it is cleared and the employee is asked again.
             if (emergencyChanged)
                 employee.NextOfKinConfirmedAt = null;
 
@@ -765,8 +759,6 @@ namespace HrPortal.Controllers
         {
             await LoadDepartments();
 
-            // Anybody already beneath this person is left out, so the
-            // form cannot be used to close the chain into a loop.
             var candidates = employeeId == null
                 ? await _context.Employees
                     .AsNoTracking()

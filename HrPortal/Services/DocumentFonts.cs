@@ -66,9 +66,6 @@ namespace HrPortal.Services
             if (registered == Weights.Length)
                 return;
 
-            // Partial registration is worse than none: QuestPDF would
-            // substitute for the weights it did not get, and the
-            // forms would print in two different typefaces.
             logger.LogWarning(
                 "Only {Registered} of {Total} Montserrat weights " +
                 "were registered. Printed documents may mix " +

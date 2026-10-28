@@ -62,10 +62,6 @@ namespace HrPortal.Services
         /// </summary>
         private async Task<List<SupportPerson>> ItAsync()
         {
-            // Matching the department by name has to happen here
-            // rather than in the query: the comparison is
-            // case-insensitive and trims, which SQL Server would do
-            // under its own collation rather than ours.
             var candidates = await _context.Employees
                 .AsNoTracking()
                 .Where(e => e.IsActive && e.Department.IsActive)

@@ -11,10 +11,6 @@ namespace HrPortal.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // A job title used to be looked up through Positions.
-            // Every employee gets their own copy of it before the
-            // lookup goes, or the directory, the people report and the
-            // two printed forms would all lose the title.
             migrationBuilder.AddColumn<string>(
                 name: "JobTitle",
                 table: "Employees",

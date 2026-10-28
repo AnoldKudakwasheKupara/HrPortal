@@ -127,10 +127,6 @@ namespace HrPortal.DbContexts
                     .HasForeignKey<Employee>(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
 
-                // Restrict rather than cascade: deleting a manager
-                // must not take their reports with them, and must not
-                // silently orphan the chain either. Whoever removes
-                // them has to say who takes the reports on.
                 entity.HasOne(e => e.Supervisor)
                     .WithMany(e => e.DirectReports)
                     .HasForeignKey(e => e.SupervisorId)
@@ -285,11 +281,6 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(t => t.TrainerEmployeeId);
 
-                // Loaded with the course wherever a course is
-                // loaded. A course is shown on a dozen pages and
-                // TrainingCourse.TrainerName reads this: an Include
-                // forgotten on one of them would not fail, it would
-                // quietly report that the course has no trainer.
                 entity.Navigation(t => t.TrainerEmployee)
                     .AutoInclude();
             });

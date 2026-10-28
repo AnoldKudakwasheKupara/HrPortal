@@ -232,9 +232,6 @@ namespace HrPortal.Services
                     var row = rows[i];
                     var applied = row.Value != null && !row.Summary;
 
-                    // A heavier rule where the leave types end and the
-                    // running totals begin, so the two are not read as
-                    // one list.
                     var divider = i == firstSummary;
 
                     table.Cell()
@@ -333,12 +330,6 @@ namespace HrPortal.Services
                         : $"{decision.ActionedByEmployee.FirstName} " +
                           $"{decision.ActionedByEmployee.LastName}";
 
-                    // Every action this list can hold is named, and
-                    // there is no catch-all. This used to end in
-                    // "or else the Managing Director rejected it",
-                    // which was true while only HR and the MD could
-                    // act: a supervisor's approval would have been
-                    // printed on the form as the MD's rejection.
                     var stage = decision.Action switch
                     {
                         LeaveRequestAction.ApprovedBySupervisor =>

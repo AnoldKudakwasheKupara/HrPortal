@@ -161,9 +161,6 @@ namespace HrPortal.Services
         {
             container.Column(column =>
             {
-                // The banner already says what this document is, so
-                // the cover names the department producing it rather
-                // than repeating the title underneath itself.
                 column.Item()
                     .Text(_branding.DepartmentName.ToUpperInvariant())
                     .FontSize(26)
@@ -264,9 +261,6 @@ namespace HrPortal.Services
                 {
                     column.Item().PaddingLeft(10).Row(row =>
                     {
-                        // Drawn rather than typed. Montserrat's bullet
-                        // is faint at this size, and a shape cannot go
-                        // missing from a font.
                         row.ConstantItem(12).PaddingTop(5).AlignLeft()
                             .Width(3.5f).Height(3.5f)
                             .Background(DocumentStyle.Teal);

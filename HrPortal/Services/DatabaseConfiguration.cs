@@ -69,9 +69,6 @@ namespace HrPortal.Services
             }
             catch (SqlException ex)
             {
-                // This runs while configuration is still being built, so
-                // there is no logger yet. Keep the failure and let the
-                // host report it once it can, rather than losing it.
                 LastLoadError = ex;
 
                 Data = Data.Count > 0 ? Data : data;
