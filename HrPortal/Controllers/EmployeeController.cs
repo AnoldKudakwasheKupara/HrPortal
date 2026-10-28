@@ -23,6 +23,7 @@ namespace HrPortal.Controllers
 
         private readonly NextOfKinPdfService _nextOfKinPdf;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
         private readonly SupervisorService _supervisors;
 
         public EmployeeController(
@@ -33,6 +34,7 @@ namespace HrPortal.Controllers
             FileStorageService fileStorage,
             NextOfKinPdfService nextOfKinPdf,
             RecordDocumentPdfService pdf,
+            ListDocumentPdfService lists,
             SupervisorService supervisors)
         {
             _context = context;
@@ -42,6 +44,7 @@ namespace HrPortal.Controllers
             _fileStorage = fileStorage;
             _nextOfKinPdf = nextOfKinPdf;
             _pdf = pdf;
+            _lists = lists;
             _supervisors = supervisors;
         }
 
@@ -56,6 +59,66 @@ namespace HrPortal.Controllers
                 .ToListAsync();
 
             return View(employees);
+        }
+
+        /// <summary>
+        /// The staff list as a printable register. The same people in
+        /// the same order as the page, so what comes out of the
+        /// printer can be checked against what is on the screen.
+        /// </summary>
+        public async Task<IActionResult> List()
+        {
+            var employees = await _context.Employees
+                .AsNoTracking()
+                .Include(e => e.Department)
+                .Include(e => e.Supervisor)
+                .Include(e => e.User)
+                .OrderBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .ToListAsync();
+
+            var list = new ListDocument(
+                "Employee List",
+                "Everybody on record, active and left.");
+
+            list.Column("Number", 1.1f)
+                .Column("Name", 1.7f)
+                .Column("Job title", 1.8f)
+                .Column("Department", 1.5f)
+                .Column("Supervisor", 1.5f)
+                .Column("Joined", 1f)
+                .Column("Sign-in", 0.9f)
+                .Column("Status", 0.9f);
+
+            foreach (var employee in employees)
+            {
+                list.Row(
+                    ListDocument.Text(employee.EmployeeNumber),
+                    $"{employee.FirstName} {employee.LastName}".Trim(),
+                    ListDocument.Text(employee.JobTitle),
+                    ListDocument.Text(employee.Department?.Name),
+                    employee.Supervisor == null
+                        ? null
+                        : $"{employee.Supervisor.FirstName} " +
+                          $"{employee.Supervisor.LastName}",
+                    ListDocument.Date(employee.DateJoined),
+                    employee.UserId == null ? "Not linked" : "Linked",
+                    employee.IsActive ? "Active" : "Left");
+            }
+
+            list.Total("On record", employees.Count)
+                .Total("Active", employees.Count(e => e.IsActive))
+                .Total("Left", employees.Count(e => !e.IsActive))
+                .Total(
+                    "Without a sign-in",
+                    employees.Count(e => e.UserId == null));
+
+            list.EmptyMessage = "Nobody is on record yet.";
+
+            return File(
+                _lists.Render(list),
+                "application/pdf",
+                list.FileName);
         }
 
         public async Task<IActionResult> Details(int? id)
