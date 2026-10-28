@@ -23,6 +23,8 @@ namespace HrPortal.DbContexts
         public DbSet<LeaveBalance> LeaveBalances { get; set; }
         public DbSet<TrainingCourse> TrainingCourses { get; set; }
         public DbSet<TrainingMaterial> TrainingMaterials { get; set; }
+
+        public DbSet<TrainingReminder> TrainingReminders { get; set; }
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
@@ -283,6 +285,34 @@ namespace HrPortal.DbContexts
 
                 entity.Navigation(t => t.TrainerEmployee)
                     .AutoInclude();
+            });
+
+            builder.Entity<TrainingReminder>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Kind)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.HasOne(r => r.TrainingCourse)
+                    .WithMany()
+                    .HasForeignKey(r => r.TrainingCourseId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Employee)
+                    .WithMany()
+                    .HasForeignKey(r => r.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(r => new
+                    {
+                        r.Kind,
+                        r.TrainingCourseId,
+                        r.EmployeeId,
+                        r.SentOn
+                    })
+                    .IsUnique();
             });
 
             builder.Entity<TrainingMaterial>(entity =>

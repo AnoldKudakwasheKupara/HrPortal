@@ -1619,6 +1619,40 @@ namespace HrPortal.Migrations
                     b.ToTable("TrainingMaterials");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.TrainingReminder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("SentOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TrainingCourseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("TrainingCourseId");
+
+                    b.HasIndex("Kind", "TrainingCourseId", "EmployeeId", "SentOn")
+                        .IsUnique();
+
+                    b.ToTable("TrainingReminders");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Vendor", b =>
                 {
                     b.Property<int>("Id")
@@ -2328,6 +2362,25 @@ namespace HrPortal.Migrations
                     b.Navigation("TrainingCourse");
 
                     b.Navigation("UploadedByEmployee");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.TrainingReminder", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.TrainingCourse", "TrainingCourse")
+                        .WithMany()
+                        .HasForeignKey("TrainingCourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("TrainingCourse");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.WeeklyReportPriority", b =>
