@@ -73,6 +73,15 @@ namespace HrPortal.ViewModels
         [Display(Name = "Department")]
         public int DepartmentId { get; set; }
 
+        /// <summary>
+        /// Who signs this person's requests off first. Optional on
+        /// the form: the Managing Director has nobody above them,
+        /// and a request from anybody else without one goes
+        /// straight to HR rather than waiting.
+        /// </summary>
+        [Display(Name = "Supervisor")]
+        public int? SupervisorId { get; set; }
+
         [Required]
         [Display(Name = "Employment Type")]
         public EmploymentType EmploymentType { get; set; }

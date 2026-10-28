@@ -71,6 +71,26 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
+                    <span class="field-label">Reports to</span>
+                    <div class="field-value">
+                        @if (Model.Supervisor != null)
+                        {
+                            <a asp-action="Details"
+                               asp-route-id="@Model.Supervisor.Id">
+                                @Model.Supervisor.FirstName
+                                @Model.Supervisor.LastName
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                Nobody &mdash; requests go straight to HR
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
                     <span class="field-label">First Name</span>
                     <div class="field-value">@Model.FirstName</div>
                 </div>

@@ -23,6 +23,7 @@ namespace HrPortal.Controllers
 
         private readonly NextOfKinPdfService _nextOfKinPdf;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly SupervisorService _supervisors;
 
         public EmployeeController(
             ApplicationDbContext context,
@@ -31,7 +32,8 @@ namespace HrPortal.Controllers
             AuditService audit,
             FileStorageService fileStorage,
             NextOfKinPdfService nextOfKinPdf,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            SupervisorService supervisors)
         {
             _context = context;
             _records = records;
@@ -40,6 +42,7 @@ namespace HrPortal.Controllers
             _fileStorage = fileStorage;
             _nextOfKinPdf = nextOfKinPdf;
             _pdf = pdf;
+            _supervisors = supervisors;
         }
 
         public async Task<IActionResult> Index()
@@ -63,6 +66,7 @@ namespace HrPortal.Controllers
             var employee = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
+                .Include(e => e.Supervisor)
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -86,6 +90,7 @@ namespace HrPortal.Controllers
             var employee = await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Department)
+                .Include(e => e.Supervisor)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employee == null)
@@ -106,6 +111,12 @@ namespace HrPortal.Controllers
                 .Add("Employee number", employee.EmployeeNumber)
                 .Add("Job title", employee.JobTitle)
                 .Add("Department", employee.Department?.Name)
+                .Add(
+                    "Reports to",
+                    employee.Supervisor == null
+                        ? null
+                        : $"{employee.Supervisor.FirstName} " +
+                          $"{employee.Supervisor.LastName}")
                 .Add("Employment type", employee.EmploymentType.ToString())
                 .Add("Date joined", employee.DateJoined)
                 .Add("Contract end date", employee.ContractEndDate)
@@ -372,12 +383,13 @@ namespace HrPortal.Controllers
                 EmploymentType = employee.EmploymentType,
                 ContractEndDate = employee.ContractEndDate,
                 DepartmentId = employee.DepartmentId,
+                SupervisorId = employee.SupervisorId,
                 IsActive = employee.IsActive,
                 EndDate = employee.EndDate,
                 LeavingReason = employee.LeavingReason
             };
 
-            await LoadLookups();
+            await LoadLookups(employee.Id);
 
             return View(model);
         }
@@ -403,9 +415,22 @@ namespace HrPortal.Controllers
                 ModelState.AddModelError(error.Field, error.Message);
             }
 
+            // Checked on the way in as well as filtered out of the
+            // list, because the list is only what the form offered
+            // and a posted id need not have come from it.
+            var supervisorProblem = await _supervisors
+                .RejectionReasonAsync(id, model.SupervisorId);
+
+            if (supervisorProblem != null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.SupervisorId),
+                    supervisorProblem);
+            }
+
             if (!ModelState.IsValid)
             {
-                await LoadLookups();
+                await LoadLookups(id);
                 return View(model);
             }
 
@@ -456,6 +481,7 @@ namespace HrPortal.Controllers
             employee.EmploymentType = model.EmploymentType;
             employee.ContractEndDate = model.ContractEndDate;
             employee.DepartmentId = model.DepartmentId;
+            employee.SupervisorId = model.SupervisorId;
             employee.IsActive = model.IsActive;
 
             employee.EndDate = model.IsActive ? null : model.EndDate;
@@ -672,9 +698,31 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task LoadLookups()
+        private async Task LoadLookups(int? employeeId = null)
         {
             await LoadDepartments();
+
+            // Anybody already beneath this person is left out, so the
+            // form cannot be used to close the chain into a loop.
+            var candidates = employeeId == null
+                ? await _context.Employees
+                    .AsNoTracking()
+                    .Where(e => e.IsActive)
+                    .OrderBy(e => e.LastName)
+                    .ThenBy(e => e.FirstName)
+                    .ToListAsync()
+                : await _supervisors.CandidatesAsync(employeeId.Value);
+
+            ViewBag.Supervisors = candidates
+                .Select(e => new SelectListItem
+                {
+                    Value = e.Id.ToString(),
+                    Text = $"{e.FirstName} {e.LastName}" +
+                           (string.IsNullOrWhiteSpace(e.JobTitle)
+                               ? ""
+                               : $" — {e.JobTitle}")
+                })
+                .ToList();
         }
 
         private async Task LoadDepartments()

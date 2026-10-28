@@ -56,6 +56,29 @@
 
                     <div class="col-md-6 mb-3">
 
+                        <label asp-for="SupervisorId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="SupervisorId"
+                                asp-items="ViewBag.Supervisors"
+                                class="form-select">
+                            <option value="">Nobody</option>
+                        </select>
+
+                        <div class="form-text">
+                            Signs this person's leave, loan and course
+                            requests off before they reach HR. Leave
+                            it as Nobody for the Managing Director.
+                        </div>
+
+                        <span asp-validation-for="SupervisorId"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
                         <label asp-for="FirstName"
                                class="form-label">
                         </label>
