@@ -128,36 +128,6 @@ namespace HrPortal.Migrations
                     b.ToTable("AppSettings");
                 });
 
-            modelBuilder.Entity("HrPortal.Entities.ApprovalConfiguration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("Role")
-                        .IsUnique()
-                        .HasFilter("[IsActive] = 1");
-
-                    b.ToTable("ApprovalConfigurations");
-                });
-
             modelBuilder.Entity("HrPortal.Entities.Asset", b =>
                 {
                     b.Property<int>("Id")
@@ -1945,17 +1915,6 @@ namespace HrPortal.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("HrPortal.Entities.ApprovalConfiguration", b =>
-                {
-                    b.HasOne("HrPortal.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.Asset", b =>

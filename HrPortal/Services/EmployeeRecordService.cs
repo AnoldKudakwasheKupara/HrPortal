@@ -47,10 +47,6 @@ namespace HrPortal.Services
                     .CountAsync(d => d.UploadedByEmployeeId == employeeId),
                 "document(s) they uploaded for others");
 
-            Add(
-                await _context.ApprovalConfigurations
-                    .CountAsync(a => a.EmployeeId == employeeId),
-                "approval role assignment(s)");
 
             Add(
                 await _context.EmployeeDocuments

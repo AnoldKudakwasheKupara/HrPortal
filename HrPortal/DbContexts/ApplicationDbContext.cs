@@ -29,7 +29,6 @@ namespace HrPortal.DbContexts
         public DbSet<DocumentCategory> DocumentCategories { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
-        public DbSet<ApprovalConfiguration> ApprovalConfigurations { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<AssetMaintenance> AssetMaintenances { get; set; }
@@ -949,24 +948,6 @@ namespace HrPortal.DbContexts
                     a.EntityName,
                     a.Timestamp
                 });
-            });
-
-            builder.Entity<ApprovalConfiguration>(entity =>
-            {
-                entity.HasKey(a => a.Id);
-
-                entity.Property(a => a.Role)
-                    .HasConversion<string>()
-                    .HasMaxLength(50);
-
-                entity.HasOne(a => a.Employee)
-                    .WithMany()
-                    .HasForeignKey(a => a.EmployeeId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasIndex(a => a.Role)
-                    .IsUnique()
-                    .HasFilter("[IsActive] = 1");
             });
 
             builder.Entity<Vendor>(entity =>
