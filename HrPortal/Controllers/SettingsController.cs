@@ -18,18 +18,15 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
-        private readonly IOptionsSnapshot<LeaveOptions> _leave;
 
         public SettingsController(
             ApplicationDbContext context,
             AuditService audit,
-            CurrentUserService currentUser,
-            IOptionsSnapshot<LeaveOptions> leave)
+            CurrentUserService currentUser)
         {
             _context = context;
             _audit = audit;
             _currentUser = currentUser;
-            _leave = leave;
         }
 
         public async Task<IActionResult> Index()
@@ -52,12 +49,6 @@ namespace HrPortal.Controllers
             var by = await _currentUser.GetDisplayNameAsync();
 
             var changes = new List<string>();
-
-            await SetAsync(
-                "Leave:BackdateGraceDays",
-                model.BackdateGraceDays.ToString(),
-                by,
-                changes);
 
             await _context.SaveChangesAsync();
 
@@ -128,15 +119,11 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private SettingsViewModel Current()
-        {
-            var leave = _leave.Value;
-
-            return new SettingsViewModel
-            {
-                BackdateGraceDays = leave.BackdateGraceDays
-            };
-        }
+        /// <summary>
+        /// Nothing about leave is configurable: a request is not
+        /// measured against an entitlement and may start on any date.
+        /// </summary>
+        private SettingsViewModel Current() => new();
 
         private async Task SetAsync(
             string key,

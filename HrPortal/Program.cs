@@ -124,9 +124,6 @@ builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
 
 
-builder.Services.Configure<LeaveOptions>(
-    builder.Configuration.GetSection(LeaveOptions.Section));
-
 builder.Services.AddSingleton<EmailService>();
 
 builder.Services.AddScoped<INotificationChannel, EmailNotificationChannel>();

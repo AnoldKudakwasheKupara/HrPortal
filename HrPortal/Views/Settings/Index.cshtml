@@ -33,50 +33,6 @@
              class="text-danger mb-3"
              role="alert"></div>
 
-        <div class="row g-3">
-
-            <div class="col-12">
-
-                <div class="card shadow-sm h-100">
-
-                    <div class="card-header">Leave</div>
-
-                    <div class="card-body">
-
-                        <div class="row">
-
-                            <div class="col-sm-6 mb-3">
-
-                                <label asp-for="BackdateGraceDays"
-                                       class="form-label"></label>
-
-                                <input asp-for="BackdateGraceDays"
-                                       class="form-control"
-                                       type="number"
-                                       min="0" />
-
-                                <div class="form-text">
-                                    How many days back leave may start,
-                                    so sick leave can be recorded after
-                                    returning. Set it to 0 to refuse any
-                                    past start date.
-                                </div>
-
-                                <span asp-validation-for="BackdateGraceDays"
-                                      class="text-danger"></span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
         <div class="card shadow-sm mt-3">
 
             <div class="card-header">Mail</div>
