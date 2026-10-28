@@ -27,6 +27,18 @@
             ? "active"
             : "";
 
+    // One controller serves more than one item in this menu: a
+    // supervisor's queue and the manager's are the same pages with
+    // a different question asked of them. The item that takes
+    // everything else has to say what it does not take, or both of
+    // them light up at once and neither tells you where you are.
+    string OnExcept(string controller, params string[] others) =>
+        string.Equals(ctrl, controller, StringComparison.OrdinalIgnoreCase) &&
+        !others.Any(other =>
+            string.Equals(act, other, StringComparison.OrdinalIgnoreCase))
+            ? "active"
+            : "";
+
     var isAdmin = User.IsInRole("Administrator");
     var isHr = User.IsInRole("HR Officer");
     var isMd = User.IsInRole("MD");
@@ -144,7 +156,7 @@
 
         @if (isHr)
         {
-            <a class="nav-item @OnAction("LeaveApproval", "Index")"
+            <a class="nav-item @OnExcept("LeaveApproval", "MyTeam", "FinalApproval")"
                asp-controller="LeaveApproval" asp-action="Index">
                 <i class="fas fa-inbox"></i> Leave Review
             </a>
@@ -158,14 +170,14 @@
             </a>
         }
 
-        <a class="nav-item @On("CourseApproval")"
+        <a class="nav-item @OnExcept("CourseApproval", "MyTeam")"
            asp-controller="CourseApproval" asp-action="Index">
             <i class="fas fa-user-graduate"></i> Course Applications
         </a>
 
         @if (isMd)
         {
-            <a class="nav-item @On("LoanApproval")"
+            <a class="nav-item @OnExcept("LoanApproval", "MyTeam")"
                asp-controller="LoanApproval" asp-action="Index">
                 <i class="fas fa-hand-holding-dollar"></i> Loan Sanction
             </a>
