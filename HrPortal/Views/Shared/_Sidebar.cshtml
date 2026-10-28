@@ -1,5 +1,6 @@
 ﻿@inject HrPortal.Services.NotificationBadgeService Notifications
 @inject HrPortal.Services.SupervisorQueueService TeamQueue
+@inject HrPortal.Services.TrainingAssignmentService Training
 
 @{
     var unread = await Notifications.UnreadCountAsync();
@@ -33,6 +34,8 @@
 
     var isAdmin = User.IsInRole("Administrator");
     var isHr = User.IsInRole("HR Officer");
+
+    var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
 }
 
@@ -93,6 +96,14 @@
             <span class="nav-badge">@unread</span>
         }
     </a>
+
+    @if (leadsTraining)
+    {
+        <a class="nav-item @On("TrainingMaterial")"
+           asp-controller="TrainingMaterial" asp-action="Index">
+            <i class="fas fa-file-lines"></i> Training I Lead
+        </a>
+    }
 
     <div class="nav-group">Company</div>
 

@@ -25,15 +25,37 @@ namespace HrPortal.Services
         private readonly ApplicationDbContext _context;
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
+        private readonly CurrentUserService _currentUser;
 
         public TrainingAssignmentService(
             ApplicationDbContext context,
             NotificationService notifications,
-            AuditService audit)
+            AuditService audit,
+            CurrentUserService currentUser)
         {
             _context = context;
             _notifications = notifications;
             _audit = audit;
+            _currentUser = currentUser;
+        }
+
+        /// <summary>
+        /// Whether the signed-in person is the trainer on anything.
+        /// The menu asks this to decide whether to offer them the
+        /// material pages at all: leading a course is a relationship
+        /// and almost nobody has it.
+        /// </summary>
+        public async Task<bool> LeadsAnyTrainingAsync()
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return false;
+
+            return await _context.TrainingCourses
+                .AsNoTracking()
+                .AnyAsync(c =>
+                    c.TrainerEmployeeId == me.Value && c.IsActive);
         }
 
         /// <summary>
@@ -58,26 +80,33 @@ namespace HrPortal.Services
                 .Select(e => e.Id)
                 .ToListAsync();
 
+            var scheduled = course.TrainingDate.HasValue
+                ? $" on {course.TrainingDate.Value:dd MMM yyyy}"
+                : string.Empty;
+
             if (course.TrainerEmployeeId is int trainer)
             {
                 everyone.Remove(trainer);
 
-                var when = course.TrainingDate.HasValue
-                    ? $" on {course.TrainingDate.Value:dd MMM yyyy}"
-                    : string.Empty;
+                var post = course.MaterialsDueDate.HasValue
+                    ? "Please prepare, and post the content for it " +
+                      "by " +
+                      $"{course.MaterialsDueDate.Value:dd MMM yyyy}."
+                    : "Please prepare, and post the content for it.";
 
                 _notifications.Notify(
                     trainer,
-                    "You are down to deliver a course",
+                    "You are leading a training session",
                     $"You are the trainer for \"{course.Title}\"" +
-                    $"{when}. Everybody on the staff list has been " +
-                    "assigned it.",
-                    $"/TrainingCourse/Details/{course.Id}");
+                    $"{scheduled}. {post} Everybody on the staff " +
+                    "list has been assigned it.",
+                    "/TrainingMaterial?courseId=" + course.Id);
             }
 
             var due = dueDate.HasValue
-                ? $", due {dueDate.Value:dd MMM yyyy}."
-                : ".";
+                ? $" It has to be completed by " +
+                  $"{dueDate.Value:dd MMM yyyy}."
+                : string.Empty;
 
             foreach (var employeeId in everyone)
             {
@@ -93,8 +122,9 @@ namespace HrPortal.Services
 
                 _notifications.Notify(
                     employeeId,
-                    "Training assigned",
-                    $"You have been assigned \"{course.Title}\"{due}",
+                    "Training scheduled",
+                    $"\"{course.Title}\" has been scheduled" +
+                    $"{scheduled} and you are down to attend.{due}",
                     "/MyTraining");
             }
 

@@ -57,6 +57,30 @@
 
                 <div class="col-md-4">
 
+                    <span class="field-label">Content Due</span>
+
+                    <div class="field-value">
+                        @if (Model.MaterialsDueDate == null)
+                        {
+                            <span class="text-muted">No date set</span>
+                        }
+                        else if (Model.MaterialsOverdue)
+                        {
+                            <span class="badge bg-danger">
+                                Nothing posted, was due
+                                @Model.MaterialsDueDate.Value.ToString("dd MMM yyyy")
+                            </span>
+                        }
+                        else
+                        {
+                            @Model.MaterialsDueDate.Value.ToString("dd MMM yyyy")
+                        }
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
                     <span class="field-label">Training Date</span>
 
                     <div class="field-value">

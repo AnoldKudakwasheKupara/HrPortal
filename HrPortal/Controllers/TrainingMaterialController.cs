@@ -13,7 +13,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.HrOnly)]
+    /// <summary>
+    /// Leading a course is a relationship, not a role: any employee
+    /// may be the trainer on one, and the trainer is the person
+    /// asked to post the material for it. The class guard asks only
+    /// for a signed-in user, and every action settles for itself
+    /// whether the person asking is HR or the trainer on the course
+    /// in question.
+    /// </summary>
+    [Authorize]
     public class TrainingMaterialController : Controller
     {
         private const string UploadFolder = "training-materials";
@@ -36,6 +44,39 @@ namespace HrPortal.Controllers
             _pdf = pdf;
         }
 
+        private bool IsHr => User.IsInRole(Roles.HrOfficer);
+
+        /// <summary>
+        /// The courses the signed-in person is the trainer on.
+        /// Empty for almost everybody, which is what keeps this
+        /// page to HR and the few people leading something.
+        /// </summary>
+        private async Task<List<int>> CoursesILeadAsync()
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return new List<int>();
+
+            return await _context.TrainingCourses
+                .AsNoTracking()
+                .Where(c => c.TrainerEmployeeId == me.Value)
+                .Select(c => c.Id)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Whether the person asking has business with this course:
+        /// HR, or the trainer leading it.
+        /// </summary>
+        private async Task<bool> MayPostToAsync(int courseId)
+        {
+            if (IsHr)
+                return true;
+
+            return (await CoursesILeadAsync()).Contains(courseId);
+        }
+
         /// <summary>
         /// What is known about the material, as a printable record.
         /// This is the card, not the file -- Download still fetches
@@ -52,8 +93,11 @@ namespace HrPortal.Controllers
                 .Include(m => m.UploadedByEmployee)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             var uploader = material.UploadedByEmployee;
 
@@ -89,11 +133,22 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index(int? courseId)
         {
+            var mine = IsHr ? null : await CoursesILeadAsync();
+
+            if (mine is { Count: 0 })
+                return Forbid();
+
             var query = _context.TrainingMaterials
                 .AsNoTracking()
                 .Include(m => m.TrainingCourse)
                 .Include(m => m.UploadedByEmployee)
                 .AsQueryable();
+
+            if (mine != null)
+            {
+                query = query.Where(m =>
+                    mine.Contains(m.TrainingCourseId));
+            }
 
             if (courseId.HasValue)
             {
@@ -108,6 +163,22 @@ namespace HrPortal.Controllers
             await LoadCourses();
 
             ViewBag.SelectedCourseId = courseId;
+            ViewBag.IsTrainer = mine != null;
+
+            if (mine != null)
+            {
+                // The courses themselves, not just what has been
+                // posted to them. A course with nothing posted yet
+                // is the one the trainer most needs to see, and it
+                // has no material to appear under.
+                ViewBag.MyCourses = await _context.TrainingCourses
+                    .AsNoTracking()
+                    .Include(c => c.Materials)
+                    .Where(c => mine.Contains(c.Id))
+                    .OrderBy(c => c.TrainingDate ?? DateTime.MaxValue)
+                    .ThenBy(c => c.Title)
+                    .ToListAsync();
+            }
 
             return View(materials);
         }
@@ -123,8 +194,11 @@ namespace HrPortal.Controllers
                 .Include(m => m.UploadedByEmployee)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             return View(material);
         }
@@ -137,8 +211,11 @@ namespace HrPortal.Controllers
             var material = await _context.TrainingMaterials
                 .FindAsync(id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             var fullPath =
                 _fileStorage.ResolveExistingPath(material.FilePath);
@@ -162,6 +239,9 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Create(int? courseId)
         {
+            if (!IsHr && (await CoursesILeadAsync()).Count == 0)
+                return Forbid();
+
             await LoadCourses();
             await LoadEmployees();
 
@@ -178,6 +258,18 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Create(
             TrainingMaterialCreateViewModel model)
         {
+            if (!await MayPostToAsync(model.TrainingCourseId))
+                return Forbid();
+
+            if (!IsHr)
+            {
+                // The trainer posts as themselves. The form offers
+                // the choice to HR, who files material on somebody
+                // else's behalf.
+                model.UploadedByEmployeeId =
+                    await _currentUser.GetEmployeeIdAsync() ?? 0;
+            }
+
             var fileError = FileStorageService.Validate(model.File);
 
             if (fileError != null)
@@ -227,8 +319,11 @@ namespace HrPortal.Controllers
             var material = await _context.TrainingMaterials
                 .FindAsync(id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             var model = new TrainingMaterialEditViewModel
             {
@@ -272,8 +367,23 @@ namespace HrPortal.Controllers
             var material = await _context.TrainingMaterials
                 .FindAsync(id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
+
+            // Where it is being moved to is asked about as well as
+            // where it is: otherwise a trainer could post material
+            // onto somebody else's course by editing their own.
+            if (!await MayPostToAsync(model.TrainingCourseId))
+                return Forbid();
+
+            if (!IsHr)
+            {
+                model.UploadedByEmployeeId =
+                    material.UploadedByEmployeeId;
+            }
 
             if (model.File != null)
             {
@@ -316,8 +426,11 @@ namespace HrPortal.Controllers
                 .Include(m => m.UploadedByEmployee)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             return View(material);
         }
@@ -330,8 +443,11 @@ namespace HrPortal.Controllers
             var material = await _context.TrainingMaterials
                 .FindAsync(id);
 
-            if (material == null)
+            if (material == null ||
+                !await MayPostToAsync(material.TrainingCourseId))
+            {
                 return NotFound();
+            }
 
             var filePath = material.FilePath;
 
@@ -349,7 +465,14 @@ namespace HrPortal.Controllers
 
         private async Task LoadCourses()
         {
-            var courses = await _context.TrainingCourses
+            var mine = IsHr ? null : await CoursesILeadAsync();
+
+            var query = _context.TrainingCourses.AsQueryable();
+
+            if (mine != null)
+                query = query.Where(c => mine.Contains(c.Id));
+
+            var courses = await query
                 .OrderBy(c => c.Title)
                 .ToListAsync();
 

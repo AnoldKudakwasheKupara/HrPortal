@@ -55,27 +55,35 @@
 
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    @if (User.IsInRole(HrPortal.Security.Roles.HrOfficer))
+                    {
+                        <div class="col-md-6 mb-3">
 
-                        <label asp-for="UploadedByEmployeeId"
-                               class="form-label">
-                        </label>
+                            <label asp-for="UploadedByEmployeeId"
+                                   class="form-label">
+                            </label>
 
-                        <select asp-for="UploadedByEmployeeId"
-                                asp-items="ViewBag.Employees"
-                                class="form-select">
+                            <select asp-for="UploadedByEmployeeId"
+                                    asp-items="ViewBag.Employees"
+                                    class="form-select">
 
-                            <option value="">
-                                -- Select Employee --
-                            </option>
+                                <option value="">
+                                    -- Select Employee --
+                                </option>
 
-                        </select>
+                            </select>
 
-                        <span asp-validation-for="UploadedByEmployeeId"
-                              class="text-danger">
-                        </span>
+                            <span asp-validation-for="UploadedByEmployeeId"
+                                  class="text-danger">
+                            </span>
 
-                    </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="hidden"
+                               asp-for="UploadedByEmployeeId" />
+                    }
 
                     <div class="col-12 mb-3">
 

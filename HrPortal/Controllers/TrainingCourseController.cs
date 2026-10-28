@@ -75,6 +75,7 @@ namespace HrPortal.Controllers
                 .Add("Title", course.Title)
                 .Add("Trainer", course.TrainerName)
                 .Add("Training date", course.TrainingDate)
+                .Add("Content due", course.MaterialsDueDate)
                 .Add("Active", course.IsActive)
                 .Add(
                     "Created by",
@@ -178,6 +179,7 @@ namespace HrPortal.Controllers
                 Title = title,
                 Description = model.Description?.Trim(),
                 TrainingDate = model.TrainingDate,
+                MaterialsDueDate = model.MaterialsDueDate,
                 Trainer = model.TrainerEmployeeId == null
                     ? model.Trainer?.Trim()
                     : null,
@@ -220,6 +222,7 @@ namespace HrPortal.Controllers
                 Title = course.Title,
                 Description = course.Description,
                 TrainingDate = course.TrainingDate,
+                MaterialsDueDate = course.MaterialsDueDate,
                 Trainer = course.Trainer,
                 TrainerEmployeeId = course.TrainerEmployeeId,
                 CreatedByEmployeeId = course.CreatedByEmployeeId,
@@ -279,6 +282,7 @@ namespace HrPortal.Controllers
             course.Title = title;
             course.Description = model.Description?.Trim();
             course.TrainingDate = model.TrainingDate;
+            course.MaterialsDueDate = model.MaterialsDueDate;
             course.Trainer = model.TrainerEmployeeId == null
                 ? model.Trainer?.Trim()
                 : null;

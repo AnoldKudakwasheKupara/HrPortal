@@ -102,6 +102,28 @@
 
                     <div class="col-md-6 mb-3">
 
+                        <label asp-for="MaterialsDueDate"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="MaterialsDueDate"
+                               class="form-control"
+                               type="date" />
+
+                        <div class="form-text">
+                            The trainer is told to have the material
+                            posted by this date. Leave it empty where
+                            an outside provider is delivering it.
+                        </div>
+
+                        <span asp-validation-for="MaterialsDueDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
                         <label asp-for="CreatedByEmployeeId"
                                class="form-label">
                         </label>

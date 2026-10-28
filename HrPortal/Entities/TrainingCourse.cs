@@ -11,6 +11,13 @@
         public DateTime? TrainingDate { get; set; }
 
         /// <summary>
+        /// When the trainer has to have posted the material for it.
+        /// Only meaningful where a member of staff is delivering it:
+        /// an outside provider has nothing to post here.
+        /// </summary>
+        public DateTime? MaterialsDueDate { get; set; }
+
+        /// <summary>
         /// An outside provider, by name. Used where the course is
         /// not delivered by somebody on the staff list.
         /// </summary>
@@ -45,6 +52,18 @@
                 ? Trainer
                 : $"{TrainerEmployee.FirstName} " +
                   $"{TrainerEmployee.LastName}";
+
+        /// <summary>
+        /// Whether the trainer has missed the date for posting the
+        /// material. Nothing posted and the date gone by is the
+        /// state worth showing; a course with no date set and no
+        /// trainer is simply not waiting on anybody.
+        /// </summary>
+        public bool MaterialsOverdue =>
+            TrainerEmployeeId != null &&
+            MaterialsDueDate != null &&
+            MaterialsDueDate.Value.Date < DateTime.Today &&
+            Materials.Count == 0;
 
         public ICollection<TrainingMaterial> Materials { get; set; }
             = new List<TrainingMaterial>();

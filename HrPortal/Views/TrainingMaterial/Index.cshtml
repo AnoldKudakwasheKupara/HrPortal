@@ -9,10 +9,16 @@
     <div class="page-head">
 
         <div>
-            <h2>Training Materials</h2>
+            <h2>
+                @(ViewBag.IsTrainer == true
+                    ? "Training I Lead"
+                    : "Training Materials")
+            </h2>
 
             <p class="text-muted">
-                Documents and handouts attached to training courses.
+                @(ViewBag.IsTrainer == true
+                    ? "The courses you are delivering, and the content you have posted for them."
+                    : "Documents and handouts attached to training courses.")
             </p>
         </div>
 
@@ -35,6 +41,92 @@
     {
         <div class="alert alert-danger">
             @TempData["Error"]
+        </div>
+    }
+
+    @if (ViewBag.MyCourses is List<HrPortal.Entities.TrainingCourse> leading
+         && leading.Any())
+    {
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-header">
+                Courses you are delivering
+            </div>
+
+            <div class="card-body is-table">
+
+                <div class="table-responsive">
+
+                    <table class="table align-middle mb-0">
+
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Training date</th>
+                                <th>Content due</th>
+                                <th>Content posted</th>
+                                <th class="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        @foreach (var course in leading)
+                        {
+                            <tr>
+                                <td>@course.Title</td>
+
+                                <td>
+                                    @(course.TrainingDate?.ToString("dd MMM yyyy")
+                                        ?? "Not scheduled")
+                                </td>
+
+                                <td>
+                                    @if (course.MaterialsDueDate == null)
+                                    {
+                                        <span class="text-muted">No date set</span>
+                                    }
+                                    else if (course.MaterialsOverdue)
+                                    {
+                                        <span class="badge bg-danger">
+                                            Was due @course.MaterialsDueDate.Value.ToString("dd MMM yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @course.MaterialsDueDate.Value.ToString("dd MMM yyyy")
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (course.Materials.Count == 0)
+                                    {
+                                        <span class="text-muted">Nothing yet</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            @course.Materials.Count file(s)
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a class="btn btn-sm btn-primary"
+                                       asp-action="Create"
+                                       asp-route-courseId="@course.Id">
+                                        Post content
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
         </div>
     }
 

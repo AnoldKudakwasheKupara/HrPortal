@@ -29,6 +29,15 @@ namespace HrPortal.ViewModels
         [StringLength(200)]
         public string? Trainer { get; set; }
 
+        /// <summary>
+        /// When the trainer has to have posted the material. Only
+        /// a member of staff is told about it: an outside provider
+        /// has no account to post anything from.
+        /// </summary>
+        [Display(Name = "Trainer posts the content by")]
+        [DataType(DataType.Date)]
+        public DateTime? MaterialsDueDate { get; set; }
+
         [Required]
         [Display(Name = "Created By")]
         public int CreatedByEmployeeId { get; set; }
