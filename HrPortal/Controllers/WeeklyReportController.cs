@@ -11,9 +11,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.AdminOnly)]
+    /// <summary>
+    /// Everybody signed in may read an issued report; only an
+    /// administrator may write one. The class guard is therefore the
+    /// weaker of the two and every action that changes something
+    /// carries its own, so a new action is private by omission
+    /// rather than public by it.
+    /// </summary>
+    [Authorize]
     public class WeeklyReportController : Controller
     {
+        private const string Managers = Roles.AdminOnly;
+
         private const int PageSize = 50;
 
         private readonly ApplicationDbContext _context;
@@ -36,20 +45,44 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
+        /// <summary>
+        /// A report is a draft until somebody issues it. Only the
+        /// people who write them can see one before that.
+        /// </summary>
+        private bool CanManage => User.IsInRole(Roles.Administrator);
+
+        /// <summary>A draft is for its authors only.</summary>
+        private bool Visible(WeeklyReport report) =>
+            CanManage || report.Status == WeeklyReportStatus.Final;
+
+        /// <summary>
+        /// What the person asking is allowed to see.
+        /// </summary>
+        private IQueryable<WeeklyReport> Readable() =>
+            CanManage
+                ? _context.WeeklyReports
+                : _context.WeeklyReports
+                    .Where(r => r.Status == WeeklyReportStatus.Final);
+
         public async Task<IActionResult> Index(int page = 1)
         {
-            var reports = await _context.WeeklyReports
+            var reports = await Readable()
                 .AsNoTracking()
                 .Include(r => r.Sections)
                 .Include(r => r.Priorities)
                 .OrderByDescending(r => r.PeriodStart)
                 .ToPagedResultAsync(page, PageSize);
 
-            ViewBag.Drafts = await _context.WeeklyReports
-                .CountAsync(r => r.Status == WeeklyReportStatus.Draft);
+            ViewBag.CanManage = CanManage;
 
             ViewBag.Issued = await _context.WeeklyReports
                 .CountAsync(r => r.Status == WeeklyReportStatus.Final);
+
+            if (!CanManage)
+                return View(reports);
+
+            ViewBag.Drafts = await _context.WeeklyReports
+                .CountAsync(r => r.Status == WeeklyReportStatus.Draft);
 
             var lastPeriod = await _context.WeeklyReports
                 .OrderByDescending(r => r.PeriodStart)
@@ -64,6 +97,7 @@ namespace HrPortal.Controllers
             return View(reports);
         }
 
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Create()
         {
             var lastPeriod = await _context.WeeklyReports
@@ -83,6 +117,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Create(WeeklyReportCreateViewModel model)
         {
             if (model.PeriodEnd < model.PeriodStart)
@@ -128,6 +163,7 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Edit), new { id = report.Id });
         }
 
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -162,6 +198,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Edit(
             int id,
             WeeklyReportEditViewModel model)
@@ -229,7 +266,7 @@ namespace HrPortal.Controllers
 
             var report = await LoadFullAsync(id.Value);
 
-            if (report == null)
+            if (report == null || !Visible(report))
                 return NotFound();
 
             return View(report);
@@ -242,7 +279,7 @@ namespace HrPortal.Controllers
 
             var report = await LoadFullAsync(id.Value);
 
-            if (report == null)
+            if (report == null || !Visible(report))
                 return NotFound();
 
             var bytes = _pdf.Render(report);
@@ -257,6 +294,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Finalise(int id)
         {
             var report = await _context.WeeklyReports.FindAsync(id);
@@ -290,6 +328,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Reopen(int id)
         {
             var report = await _context.WeeklyReports.FindAsync(id);
@@ -314,6 +353,7 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Edit), new { id });
         }
 
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -330,6 +370,7 @@ namespace HrPortal.Controllers
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Managers)]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var report = await _context.WeeklyReports.FindAsync(id);

@@ -4,8 +4,15 @@
 @{
     ViewData["Title"] = "Weekly Reports";
 
-    var nextStart = (DateTime)ViewBag.NextPeriodStart;
-    var unlogged = (int)ViewBag.UnloggedDays;
+    // Everybody reads this page; only the people who write the
+    // reports see the drafting apparatus.
+    var canManage = (bool)(ViewBag.CanManage ?? false);
+
+    var nextStart = canManage
+        ? (DateTime)ViewBag.NextPeriodStart
+        : default;
+
+    var unlogged = canManage ? (int)ViewBag.UnloggedDays : 0;
 }
 
 <div class="container-fluid">
@@ -14,12 +21,18 @@
         <div>
             <h2>Weekly Reports</h2>
             <p class="text-muted mb-0">
-                The IT department status report, drafted from the
-                activity log and issued as a PDF.
+                @(canManage
+                    ? "The IT department status report, drafted from "
+                      + "the activity log and issued as a PDF."
+                    : "The IT department status report. Each one "
+                      + "appears here once it has been issued.")
             </p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">New Report</a>
+        @if (canManage)
+        {
+            <a asp-action="Create" class="btn btn-primary">New Report</a>
+        }
     </div>
 
     @if (TempData["Success"] != null)
@@ -40,34 +53,37 @@
             <span class="report-stat-note">Final reports on file</span>
         </div>
 
-        <div class="report-stat @(((int)ViewBag.Drafts) > 0 ? "is-warning" : "")">
-            <span class="report-stat-label">In draft</span>
-            <span class="report-stat-value">@ViewBag.Drafts</span>
-            <span class="report-stat-note">Not yet issued</span>
-        </div>
+        @if (canManage)
+        {
+            <div class="report-stat @(((int)ViewBag.Drafts) > 0 ? "is-warning" : "")">
+                <span class="report-stat-label">In draft</span>
+                <span class="report-stat-value">@ViewBag.Drafts</span>
+                <span class="report-stat-note">Not yet issued</span>
+            </div>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Next period</span>
-            <span class="report-stat-value is-text">
-                @nextStart.ToString("d MMM")
-            </span>
-            <span class="report-stat-note">
-                to @nextStart.AddDays(4).ToString("d MMM yyyy")
-            </span>
-        </div>
+            <div class="report-stat">
+                <span class="report-stat-label">Next period</span>
+                <span class="report-stat-value is-text">
+                    @nextStart.ToString("d MMM")
+                </span>
+                <span class="report-stat-note">
+                    to @nextStart.AddDays(4).ToString("d MMM yyyy")
+                </span>
+            </div>
 
-        <a class="report-stat @(unlogged > 0 ? "is-warning" : "is-good")"
-           asp-controller="ItActivity" asp-action="Index"
-           asp-route-from="@nextStart.ToString("yyyy-MM-dd")"
-           asp-route-to="@nextStart.AddDays(4).ToString("yyyy-MM-dd")">
-            <span class="report-stat-label">Days not logged</span>
-            <span class="report-stat-value">@unlogged</span>
-            <span class="report-stat-note">
-                @(unlogged == 0
-                    ? "This period is up to date"
-                    : "Log these before drafting")
-            </span>
-        </a>
+            <a class="report-stat @(unlogged > 0 ? "is-warning" : "is-good")"
+               asp-controller="ItActivity" asp-action="Index"
+               asp-route-from="@nextStart.ToString("yyyy-MM-dd")"
+               asp-route-to="@nextStart.AddDays(4).ToString("yyyy-MM-dd")">
+                <span class="report-stat-label">Days not logged</span>
+                <span class="report-stat-value">@unlogged</span>
+                <span class="report-stat-note">
+                    @(unlogged == 0
+                        ? "This period is up to date"
+                        : "Log these before drafting")
+                </span>
+            </a>
+        }
 
     </div>
 
@@ -147,14 +163,17 @@
                                            asp-action="Details" asp-route-id="@r.Id">
                                             View
                                         </a>
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@r.Id">
-                                            Edit
-                                        </a>
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete" asp-route-id="@r.Id">
-                                            Delete
-                                        </a>
+                                        @if (canManage)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               asp-action="Edit" asp-route-id="@r.Id">
+                                                Edit
+                                            </a>
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               asp-action="Delete" asp-route-id="@r.Id">
+                                                Delete
+                                            </a>
+                                        }
                                     </div>
                                 </td>
                             </tr>
