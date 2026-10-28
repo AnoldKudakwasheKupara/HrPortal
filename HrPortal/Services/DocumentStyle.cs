@@ -78,9 +78,14 @@ namespace HrPortal.Services
         /// DefaultTextStyle call replaces this one outright rather
         /// than adding to it, and silently drops the typeface.
         /// </summary>
-        public static void Apply(PageDescriptor page, float fontSize = 9)
+        public static void Apply(
+            PageDescriptor page,
+            float fontSize = 9,
+            bool landscape = false)
         {
-            page.Size(PageSizes.A4);
+            page.Size(landscape
+                ? PageSizes.A4.Landscape()
+                : PageSizes.A4);
             page.Margin(0);
 
             page.DefaultTextStyle(t => t
@@ -88,6 +93,14 @@ namespace HrPortal.Services
                 .FontColor(Ink)
                 .FontFamily(DocumentFonts.Family, "Lato"));
         }
+
+        /// <summary>
+        /// How wide the paper is, which only the full-bleed banner
+        /// needs to know: everything else is laid out against the
+        /// space it is handed.
+        /// </summary>
+        public static float PaperWidth(bool landscape) =>
+            landscape ? PageSizes.A4.Height : PageSizes.A4.Width;
 
         /// <summary>
         /// Puts the page gutter back inside a full-bleed page.
@@ -108,7 +121,8 @@ namespace HrPortal.Services
             IContainer container,
             BrandAssets brand,
             string title,
-            string? reference)
+            string? reference,
+            bool landscape = false)
         {
             // The flat colour is painted rather than drawn: QuestPDF's
             // SVG reader does not resolve a url(#...) gradient fill and
@@ -121,7 +135,7 @@ namespace HrPortal.Services
                 // vector nothing to measure against and it draws
                 // nothing at all, silently.
                 layers.Layer()
-                    .Width(PageSizes.A4.Width)
+                    .Width(PaperWidth(landscape))
                     .Height(BannerHeight)
                     .Svg(BannerArt);
 
@@ -130,7 +144,15 @@ namespace HrPortal.Services
                     .PaddingVertical(8)
                     .Row(row =>
                     {
-                        row.RelativeItem().AlignLeft().AlignMiddle()
+                        // The mark is a fixed 120pt wide, so it
+                        // takes only what it needs and the title
+                        // gets the rest. Splitting the row in half
+                        // left the title a column it could not fit
+                        // a document name in, and a title that
+                        // wrapped to two lines pushed the strapline
+                        // off the band and threw a layout error
+                        // rather than printing smaller.
+                        row.AutoItem().AlignLeft().AlignMiddle()
                             .Element(e => Mark(e, brand));
 
                         row.RelativeItem().AlignRight().AlignMiddle()
@@ -246,12 +268,13 @@ namespace HrPortal.Services
             IContainer container,
             BrandAssets brand,
             string title,
-            string? reference)
+            string? reference,
+            bool landscape = false)
         {
             container.Column(column =>
             {
                 column.Item().ShowOnce().Element(e =>
-                    Banner(e, brand, title, reference));
+                    Banner(e, brand, title, reference, landscape));
 
                 column.Item().SkipOnce().Element(e =>
                     RunningHead(e, title, reference));
@@ -700,6 +723,149 @@ namespace HrPortal.Services
                 .Text($"{value?.Length ?? 0}/{limit}")
                 .FontSize(7.5f)
                 .FontColor(Placeholder);
+        }
+
+        // ---- lists ----------------------------------------------
+
+        /// <summary>
+        /// A register: headings reversed out of the green band, rows
+        /// under it, every other row on the wash so the eye can
+        /// follow one across the page.
+        ///
+        /// The heading band repeats on every sheet. A column of
+        /// serial numbers with no heading on page three is a column
+        /// of nothing in particular.
+        /// </summary>
+        public static void ListTable(
+            IContainer container,
+            IReadOnlyList<ListColumn> columns,
+            IReadOnlyList<IReadOnlyList<string?>> rows,
+            string emptyMessage = "Nothing to show.")
+        {
+            if (columns.Count == 0)
+                return;
+
+            container
+                .Border(0.8f)
+                .BorderColor(FieldLine)
+                .CornerRadius(5)
+                .Table(table =>
+                {
+                    table.ColumnsDefinition(definition =>
+                    {
+                        foreach (var column in columns)
+                            definition.RelativeColumn(column.Weight);
+                    });
+
+                    table.Header(header =>
+                    {
+                        foreach (var column in columns)
+                        {
+                            var cell = header.Cell()
+                                .Background(Green)
+                                .PaddingVertical(5)
+                                .PaddingHorizontal(7);
+
+                            (column.AlignRight
+                                    ? cell.AlignRight()
+                                    : cell)
+                                .Text(column.Heading.ToUpperInvariant())
+                                .FontSize(7.5f)
+                                .Bold()
+                                .FontColor(Colors.White)
+                                .LetterSpacing(0.04f);
+                        }
+                    });
+
+                    if (rows.Count == 0)
+                    {
+                        table.Cell()
+                            .ColumnSpan((uint)columns.Count)
+                            .PaddingVertical(16)
+                            .AlignCenter()
+                            .Text(emptyMessage)
+                            .FontSize(9)
+                            .FontColor(Placeholder);
+
+                        return;
+                    }
+
+                    for (var r = 0; r < rows.Count; r++)
+                    {
+                        var row = rows[r];
+                        var last = r == rows.Count - 1;
+                        var shaded = r % 2 == 1;
+
+                        for (var c = 0; c < columns.Count; c++)
+                        {
+                            // Read the row by position rather than
+                            // walking it: a row that came in short
+                            // leaves a blank cell, where walking it
+                            // would pull the next row's first value
+                            // up into this one.
+                            var value = c < row.Count ? row[c] : null;
+
+                            var cell = table.Cell()
+                                .Background(shaded ? Wash : Colors.White)
+                                .BorderBottom(last ? 0 : 0.6f)
+                                .BorderColor(FieldLine)
+                                .PaddingVertical(4)
+                                .PaddingHorizontal(7);
+
+                            (columns[c].AlignRight
+                                    ? cell.AlignRight()
+                                    : cell)
+                                .Text(string.IsNullOrWhiteSpace(value)
+                                    ? NotRecorded
+                                    : Lines(value!))
+                                .FontSize(8.5f);
+                        }
+                    }
+                });
+        }
+
+        /// <summary>
+        /// The figures that belong with a register, as a row of
+        /// boxed counts across the top.
+        /// </summary>
+        public static void Tally(
+            IContainer container,
+            IReadOnlyList<(string Label, string Value)> totals)
+        {
+            if (totals.Count == 0)
+                return;
+
+            container.Row(row =>
+            {
+                for (var i = 0; i < totals.Count; i++)
+                {
+                    var item = totals[i];
+
+                    row.RelativeItem()
+                        .PaddingRight(i == totals.Count - 1 ? 0 : 7)
+                        .Background(MintPale)
+                        .Border(0.8f)
+                        .BorderColor(Mint)
+                        .CornerRadius(5)
+                        .PaddingVertical(6)
+                        .PaddingHorizontal(9)
+                        .Column(column =>
+                        {
+                            column.Item()
+                                .Text(item.Value)
+                                .FontSize(14)
+                                .Bold()
+                                .FontColor(Green);
+
+                            column.Item()
+                                .Text(item.Label.ToUpperInvariant())
+                                .FontSize(7)
+                                .SemiBold()
+                                .FontColor(Muted)
+                                .LetterSpacing(0.05f);
+                        });
+                }
+            });
         }
 
         // ---- footer ---------------------------------------------
