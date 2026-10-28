@@ -274,9 +274,12 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Leave is authorised by HR and then the Managing Director,
-        /// so the form's single signature line becomes one line per
-        /// decision actually taken.
+        /// Leave is authorised by the employee's supervisor, then HR,
+        /// then the Managing Director, so the form's single signature
+        /// line becomes one line per decision actually taken.
+        ///
+        /// A return is not an authorisation and does not appear here:
+        /// it sends the request back rather than deciding it.
         /// </summary>
         private void Authorisations(
             IContainer container,
@@ -284,6 +287,8 @@ namespace HrPortal.Services
         {
             var decisions = request.History
                 .Where(h =>
+                    h.Action == LeaveRequestAction.ApprovedBySupervisor ||
+                    h.Action == LeaveRequestAction.RejectedBySupervisor ||
                     h.Action == LeaveRequestAction.ApprovedByHR ||
                     h.Action == LeaveRequestAction.ApprovedByMD ||
                     h.Action == LeaveRequestAction.RejectedByHR ||
@@ -328,14 +333,28 @@ namespace HrPortal.Services
                         : $"{decision.ActionedByEmployee.FirstName} " +
                           $"{decision.ActionedByEmployee.LastName}";
 
-                    var stage =
-                        decision.Action == LeaveRequestAction.ApprovedByHR
-                            ? "Approved by HR"
-                        : decision.Action == LeaveRequestAction.RejectedByHR
-                            ? "Rejected by HR"
-                        : decision.Action == LeaveRequestAction.ApprovedByMD
-                            ? "Approved by the Managing Director"
-                        : "Rejected by the Managing Director";
+                    // Every action this list can hold is named, and
+                    // there is no catch-all. This used to end in
+                    // "or else the Managing Director rejected it",
+                    // which was true while only HR and the MD could
+                    // act: a supervisor's approval would have been
+                    // printed on the form as the MD's rejection.
+                    var stage = decision.Action switch
+                    {
+                        LeaveRequestAction.ApprovedBySupervisor =>
+                            "Approved by the supervisor",
+                        LeaveRequestAction.RejectedBySupervisor =>
+                            "Rejected by the supervisor",
+                        LeaveRequestAction.ApprovedByHR =>
+                            "Approved by HR",
+                        LeaveRequestAction.RejectedByHR =>
+                            "Rejected by HR",
+                        LeaveRequestAction.ApprovedByMD =>
+                            "Approved by the Managing Director",
+                        LeaveRequestAction.RejectedByMD =>
+                            "Rejected by the Managing Director",
+                        _ => decision.Action.ToString()
+                    };
 
                     column.Item().Row(row =>
                     {

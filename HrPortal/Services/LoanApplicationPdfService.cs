@@ -263,6 +263,83 @@ namespace HrPortal.Services
             });
         }
 
+        /// <summary>
+        /// The supervisor's line: who recommended it and when, or
+        /// an empty box where the application has not been through
+        /// a supervisor -- somebody with nobody above them, or a
+        /// copy printed before it was sent.
+        /// </summary>
+        private void Recommendation(
+            IContainer container,
+            LoanApplication application)
+        {
+            var decision = application.History
+                .Where(h =>
+                    h.Action ==
+                        LoanApplicationAction.ApprovedBySupervisor ||
+                    h.Action ==
+                        LoanApplicationAction.RejectedBySupervisor)
+                .OrderByDescending(h => h.ActionDate)
+                .FirstOrDefault();
+
+            var who = decision?.ActionedByEmployee == null
+                ? null
+                : $"{decision.ActionedByEmployee.FirstName} " +
+                  $"{decision.ActionedByEmployee.LastName}";
+
+            var label =
+                decision?.Action ==
+                    LoanApplicationAction.RejectedBySupervisor
+                    ? "Declined by (manager / supervisor)"
+                    : "Recommended by (manager / supervisor)";
+
+            container.Column(column =>
+            {
+                column.Spacing(6);
+
+                column.Item().Row(row =>
+                {
+                    // Nothing decided yet leaves a box that says to
+                    // sign it, the way the sanction below does: this
+                    // form is also filled in by hand where somebody
+                    // has no supervisor on record.
+                    row.RelativeItem(2).Element(e =>
+                    {
+                        if (decision == null)
+                            DocumentStyle.Blank(e, label);
+                        else
+                            DocumentStyle.Field(e, label, who);
+                    });
+
+                    row.ConstantItem(18);
+
+                    row.RelativeItem().Element(e =>
+                    {
+                        if (decision == null)
+                        {
+                            DocumentStyle.Blank(
+                                e, "Date", "Select date",
+                                icon: Icons.Calendar);
+                        }
+                        else
+                        {
+                            DocumentStyle.Field(
+                                e,
+                                "Date",
+                                DocumentStyle.Stamp(decision.ActionDate),
+                                icon: Icons.Calendar);
+                        }
+                    });
+                });
+
+                if (!string.IsNullOrWhiteSpace(decision?.Comment))
+                {
+                    column.Item().Element(e => DocumentStyle.Note(
+                        e, decision!.Comment!));
+                }
+            });
+        }
+
         private void Sanction(
             IContainer container,
             LoanApplication application)
@@ -277,6 +354,14 @@ namespace HrPortal.Services
             container.Column(column =>
             {
                 column.Spacing(6);
+
+                // The supervisor sees the application before the
+                // Managing Director does, and the form showed no
+                // sign of it: a sanctioned loan printed as though
+                // nobody between the applicant and the MD had ever
+                // looked at it.
+                column.Item().Element(e =>
+                    Recommendation(e, application));
 
                 if (decision == null)
                 {

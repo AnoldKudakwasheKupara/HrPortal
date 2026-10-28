@@ -302,6 +302,11 @@ namespace HrPortal.Services
                 application.Status is CourseApplicationStatus.Rejected
                     or CourseApplicationStatus.HrRejected;
 
+            var supervisor = Decision(
+                application,
+                CourseApplicationAction.ApprovedBySupervisor,
+                CourseApplicationAction.RejectedBySupervisor);
+
             var hr = Decision(
                 application,
                 CourseApplicationAction.ApprovedByHr,
@@ -327,9 +332,13 @@ namespace HrPortal.Services
                         e, "Not approved", declined, adverse: true));
                 });
 
-                column.Item().PaddingTop(3).Element(e =>
-                    DocumentStyle.SignatureRow(
-                        e, "Manager / Supervisor", null, null));
+                // Filled from the supervisor's own decision. This
+                // row was passed nothing at all, so a form printed
+                // after the supervisor had approved it still read
+                // "Sign here" -- the one approval the form asks for
+                // by name was the one it never showed.
+                column.Item().PaddingTop(3).Element(e => Approver(
+                    e, "Manager / Supervisor", supervisor));
 
                 column.Item().Element(e => Approver(
                     e, "Human Resources", hr));
@@ -337,7 +346,7 @@ namespace HrPortal.Services
                 column.Item().Element(e => Approver(
                     e, "Managing Consultant", consultant));
 
-                var comments = new[] { hr, consultant }
+                var comments = new[] { supervisor, hr, consultant }
                     .Where(d => !string.IsNullOrWhiteSpace(d?.Comment))
                     .Select(d => d!.Comment!)
                     .ToList();
