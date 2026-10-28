@@ -191,21 +191,11 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (!model.AssignCompanyWide)
-            {
-                TempData["Success"] =
-                    "Training course created successfully.";
-
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Everybody on the staff list as it stands. The course
-            // had to be saved first: an assignment needs a course to
-            // point at.
-            var outcome = await _assignments.AssignAsync(
-                course,
-                await _assignments.EveryoneAsync(),
-                model.AssignmentDueDate);
+            // Everybody on the staff list as it stands, without
+            // being asked. The course had to be saved first: an
+            // assignment needs a course to point at.
+            var outcome = await _assignments.AssignNewCourseAsync(
+                course, model.AssignmentDueDate);
 
             TempData["Success"] = outcome.DidNothing
                 ? "Training course created. There is nobody on the " +

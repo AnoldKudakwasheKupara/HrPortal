@@ -34,14 +34,10 @@ namespace HrPortal.ViewModels
         public int CreatedByEmployeeId { get; set; }
 
         /// <summary>
-        /// Assigns the course to everybody on the staff list as it
-        /// stands. A one-off: somebody who joins next month is not
-        /// caught by it and has to be assigned the course like
-        /// anybody else.
+        /// When everybody has to have completed it by. Optional: a
+        /// course with no date is simply outstanding until it is
+        /// done.
         /// </summary>
-        [Display(Name = "Assign this course to everyone")]
-        public bool AssignCompanyWide { get; set; }
-
         [Display(Name = "Due by")]
         [DataType(DataType.Date)]
         public DateTime? AssignmentDueDate { get; set; }

@@ -5,11 +5,9 @@ using Microsoft.EntityFrameworkCore;
 namespace HrPortal.Services
 {
     /// <summary>
-    /// What came of an attempt to assign a course.
+    /// What came of assigning a course.
     /// </summary>
-    public record TrainingAssignmentOutcome(
-        int Assigned,
-        int AlreadyAssigned)
+    public record TrainingAssignmentOutcome(int Assigned)
     {
         public bool DidNothing => Assigned == 0;
     }
@@ -17,9 +15,10 @@ namespace HrPortal.Services
     /// <summary>
     /// Putting a course in front of people.
     ///
-    /// The assignments page and the course form both do this, and
-    /// each telling somebody they have been assigned training is
-    /// one place too many for that to be forgotten.
+    /// A course used to be created and then assigned, on a separate
+    /// page, by picking employees out of a list. Creating it is the
+    /// whole of it now: everybody gets it, and the trainer is told
+    /// they are delivering it.
     /// </summary>
     public class TrainingAssignmentService
     {
@@ -38,44 +37,49 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Everybody on the staff list as it stands. A snapshot:
-        /// whoever joins afterwards is not in it.
+        /// What happens when a course is created: everybody on the
+        /// staff list as it stands gets it and is told so, and
+        /// whoever is delivering it is told that instead.
+        ///
+        /// A snapshot. Somebody who joins next month is not caught
+        /// by it, and takes the course when one is next created.
+        ///
+        /// The trainer is not given their own course to complete.
+        /// They are running the session, and an outstanding training
+        /// item for it would be asking them to attend themselves.
         /// </summary>
-        public Task<List<int>> EveryoneAsync() =>
-            _context.Employees
+        public async Task<TrainingAssignmentOutcome>
+            AssignNewCourseAsync(
+                TrainingCourse course,
+                DateTime? dueDate)
+        {
+            var everyone = await _context.Employees
                 .Where(e => e.IsActive)
                 .Select(e => e.Id)
                 .ToListAsync();
 
-        /// <summary>
-        /// Assigns the course to those of these people who do not
-        /// already have it, tells each of them, and records it.
-        /// Saves, so the course has to exist first.
-        /// </summary>
-        public async Task<TrainingAssignmentOutcome> AssignAsync(
-            TrainingCourse course,
-            IEnumerable<int> employeeIds,
-            DateTime? dueDate)
-        {
-            var wanted = employeeIds.Distinct().ToList();
+            if (course.TrainerEmployeeId is int trainer)
+            {
+                everyone.Remove(trainer);
 
-            var already = await _context.TrainingAssignments
-                .Where(a => a.TrainingCourseId == course.Id)
-                .Select(a => a.EmployeeId)
-                .ToListAsync();
+                var when = course.TrainingDate.HasValue
+                    ? $" on {course.TrainingDate.Value:dd MMM yyyy}"
+                    : string.Empty;
 
-            var toAssign = wanted
-                .Where(id => !already.Contains(id))
-                .ToList();
-
-            if (toAssign.Count == 0)
-                return new TrainingAssignmentOutcome(0, wanted.Count);
+                _notifications.Notify(
+                    trainer,
+                    "You are down to deliver a course",
+                    $"You are the trainer for \"{course.Title}\"" +
+                    $"{when}. Everybody on the staff list has been " +
+                    "assigned it.",
+                    $"/TrainingCourse/Details/{course.Id}");
+            }
 
             var due = dueDate.HasValue
                 ? $", due {dueDate.Value:dd MMM yyyy}."
                 : ".";
 
-            foreach (var employeeId in toAssign)
+            foreach (var employeeId in everyone)
             {
                 _context.TrainingAssignments.Add(
                     new TrainingAssignment
@@ -94,17 +98,17 @@ namespace HrPortal.Services
                     "/MyTraining");
             }
 
+            // Saved even where there was nobody to assign: the
+            // trainer still has to be told on a one-person company.
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
                 AuditService.TrainingAssigned,
                 nameof(TrainingCourse),
                 course.Title,
-                $"Assigned to {toAssign.Count} employee(s).");
+                $"Assigned to {everyone.Count} employee(s).");
 
-            return new TrainingAssignmentOutcome(
-                toAssign.Count,
-                wanted.Count - toAssign.Count);
+            return new TrainingAssignmentOutcome(everyone.Count);
         }
     }
 }

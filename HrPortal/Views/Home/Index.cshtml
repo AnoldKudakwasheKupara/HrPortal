@@ -174,7 +174,7 @@
                 Model.Hr.OverdueTrainingOrgWide.ToString("N0"),
                 Model.Hr.OverdueTrainingOrgWide == 0
                     ? "All up to date" : "Past the due date",
-                "TrainingAssignment", "Index"));
+                "Reports", "Training"));
 
             actions.Add(("fa-inbox", "Review leave",
                 "Work through the review queue",
@@ -187,9 +187,11 @@
                 "File a document for somebody",
                 "EmployeeDocument", "Create"));
 
-            actions.Add(("fa-clipboard-check", "Assign training",
+            // Creating a course is what puts it in front of staff:
+            // saving one assigns it to everybody.
+            actions.Add(("fa-clipboard-check", "Add a course",
                 "Put a course in front of staff",
-                "TrainingAssignment", "Create"));
+                "TrainingCourse", "Create"));
         }
         else if (Model.Md != null)
         {
@@ -850,8 +852,8 @@
             </a>
 
             <a class="stat-tile @(Model.Hr.OverdueTrainingOrgWide > 0 ? "is-critical" : "is-good")"
-               asp-controller="TrainingAssignment"
-               asp-action="Index">
+               asp-controller="Reports"
+               asp-action="Training">
 
                 <i class="fas fa-triangle-exclamation stat-icon" aria-hidden="true"></i>
                 <span class="stat-label">Overdue training</span>

@@ -465,8 +465,12 @@ namespace HrPortal.Services
                         ? "assignment" : "assignments",
                     Note = "Past the due date across the business.",
                     Tone = "is-warning",
-                    Controller = "TrainingAssignment",
-                    Action = "Index"
+
+                    // The training report is where who is overdue
+                    // is listed now: course, employee, due date and
+                    // where they have got to.
+                    Controller = "Reports",
+                    Action = "Training"
                 });
             }
 
