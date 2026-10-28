@@ -9,6 +9,9 @@ namespace HrPortal.Entities
         ReturnedByHr,
         ApprovedByManagingConsultant,
         RejectedByManagingConsultant,
-        Cancelled
+        Cancelled,
+        ApprovedBySupervisor,
+        RejectedBySupervisor,
+        ReturnedBySupervisor
     }
 }

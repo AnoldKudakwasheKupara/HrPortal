@@ -131,6 +131,11 @@
            asp-controller="LoanApproval" asp-action="MyTeam">
             <i class="fas fa-hand-holding-dollar"></i> Loans to Approve
         </a>
+
+        <a class="nav-item @OnAction("CourseApproval", "MyTeam")"
+           asp-controller="CourseApproval" asp-action="MyTeam">
+            <i class="fas fa-user-graduate"></i> Courses to Approve
+        </a>
     }
 
     @if (isHr || isMd)

@@ -15,6 +15,68 @@
     var mdTurn = isMd &&
         CourseApplicationWorkflowService
             .IsAwaitingManagingConsultant(Model.Status);
+
+    var supervisorTurn =
+        CourseApplicationWorkflowService
+            .IsAwaitingSupervisor(Model.Status) &&
+        (bool)(ViewBag.CanActAsSupervisor ?? false);
+}
+
+@if (supervisorTurn)
+{
+    <div class="container">
+
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header">Supervisor Approval</div>
+
+            <div class="card-body">
+
+                <form method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="mb-3">
+
+                        <label for="supComment" class="form-label">
+                            Comment
+                        </label>
+
+                        <textarea id="supComment"
+                                  name="comment"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Required when declining or returning"></textarea>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-success"
+                            asp-action="SupervisorApprove">
+                        Approve and send to HR
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-warning"
+                            asp-action="SupervisorReturn">
+                        Return to applicant
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-danger"
+                            asp-action="SupervisorReject">
+                        Decline
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
 }
 
 <div class="container">

@@ -13,7 +13,14 @@ namespace HrPortal.Controllers
     /// Managing Consultant, and HR prints an approved one for
     /// Finance, so all three live here.
     /// </summary>
-    [Authorize(Roles = Roles.HrOrMd)]
+    /// <summary>
+    /// A supervisor is a relationship, not a role, so this controller
+    /// cannot be gated on roles alone. The class guard asks only for
+    /// a signed-in user; the HR and Managing Consultant queues and
+    /// decisions keep their role attributes, and anything to do with
+    /// one application is gated on standing.
+    /// </summary>
+    [Authorize]
     public class CourseApprovalController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -35,9 +42,139 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>
+        /// Whether the person asking has any business with this
+        /// application: HR, the Managing Consultant, or the
+        /// applicant's own supervisor.
+        /// </summary>
+        private async Task<bool> HasStandingAsync(
+            CourseApplication application)
+        {
+            if (User.IsInRole(Roles.HrOfficer) || User.IsInRole(Roles.Md))
+                return true;
+
+            return await IsSupervisorOfAsync(application);
+        }
+
+        private async Task<bool> IsSupervisorOfAsync(
+            CourseApplication application)
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return false;
+
+            var supervisorId = await _context.Employees
+                .AsNoTracking()
+                .Where(e => e.Id == application.EmployeeId)
+                .Select(e => e.SupervisorId)
+                .FirstOrDefaultAsync();
+
+            return supervisorId == me.Value;
+        }
+
+        /// <summary>
+        /// What the people reporting to me have sent up.
+        /// </summary>
+        public async Task<IActionResult> MyTeam()
+        {
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            var applications = me == null
+                ? new List<CourseApplication>()
+                : await _context.CourseApplications
+                    .AsNoTracking()
+                    .Include(a => a.Employee)
+                    .Where(a =>
+                        a.Status ==
+                            CourseApplicationStatus.SupervisorReview &&
+                        a.Employee.SupervisorId == me.Value)
+                    .OrderBy(a => a.SubmittedAt)
+                    .ToListAsync();
+
+            ViewData["Title"] = "Courses Awaiting Your Approval";
+
+            return View("Index", applications);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorApprove(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorApproveAsync(
+                        application, actorId, comment),
+                "Approved and sent to HR.");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorReject(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorRejectAsync(
+                        application, actorId, comment),
+                "Application declined.");
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SupervisorReturn(
+            int id,
+            string? comment) =>
+            ActAsSupervisorAsync(
+                id,
+                (application, actorId) =>
+                    _workflow.SupervisorReturnAsync(
+                        application, actorId, comment),
+                "Application returned to the applicant.");
+
+        /// <summary>
+        /// Checked on the application rather than on a role: being
+        /// somebody's supervisor is the whole permission.
+        /// </summary>
+        private async Task<IActionResult> ActAsSupervisorAsync(
+            int id,
+            Func<CourseApplication, int, Task> act,
+            string success)
+        {
+            var application = await LoadAsync(id);
+
+            if (application == null ||
+                !await IsSupervisorOfAsync(application))
+            {
+                return NotFound();
+            }
+
+            if (!CourseApplicationWorkflowService.IsAwaitingSupervisor(
+                application.Status))
+            {
+                TempData["Error"] =
+                    "This application is not waiting for your approval.";
+
+                return RedirectToAction(nameof(MyTeam));
+            }
+
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+                return Forbid();
+
+            await act(application, me.Value);
+
+            TempData["Success"] = success;
+
+            return RedirectToAction(nameof(MyTeam));
+        }
+
+        /// <summary>
         /// What is waiting on the person looking: HR sees what it has
         /// to review, the Managing Consultant what has cleared HR.
         /// </summary>
+        [Authorize(Roles = Roles.HrOrMd)]
         public async Task<IActionResult> Index()
         {
             var waitingFor = User.IsInRole(Roles.HrOfficer)
@@ -84,8 +221,11 @@ namespace HrPortal.Controllers
 
             var application = await LoadAsync(id.Value);
 
-            if (application == null)
+            if (application == null || !await HasStandingAsync(application))
                 return NotFound();
+
+            ViewBag.CanActAsSupervisor =
+                await IsSupervisorOfAsync(application);
 
             return View(application);
         }
@@ -143,7 +283,7 @@ namespace HrPortal.Controllers
 
             var application = await LoadAsync(id.Value);
 
-            if (application == null)
+            if (application == null || !await HasStandingAsync(application))
                 return NotFound();
 
             return File(

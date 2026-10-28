@@ -52,7 +52,14 @@ namespace HrPortal.Services
                     a.Status == LoanApplicationStatus.SupervisorReview &&
                     a.Employee.SupervisorId == me.Value);
 
-            _count = leave + loans;
+            var courses = await _context.CourseApplications
+                .AsNoTracking()
+                .CountAsync(a =>
+                    a.Status ==
+                        CourseApplicationStatus.SupervisorReview &&
+                    a.Employee.SupervisorId == me.Value);
+
+            _count = leave + loans + courses;
 
             return _count.Value;
         }
