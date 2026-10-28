@@ -149,33 +149,8 @@
                             </td>
 
                             <td>
-                                @switch (request.Status)
-                                {
-                                    case LeaveRequestStatus.Approved:
-                                        <span class="badge bg-success">
-                                            @request.Status
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.Rejected:
-                                    case LeaveRequestStatus.HRRejected:
-                                        <span class="badge bg-danger">
-                                            @request.Status
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.Cancelled:
-                                        <span class="badge bg-secondary">
-                                            @request.Status
-                                        </span>
-                                        break;
-
-                                    default:
-                                        <span class="badge bg-warning text-dark">
-                                            @request.Status
-                                        </span>
-                                        break;
-                                }
+                                <partial name="_LeaveStatusBadge"
+                                         model="request.Status" />
                             </td>
 
                             <td class="col-actions">

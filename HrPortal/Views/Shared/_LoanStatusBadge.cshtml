@@ -1,8 +1,34 @@
 @using HrPortal.Entities
 @model LoanApplicationStatus
 
+@*
+    Every status is named, and there is no catch-all that guesses a
+    stage. The old one said "With the MD" for anything it did not
+    recognise, which would have sent an applicant chasing the wrong
+    person while their application sat with their supervisor.
+*@
 @switch (Model)
 {
+    case LoanApplicationStatus.Draft:
+        <span class="badge bg-secondary">Draft</span>
+        break;
+
+    case LoanApplicationStatus.SupervisorReview:
+        <span class="badge bg-info">With the supervisor</span>
+        break;
+
+    case LoanApplicationStatus.SupervisorRejected:
+        <span class="badge bg-danger">Declined by the supervisor</span>
+        break;
+
+    case LoanApplicationStatus.Submitted:
+        <span class="badge bg-info">With the MD</span>
+        break;
+
+    case LoanApplicationStatus.ReturnedToApplicant:
+        <span class="badge bg-warning">Returned</span>
+        break;
+
     case LoanApplicationStatus.Approved:
         <span class="badge bg-success">Sanctioned</span>
         break;
@@ -15,15 +41,7 @@
         <span class="badge bg-secondary">Cancelled</span>
         break;
 
-    case LoanApplicationStatus.ReturnedToApplicant:
-        <span class="badge bg-warning">Returned</span>
-        break;
-
-    case LoanApplicationStatus.Draft:
-        <span class="badge bg-secondary">Draft</span>
-        break;
-
     default:
-        <span class="badge bg-info">With the MD</span>
+        <span class="badge bg-secondary">@Model</span>
         break;
 }

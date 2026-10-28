@@ -154,46 +154,14 @@
                                 @request.NumberOfDays.ToString("0.##")
                             </td>
 
+                            @* The shared badge, not a second copy of
+                               the same switch: the copy that used to
+                               live here had its own catch-all and so
+                               told an employee their request was with
+                               HR while it sat with their supervisor. *@
                             <td>
-                                @switch (request.Status)
-                                {
-                                    case LeaveRequestStatus.Approved:
-                                        <span class="badge bg-success">
-                                            Approved
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.Rejected:
-                                    case LeaveRequestStatus.HRRejected:
-                                        <span class="badge bg-danger">
-                                            Rejected
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.Cancelled:
-                                        <span class="badge bg-secondary">
-                                            Cancelled
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.ReturnedToEmployee:
-                                        <span class="badge bg-warning text-dark">
-                                            Returned to you
-                                        </span>
-                                        break;
-
-                                    case LeaveRequestStatus.HRApproved:
-                                        <span class="badge bg-info text-dark">
-                                            With the MD
-                                        </span>
-                                        break;
-
-                                    default:
-                                        <span class="badge bg-info text-dark">
-                                            With HR
-                                        </span>
-                                        break;
-                                }
+                                <partial name="_LeaveStatusBadge"
+                                         model="request.Status" />
                             </td>
 
                             <td class="col-actions">

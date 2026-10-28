@@ -1,22 +1,31 @@
 @using HrPortal.Entities
 @model CourseApplicationStatus
 
+@*
+    Every status is named. There is deliberately no catch-all that
+    guesses a stage: the old one said "With HR" for anything it did
+    not recognise, so a request sitting with a supervisor claimed to
+    be with HR, and approving it changed nothing on screen.
+
+    A status nobody has named here prints its own name instead. Plain,
+    but never a lie about where the request is.
+*@
 @switch (Model)
 {
-    case CourseApplicationStatus.Approved:
-        <span class="badge bg-success">Approved</span>
+    case CourseApplicationStatus.Draft:
+        <span class="badge bg-secondary">Draft</span>
         break;
 
-    case CourseApplicationStatus.Rejected:
-        <span class="badge bg-danger">Declined</span>
+    case CourseApplicationStatus.SupervisorReview:
+        <span class="badge bg-info">With the supervisor</span>
         break;
 
-    case CourseApplicationStatus.HrRejected:
-        <span class="badge bg-danger">Declined by HR</span>
+    case CourseApplicationStatus.SupervisorRejected:
+        <span class="badge bg-danger">Declined by the supervisor</span>
         break;
 
-    case CourseApplicationStatus.Cancelled:
-        <span class="badge bg-secondary">Cancelled</span>
+    case CourseApplicationStatus.Submitted:
+        <span class="badge bg-info">With HR</span>
         break;
 
     case CourseApplicationStatus.ReturnedToApplicant:
@@ -27,11 +36,23 @@
         <span class="badge bg-info">With the Managing Consultant</span>
         break;
 
-    case CourseApplicationStatus.Draft:
-        <span class="badge bg-secondary">Draft</span>
+    case CourseApplicationStatus.HrRejected:
+        <span class="badge bg-danger">Declined by HR</span>
+        break;
+
+    case CourseApplicationStatus.Approved:
+        <span class="badge bg-success">Approved</span>
+        break;
+
+    case CourseApplicationStatus.Rejected:
+        <span class="badge bg-danger">Declined</span>
+        break;
+
+    case CourseApplicationStatus.Cancelled:
+        <span class="badge bg-secondary">Cancelled</span>
         break;
 
     default:
-        <span class="badge bg-info">With HR</span>
+        <span class="badge bg-secondary">@Model</span>
         break;
 }
