@@ -93,6 +93,8 @@ namespace HrPortal.Controllers
 
             ViewData["Title"] = "Courses Awaiting Your Approval";
 
+            ViewBag.Stage = "supervisor approval";
+
             return View("Index", applications);
         }
 
