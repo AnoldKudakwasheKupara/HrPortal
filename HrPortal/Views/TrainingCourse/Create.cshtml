@@ -46,6 +46,34 @@
 
                     </div>
 
+                    @*
+                        Two ways of naming one trainer, because an
+                        outside provider is not on the staff list.
+                        Filling in both is refused rather than one
+                        of them being quietly dropped.
+                    *@
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TrainerEmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="TrainerEmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Nobody yet --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="TrainerEmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
                     <div class="col-md-6 mb-3">
 
                         <label asp-for="Trainer"
@@ -54,7 +82,7 @@
 
                         <input asp-for="Trainer"
                                class="form-control"
-                               placeholder="e.g. External provider or staff name" />
+                               placeholder="e.g. Deloitte Zimbabwe" />
 
                         <span asp-validation-for="Trainer"
                               class="text-danger">
@@ -117,6 +145,54 @@
                     <span asp-validation-for="Description"
                           class="text-danger">
                     </span>
+
+                </div>
+
+                <div class="card bg-light border mb-4">
+
+                    <div class="card-body">
+
+                        <div class="form-check mb-2">
+
+                            <input asp-for="AssignCompanyWide"
+                                   class="form-check-input"
+                                   type="checkbox" />
+
+                            <label asp-for="AssignCompanyWide"
+                                   class="form-check-label fw-semibold">
+                            </label>
+
+                        </div>
+
+                        <p class="text-muted small">
+                            Assigns the course to everybody on the
+                            staff list as it stands, and tells each
+                            of them. Anybody who joins afterwards is
+                            not caught by this and has to be assigned
+                            the course like anybody else.
+                        </p>
+
+                        <div class="row">
+
+                            <div class="col-md-5">
+
+                                <label asp-for="AssignmentDueDate"
+                                       class="form-label">
+                                </label>
+
+                                <input asp-for="AssignmentDueDate"
+                                       class="form-control"
+                                       type="date" />
+
+                                <span asp-validation-for="AssignmentDueDate"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 

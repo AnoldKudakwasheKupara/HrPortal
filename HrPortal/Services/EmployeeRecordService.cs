@@ -38,6 +38,11 @@ namespace HrPortal.Services
                 "training course(s) they created");
 
             Add(
+                await _context.TrainingCourses
+                    .CountAsync(c => c.TrainerEmployeeId == employeeId),
+                "training course(s) they deliver");
+
+            Add(
                 await _context.TrainingMaterials
                     .CountAsync(m => m.UploadedByEmployeeId == employeeId),
                 "training material(s) they uploaded");

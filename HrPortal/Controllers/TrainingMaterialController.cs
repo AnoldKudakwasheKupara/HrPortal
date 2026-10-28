@@ -69,7 +69,7 @@ namespace HrPortal.Controllers
 
             record.Section("Course", "What it belongs to")
                 .Add("Title", material.TrainingCourse.Title)
-                .Add("Trainer", material.TrainingCourse.Trainer);
+                .Add("Trainer", material.TrainingCourse.TrainerName);
 
             record.Section("Provenance", "Who put it there, and when")
                 .Add(

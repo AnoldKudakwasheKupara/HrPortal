@@ -19,7 +19,15 @@ namespace HrPortal.ViewModels
         [DataType(DataType.Date)]
         public DateTime? TrainingDate { get; set; }
 
-        [Display(Name = "Trainer")]
+        /// <summary>
+        /// Who is delivering it. A member of staff is picked from
+        /// the list; anybody else is typed, because an outside
+        /// provider is not on it.
+        /// </summary>
+        [Display(Name = "Trainer (a member of staff)")]
+        public int? TrainerEmployeeId { get; set; }
+
+        [Display(Name = "Or an outside provider")]
         [StringLength(200)]
         public string? Trainer { get; set; }
 

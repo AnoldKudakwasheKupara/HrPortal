@@ -47,6 +47,34 @@
 
                     </div>
 
+                    @*
+                        Two ways of naming one trainer, because an
+                        outside provider is not on the staff list.
+                        Filling in both is refused rather than one
+                        of them being quietly dropped.
+                    *@
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TrainerEmployeeId"
+                               class="form-label">
+                        </label>
+
+                        <select asp-for="TrainerEmployeeId"
+                                asp-items="ViewBag.Employees"
+                                class="form-select">
+
+                            <option value="">
+                                -- Nobody yet --
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="TrainerEmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
                     <div class="col-md-6 mb-3">
 
                         <label asp-for="Trainer"
@@ -54,14 +82,14 @@
                         </label>
 
                         <input asp-for="Trainer"
-                               class="form-control" />
+                               class="form-control"
+                               placeholder="e.g. Deloitte Zimbabwe" />
 
                         <span asp-validation-for="Trainer"
                               class="text-danger">
                         </span>
 
                     </div>
-
                     <div class="col-md-6 mb-3">
 
                         <label asp-for="TrainingDate"

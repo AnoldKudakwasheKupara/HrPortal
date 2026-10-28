@@ -19,15 +19,18 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
 
         private readonly RecordDocumentPdfService _pdf;
+        private readonly TrainingAssignmentService _assignments;
 
         public TrainingCourseController(
             ApplicationDbContext context,
             CurrentUserService currentUser,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            TrainingAssignmentService assignments)
         {
             _context = context;
             _currentUser = currentUser;
             _pdf = pdf;
+            _assignments = assignments;
         }
 
         /// <summary>
@@ -64,13 +67,13 @@ namespace HrPortal.Controllers
             var record = new RecordDocument("Training Course")
             {
                 Headline = course.Title,
-                Caption = course.Trainer,
+                Caption = course.TrainerName,
                 Chip = course.IsActive ? "Active" : "Inactive"
             };
 
             record.Section("Course", "What is taught, and by whom")
                 .Add("Title", course.Title)
-                .Add("Trainer", course.Trainer)
+                .Add("Trainer", course.TrainerName)
                 .Add("Training date", course.TrainingDate)
                 .Add("Active", course.IsActive)
                 .Add(
@@ -148,6 +151,13 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
+            if (TrainerIsAmbiguous(
+                    model.TrainerEmployeeId, model.Trainer))
+            {
+                await LoadEmployees();
+                return View(model);
+            }
+
             var title = model.Title.Trim();
 
             var exists = await _context.TrainingCourses
@@ -168,7 +178,10 @@ namespace HrPortal.Controllers
                 Title = title,
                 Description = model.Description?.Trim(),
                 TrainingDate = model.TrainingDate,
-                Trainer = model.Trainer?.Trim(),
+                Trainer = model.TrainerEmployeeId == null
+                    ? model.Trainer?.Trim()
+                    : null,
+                TrainerEmployeeId = model.TrainerEmployeeId,
                 CreatedByEmployeeId = model.CreatedByEmployeeId,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
@@ -178,8 +191,27 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                "Training course created successfully.";
+            if (!model.AssignCompanyWide)
+            {
+                TempData["Success"] =
+                    "Training course created successfully.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Everybody on the staff list as it stands. The course
+            // had to be saved first: an assignment needs a course to
+            // point at.
+            var outcome = await _assignments.AssignAsync(
+                course,
+                await _assignments.EveryoneAsync(),
+                model.AssignmentDueDate);
+
+            TempData["Success"] = outcome.DidNothing
+                ? "Training course created. There is nobody on the " +
+                  "staff list to assign it to yet."
+                : $"Training course created and assigned to " +
+                  $"{outcome.Assigned} employee(s).";
 
             return RedirectToAction(nameof(Index));
         }
@@ -202,6 +234,7 @@ namespace HrPortal.Controllers
                 Description = course.Description,
                 TrainingDate = course.TrainingDate,
                 Trainer = course.Trainer,
+                TrainerEmployeeId = course.TrainerEmployeeId,
                 CreatedByEmployeeId = course.CreatedByEmployeeId,
                 IsActive = course.IsActive
             };
@@ -232,6 +265,13 @@ namespace HrPortal.Controllers
             if (course == null)
                 return NotFound();
 
+            if (TrainerIsAmbiguous(
+                    model.TrainerEmployeeId, model.Trainer))
+            {
+                await LoadEmployees();
+                return View(model);
+            }
+
             var title = model.Title.Trim();
 
             var duplicateExists = await _context.TrainingCourses
@@ -252,7 +292,11 @@ namespace HrPortal.Controllers
             course.Title = title;
             course.Description = model.Description?.Trim();
             course.TrainingDate = model.TrainingDate;
-            course.Trainer = model.Trainer?.Trim();
+            course.Trainer = model.TrainerEmployeeId == null
+                ? model.Trainer?.Trim()
+                : null;
+
+            course.TrainerEmployeeId = model.TrainerEmployeeId;
             course.CreatedByEmployeeId = model.CreatedByEmployeeId;
             course.IsActive = model.IsActive;
 
@@ -302,6 +346,30 @@ namespace HrPortal.Controllers
                     : "Training course deactivated successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// A course has one trainer. Naming a member of staff and an
+        /// outside provider at once leaves nothing to say which of
+        /// them is turning up, so the form comes back rather than
+        /// one of the two being quietly dropped.
+        /// </summary>
+        private bool TrainerIsAmbiguous(
+            int? trainerEmployeeId,
+            string? provider)
+        {
+            if (trainerEmployeeId == null ||
+                string.IsNullOrWhiteSpace(provider))
+            {
+                return false;
+            }
+
+            ModelState.AddModelError(
+                nameof(TrainingCourseCreateViewModel.Trainer),
+                "Pick a member of staff or name an outside " +
+                "provider, not both.");
+
+            return true;
         }
 
         private async Task LoadEmployees()

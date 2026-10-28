@@ -104,6 +104,7 @@ builder.Services.AddScoped<NotificationBadgeService>();
 builder.Services.AddScoped<SupportContactsService>();
 
 builder.Services.AddScoped<ApproverDirectory>();
+builder.Services.AddScoped<TrainingAssignmentService>();
 builder.Services.AddScoped<SupervisorService>();
 
 builder.Services.AddScoped<SupervisorQueueService>();

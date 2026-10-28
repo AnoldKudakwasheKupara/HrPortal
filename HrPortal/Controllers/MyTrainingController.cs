@@ -118,7 +118,7 @@ namespace HrPortal.Controllers
 
             record.Section("Course", "What you were assigned")
                 .Add("Title", assignment.TrainingCourse.Title)
-                .Add("Trainer", assignment.TrainingCourse.Trainer)
+                .Add("Trainer", assignment.TrainingCourse.TrainerName)
                 .Add(
                     "Training date",
                     assignment.TrainingCourse.TrainingDate);

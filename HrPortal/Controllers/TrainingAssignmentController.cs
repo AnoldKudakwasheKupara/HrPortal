@@ -16,6 +16,7 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly NotificationService _notifications;
         private readonly AuditService _audit;
+        private readonly TrainingAssignmentService _assignments;
         private readonly RecordScope _scope;
 
         private readonly RecordDocumentPdfService _pdf;
@@ -24,12 +25,14 @@ namespace HrPortal.Controllers
             ApplicationDbContext context,
             NotificationService notifications,
             AuditService audit,
+            TrainingAssignmentService assignments,
             RecordScope scope,
             RecordDocumentPdfService pdf)
         {
             _context = context;
             _notifications = notifications;
             _audit = audit;
+            _assignments = assignments;
             _scope = scope;
             _pdf = pdf;
         }
@@ -82,7 +85,7 @@ namespace HrPortal.Controllers
 
             record.Section("Course", "What they were assigned")
                 .Add("Title", assignment.TrainingCourse.Title)
-                .Add("Trainer", assignment.TrainingCourse.Trainer)
+                .Add("Trainer", assignment.TrainingCourse.TrainerName)
                 .Add(
                     "Training date",
                     assignment.TrainingCourse.TrainingDate);
@@ -181,18 +184,17 @@ namespace HrPortal.Controllers
                 await LoadEmployees();
                 return View(model);
             }
+            var course = await _context.TrainingCourses
+                .FirstOrDefaultAsync(c =>
+                    c.Id == model.TrainingCourseId);
 
-            var alreadyAssigned = await _context.TrainingAssignments
-                .Where(a => a.TrainingCourseId == model.TrainingCourseId)
-                .Select(a => a.EmployeeId)
-                .ToListAsync();
+            if (course == null)
+                return NotFound();
 
-            var toAssign = model.EmployeeIds
-                .Distinct()
-                .Where(id => !alreadyAssigned.Contains(id))
-                .ToList();
+            var outcome = await _assignments.AssignAsync(
+                course, model.EmployeeIds, model.DueDate);
 
-            if (!toAssign.Any())
+            if (outcome.DidNothing)
             {
                 ModelState.AddModelError(
                     "EmployeeIds",
@@ -204,48 +206,11 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            var course = await _context.TrainingCourses
-                .FirstOrDefaultAsync(c =>
-                    c.Id == model.TrainingCourseId);
-
-            foreach (var employeeId in toAssign)
-            {
-                _context.TrainingAssignments.Add(
-                    new TrainingAssignment
-                    {
-                        TrainingCourseId = model.TrainingCourseId,
-                        EmployeeId = employeeId,
-                        DueDate = model.DueDate,
-                        IsCompleted = false,
-                        AssignedAt = DateTime.UtcNow
-                    });
-
-                _notifications.Notify(
-                    employeeId,
-                    "Training assigned",
-                    $"You have been assigned \"{course?.Title}\"" +
-                    (model.DueDate.HasValue
-                        ? $", due {model.DueDate.Value:dd MMM yyyy}."
-                        : "."),
-                    "/MyTraining");
-            }
-
-            await _context.SaveChangesAsync();
-
-            await _audit.LogAsync(
-                AuditService.TrainingAssigned,
-                nameof(TrainingCourse),
-                course?.Title,
-                $"Assigned to {toAssign.Count} employee(s).");
-
-            var skipped = model.EmployeeIds.Distinct().Count()
-                - toAssign.Count;
-
             TempData["Success"] =
-                skipped > 0
-                    ? $"{toAssign.Count} employee(s) assigned. " +
-                      $"{skipped} were already assigned."
-                    : $"{toAssign.Count} employee(s) assigned successfully.";
+                outcome.AlreadyAssigned > 0
+                    ? $"{outcome.Assigned} employee(s) assigned. " +
+                      $"{outcome.AlreadyAssigned} were already assigned."
+                    : $"{outcome.Assigned} employee(s) assigned successfully.";
 
             return RedirectToAction(
                 nameof(Index),

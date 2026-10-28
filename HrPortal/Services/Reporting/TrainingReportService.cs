@@ -176,7 +176,13 @@ namespace HrPortal.Services.Reporting
                 return new TrainingCourseReportRow
                 {
                     Course = c.Title,
-                    Trainer = c.Trainer,
+                    // Spelled out rather than read from
+                    // TrainerName: this is a projection, and EF
+                    // cannot translate a property that lives in C#.
+                    Trainer = c.TrainerEmployee == null
+                        ? c.Trainer
+                        : c.TrainerEmployee.FirstName + " " +
+                          c.TrainerEmployee.LastName,
                     TrainingDate = c.TrainingDate,
                     Assigned = assigned,
                     Completed = done,

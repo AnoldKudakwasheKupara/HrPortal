@@ -277,6 +277,21 @@ namespace HrPortal.DbContexts
                     .WithMany()
                     .HasForeignKey(t => t.CreatedByEmployeeId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.TrainerEmployee)
+                    .WithMany()
+                    .HasForeignKey(t => t.TrainerEmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(t => t.TrainerEmployeeId);
+
+                // Loaded with the course wherever a course is
+                // loaded. A course is shown on a dozen pages and
+                // TrainingCourse.TrainerName reads this: an Include
+                // forgotten on one of them would not fail, it would
+                // quietly report that the course has no trainer.
+                entity.Navigation(t => t.TrainerEmployee)
+                    .AutoInclude();
             });
 
             builder.Entity<TrainingMaterial>(entity =>

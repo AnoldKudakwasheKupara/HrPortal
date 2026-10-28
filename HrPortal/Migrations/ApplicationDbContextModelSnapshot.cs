@@ -1527,12 +1527,17 @@ namespace HrPortal.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int?>("TrainerEmployeeId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("TrainingDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedByEmployeeId");
+
+                    b.HasIndex("TrainerEmployeeId");
 
                     b.ToTable("TrainingCourses");
                 });
@@ -2282,7 +2287,14 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("HrPortal.Entities.Employee", "TrainerEmployee")
+                        .WithMany()
+                        .HasForeignKey("TrainerEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("CreatedByEmployee");
+
+                    b.Navigation("TrainerEmployee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.TrainingFeedback", b =>
