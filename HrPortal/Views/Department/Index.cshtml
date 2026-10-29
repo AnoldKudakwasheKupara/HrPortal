@@ -133,22 +133,32 @@
 
                                     </a>
 
-                                    <form asp-action="ToggleStatus"
-                                          asp-route-id="@department.Id"
-                                          method="post">
+                                    @if (department.Employees.Count == 0)
+                                    {
+                                        <form asp-action="Delete"
+                                              asp-route-id="@department.Id"
+                                              method="post"
+                                              data-confirm="Delete the @department.Name department? This cannot be undone."
+                                              onsubmit="return confirm(this.dataset.confirm);">
 
-                                        @Html.AntiForgeryToken()
+                                            @Html.AntiForgeryToken()
 
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Delete
+                                            </button>
 
-                                            @(department.IsActive
-                                                ? "Deactivate"
-                                                : "Activate")
-
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                disabled
+                                                title="Move its @department.Employees.Count employee(s) to another department before deleting it.">
+                                            Delete
                                         </button>
-
-                                    </form>
+                                    }
 
                                 </div>
 

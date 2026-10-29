@@ -14,13 +14,16 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly AuditService _audit;
 
         public DepartmentController(
             ApplicationDbContext context,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            AuditService audit)
         {
             _context = context;
             _pdf = pdf;
+            _audit = audit;
         }
 
         /// <summary>
@@ -219,9 +222,14 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Removes a department nobody is in. One with people in it,
+        /// including people who have left, is refused: their records
+        /// still name it, so they have to be moved first.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleStatus(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var department = await _context.Departments
                 .Include(d => d.Employees)
@@ -230,31 +238,28 @@ namespace HrPortal.Controllers
             if (department == null)
                 return NotFound();
 
-            if (department.IsActive)
+            if (department.Employees.Count > 0)
             {
-                var hasActiveEmployees =
-                    department.Employees
-                        .Any(e => e.IsActive);
+                TempData["Error"] =
+                    $"{department.Name} cannot be deleted because " +
+                    $"{department.Employees.Count} employee(s) are still " +
+                    "in it, counting anyone who has left. Move them to " +
+                    "another department first.";
 
-                if (hasActiveEmployees)
-                {
-                    TempData["Error"] =
-                        "This department cannot be deactivated " +
-                        "because it still has active employees. " +
-                        "Move or deactivate the employees first.";
-
-                    return RedirectToAction(nameof(Index));
-                }
+                return RedirectToAction(nameof(Index));
             }
 
-            department.IsActive = !department.IsActive;
+            _context.Departments.Remove(department);
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                department.IsActive
-                    ? "Department activated successfully."
-                    : "Department deactivated successfully.";
+            await _audit.LogAsync(
+                AuditService.Deleted,
+                nameof(Department),
+                department.Id.ToString(),
+                $"{department.Name} deleted.");
+
+            TempData["Success"] = $"{department.Name} deleted.";
 
             return RedirectToAction(nameof(Index));
         }
