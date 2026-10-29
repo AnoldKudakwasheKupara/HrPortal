@@ -95,7 +95,7 @@ public class ForgotPasswordModel : PageModel
                 "Reset your My Intellego password",
                 "Somebody asked to reset the password for your My " +
                 "Intellego account. If it was you, choose a new password " +
-                "with the button below. The link works for 24 hours and " +
+                "using the link below. The link works for 24 hours and " +
                 "only once. If you did not ask, you can ignore this " +
                 "email and your password stays as it is.",
                 link,
