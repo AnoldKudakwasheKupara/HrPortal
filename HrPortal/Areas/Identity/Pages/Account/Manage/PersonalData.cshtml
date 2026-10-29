@@ -12,15 +12,15 @@
         <h2>Personal data</h2>
 
         <p class="text-muted">
-            What the portal holds against your sign-in, how to take a copy
-            of it, and how to close the account.
+            What the portal holds against your sign-in, and how to take a
+            copy of it.
         </p>
 
     </div>
 
     <div class="row g-3">
 
-        <div class="col-lg-7">
+        <div class="col-12">
 
             <div class="card shadow-sm h-100">
 
@@ -72,6 +72,8 @@
                         <a asp-area=""
                            asp-controller="MyProfile"
                            asp-action="Index">My Profile</a>.
+                        Your sign-in can only be closed by HR, when you
+                        leave.
                     </p>
 
                     <form id="download-data"
@@ -85,43 +87,6 @@
                         </button>
 
                     </form>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-lg-5">
-
-            <div class="card shadow-sm h-100">
-
-                <div class="card-header">Close this account</div>
-
-                <div class="card-body d-flex flex-column">
-
-                    <div class="alert alert-warning">
-                        <strong>This cannot be undone.</strong>
-                        Deleting removes the sign-in you are using now, so
-                        you will not be able to get back into the portal.
-                    </div>
-
-                    <div class="field-value">
-                        Your employment record stays with HR. It is the
-                        sign-in that goes, not your leave, training or
-                        documents.
-                    </div>
-
-                    <p class="text-muted small">
-                        You will be asked for your password to confirm.
-                    </p>
-
-                    <a id="delete"
-                       class="btn btn-danger mt-auto"
-                       asp-page="DeletePersonalData">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        Delete my account
-                    </a>
 
                 </div>
 
