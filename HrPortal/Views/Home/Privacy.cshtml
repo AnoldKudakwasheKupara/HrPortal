@@ -9,50 +9,18 @@
 
     var acknowledgedAt = ViewBag.AcknowledgedAt as DateTime?;
     var returnUrl = ViewBag.ReturnUrl as string;
-    var mustRead = signedIn && acknowledgedAt == null;
 }
 
 <section class="band">
 
     <div class="band-inner prose">
 
-        @if (mustRead)
-        {
-            <div class="alert alert-info" role="status">
-
-                <p>
-                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                    <strong>One step before you carry on.</strong>
-                    Please read how the portal uses your information below,
-                    then press <strong>I have read this notice</strong>.
-                    The rest of the portal opens once you have, and you
-                    will not be asked again unless the notice changes.
-                </p>
-
-                <form asp-controller="Privacy"
-                      asp-action="Acknowledge"
-                      method="post"
-                      class="mb-0">
-
-                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-
-                    <button type="submit" class="btn btn-primary">
-                        I have read this notice
-                    </button>
-
-                </form>
-
-            </div>
-        }
-        else
-        {
-            <a class="btn btn-outline-secondary mb-4"
-               asp-controller="Home"
-               asp-action="Index">
-                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                @(signedIn ? "Back to dashboard" : "Back to home")
-            </a>
-        }
+        <a class="btn btn-outline-secondary mb-4"
+           asp-controller="Home"
+           asp-action="Index">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            @(signedIn ? "Back to dashboard" : "Back to home")
+        </a>
 
         <span class="eyebrow">Privacy</span>
 
@@ -251,8 +219,8 @@
                             <input type="hidden" name="returnUrl" value="@returnUrl" />
 
                             <p>
-                                By continuing you confirm you have read
-                                how the portal uses your information.
+                                If you have read it, you can let HR know by
+                                confirming below. This is optional.
                             </p>
 
                             <button type="submit" class="btn btn-primary">

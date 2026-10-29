@@ -32,7 +32,7 @@ namespace HrPortal.Controllers
             if (Url.IsLocalUrl(returnUrl))
                 return LocalRedirect(returnUrl);
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Privacy", "Home");
         }
 
         /// <summary>
