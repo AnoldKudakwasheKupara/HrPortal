@@ -98,7 +98,7 @@ Sending is granted in Exchange Online, limited to the one mailbox:
 
 ```powershell
 New-ServicePrincipal -AppId <client id> -ObjectId <enterprise app object id> -DisplayName "My Intellego"
-New-ManagementScope -Name "My Intellego mailbox" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'noreply@intellego-ic.com'"
+New-ManagementScope -Name "My Intellego mailbox" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'no-reply@intellego-ic.com'"
 New-ManagementRoleAssignment -App <enterprise app object id> -Role "Application Mail.Send" -CustomResourceScope "My Intellego mailbox"
 ```
 
