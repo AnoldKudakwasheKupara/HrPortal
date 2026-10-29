@@ -20,6 +20,8 @@ namespace HrPortal.Services.Notifications
         PolicyPublished,
         PolicyUpdated,
         AssetAssigned,
-        DocumentAdded
+        DocumentAdded,
+        ExpiringSoon,
+        ExpiringThisWeek
     }
 }

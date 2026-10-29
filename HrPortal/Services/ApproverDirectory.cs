@@ -58,10 +58,11 @@ namespace HrPortal.Services
         /// Somebody who has left, or who has no account to sign in
         /// with, cannot approve anything.
         /// </summary>
-        private IQueryable<Employee> Holders(ApprovalRole role)
-        {
-            var signInRole = SignInRole(role);
+        private IQueryable<Employee> Holders(ApprovalRole role) =>
+            HoldersOf(SignInRole(role));
 
+        private IQueryable<Employee> HoldersOf(string signInRole)
+        {
             return _context.Employees
                 .AsNoTracking()
                 .Where(e =>
@@ -76,6 +77,13 @@ namespace HrPortal.Services
 
         public Task<List<int>> EmployeeIdsAsync(ApprovalRole role) =>
             Holders(role).Select(e => e.Id).ToListAsync();
+
+        /// <summary>
+        /// The same, for a sign-in role that is not an approval stage,
+        /// such as the administrators who look after licences.
+        /// </summary>
+        public Task<List<int>> EmployeeIdsWithRoleAsync(string signInRole) =>
+            HoldersOf(signInRole).Select(e => e.Id).ToListAsync();
 
         /// <summary>
         /// Whether this employee is one of the people who hold the

@@ -120,7 +120,8 @@ builder.Services.AddScoped<SupportContactsService>();
 builder.Services.AddScoped<ApproverDirectory>();
 builder.Services.AddScoped<TrainingAssignmentService>();
 builder.Services.AddScoped<TrainingReminderService>();
-builder.Services.AddHostedService<TrainingReminderWorker>();
+builder.Services.AddScoped<ExpiryReminderService>();
+builder.Services.AddHostedService<DailyReminderWorker>();
 builder.Services.AddScoped<SupervisorService>();
 
 builder.Services.AddScoped<SupervisorQueueService>();

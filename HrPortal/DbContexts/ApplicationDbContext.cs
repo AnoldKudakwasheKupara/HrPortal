@@ -25,6 +25,9 @@ namespace HrPortal.DbContexts
         public DbSet<TrainingMaterial> TrainingMaterials { get; set; }
 
         public DbSet<TrainingReminder> TrainingReminders { get; set; }
+
+        public DbSet<ExpiryReminder> ExpiryReminders { get; set; }
+
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
@@ -311,6 +314,24 @@ namespace HrPortal.DbContexts
                         r.TrainingCourseId,
                         r.EmployeeId,
                         r.SentOn
+                    })
+                    .IsUnique();
+            });
+
+            builder.Entity<ExpiryReminder>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Kind)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.HasIndex(r => new
+                    {
+                        r.Kind,
+                        r.RecordId,
+                        r.ExpiryDate,
+                        r.DaysBefore
                     })
                     .IsUnique();
             });

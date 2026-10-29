@@ -73,6 +73,10 @@ namespace HrPortal.Services.Notifications
                 new("Asset assigned", "#016a6a", "#e2efed", "View my assets"),
             EmailKind.DocumentAdded =>
                 new("Added to your file", "#016a6a", "#e2efed", "View my file"),
+            EmailKind.ExpiringSoon =>
+                new("Expiring soon", "#7e6e1e", "#f6f1dc", "See the details"),
+            EmailKind.ExpiringThisWeek =>
+                new("Expires this week", "#c53030", "#fdeded", "See the details"),
             _ =>
                 new("Notification", Primary, "#e2efed", "Open My Intellego")
         };
@@ -121,7 +125,9 @@ namespace HrPortal.Services.Notifications
                 : $"<span style=\"font-family:{Font};font-size:20px;font-weight:700;" +
                   "color:#ffffff;\">Intellego</span>";
 
-            var action = url == null
+            var action = string.IsNullOrWhiteSpace(n.Link)
+                ? string.Empty
+                : url == null
                 ? $"<p style=\"margin:28px 0 0;font-family:{Font};font-size:14px;" +
                   $"line-height:22px;color:{Muted};\">Sign in to My Intellego to see it.</p>"
                 : $"<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" " +
@@ -233,11 +239,15 @@ namespace HrPortal.Services.Notifications
             text.AppendLine(n.Message.TrimEnd());
             text.AppendLine();
 
-            text.AppendLine(url == null
-                ? "Sign in to My Intellego to see it."
-                : $"{look.Button}: {url}");
+            if (!string.IsNullOrWhiteSpace(n.Link))
+            {
+                text.AppendLine(url == null
+                    ? "Sign in to My Intellego to see it."
+                    : $"{look.Button}: {url}");
 
-            text.AppendLine();
+                text.AppendLine();
+            }
+
             text.AppendLine("--");
             text.AppendLine("My Intellego, Intellego Investment Consultants (Pvt) Ltd");
             text.AppendLine("This is an automatic message. Replies to it are not read.");

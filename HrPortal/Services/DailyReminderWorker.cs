@@ -1,14 +1,15 @@
 namespace HrPortal.Services
 {
     /// <summary>
-    /// Runs the training reminders once a day.
+    /// Runs the daily reminders: training coming up, and licences
+    /// and certifications about to expire.
     ///
     /// It also runs shortly after the portal starts. A server that
     /// was off at seven in the morning would otherwise skip that
     /// day altogether, and the log of what has already gone out
     /// keeps the catch-up from repeating anything.
     /// </summary>
-    public class TrainingReminderWorker : BackgroundService
+    public class DailyReminderWorker : BackgroundService
     {
         /// <summary>
         /// The hour reminders go out, in the server's own time.
@@ -20,11 +21,11 @@ namespace HrPortal.Services
             TimeSpan.FromMinutes(1);
 
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<TrainingReminderWorker> _logger;
+        private readonly ILogger<DailyReminderWorker> _logger;
 
-        public TrainingReminderWorker(
+        public DailyReminderWorker(
             IServiceScopeFactory scopeFactory,
-            ILogger<TrainingReminderWorker> logger)
+            ILogger<DailyReminderWorker> logger)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
@@ -43,6 +44,10 @@ namespace HrPortal.Services
             }
         }
 
+        /// <summary>
+        /// Each kind in a scope of its own, so one that fails does not
+        /// stop the other going out.
+        /// </summary>
         private async Task RunOnceAsync(CancellationToken stoppingToken)
         {
             try
@@ -59,6 +64,22 @@ namespace HrPortal.Services
                 _logger.LogError(
                     ex,
                     "Could not send today's training reminders.");
+            }
+
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+
+                var reminders = scope.ServiceProvider
+                    .GetRequiredService<ExpiryReminderService>();
+
+                await reminders.SendDueAsync(DateTime.Today);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Could not send today's expiry reminders.");
             }
         }
 
