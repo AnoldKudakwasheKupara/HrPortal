@@ -118,44 +118,6 @@
 
 </form>
 
-@if ((Model.ExternalLogins?.Count ?? 0) > 0)
-{
-    <div class="auth-divider"><span>or</span></div>
-
-    <form id="external-account"
-          asp-page="./ExternalLogin"
-          asp-route-returnUrl="@Model.ReturnUrl"
-          method="post">
-
-        @foreach (var provider in Model.ExternalLogins!)
-        {
-            <button type="submit"
-                    class="btn btn-secondary w-100 justify-content-center mb-2"
-                    name="provider"
-                    value="@provider.Name"
-                    title="Sign in using your @provider.DisplayName account">
-                Continue with @provider.DisplayName
-            </button>
-        }
-
-    </form>
-}
-else
-{
-    <div class="auth-divider"><span>or</span></div>
-}
-
-<p class="auth-foot-link">
-    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">
-        Resend confirmation email
-    </a>
-</p>
-
-<p class="auth-assurance">
-    <i class="fas fa-lock" aria-hidden="true"></i>
-    Your account is protected
-</p>
-
 <p class="auth-privacy">
     <a asp-area=""
        asp-controller="Home"
