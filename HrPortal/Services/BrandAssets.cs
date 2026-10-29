@@ -11,6 +11,8 @@ namespace HrPortal.Services
 
         private readonly Lazy<byte[]?> _markOnDark;
 
+        private readonly Lazy<byte[]?> _emailMark;
+
         public BrandAssets(
             IWebHostEnvironment environment,
             ILogger<BrandAssets> logger)
@@ -50,6 +52,7 @@ namespace HrPortal.Services
 
             _logo = Read("intellego-logo.png");
             _markOnDark = Read("intellego-logo-on-dark.png");
+            _emailMark = Read("intellego-logo-email.png");
         }
 
         /// <summary>
@@ -66,5 +69,12 @@ namespace HrPortal.Services
         public byte[]? MarkOnDark => _markOnDark.Value;
 
         public bool HasMarkOnDark => MarkOnDark != null;
+
+        /// <summary>
+        /// The mark for the green banner, sized for an email. Every
+        /// message carries its own copy, so it is the small one:
+        /// 13 KB rather than the 107 KB the printed forms use.
+        /// </summary>
+        public byte[]? EmailMark => _emailMark.Value;
     }
 }

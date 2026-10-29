@@ -1,42 +1,41 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
+using HrPortal.Services.Notifications;
 using MimeKit;
-using MimeKit.Text;
 
 namespace HrPortal.Services
 {
     public class EmailService
     {
         private readonly EmailOptions _options;
+        private readonly BrandAssets _brand;
         private readonly ILogger<EmailService> _logger;
 
         public EmailService(
             IOptions<EmailOptions> options,
+            BrandAssets brand,
             ILogger<EmailService> logger)
         {
             _options = options.Value;
+            _brand = brand;
             _logger = logger;
         }
 
         public bool IsEnabled => _options.Enabled;
 
-        public async Task<bool> SendAsync(
-            string toAddress,
-            string? toName,
-            string subject,
-            string body,
-            string? link = null,
+        public async Task<bool> SendNotificationAsync(
+            OutboundNotification notification,
             CancellationToken cancellationToken = default)
         {
             if (!_options.Enabled)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(toAddress))
+            if (string.IsNullOrWhiteSpace(notification.EmailAddress))
             {
                 _logger.LogDebug(
                     "Skipping notification email with no recipient: {Subject}",
-                    subject);
+                    notification.Title);
 
                 return false;
             }
@@ -52,7 +51,7 @@ namespace HrPortal.Services
 
             try
             {
-                var message = Build(toAddress, toName, subject, body, link);
+                var message = Build(notification);
 
                 if (_options.Delivery == EmailDelivery.File)
                 {
@@ -70,55 +69,52 @@ namespace HrPortal.Services
                     ex,
                     "Could not send the notification email to {Recipient}: " +
                     "{Subject}",
-                    toAddress,
-                    subject);
+                    notification.EmailAddress,
+                    notification.Title);
 
                 return false;
             }
         }
 
-        private MimeMessage Build(
-            string toAddress,
-            string? toName,
-            string subject,
-            string body,
-            string? link)
+        private MimeMessage Build(OutboundNotification notification)
         {
+            var logo = _brand.EmailMark;
+
+            var rendered = NotificationEmail.Render(
+                notification,
+                _options.PortalBaseUrl,
+                hasLogo: logo != null);
+
             var message = new MimeMessage();
 
             message.From.Add(
                 new MailboxAddress(_options.FromName, _options.FromAddress));
 
-            message.To.Add(new MailboxAddress(toName ?? string.Empty, toAddress));
+            message.To.Add(new MailboxAddress(
+                notification.DisplayName ?? string.Empty,
+                notification.EmailAddress));
 
-            message.Subject = subject;
+            message.Subject = rendered.Subject;
 
-            var text = body.TrimEnd();
+            var body = new BodyBuilder
+            {
+                HtmlBody = rendered.Html,
+                TextBody = rendered.Text
+            };
 
-            var url = AbsoluteLink(link);
+            if (logo != null)
+            {
+                var image = body.LinkedResources.Add(
+                    "intellego-logo.png",
+                    logo,
+                    new ContentType("image", "png"));
 
-            if (url != null)
-                text += $"\n\nOpen it here: {url}";
+                image.ContentId = NotificationEmail.LogoContentId;
+            }
 
-            text +=
-                $"\n\n--\n{_options.FromName}\n" +
-                "This is an automatic message. Replies are not read.";
-
-            message.Body = new TextPart(TextFormat.Plain) { Text = text };
+            message.Body = body.ToMessageBody();
 
             return message;
-        }
-
-        private string? AbsoluteLink(string? link)
-        {
-            if (string.IsNullOrWhiteSpace(link))
-                return null;
-
-            if (string.IsNullOrWhiteSpace(_options.PortalBaseUrl))
-                return null;
-
-            return _options.PortalBaseUrl.TrimEnd('/') +
-                   "/" + link.TrimStart('/');
         }
 
         private async Task SendOverSmtpAsync(

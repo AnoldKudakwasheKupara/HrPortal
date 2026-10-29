@@ -20,7 +20,9 @@ namespace HrPortal.Services.Notifications
         int EmployeeId,
         string EmailAddress,
         string? DisplayName,
+        string? FirstName,
         string Title,
         string Message,
-        string? Link);
+        string? Link,
+        EmailKind Kind);
 }

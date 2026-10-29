@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -130,7 +131,8 @@ namespace HrPortal.Services
                     $"{application.ApplicationNumber} from " +
                     $"{Who(application)} is waiting for your approval " +
                     "as supervisor.",
-                    $"/LoanApproval/Details/{application.Id}");
+                    $"/LoanApproval/Details/{application.Id}",
+                    EmailKind.ActionNeeded);
             }
             else
             {
@@ -142,7 +144,8 @@ namespace HrPortal.Services
                     LoanCurrencies.Format(
                         application.Currency,
                         application.AmountRequested) + ".",
-                    $"/LoanApproval/Details/{application.Id}");
+                    $"/LoanApproval/Details/{application.Id}",
+                    EmailKind.ActionNeeded);
             }
 
             await _context.SaveChangesAsync();
@@ -178,7 +181,8 @@ namespace HrPortal.Services
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} has been approved by their " +
                 "supervisor and is waiting for you.",
-                $"/LoanApproval/Details/{application.Id}");
+                $"/LoanApproval/Details/{application.Id}",
+                EmailKind.ActionNeeded);
 
             _notifications.Notify(
                 application.EmployeeId,
@@ -216,7 +220,8 @@ namespace HrPortal.Services
                 "Loan application declined by your supervisor",
                 $"{application.ApplicationNumber} was declined." +
                 (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
-                $"/MyLoans/Details/{application.Id}");
+                $"/MyLoans/Details/{application.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
         }
@@ -248,7 +253,8 @@ namespace HrPortal.Services
                 $"{application.ApplicationNumber} needs a change " +
                 "before it can go on." +
                 (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
-                $"/MyLoans/Details/{application.Id}");
+                $"/MyLoans/Details/{application.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
         }
@@ -285,7 +291,8 @@ namespace HrPortal.Services
                     amountAuthorised) + ", repayable over " +
                 $"{application.RepaymentMonths} months from " +
                 $"{repaymentStartDate:d MMM yyyy}.",
-                $"/MyLoans/Details/{application.Id}");
+                $"/MyLoans/Details/{application.Id}",
+                EmailKind.Approved);
 
             await _context.SaveChangesAsync();
         }
@@ -314,7 +321,8 @@ namespace HrPortal.Services
                 "Loan application declined",
                 $"{application.ApplicationNumber} was not approved." +
                 Because(comment),
-                $"/MyLoans/Details/{application.Id}");
+                $"/MyLoans/Details/{application.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
         }
@@ -343,7 +351,8 @@ namespace HrPortal.Services
                 "Loan application sent back",
                 $"{application.ApplicationNumber} needs changes before " +
                 "it can be looked at again." + Because(comment),
-                $"/MyLoans/Edit/{application.Id}");
+                $"/MyLoans/Edit/{application.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
         }

@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -100,7 +101,8 @@ namespace HrPortal.Services
                     $"You are the trainer for \"{course.Title}\"" +
                     $"{scheduled}. {post} Everybody on the staff " +
                     "list has been assigned it.",
-                    "/TrainingMaterial?courseId=" + course.Id);
+                    "/TrainingMaterial?courseId=" + course.Id,
+                    EmailKind.TrainerAssigned);
             }
 
             var due = dueDate.HasValue
@@ -125,7 +127,8 @@ namespace HrPortal.Services
                     "Training scheduled",
                     $"\"{course.Title}\" has been scheduled" +
                     $"{scheduled} and you are down to attend.{due}",
-                    "/MyTraining");
+                    "/MyTraining",
+                    EmailKind.TrainingScheduled);
             }
 
             await _context.SaveChangesAsync();

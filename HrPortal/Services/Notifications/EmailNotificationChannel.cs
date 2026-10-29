@@ -22,12 +22,8 @@ namespace HrPortal.Services.Notifications
 
             foreach (var item in batch)
             {
-                var sent = await _email.SendAsync(
-                    item.EmailAddress,
-                    item.DisplayName,
-                    item.Title,
-                    item.Message,
-                    item.Link,
+                var sent = await _email.SendNotificationAsync(
+                    item,
                     cancellationToken);
 
                 if (sent)

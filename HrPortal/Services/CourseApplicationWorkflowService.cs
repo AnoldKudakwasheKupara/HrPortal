@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -137,7 +138,8 @@ namespace HrPortal.Services
                     $"{application.ApplicationNumber} from " +
                     $"{Who(application)} is waiting for your approval " +
                     "as supervisor.",
-                    $"/CourseApproval/Details/{application.Id}");
+                    $"/CourseApproval/Details/{application.Id}",
+                    EmailKind.ActionNeeded);
             }
             else
             {
@@ -147,7 +149,8 @@ namespace HrPortal.Services
                     $"{application.ApplicationNumber} from " +
                     $"{Who(application)} for " +
                     $"{application.ProgramIntended}.",
-                    $"/CourseApproval/Details/{application.Id}");
+                    $"/CourseApproval/Details/{application.Id}",
+                    EmailKind.ActionNeeded);
             }
 
             await _context.SaveChangesAsync();
@@ -183,7 +186,8 @@ namespace HrPortal.Services
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} has been approved by their " +
                 "supervisor and is waiting for you.",
-                $"/CourseApproval/Details/{application.Id}");
+                $"/CourseApproval/Details/{application.Id}",
+                EmailKind.ActionNeeded);
 
             _notifications.Notify(
                 application.EmployeeId,
@@ -222,7 +226,8 @@ namespace HrPortal.Services
                 "Course application declined by your supervisor",
                 $"{application.ApplicationNumber} was declined." +
                 (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
-                $"/MyCourses/Details/{application.Id}");
+                $"/MyCourses/Details/{application.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
         }
@@ -254,7 +259,8 @@ namespace HrPortal.Services
                 $"{application.ApplicationNumber} needs a change " +
                 "before it can go on." +
                 (string.IsNullOrWhiteSpace(comment) ? "" : $" {comment}"),
-                $"/MyCourses/Details/{application.Id}");
+                $"/MyCourses/Details/{application.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
         }
@@ -285,7 +291,8 @@ namespace HrPortal.Services
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} for " +
                 $"{application.ProgramIntended} has cleared HR.",
-                $"/CourseApproval/Details/{application.Id}");
+                $"/CourseApproval/Details/{application.Id}",
+                EmailKind.ActionNeeded);
 
             _notifications.Notify(
                 application.EmployeeId,
@@ -323,7 +330,8 @@ namespace HrPortal.Services
                 "Course application declined",
                 $"{application.ApplicationNumber} was not approved by " +
                 "HR." + Because(comment),
-                $"/MyCourses/Details/{application.Id}");
+                $"/MyCourses/Details/{application.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
         }
@@ -354,7 +362,8 @@ namespace HrPortal.Services
                 "Course application sent back",
                 $"{application.ApplicationNumber} needs changes " +
                 "before it can go further." + Because(comment),
-                $"/MyCourses/Edit/{application.Id}");
+                $"/MyCourses/Edit/{application.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
         }
@@ -385,7 +394,8 @@ namespace HrPortal.Services
                 "Course application approved",
                 $"{application.ApplicationNumber} for " +
                 $"{application.ProgramIntended} was approved.",
-                $"/MyCourses/Details/{application.Id}");
+                $"/MyCourses/Details/{application.Id}",
+                EmailKind.Approved);
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.HROfficer,
@@ -424,7 +434,8 @@ namespace HrPortal.Services
                 "Course application declined",
                 $"{application.ApplicationNumber} was not approved." +
                 Because(comment),
-                $"/MyCourses/Details/{application.Id}");
+                $"/MyCourses/Details/{application.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
         }

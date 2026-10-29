@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -219,7 +220,8 @@ namespace HrPortal.Services
                     "Leave request awaiting your approval",
                     $"{request.RequestNumber} is waiting for your " +
                     "approval as supervisor.",
-                    $"/LeaveApproval/Details/{request.Id}");
+                    $"/LeaveApproval/Details/{request.Id}",
+                    EmailKind.ActionNeeded);
             }
             else if (isHrOfficersOwn)
             {
@@ -228,7 +230,8 @@ namespace HrPortal.Services
                     "Leave request awaiting final approval",
                     $"{request.RequestNumber} is the HR Officer's own " +
                     "request and needs your decision.",
-                    $"/LeaveApproval/Details/{request.Id}");
+                    $"/LeaveApproval/Details/{request.Id}",
+                    EmailKind.ActionNeeded);
             }
             else
             {
@@ -236,7 +239,8 @@ namespace HrPortal.Services
                     ApprovalRole.HROfficer,
                     "Leave request submitted",
                     $"{request.RequestNumber} is waiting for your review.",
-                    $"/LeaveApproval/Details/{request.Id}");
+                    $"/LeaveApproval/Details/{request.Id}",
+                    EmailKind.ActionNeeded);
             }
 
             await _context.SaveChangesAsync();
@@ -285,7 +289,8 @@ namespace HrPortal.Services
                 "Leave request approved by supervisor",
                 $"{request.RequestNumber} has been approved by the " +
                 "employee's supervisor and is waiting for you.",
-                $"/LeaveApproval/Details/{request.Id}");
+                $"/LeaveApproval/Details/{request.Id}",
+                EmailKind.ActionNeeded);
 
             _notifications.Notify(
                 request.EmployeeId,
@@ -330,7 +335,8 @@ namespace HrPortal.Services
                 (string.IsNullOrWhiteSpace(comment)
                     ? ""
                     : $" {comment}"),
-                $"/MyLeave/Details/{request.Id}");
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
 
@@ -373,7 +379,8 @@ namespace HrPortal.Services
                 (string.IsNullOrWhiteSpace(comment)
                     ? ""
                     : $" {comment}"),
-                $"/MyLeave/Details/{request.Id}");
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
 
@@ -414,7 +421,8 @@ namespace HrPortal.Services
                 "Leave request awaiting final approval",
                 $"{request.RequestNumber} has cleared HR and needs " +
                 "your decision.",
-                $"/LeaveApproval/Details/{request.Id}");
+                $"/LeaveApproval/Details/{request.Id}",
+                EmailKind.ActionNeeded);
 
             await _context.SaveChangesAsync();
 
@@ -450,7 +458,8 @@ namespace HrPortal.Services
                 request.EmployeeId,
                 "Leave rejected by HR",
                 $"{request.RequestNumber} was rejected by HR.",
-                $"/MyLeave/Details/{request.Id}");
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
 
@@ -486,7 +495,8 @@ namespace HrPortal.Services
                 "Leave request returned",
                 $"{request.RequestNumber} was returned to you for " +
                 "correction. Update it and send it again.",
-                $"/MyLeave/Edit/{request.Id}");
+                $"/MyLeave/Edit/{request.Id}",
+                EmailKind.Returned);
 
             await _context.SaveChangesAsync();
 
@@ -523,7 +533,8 @@ namespace HrPortal.Services
                 "Leave approved",
                 $"{request.RequestNumber} has been approved by the " +
                 "Managing Director.",
-                $"/MyLeave/Details/{request.Id}");
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Approved);
 
             await _context.SaveChangesAsync();
 
@@ -561,7 +572,8 @@ namespace HrPortal.Services
                 "Leave rejected",
                 $"{request.RequestNumber} was rejected by the " +
                 "Managing Director.",
-                $"/MyLeave/Details/{request.Id}");
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Declined);
 
             await _context.SaveChangesAsync();
 
@@ -645,7 +657,6 @@ namespace HrPortal.Services
 
             return $"{prefix}{next:D4}";
         }
-
         private void AddHistory(
             LeaveRequest request,
             int actedByEmployeeId,

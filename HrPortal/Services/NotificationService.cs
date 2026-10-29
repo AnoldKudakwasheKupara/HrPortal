@@ -29,11 +29,19 @@ namespace HrPortal.Services
             _context.SavedChanges += OnSavedChanges;
         }
 
+        /// <summary>
+        /// Puts a notification in the person's bell, and emails it
+        /// too when it is given a kind. Without one it stays in the
+        /// bell: most of what the portal says is progress or a
+        /// repeated nudge, and an inbox that gets all of it is one
+        /// that stops being read.
+        /// </summary>
         public void Notify(
             int employeeId,
             string title,
             string message,
-            string? link = null)
+            string? link = null,
+            EmailKind? email = null)
         {
             _context.Notifications.Add(
                 new Notification
@@ -46,7 +54,8 @@ namespace HrPortal.Services
                     CreatedAt = DateTime.UtcNow
                 });
 
-            _pending.Add(new PendingEmail(employeeId, title, message, link));
+            if (email is EmailKind kind)
+                _pending.Add(new PendingEmail(employeeId, title, message, link, kind));
         }
 
         /// <summary>
@@ -59,12 +68,13 @@ namespace HrPortal.Services
             ApprovalRole role,
             string title,
             string message,
-            string? link = null)
+            string? link = null,
+            EmailKind? email = null)
         {
             var approvers = await _approvers.EmployeeIdsAsync(role);
 
             foreach (var employeeId in approvers)
-                Notify(employeeId, title, message, link);
+                Notify(employeeId, title, message, link, email);
         }
 
         private void OnSavedChanges(object? sender, SavedChangesEventArgs e)
@@ -107,6 +117,7 @@ namespace HrPortal.Services
                     {
                         emp.Id,
                         emp.Email,
+                        emp.FirstName,
                         Name = emp.FirstName + " " + emp.LastName
                     })
                     .ToDictionaryAsync(emp => emp.Id);
@@ -122,9 +133,11 @@ namespace HrPortal.Services
                         item.EmployeeId,
                         to.Email,
                         to.Name,
+                        to.FirstName,
                         item.Title,
                         item.Message,
-                        item.Link));
+                        item.Link,
+                        item.Kind));
                 }
 
                 if (outbound.Count == 0)
@@ -172,6 +185,7 @@ namespace HrPortal.Services
             int EmployeeId,
             string Title,
             string Message,
-            string? Link);
+            string? Link,
+            EmailKind Kind);
     }
 }

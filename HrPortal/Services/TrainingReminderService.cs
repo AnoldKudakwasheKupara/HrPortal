@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -17,7 +18,11 @@ namespace HrPortal.Services
     {
         /// <summary>
         /// How far ahead the chasing starts. A reminder then goes
-        /// every day until the date arrives.
+        /// every day until the date arrives, in the bell. Only the
+        /// one three days out and the one the day before are also
+        /// emailed, and for content gone overdue only the first day
+        /// of it: seven emails a course is how a reminder becomes
+        /// something people filter away.
         /// </summary>
         public const int LeadDays = 7;
 
@@ -112,7 +117,13 @@ namespace HrPortal.Services
                     $"The content for \"{course.Title}\" {when} " +
                     $"({due:dd MMM yyyy}) and nothing has been " +
                     "posted yet.",
-                    "/TrainingMaterial?courseId=" + course.Id);
+                    "/TrainingMaterial?courseId=" + course.Id,
+                    days switch
+                    {
+                        3 or 1 => EmailKind.ContentDue,
+                        -1 => EmailKind.ContentOverdue,
+                        _ => null
+                    });
 
                 Record(
                     TrainingReminderKind.Content,
@@ -191,7 +202,10 @@ namespace HrPortal.Services
                             : string.Empty),
                         leading
                             ? "/TrainingMaterial?courseId=" + course.Id
-                            : "/MyTraining");
+                            : "/MyTraining",
+                        days is 3 or 1
+                            ? EmailKind.SessionReminder
+                            : null);
 
                     Record(
                         TrainingReminderKind.Session,
