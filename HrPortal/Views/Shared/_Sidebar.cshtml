@@ -43,7 +43,7 @@
 
     <div class="nav-group">Home</div>
 
-    <a class="nav-item @On("Home")"
+    <a class="nav-item @OnAction("Home", "Index")"
        asp-controller="Home" asp-action="Index">
         <i class="fas fa-house"></i> Dashboard
     </a>
@@ -333,6 +333,11 @@
         <a class="nav-item @On("Help")"
            asp-controller="Help" asp-action="Index">
             <i class="fas fa-circle-question"></i> Help &amp; Support
+        </a>
+
+        <a class="nav-item @OnAction("Home", "Privacy")@On("Privacy")"
+           asp-controller="Home" asp-action="Privacy">
+            <i class="fas fa-shield-halved"></i> Privacy notice
         </a>
 
     </div>

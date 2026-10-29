@@ -28,6 +28,8 @@ namespace HrPortal.DbContexts
 
         public DbSet<ExpiryReminder> ExpiryReminders { get; set; }
 
+        public DbSet<PrivacyNoticeAcknowledgement> PrivacyNoticeAcknowledgements { get; set; }
+
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
@@ -315,6 +317,26 @@ namespace HrPortal.DbContexts
                         r.EmployeeId,
                         r.SentOn
                     })
+                    .IsUnique();
+            });
+
+            builder.Entity<PrivacyNoticeAcknowledgement>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+
+                entity.Property(a => a.Version)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(a => a.IpAddress)
+                    .HasMaxLength(64);
+
+                entity.HasOne(a => a.User)
+                    .WithMany()
+                    .HasForeignKey(a => a.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(a => new { a.UserId, a.Version })
                     .IsUnique();
             });
 

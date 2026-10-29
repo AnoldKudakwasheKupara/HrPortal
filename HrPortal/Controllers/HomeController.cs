@@ -3,16 +3,21 @@ using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace HrPortal.Controllers
 {
     public class HomeController : Controller
     {
         private readonly DashboardService _dashboard;
+        private readonly PrivacyNoticeService _privacy;
 
-        public HomeController(DashboardService dashboard)
+        public HomeController(
+            DashboardService dashboard,
+            PrivacyNoticeService privacy)
         {
             _dashboard = dashboard;
+            _privacy = privacy;
         }
 
         [AllowAnonymous]
@@ -30,8 +35,15 @@ namespace HrPortal.Controllers
         /// should be able to read it first.
         /// </summary>
         [AllowAnonymous]
-        public IActionResult Privacy()
+        public async Task<IActionResult> Privacy(string? returnUrl)
         {
+            ViewBag.ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : null;
+
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (int.TryParse(id, out var userId))
+                ViewBag.AcknowledgedAt = await _privacy.AcknowledgedAtAsync(userId);
+
             return View();
         }
 

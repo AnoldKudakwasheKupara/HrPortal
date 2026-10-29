@@ -160,6 +160,8 @@ builder.Services.AddScoped<ApproverDirectory>();
 builder.Services.AddScoped<TrainingAssignmentService>();
 builder.Services.AddScoped<TrainingReminderService>();
 builder.Services.AddScoped<ExpiryReminderService>();
+builder.Services.AddScoped<PrivacyNoticeService>();
+builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<DailyReminderWorker>();
 builder.Services.AddScoped<SupervisorService>();
 
@@ -375,6 +377,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(PrivacyNoticeService.GateAsync);
 
 app.MapControllerRoute(
     name: "default",

@@ -1,0 +1,86 @@
+@model List<HrPortal.Services.PrivacyNoticeReader>
+
+@{
+    ViewData["Title"] = "Privacy notice readers";
+
+    var read = Model.Count(r => r.AcknowledgedAt.HasValue);
+}
+
+<div class="container">
+
+    <div class="page-head">
+
+        <div>
+            <h2>Privacy notice readers</h2>
+
+            <p class="text-muted">
+                Who has confirmed reading the notice dated
+                @HrPortal.Services.PrivacyNoticeService.VersionDate.ToString("d MMMM yyyy"):
+                @read of @Model.Count staff who can sign in.
+            </p>
+        </div>
+
+        <a asp-controller="Home"
+           asp-action="Privacy"
+           class="btn btn-outline-secondary">
+            Read the notice
+        </a>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Read on</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                Nobody can sign in yet.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var reader in Model)
+                    {
+                        <tr>
+                            <td><strong>@reader.Name</strong></td>
+                            <td>@reader.Department</td>
+                            <td>
+                                @if (reader.AcknowledgedAt is DateTime at)
+                                {
+                                    @at.ToLocalTime().ToString("d MMM yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Not yet</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

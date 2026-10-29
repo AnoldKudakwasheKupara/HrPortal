@@ -6,18 +6,34 @@
     Layout = signedIn
         ? "~/Views/Shared/_Layout.cshtml"
         : "~/Views/Shared/_PublicLayout.cshtml";
+
+    var acknowledgedAt = ViewBag.AcknowledgedAt as DateTime?;
+    var returnUrl = ViewBag.ReturnUrl as string;
+    var mustRead = signedIn && acknowledgedAt == null;
 }
 
 <section class="band">
 
     <div class="band-inner prose">
 
-        <a class="btn btn-outline-secondary mb-4"
-           asp-controller="Home"
-           asp-action="Index">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-            @(signedIn ? "Back to dashboard" : "Back to home")
-        </a>
+        @if (mustRead)
+        {
+            <div class="alert alert-info" role="status">
+                <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                Before you carry on, please read how the portal uses your
+                information. You only need to do this once, unless the
+                notice changes.
+            </div>
+        }
+        else
+        {
+            <a class="btn btn-outline-secondary mb-4"
+               asp-controller="Home"
+               asp-action="Index">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                @(signedIn ? "Back to dashboard" : "Back to home")
+            </a>
+        }
 
         <span class="eyebrow">Privacy</span>
 
@@ -27,7 +43,13 @@
             My Intellego is the staff portal of Intellego Investment
             Consultants (Pvt) Ltd. It holds employment records for
             people who work here, so that leave, training, documents
-            and related requests can be handled in one place.
+            and related requests can be handled in one place. The
+            company is responsible for this information under the
+            Cyber and Data Protection Act [Chapter 12:07].
+        </p>
+
+        <p class="text-muted">
+            Last updated @HrPortal.Services.PrivacyNoticeService.VersionDate.ToString("d MMMM yyyy").
         </p>
 
         <h2>What the portal holds about you</h2>
@@ -46,8 +68,8 @@
             </li>
             <li>
                 <strong>Your job.</strong> Job title, department,
-                employment type, the date you joined, and where
-                relevant a contract end date or leaving date and
+                supervisor, employment type, the date you joined, and
+                where relevant a contract end date or leaving date and
                 reason.
             </li>
             <li>
@@ -58,19 +80,23 @@
             </li>
             <li>
                 <strong>What you have asked for.</strong> Leave
-                requests and balances, loan applications and any
-                receipts or quotations attached to them, course
-                applications, and the decisions taken on each.
+                requests, loan applications and any receipts or
+                quotations attached to them, course applications, and
+                the decisions taken on each. The reason you give for
+                sick leave can say something about your health, which
+                the law treats as especially sensitive; give only as
+                much as is needed.
             </li>
             <li>
                 <strong>Your training and documents.</strong> Training
                 assigned to you and any feedback you give,
-                certifications recorded against your name, documents
-                HR holds for you, and policies you have acknowledged.
+                certifications recorded against your name and when
+                they expire, documents HR files for you, and policies
+                you have acknowledged.
             </li>
             <li>
-                <strong>Company property.</strong> Assets issued to
-                you.
+                <strong>Company property.</strong> Assets and licences
+                issued to you.
             </li>
             <li>
                 <strong>Your sign-in.</strong> Your account, the roles
@@ -82,10 +108,13 @@
         <h2>Why it is held</h2>
 
         <p>
-            To administer your employment: to pay and account for
-            leave, to route approvals to the right people, to meet the
-            company's record-keeping obligations, and to reach
-            somebody on your behalf in an emergency.
+            To administer your employment: to account for leave, to
+            route requests to the right people for a decision, to
+            remind you of training and renewals, to meet the company's
+            record-keeping obligations, and to reach somebody on your
+            behalf in an emergency. The company holds it because your
+            employment requires it and because the law requires
+            employment records to be kept.
         </p>
 
         <h2>Who can see it</h2>
@@ -97,16 +126,23 @@
             </li>
             <li>
                 <strong>HR</strong> can see staff records, requests
-                and documents, in order to administer them.
+                and documents, in order to administer them. Only HR
+                can see your national identity number, date of birth,
+                home address and next of kin, and each time they open
+                them it is recorded.
             </li>
             <li>
-                <strong>Approvers</strong> see the requests put in
-                front of them for a decision, and the applicant's
-                name and department alongside.
+                <strong>Your supervisor and the Managing Director</strong>
+                see the requests put in front of them for a decision,
+                with your name and department alongside. On a course
+                application they see only the last few characters of
+                your ID number.
             </li>
             <li>
-                <strong>Administrators</strong> can see records and
-                settings in order to keep the portal running.
+                <strong>Administrators</strong> keep the portal
+                running and look after company assets and licences.
+                They can see employment records, but not the details
+                above that are for HR only.
             </li>
             <li>
                 <strong>Colleagues</strong> see only what the staff
@@ -115,20 +151,31 @@
             </li>
         </ul>
 
+        <h2>Where it is kept</h2>
+
+        <p>
+            The portal and its files are hosted by Render on servers
+            in Frankfurt, Germany, and emails from the portal are sent
+            through the company's Microsoft 365 account. Both act only
+            on the company's instructions. Information travels to and
+            from the portal encrypted.
+        </p>
+
         <p>
             Nothing in the portal is sold, and nothing is shared
-            outside the company except where the company is required
-            to do so by law or by a regulator.
+            outside the company except with those providers or where
+            the company is required to do so by law or by a regulator.
         </p>
 
         <h2>What is recorded about your use</h2>
 
         <p>
-            Actions that change a record are written to an audit log
-            with your name and the time, so that decisions can be
-            traced afterwards. Approval steps are also kept on the
-            request itself, showing who decided what and when, and any
-            comment they left.
+            Actions that change a record, and HR opening somebody's
+            personal details, are written to an audit log with the
+            person's name, the time and the internet address they
+            used, so that what happened can be traced afterwards.
+            Approval steps are also kept on the request itself, showing
+            who decided what and when, and any comment they left.
         </p>
 
         <h2>How long it is kept</h2>
@@ -140,32 +187,76 @@
             until they are superseded or no longer needed.
         </p>
 
-        <h2>Keeping it accurate</h2>
+        <h2>Your rights</h2>
 
         <p>
-            You can correct most of your own details on My Profile.
-            Anything you cannot change yourself, including your name,
-            employee number and employment dates, is maintained by HR
-            on request.
+            You can ask to see what the portal holds about you, to
+            have anything wrong corrected, and to have anything the
+            company no longer needs removed. You can correct some of
+            your own details, such as your next of kin, on My Profile;
+            HR maintains the rest and will correct it on request.
         </p>
 
         <h2>Who to ask</h2>
 
         <p>
             Questions about this notice, about what is held about you,
-            or a request to see or correct it should go to HR. If you
-            are not satisfied with the answer, raise it with the
-            Managing Director.
+            or a request to see or correct it should go to HR, who can
+            also put you in touch with the company's data protection
+            officer. If you are not satisfied with the answer, you can
+            complain to the Postal and Telecommunications Regulatory
+            Authority of Zimbabwe (POTRAZ), which oversees data
+            protection.
         </p>
 
-        <p class="prose-note">
-            This notice describes how the portal works today. It is
-            not legal advice and has not been reviewed by a legal
-            adviser. The company should have whoever is responsible
-            for data protection check it against the Data Protection
-            Act [Chapter 11:12] and its own policies before relying
-            on it.
-        </p>
+        @if (signedIn)
+        {
+            <div class="card shadow-sm mt-4">
+
+                <div class="card-body">
+
+                    @if (acknowledgedAt is DateTime read)
+                    {
+                        <p class="mb-0">
+                            <i class="fas fa-circle-check text-success" aria-hidden="true"></i>
+                            You confirmed you had read this notice on
+                            @read.ToLocalTime().ToString("d MMMM yyyy 'at' HH:mm").
+                        </p>
+                    }
+                    else
+                    {
+                        <form asp-controller="Privacy"
+                              asp-action="Acknowledge"
+                              method="post">
+
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                            <p>
+                                By continuing you confirm you have read
+                                how the portal uses your information.
+                            </p>
+
+                            <button type="submit" class="btn btn-primary">
+                                I have read this notice
+                            </button>
+
+                        </form>
+                    }
+
+                    @if (User.IsInRole(HrPortal.Security.Roles.Administrator) ||
+                         User.IsInRole(HrPortal.Security.Roles.HrOfficer))
+                    {
+                        <p class="mb-0 mt-3">
+                            <a asp-controller="Privacy" asp-action="Readers">
+                                See who has read it
+                            </a>
+                        </p>
+                    }
+
+                </div>
+
+            </div>
+        }
 
     </div>
 

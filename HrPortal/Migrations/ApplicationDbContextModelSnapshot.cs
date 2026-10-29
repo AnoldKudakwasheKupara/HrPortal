@@ -1370,6 +1370,37 @@ namespace HrPortal.Migrations
                     b.ToTable("PolicyAcknowledgements");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.PrivacyNoticeAcknowledgement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AcknowledgedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("PrivacyNoticeAcknowledgements");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.PublicHoliday", b =>
                 {
                     b.Property<int>("Id")
@@ -2314,6 +2345,17 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.PrivacyNoticeAcknowledgement", b =>
+                {
+                    b.HasOne("HrPortal.Data.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>
