@@ -157,6 +157,10 @@
 
 .stat-grid[data-count="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
+.stat-grid[data-count="5"] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.stat-grid[data-count="5"] > * { grid-column: span 2; }
+.stat-grid[data-count="5"] > :nth-last-child(-n+2) { grid-column: span 3; }
+
 .dash-bento {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -594,6 +598,10 @@
     .dash-bento .bento-card.tall-2 { grid-row: auto; }
     .stat-grid,
     .stat-grid[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat-grid[data-count="5"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat-grid[data-count="5"] > *,
+    .stat-grid[data-count="5"] > :nth-last-child(-n+2) { grid-column: auto; }
+    .stat-grid[data-count="5"] > :last-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 992px) {
@@ -609,6 +617,7 @@
 
     .stat-grid,
     .stat-grid[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+    .stat-grid[data-count="5"] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
     .bento-card.is-compact { padding: .9rem; }
     .bento-card.is-compact .bento-stat { font-size: 1.3rem; }
     .bento-card.is-compact .bento-title { font-size: .85rem; }

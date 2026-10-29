@@ -91,6 +91,15 @@ namespace HrPortal.Services
                 .OrderByDescending(b => b.RemainingDays)
                 .FirstOrDefault();
 
+            var daysTaken = balances.Count > 0
+                ? balances.Sum(b => b.UsedDays)
+                : await _context.LeaveRequests
+                    .Where(r =>
+                        r.EmployeeId == employeeId &&
+                        r.Status == LeaveRequestStatus.Approved &&
+                        r.StartDate.Year == year)
+                    .SumAsync(r => r.NumberOfDays);
+
             return new MyDashboardSection
             {
                 HasBalances = balances.Count > 0,
@@ -126,7 +135,7 @@ namespace HrPortal.Services
                     .CountAsync(a =>
                         a.AssignedToEmployeeId == employeeId),
 
-                DaysTakenThisYear = balances.Sum(b => b.UsedDays),
+                DaysTakenThisYear = daysTaken,
 
                 RecentRequests = await _context.LeaveRequests
                     .Include(r => r.LeaveType)

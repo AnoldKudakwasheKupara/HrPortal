@@ -165,13 +165,18 @@
     {
         var me = Model.Mine ?? new HrPortal.ViewModels.MyDashboardSection();
         lede = "Here's where your leave, training and requests stand.";
-        metaNote = me.HasBalances ? $"{me.RemainingDays:0.#} leave days left" : "no leave balance set up yet";
+        metaNote = me.HasBalances
+            ? $"{me.RemainingDays:0.#} leave days left"
+            : $"{me.DaysTakenThisYear:0.#} leave day{(me.DaysTakenThisYear == 1 ? "" : "s")} taken this year";
         primary = Model.ShowsOwnLeave ? ("Request leave", "MyLeave", "Create") : ("My training", "MyTraining", "Index");
 
-        tiles.Add(("Leave", "fa-calendar-days", "Leave remaining", me.HasBalances ? me.RemainingDays.ToString("0.#") : "—",
-            me.HasBalances ? (me.HeadlineLeaveType ?? "days available").ToLower() : "no balance set up yet",
-            "My leave", "tone-green", "MyLeave", "Index"));
-        tiles.Add(("Leave", "fa-umbrella-beach", "Leave taken", me.HasBalances ? me.DaysTakenThisYear.ToString("0.#") : "—",
+        if (me.HasBalances)
+        {
+            tiles.Add(("Leave", "fa-calendar-days", "Leave remaining", me.RemainingDays.ToString("0.#"),
+                (me.HeadlineLeaveType ?? "days available").ToLower(),
+                "My leave", "tone-green", "MyLeave", "Index"));
+        }
+        tiles.Add(("Leave", "fa-umbrella-beach", "Leave taken", me.DaysTakenThisYear.ToString("0.#"),
             $"days used in {DateTime.Today.Year}", "History", "tone-slate", "MyLeave", "Index"));
         tiles.Add(("Requests", "fa-hourglass-half", "In progress", me.RequestsInProgress.ToString("N0"),
             me.RequestsInProgress == 0 ? "no open requests" : "awaiting a decision", "See them",

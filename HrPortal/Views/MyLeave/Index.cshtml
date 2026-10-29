@@ -14,7 +14,9 @@
             <h2>My Leave</h2>
 
             <p class="text-muted">
-                Your leave balances and the requests you have made.
+                @(Model.Balances.Any()
+                    ? "Your leave balances and the requests you have made."
+                    : "The leave requests you have made.")
             </p>
         </div>
 
@@ -40,14 +42,14 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-4">
+    @if (Model.Balances.Any())
+    {
+        <div class="card shadow-sm mb-4">
 
-        <div class="card-header">My Balances for @DateTime.Today.Year</div>
+            <div class="card-header">My Balances for @DateTime.Today.Year</div>
 
-        <div class="card-body @(Model.Balances.Any() ? "is-table" : "")">
+            <div class="card-body is-table">
 
-            @if (Model.Balances.Any())
-            {
                 <div class="table-responsive">
 
                     <table class="table align-middle">
@@ -84,20 +86,11 @@
                     </table>
 
                 </div>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128197;</span>
-                    No leave balances have been set up for you yet.
-                    You can still request leave types that are not
-                    rationed.
-                </p>
-            }
+
+            </div>
 
         </div>
-
-    </div>
+    }
 
     <div class="card shadow-sm">
 
