@@ -19,6 +19,14 @@
     </div>
 }
 
+@if (Request.Query["limited"] == "1")
+{
+    <div class="alert alert-warning" role="alert">
+        There have been too many sign-in attempts from your network.
+        Wait a few minutes and try again.
+    </div>
+}
+
 <form id="account" method="post">
 
     <div asp-validation-summary="ModelOnly"

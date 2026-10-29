@@ -234,6 +234,8 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
     options.Level = CompressionLevel.Fastest;
 });
 
+builder.Services.AddRateLimiter(SignInLimits.Configure);
+
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddRazorPages(options =>
@@ -364,6 +366,10 @@ app.UseStaticFiles(new StaticFileOptions
             };
     }
 });
+
+app.Use(SignInLimits.ReadEmailAsync);
+
+app.UseRateLimiter();
 
 app.UseRouting();
 
