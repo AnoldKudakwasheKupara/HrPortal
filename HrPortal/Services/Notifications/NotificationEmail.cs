@@ -77,6 +77,8 @@ namespace HrPortal.Services.Notifications
                 new("Expiring soon", "#7e6e1e", "#f6f1dc", "See the details"),
             EmailKind.ExpiringThisWeek =>
                 new("Expires this week", "#c53030", "#fdeded", "See the details"),
+            EmailKind.Welcome =>
+                new("Welcome", Primary, "#e2efed", "Choose your password"),
             _ =>
                 new("Notification", Primary, "#e2efed", "Open My Intellego")
         };

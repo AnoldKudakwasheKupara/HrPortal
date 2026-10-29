@@ -27,6 +27,14 @@
                     Reset Password
                 </a>
             }
+            else if (Model.IsActive)
+            {
+                <a asp-action="AllowLogin"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-outline-primary">
+                    Allow Login
+                </a>
+            }
 
             @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
             {

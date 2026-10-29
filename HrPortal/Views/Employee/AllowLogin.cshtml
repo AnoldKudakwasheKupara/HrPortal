@@ -1,0 +1,174 @@
+@model HrPortal.ViewModels.EmployeeAllowLoginViewModel
+
+@{
+    ViewData["Title"] = "Allow Login";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>Allow Login</h2>
+
+        <p class="text-muted">
+            Let @Model.FullName (@Model.EmployeeNumber) sign in to the
+            portal.
+        </p>
+
+    </div>
+
+    <div class="alert alert-info">
+
+        <p class="mb-0">
+            They will sign in with <strong>@Model.Email</strong>, the
+            address on their record. If that is wrong, change it on
+            the edit page first.
+        </p>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="AllowLogin"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  autocomplete="off">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <fieldset class="mb-3">
+
+                    <legend class="form-label">
+                        How they get their password
+                    </legend>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               id="SendLink_true"
+                               name="SendLink"
+                               value="true"
+                               checked="@Model.SendLink"
+                               disabled="@(!Model.CanEmail)" />
+
+                        <label class="form-check-label" for="SendLink_true">
+                            Email them a link to choose their own password
+                        </label>
+
+                        @if (!Model.CanEmail)
+                        {
+                            <div class="form-text">
+                                Email is not switched on for the portal,
+                                so this is not available.
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               id="SendLink_false"
+                               name="SendLink"
+                               value="false"
+                               checked="@(!Model.SendLink)" />
+
+                        <label class="form-check-label" for="SendLink_false">
+                            Set a temporary password and give it to them
+                            yourself
+                        </label>
+
+                    </div>
+
+                </fieldset>
+
+                <div class="row" data-temporary-password>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TemporaryPassword"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="TemporaryPassword"
+                               class="form-control"
+                               autocomplete="new-password" />
+
+                        <div class="form-text">
+                            At least 8 characters, with an upper case
+                            letter, a lower case letter and a digit.
+                        </div>
+
+                        <span asp-validation-for="TemporaryPassword"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="ConfirmPassword"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="ConfirmPassword"
+                               class="form-control"
+                               autocomplete="new-password" />
+
+                        <span asp-validation-for="ConfirmPassword"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit" class="btn btn-primary">
+                        Allow Login
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            var fields = document.querySelector("[data-temporary-password]");
+            var radios = document.querySelectorAll("input[name='SendLink']");
+
+            function sync() {
+                var link = document.getElementById("SendLink_true");
+                fields.hidden = link.checked && !link.disabled;
+            }
+
+            radios.forEach(function (r) { r.addEventListener("change", sync); });
+            sync();
+        })();
+    </script>
+}

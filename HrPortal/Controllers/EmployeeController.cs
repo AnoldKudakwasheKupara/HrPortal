@@ -8,7 +8,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using HrPortal.Services.Notifications;
+using System.Text;
 
 namespace HrPortal.Controllers
 {
@@ -25,6 +29,8 @@ namespace HrPortal.Controllers
         private readonly RecordDocumentPdfService _pdf;
         private readonly ListDocumentPdfService _lists;
         private readonly SupervisorService _supervisors;
+        private readonly EmailService _email;
+        private readonly EmailOptions _emailOptions;
 
         public EmployeeController(
             ApplicationDbContext context,
@@ -35,7 +41,9 @@ namespace HrPortal.Controllers
             NextOfKinPdfService nextOfKinPdf,
             RecordDocumentPdfService pdf,
             ListDocumentPdfService lists,
-            SupervisorService supervisors)
+            SupervisorService supervisors,
+            EmailService email,
+            IOptions<EmailOptions> emailOptions)
         {
             _context = context;
             _records = records;
@@ -46,6 +54,8 @@ namespace HrPortal.Controllers
             _pdf = pdf;
             _lists = lists;
             _supervisors = supervisors;
+            _email = email;
+            _emailOptions = emailOptions.Value;
         }
 
         public async Task<IActionResult> Index()
@@ -569,6 +579,268 @@ namespace HrPortal.Controllers
                 "Employee updated successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> AllowLogin(int? id)
+        {
+            if (id == null)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .AsNoTracking()
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            var refusal = CannotAllowLogin(employee);
+
+            if (refusal != null)
+            {
+                TempData["Error"] = refusal;
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(new EmployeeAllowLoginViewModel
+            {
+                Id = employee.Id,
+                FullName = $"{employee.FirstName} {employee.LastName}",
+                EmployeeNumber = employee.EmployeeNumber,
+                Email = employee.Email,
+                CanEmail = _email.IsEnabled,
+                SendLink = _email.IsEnabled
+            });
+        }
+
+        /// <summary>
+        /// Gives somebody already on the books a sign-in, under the
+        /// email address on their record. Either they are emailed a
+        /// link to choose their own password, or HR sets a temporary
+        /// one and hands it over.
+        ///
+        /// A sign-in that already exists under that address and
+        /// belongs to nobody, as an import can leave behind, is
+        /// linked to them rather than refused.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AllowLogin(
+            int id,
+            EmployeeAllowLoginViewModel model)
+        {
+            if (id != model.Id)
+                return NotFound();
+
+            var employee = await _context.Employees
+                .Include(e => e.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null)
+                return NotFound();
+
+            var refusal = CannotAllowLogin(employee);
+
+            if (refusal != null)
+            {
+                TempData["Error"] = refusal;
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var fullName = $"{employee.FirstName} {employee.LastName}";
+            var email = employee.Email.Trim();
+
+            model.FullName = fullName;
+            model.EmployeeNumber = employee.EmployeeNumber;
+            model.Email = email;
+            model.CanEmail = _email.IsEnabled;
+
+            var sendLink = model.SendLink && _email.IsEnabled;
+
+            if (!sendLink && string.IsNullOrWhiteSpace(model.TemporaryPassword))
+            {
+                ModelState.AddModelError(
+                    nameof(model.TemporaryPassword),
+                    "Set a temporary password, or choose to email them " +
+                    "a link instead.");
+            }
+
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user != null &&
+                await _context.Employees.AnyAsync(e => e.UserId == user.Id))
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    $"The sign-in {email} already belongs to another " +
+                    "employee. Correct the email address on this " +
+                    "record first.");
+
+                return View(model);
+            }
+
+            var created = user == null;
+
+            if (user == null)
+            {
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    FullName = fullName,
+                    EmailConfirmed = true,
+                    EmployeeId = employee.Id
+                };
+
+                var result = sendLink
+                    ? await _userManager.CreateAsync(user)
+                    : await _userManager.CreateAsync(
+                        user,
+                        model.TemporaryPassword!);
+
+                if (!AddErrors(result, nameof(model.TemporaryPassword)))
+                    return View(model);
+            }
+            else
+            {
+                user.EmployeeId = employee.Id;
+                user.EmailConfirmed = true;
+                user.FullName ??= fullName;
+
+                await _userManager.UpdateAsync(user);
+
+                if (!sendLink)
+                {
+                    var token = await _userManager
+                        .GeneratePasswordResetTokenAsync(user);
+
+                    var reset = await _userManager.ResetPasswordAsync(
+                        user,
+                        token,
+                        model.TemporaryPassword!);
+
+                    if (!AddErrors(reset, nameof(model.TemporaryPassword)))
+                        return View(model);
+                }
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, Roles.Employee))
+                await _userManager.AddToRoleAsync(user, Roles.Employee);
+
+            employee.UserId = user.Id;
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.Updated,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"Sign-in {(created ? "created" : "linked")} for " +
+                $"{fullName} as {email}.");
+
+            if (!sendLink)
+            {
+                TempData["Success"] =
+                    $"{fullName} can now sign in as {email} with the " +
+                    "temporary password you set. Give it to them " +
+                    "yourself and ask them to change it.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var sent = await SendWelcomeAsync(employee, user);
+
+            if (sent)
+            {
+                TempData["Success"] =
+                    $"{fullName} can now sign in as {email}. They have " +
+                    "been emailed a link to choose their password.";
+            }
+            else
+            {
+                TempData["Error"] =
+                    $"A sign-in was made for {fullName} as {email}, but " +
+                    "the email with their link could not be sent. Use " +
+                    "Reset Password on their record to set one, or ask " +
+                    "them to use Forgot password on the sign-in page.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private static string? CannotAllowLogin(Employee employee)
+        {
+            if (employee.User != null)
+                return "That employee can already sign in.";
+
+            if (!employee.IsActive)
+            {
+                return "That employee is marked as having left, so they " +
+                       "cannot be given a sign-in.";
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.Email))
+            {
+                return "That employee has no email address on their " +
+                       "record, and their sign-in would use it. Add one " +
+                       "on the edit page first.";
+            }
+
+            return null;
+        }
+
+        private bool AddErrors(IdentityResult result, string field)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(
+                    error.Code.Contains("Password") ? field : string.Empty,
+                    error.Description);
+            }
+
+            return result.Succeeded;
+        }
+
+        /// <summary>
+        /// The welcome email, carrying a link to choose a password.
+        /// It is the same link Forgot password sends, so it lasts as
+        /// long, and Forgot password is the way back if it runs out.
+        /// </summary>
+        private async Task<bool> SendWelcomeAsync(
+            Employee employee,
+            ApplicationUser user)
+        {
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+            var link = Url.Page(
+                "/Account/ResetPassword",
+                pageHandler: null,
+                values: new { area = "Identity", code })!;
+
+            if (string.IsNullOrWhiteSpace(_emailOptions.PortalBaseUrl))
+                link = $"{Request.Scheme}://{Request.Host}{link}";
+
+            return await _email.SendNotificationAsync(
+                new OutboundNotification(
+                    employee.Id,
+                    user.Email!,
+                    $"{employee.FirstName} {employee.LastName}",
+                    employee.FirstName,
+                    "Welcome to My Intellego",
+                    "You can now sign in to My Intellego, the Intellego " +
+                    $"people portal, as {user.Email}. Choose your " +
+                    "password using the link below to get started. The " +
+                    "link works for 24 hours; if it runs out, use Forgot " +
+                    "password on the sign-in page for a new one.",
+                    link,
+                    EmailKind.Welcome));
         }
 
         public async Task<IActionResult> ResetPassword(int? id)

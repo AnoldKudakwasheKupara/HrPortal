@@ -22,6 +22,7 @@ namespace HrPortal.Services.Notifications
         AssetAssigned,
         DocumentAdded,
         ExpiringSoon,
-        ExpiringThisWeek
+        ExpiringThisWeek,
+        Welcome
     }
 }
