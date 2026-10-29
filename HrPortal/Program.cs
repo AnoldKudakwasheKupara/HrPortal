@@ -6,6 +6,7 @@ using HrPortal.Services.Reporting;
 using HrPortal.Services.Notifications;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -91,6 +92,11 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
+        builder.Environment.ContentRootPath, "App_Data", "keys")))
+    .SetApplicationName("HrPortal");
 
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<AuditService>();
