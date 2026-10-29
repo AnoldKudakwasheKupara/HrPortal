@@ -457,7 +457,8 @@ namespace HrPortal.Services
             _notifications.Notify(
                 request.EmployeeId,
                 "Leave rejected by HR",
-                $"{request.RequestNumber} was rejected by HR.",
+                $"{request.RequestNumber} was rejected by HR." +
+                Because(comment),
                 $"/MyLeave/Details/{request.Id}",
                 EmailKind.Declined);
 
@@ -494,7 +495,8 @@ namespace HrPortal.Services
                 request.EmployeeId,
                 "Leave request returned",
                 $"{request.RequestNumber} was returned to you for " +
-                "correction. Update it and send it again.",
+                "correction. Update it and send it again." +
+                Because(comment),
                 $"/MyLeave/Edit/{request.Id}",
                 EmailKind.Returned);
 
@@ -571,7 +573,7 @@ namespace HrPortal.Services
                 request.EmployeeId,
                 "Leave rejected",
                 $"{request.RequestNumber} was rejected by the " +
-                "Managing Director.",
+                "Managing Director." + Because(comment),
                 $"/MyLeave/Details/{request.Id}",
                 EmailKind.Declined);
 
@@ -657,6 +659,17 @@ namespace HrPortal.Services
 
             return $"{prefix}{next:D4}";
         }
+
+        /// <summary>
+        /// The approver's reason, after the sentence that says what
+        /// happened. A request sent back or turned down without it
+        /// tells the employee there is a problem and not what it is.
+        /// </summary>
+        private static string Because(string? comment) =>
+            string.IsNullOrWhiteSpace(comment)
+                ? string.Empty
+                : $" {comment.Trim()}";
+
         private void AddHistory(
             LeaveRequest request,
             int actedByEmployeeId,
