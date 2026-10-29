@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Employee Details";
+
+    var seesPersonal = ViewBag.SeesPersonal == true;
 }
 
 <div class="container">
@@ -36,7 +38,7 @@
                 </a>
             }
 
-            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+            @if (seesPersonal && !string.IsNullOrWhiteSpace(Model.EmergencyContactName))
             {
                 <a asp-action="NextOfKinForm"
                    asp-route-id="@Model.Id"
@@ -167,7 +169,14 @@
 
                 <div class="col-md-6 mb-3">
                     <span class="field-label">National ID</span>
-                    <div class="field-value">@Model.NationalId</div>
+                    @if (seesPersonal)
+                    {
+                        <div class="field-value">@Model.NationalId</div>
+                    }
+                    else
+                    {
+                        <partial name="_HrOnly" />
+                    }
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -228,9 +237,16 @@
 
                 <div class="col-md-4 mb-3">
                     <span class="field-label">Date of Birth</span>
-                    <div class="field-value">
-                        @(Model.DateOfBirth?.ToString("d MMM yyyy") ?? "Not recorded")
-                    </div>
+                    @if (seesPersonal)
+                    {
+                        <div class="field-value">
+                            @(Model.DateOfBirth?.ToString("d MMM yyyy") ?? "Not recorded")
+                        </div>
+                    }
+                    else
+                    {
+                        <partial name="_HrOnly" />
+                    }
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -243,72 +259,82 @@
                     <div class="field-value">@Html.DisplayFor(m => m.MaritalStatus)</div>
                 </div>
 
-                <div class="col-12 mb-3">
-                    <span class="field-label">Home Address</span>
-                    <div class="field-value">
-                        @(string.IsNullOrWhiteSpace(Model.Address)
-                            ? "Not recorded"
-                            : Model.Address)
+                @if (seesPersonal)
+                {
+                    <div class="col-12 mb-3">
+                        <span class="field-label">Home Address</span>
+                        <div class="field-value">
+                            @(string.IsNullOrWhiteSpace(Model.Address)
+                                ? "Not recorded"
+                                : Model.Address)
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Emergency Contact</span>
-                    <div class="field-value">
-                        @if (string.IsNullOrWhiteSpace(Model.EmergencyContactName))
-                        {
-                            <span class="text-muted">Not recorded</span>
-                        }
-                        else
-                        {
-                            @Model.EmergencyContactName
-                            @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactRelationship))
+                    <div class="col-md-6 mb-3">
+                        <span class="field-label">Emergency Contact</span>
+                        <div class="field-value">
+                            @if (string.IsNullOrWhiteSpace(Model.EmergencyContactName))
                             {
-                                <span class="text-muted">
-                                    (@Model.EmergencyContactRelationship)
+                                <span class="text-muted">Not recorded</span>
+                            }
+                            else
+                            {
+                                @Model.EmergencyContactName
+                                @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactRelationship))
+                                {
+                                    <span class="text-muted">
+                                        (@Model.EmergencyContactRelationship)
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <span class="field-label">Emergency Contact Phone</span>
+                        <div class="field-value">
+                            @(string.IsNullOrWhiteSpace(Model.EmergencyContactPhone)
+                                ? "Not recorded"
+                                : Model.EmergencyContactPhone)
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <span class="field-label">Emergency Contact Address</span>
+                        <div class="field-value">
+                            @(string.IsNullOrWhiteSpace(Model.EmergencyContactAddress)
+                                ? "Same as the employee's"
+                                : Model.EmergencyContactAddress)
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <span class="field-label">Next Of Kin Confirmed</span>
+                        <div class="field-value">
+                            @if (Model.NextOfKinConfirmedAt == null)
+                            {
+                                <span class="badge bg-warning">
+                                    Not confirmed by the employee
                                 </span>
                             }
-                        }
+                            else
+                            {
+                                <span class="badge bg-success">Confirmed</span>
+                                <span class="text-muted">
+                                    @(Model.NextOfKinConfirmedAt.Value.ToLocalTime()
+                                        .ToString("d MMM yyyy HH:mm"))
+                                </span>
+                            }
+                        </div>
                     </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Emergency Contact Phone</span>
-                    <div class="field-value">
-                        @(string.IsNullOrWhiteSpace(Model.EmergencyContactPhone)
-                            ? "Not recorded"
-                            : Model.EmergencyContactPhone)
+                }
+                else
+                {
+                    <div class="col-12 mb-3">
+                        <span class="field-label">Home address and next of kin</span>
+                        <partial name="_HrOnly" />
                     </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Emergency Contact Address</span>
-                    <div class="field-value">
-                        @(string.IsNullOrWhiteSpace(Model.EmergencyContactAddress)
-                            ? "Same as the employee's"
-                            : Model.EmergencyContactAddress)
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Next Of Kin Confirmed</span>
-                    <div class="field-value">
-                        @if (Model.NextOfKinConfirmedAt == null)
-                        {
-                            <span class="badge bg-warning">
-                                Not confirmed by the employee
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-success">Confirmed</span>
-                            <span class="text-muted">
-                                @(Model.NextOfKinConfirmedAt.Value.ToLocalTime()
-                                    .ToString("d MMM yyyy HH:mm"))
-                            </span>
-                        }
-                    </div>
-                </div>
+                }
 
             </div>
         </div>

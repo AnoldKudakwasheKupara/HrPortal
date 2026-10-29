@@ -1,6 +1,12 @@
 @using HrPortal.Entities
 @model HrPortal.Entities.CourseApplication
 
+@{
+    var nationalId = ViewData["HidePersonal"] as bool? == true
+        ? HrPortal.Services.PersonalData.MaskId(Model.Employee.NationalId)
+        : Model.Employee.NationalId;
+}
+
 <div class="card shadow-sm mb-3">
 
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -24,8 +30,8 @@
 
             <div class="col-sm-6 col-lg-3">
                 <span class="field-label">I.D. no.</span>
-                <div class="field-value @(Model.Employee.NationalId == null ? "is-empty" : "")">
-                    @(Model.Employee.NationalId ?? "Not recorded")
+                <div class="field-value @(nationalId == null ? "is-empty" : "")">
+                    @(nationalId ?? "Not recorded")
                 </div>
             </div>
 

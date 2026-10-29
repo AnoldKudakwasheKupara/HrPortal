@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Edit Employee";
+
+    var seesPersonal = ViewBag.SeesPersonal == true;
 }
 
 <div class="container">
@@ -137,6 +139,8 @@
 
                     </div>
 
+                    @if (seesPersonal)
+                    {
                     <div class="col-md-6 mb-3">
 
                         <label asp-for="NationalId"
@@ -147,6 +151,7 @@
                                class="form-control" />
 
                     </div>
+                    }
 
                     <div class="col-md-6 mb-3">
 
@@ -202,11 +207,14 @@
 
                 <div class="row">
 
+                    @if (seesPersonal)
+                    {
                     <div class="col-md-4 mb-3">
                         <label asp-for="DateOfBirth" class="form-label"></label>
                         <input asp-for="DateOfBirth" class="form-control" type="date" />
                         <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                     </div>
+                    }
 
                     <div class="col-md-4 mb-3">
                         <label asp-for="Gender" class="form-label"></label>
@@ -222,6 +230,8 @@
                         </select>
                     </div>
 
+                    @if (seesPersonal)
+                    {
                     <div class="col-12 mb-3">
                         <label asp-for="Address" class="form-label"></label>
                         <textarea asp-for="Address" class="form-control" rows="2"></textarea>
@@ -254,6 +264,17 @@
                                   placeholder="Leave blank if the same as the employee address"></textarea>
                         <span asp-validation-for="EmergencyContactAddress" class="text-danger"></span>
                     </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-lock" aria-hidden="true"></i>
+                                National ID, date of birth, home address and
+                                next of kin are seen and changed by HR only.
+                            </div>
+                        </div>
+                    }
 
                 </div>
 

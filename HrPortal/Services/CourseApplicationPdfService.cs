@@ -24,15 +24,24 @@ namespace HrPortal.Services
             _brand = brand;
         }
 
-        public byte[] Render(CourseApplication application) =>
-            Build(application).GeneratePdf();
+        /// <summary>
+        /// hidePersonal masks the ID number and leaves out the home
+        /// address, for an approver who is neither HR nor the
+        /// applicant.
+        /// </summary>
+        public byte[] Render(
+            CourseApplication application,
+            bool hidePersonal = false) =>
+            Build(application, hidePersonal).GeneratePdf();
 
         /// <summary>
         /// The document itself, kept separate from how it is
         /// rendered so it can also be exported as images for a
         /// visual check.
         /// </summary>
-        public IDocument Build(CourseApplication application)
+        public IDocument Build(
+            CourseApplication application,
+            bool hidePersonal = false)
         {
             return Document.Create(container =>
             {
@@ -43,7 +52,7 @@ namespace HrPortal.Services
                     page.Header().Element(e => DocumentStyle.Head(
                         e, _brand, Title, application.ApplicationNumber));
 
-                    page.Content().Element(e => Content(e, application));
+                    page.Content().Element(e => Content(e, application, hidePersonal));
 
                     page.Footer().Element(e => DocumentStyle.Footer(
                         e, application.ApplicationNumber));
@@ -53,7 +62,8 @@ namespace HrPortal.Services
 
         private void Content(
             IContainer container,
-            CourseApplication application)
+            CourseApplication application,
+            bool hidePersonal)
         {
             var employee = application.Employee;
 
@@ -70,7 +80,7 @@ namespace HrPortal.Services
                         "Your current employment information"));
 
                     column.Item().PaddingTop(5).Element(e =>
-                        Employee(e, employee, who));
+                        Employee(e, employee, who, hidePersonal));
 
                     column.Item().Element(DocumentStyle.Divider);
 
@@ -115,7 +125,8 @@ namespace HrPortal.Services
         private void Employee(
             IContainer container,
             Employee employee,
-            string who)
+            string who,
+            bool hidePersonal)
         {
             container.Row(row =>
             {
@@ -135,10 +146,12 @@ namespace HrPortal.Services
                     {
                         ("First name(s)", employee.FirstName),
                         ("Surname", employee.LastName),
-                        ("I.D No.", employee.NationalId),
+                        ("I.D No.", hidePersonal
+                            ? PersonalData.MaskId(employee.NationalId)
+                            : employee.NationalId),
                         ("Department", employee.Department?.Name),
                         ("Position", employee.JobTitle),
-                        ("Address", employee.Address),
+                        ("Address", hidePersonal ? "HR only" : employee.Address),
                         ("Phone number", employee.PhoneNumber)
                     }));
             });

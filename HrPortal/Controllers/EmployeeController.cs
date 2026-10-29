@@ -131,6 +131,40 @@ namespace HrPortal.Controllers
                 list.FileName);
         }
 
+        /// <summary>
+        /// National ID, date of birth, home address and next of kin
+        /// are HR's alone. An administrator looking after the system
+        /// sees the rest of the record without them.
+        /// </summary>
+        private bool SeesPersonal => User.IsInRole(Roles.HrOfficer);
+
+        /// <summary>
+        /// Takes the HR-only details off a record before it is shown
+        /// to somebody who may not see them.
+        /// </summary>
+        private static void HidePersonal(Employee employee)
+        {
+            employee.NationalId = null;
+            employee.DateOfBirth = null;
+            employee.Address = null;
+            employee.EmergencyContactName = null;
+            employee.EmergencyContactPhone = null;
+            employee.EmergencyContactRelationship = null;
+            employee.EmergencyContactAddress = null;
+        }
+
+        /// <summary>
+        /// Each time HR opens somebody's personal details it goes in
+        /// the audit log, so who has looked at them can be answered.
+        /// </summary>
+        private Task LogPersonalViewAsync(Employee employee, string where) =>
+            _audit.LogAsync(
+                AuditService.PersonalDetailsViewed,
+                nameof(Employee),
+                employee.EmployeeNumber,
+                $"Personal details of {employee.FirstName} " +
+                $"{employee.LastName} viewed on {where}.");
+
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -145,6 +179,13 @@ namespace HrPortal.Controllers
 
             if (employee == null)
                 return NotFound();
+
+            ViewBag.SeesPersonal = SeesPersonal;
+
+            if (SeesPersonal)
+                await LogPersonalViewAsync(employee, "the record page");
+            else
+                HidePersonal(employee);
 
             return View(employee);
         }
@@ -168,6 +209,9 @@ namespace HrPortal.Controllers
 
             if (employee == null)
                 return NotFound();
+
+            if (SeesPersonal)
+                await LogPersonalViewAsync(employee, "the printed record");
 
             var who = $"{employee.FirstName} {employee.LastName}";
 
@@ -197,29 +241,37 @@ namespace HrPortal.Controllers
                 .Add("End date", employee.EndDate)
                 .Add("Leaving reason", employee.LeavingReason);
 
-            record.Section("Personal", "What the record holds")
+            var personal = record.Section("Personal", "What the record holds")
                 .Add("First name(s)", employee.FirstName)
                 .Add("Surname", employee.LastName)
-                .Add("National ID", employee.NationalId)
-                .Add("Date of birth", employee.DateOfBirth)
                 .Add("Gender", employee.Gender.ToString())
-                .Add("Marital status", employee.MaritalStatus.ToString())
-                .Add("Address", employee.Address);
+                .Add("Marital status", employee.MaritalStatus.ToString());
+
+            if (SeesPersonal)
+            {
+                personal
+                    .Add("National ID", employee.NationalId)
+                    .Add("Date of birth", employee.DateOfBirth)
+                    .Add("Address", employee.Address);
+            }
 
             record.Section("Contact", "How to reach them")
                 .Add("Email", employee.Email)
                 .Add("Phone number", employee.PhoneNumber);
 
-            record.Section("In an emergency", "Who we call")
-                .Add("Name", employee.EmergencyContactName)
-                .Add(
-                    "Relationship",
-                    employee.EmergencyContactRelationship)
-                .Add("Phone number", employee.EmergencyContactPhone)
-                .Add("Address", employee.EmergencyContactAddress)
-                .AddStamp(
-                    "Confirmed by the employee",
-                    employee.NextOfKinConfirmedAt);
+            if (SeesPersonal)
+            {
+                record.Section("In an emergency", "Who we call")
+                    .Add("Name", employee.EmergencyContactName)
+                    .Add(
+                        "Relationship",
+                        employee.EmergencyContactRelationship)
+                    .Add("Phone number", employee.EmergencyContactPhone)
+                    .Add("Address", employee.EmergencyContactAddress)
+                    .AddStamp(
+                        "Confirmed by the employee",
+                        employee.NextOfKinConfirmedAt);
+            }
 
             return File(
                 _pdf.Render(record),
@@ -239,6 +291,11 @@ namespace HrPortal.Controllers
 
             if (employee == null)
                 return NotFound();
+
+            if (!SeesPersonal)
+                return Forbid();
+
+            await LogPersonalViewAsync(employee, "the next of kin form");
 
             return File(
                 _nextOfKinPdf.Render(employee),
@@ -462,6 +519,23 @@ namespace HrPortal.Controllers
                 LeavingReason = employee.LeavingReason
             };
 
+            ViewBag.SeesPersonal = SeesPersonal;
+
+            if (SeesPersonal)
+            {
+                await LogPersonalViewAsync(employee, "the edit page");
+            }
+            else
+            {
+                model.NationalId = null;
+                model.DateOfBirth = null;
+                model.Address = null;
+                model.EmergencyContactName = null;
+                model.EmergencyContactPhone = null;
+                model.EmergencyContactRelationship = null;
+                model.EmergencyContactAddress = null;
+            }
+
             await LoadLookups(employee.Id);
 
             return View(model);
@@ -475,6 +549,27 @@ namespace HrPortal.Controllers
         {
             if (id != model.Id)
                 return NotFound();
+
+            ViewBag.SeesPersonal = SeesPersonal;
+
+            if (!SeesPersonal)
+            {
+                var current = await _context.Employees
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (current == null)
+                    return NotFound();
+
+                model.NationalId = current.NationalId;
+                model.DateOfBirth = current.DateOfBirth;
+                model.Address = current.Address;
+                model.EmergencyContactName = current.EmergencyContactName;
+                model.EmergencyContactPhone = current.EmergencyContactPhone;
+                model.EmergencyContactRelationship =
+                    current.EmergencyContactRelationship;
+                model.EmergencyContactAddress = current.EmergencyContactAddress;
+            }
 
             foreach (var error in await _records.ValidateAsync(
                 model.EmployeeNumber,

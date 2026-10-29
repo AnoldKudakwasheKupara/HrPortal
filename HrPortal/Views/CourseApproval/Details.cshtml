@@ -120,6 +120,8 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
+    @{ ViewData["HidePersonal"] = !User.IsInRole(HrPortal.Security.Roles.HrOfficer); }
+
     <partial name="_CourseApplicationCard" model="Model" />
 
     @if (hrTurn)

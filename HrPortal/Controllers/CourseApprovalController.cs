@@ -405,7 +405,9 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             return File(
-                _pdf.Render(application),
+                _pdf.Render(
+                    application,
+                    hidePersonal: !User.IsInRole(Roles.HrOfficer)),
                 "application/pdf",
                 $"Course application - " +
                 $"{application.ApplicationNumber}.pdf");
