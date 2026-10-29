@@ -1,6 +1,7 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
+using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -13,15 +14,18 @@ namespace HrPortal.Services
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
         private readonly AuditService _audit;
+        private readonly NotificationService _notifications;
 
         public PolicyService(
             ApplicationDbContext context,
             CurrentUserService currentUser,
-            AuditService audit)
+            AuditService audit,
+            NotificationService notifications)
         {
             _context = context;
             _currentUser = currentUser;
             _audit = audit;
+            _notifications = notifications;
         }
 
         public static bool CanManage(ClaimsPrincipal user) =>
@@ -112,6 +116,10 @@ namespace HrPortal.Services
                 }
             }
 
+            await TellReadersAsync(
+                policy,
+                replacing: policy.SupersedesPolicyId.HasValue);
+
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
@@ -197,6 +205,62 @@ namespace HrPortal.Services
             return ServiceResult.Ok(
                 $"Thank you. Your reading of {policy.Title} " +
                 $"version {policy.Version} has been recorded.");
+        }
+        /// <summary>
+        /// Tells everybody the policy is meant for that it is now in
+        /// force: active staff with a sign-in, narrowed to the roles
+        /// its audience allows. Somebody with no sign-in could not
+        /// open it, so there is nothing to tell them.
+        /// </summary>
+        private async Task TellReadersAsync(Policy policy, bool replacing)
+        {
+            var roles = AudienceRules.RolesFor(policy.Audience);
+
+            var readers = _context.Employees
+                .AsNoTracking()
+                .Where(e => e.IsActive && e.UserId != null);
+
+            if (roles != null)
+            {
+                readers = readers.Where(e =>
+                    _context.UserRoles.Any(ur =>
+                        ur.UserId == e.UserId!.Value &&
+                        _context.Roles.Any(r =>
+                            r.Id == ur.RoleId &&
+                            roles.Contains(r.Name!))));
+            }
+
+            var employeeIds = await readers
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            var title = replacing
+                ? $"{policy.Title} has been updated"
+                : $"New policy: {policy.Title}";
+
+            var message =
+                (replacing
+                    ? $"Version {policy.Version} of {policy.Title} is now " +
+                      "in force and replaces the earlier version."
+                    : $"{policy.Title} (version {policy.Version}) is now " +
+                      "in force.") +
+                $" It takes effect on {policy.EffectiveDate:d MMM yyyy}." +
+                (policy.RequiresAcknowledgement
+                    ? " Please read it and confirm in the portal that " +
+                      "you have."
+                    : string.Empty);
+
+            foreach (var employeeId in employeeIds)
+            {
+                _notifications.Notify(
+                    employeeId,
+                    title,
+                    message,
+                    $"/Policy/Details/{policy.Id}",
+                    replacing
+                        ? EmailKind.PolicyUpdated
+                        : EmailKind.PolicyPublished);
+            }
         }
     }
 }

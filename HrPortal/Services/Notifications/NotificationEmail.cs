@@ -65,6 +65,10 @@ namespace HrPortal.Services.Notifications
                 new("Coming up", "#016a6a", "#e2efed", "View the training"),
             EmailKind.PasswordReset =>
                 new("Password reset", Primary, "#e2efed", "Choose a new password"),
+            EmailKind.PolicyPublished =>
+                new("New policy", "#016a6a", "#e2efed", "Read the policy"),
+            EmailKind.PolicyUpdated =>
+                new("Policy updated", "#016a6a", "#e2efed", "Read the policy"),
             _ =>
                 new("Notification", Primary, "#e2efed", "Open My Intellego")
         };

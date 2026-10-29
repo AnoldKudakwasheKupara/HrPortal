@@ -16,6 +16,8 @@ namespace HrPortal.Services.Notifications
         ContentDue,
         ContentOverdue,
         SessionReminder,
-        PasswordReset
+        PasswordReset,
+        PolicyPublished,
+        PolicyUpdated
     }
 }

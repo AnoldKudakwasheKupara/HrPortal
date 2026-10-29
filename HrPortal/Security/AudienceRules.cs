@@ -5,23 +5,31 @@ namespace HrPortal.Security
 {
     public static class AudienceRules
     {
-        public static bool CanSee(ClaimsPrincipal user, DocumentAudience audience)
-        {
-            return audience switch
+        /// <summary>
+        /// The sign-in roles that may see something meant for this
+        /// audience, or null when everybody may. Both the check on a
+        /// person and the list of who to tell come from here, so the
+        /// two cannot drift apart.
+        /// </summary>
+        public static string[]? RolesFor(DocumentAudience audience) =>
+            audience switch
             {
-                DocumentAudience.Everyone => true,
+                DocumentAudience.Everyone => null,
 
                 DocumentAudience.Managers =>
-                    user.IsInRole(Roles.Administrator) ||
-                    user.IsInRole(Roles.HrOfficer) ||
-                    user.IsInRole(Roles.Md),
+                    new[] { Roles.Administrator, Roles.HrOfficer, Roles.Md },
 
                 DocumentAudience.HrAndAdministrators =>
-                    user.IsInRole(Roles.Administrator) ||
-                    user.IsInRole(Roles.HrOfficer),
+                    new[] { Roles.Administrator, Roles.HrOfficer },
 
-                _ => false
+                _ => Array.Empty<string>()
             };
+
+        public static bool CanSee(ClaimsPrincipal user, DocumentAudience audience)
+        {
+            var roles = RolesFor(audience);
+
+            return roles == null || roles.Any(user.IsInRole);
         }
 
         public static List<DocumentAudience> Visible(ClaimsPrincipal user)
