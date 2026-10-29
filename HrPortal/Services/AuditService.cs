@@ -34,6 +34,7 @@ namespace HrPortal.Services
         public const string TrainingCompleted = "Training Completed";
         public const string DocumentUploaded = "Document Uploaded";
         public const string PersonalDetailsViewed = "Personal Details Viewed";
+        public const string BackupDownloaded = "Backup Downloaded";
 
         public async Task LogAsync(
             string action,

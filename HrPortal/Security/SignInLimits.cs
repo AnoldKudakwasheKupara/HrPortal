@@ -32,7 +32,8 @@ namespace HrPortal.Security
                 ["/Identity/Account/LoginWithRecoveryCode"] = new(60, TimeSpan.FromMinutes(5)),
                 [ForgotPasswordPath] = new(20, TimeSpan.FromHours(1)),
                 ["/Identity/Account/ResendEmailConfirmation"] = new(20, TimeSpan.FromHours(1)),
-                ["/Identity/Account/ResetPassword"] = new(20, TimeSpan.FromMinutes(15))
+                ["/Identity/Account/ResetPassword"] = new(20, TimeSpan.FromMinutes(15)),
+                ["/Backup/Download"] = new(10, TimeSpan.FromMinutes(15))
             };
 
         private static readonly Dictionary<string, Rule> ByEmail =
