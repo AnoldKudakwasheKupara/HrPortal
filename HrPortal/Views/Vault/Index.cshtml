@@ -1,0 +1,226 @@
+@model List<HrPortal.Entities.VaultEntry>
+
+@{
+    ViewData["Title"] = "Password vault";
+
+    static bool IsWebLink(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) &&
+        (u.Scheme == Uri.UriSchemeHttps || u.Scheme == Uri.UriSchemeHttp);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>Password vault</h2>
+            <p class="text-muted mb-0">
+                Shared logins for the IT team. Passwords are encrypted and
+                shown only when you ask, and each time is recorded.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <form asp-action="Lock" method="post">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    Lock
+                </button>
+            </form>
+
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                Add a login
+            </a>
+
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+
+                <div class="col-md-6">
+                    <label class="form-label" for="search">Search</label>
+                    <input id="search" name="search" class="form-control"
+                           value="@ViewBag.Search"
+                           placeholder="What it is for, username or address" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" name="category" class="form-select">
+                        <option value="">All categories</option>
+                        @foreach (var c in (ViewBag.Categories as List<string>) ?? new List<string>())
+                        {
+                            <option value="@c"
+                                    selected="@(c == (string?)ViewBag.CategoryFilter)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>For</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Changed</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Nothing in the vault yet.
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var entry in Model)
+                    {
+                        <tr data-vault-entry="@entry.Id">
+
+                            <td>
+                                <strong>@entry.Name</strong>
+
+                                @if (!string.IsNullOrWhiteSpace(entry.Category))
+                                {
+                                    <span class="badge bg-secondary ms-1">@entry.Category</span>
+                                }
+
+                                @if (IsWebLink(entry.Url))
+                                {
+                                    <div class="small">
+                                        <a href="@entry.Url"
+                                           target="_blank"
+                                           rel="noopener noreferrer">@entry.Url</a>
+                                    </div>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(entry.Url))
+                                {
+                                    <div class="small text-muted">@entry.Url</div>
+                                }
+
+                                <div class="small text-muted"
+                                     data-vault-notes
+                                     hidden></div>
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(entry.Username))
+                                {
+                                    <span>@entry.Username</span>
+                                    <button type="button"
+                                            class="btn btn-sm btn-link p-0 ms-1"
+                                            data-vault-copy-text="@entry.Username"
+                                            title="Copy the username"
+                                            aria-label="Copy the username for @entry.Name">
+                                        <i class="fas fa-copy" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </td>
+
+                            <td>
+                                <code data-vault-password>••••••••••</code>
+
+                                <div class="d-inline-flex gap-1 ms-2">
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            data-vault-reveal>
+                                        Reveal
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-vault-copy
+                                            aria-label="Copy the password for @entry.Name">
+                                        Copy
+                                    </button>
+
+                                </div>
+                            </td>
+
+                            <td class="text-muted small">
+                                @entry.PasswordChangedAt.ToLocalTime().ToString("d MMM yyyy")
+                            </td>
+
+                            <td class="col-actions">
+                                <div class="table-actions">
+
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="Edit"
+                                       asp-route-id="@entry.Id">
+                                        Edit
+                                    </a>
+
+                                    <form asp-action="Delete"
+                                          asp-route-id="@entry.Id"
+                                          method="post"
+                                          data-confirm="Remove @entry.Name from the vault? This cannot be undone."
+                                          onsubmit="return confirm(this.dataset.confirm);">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+                                            Delete
+                                        </button>
+
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <form id="vault-reveal-form" asp-action="Reveal" method="post" hidden></form>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/vault.js" asp-append-version="true"></script>
+}

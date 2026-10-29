@@ -30,6 +30,8 @@ namespace HrPortal.DbContexts
 
         public DbSet<PrivacyNoticeAcknowledgement> PrivacyNoticeAcknowledgements { get; set; }
 
+        public DbSet<VaultEntry> VaultEntries { get; set; }
+
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
@@ -318,6 +320,24 @@ namespace HrPortal.DbContexts
                         r.SentOn
                     })
                     .IsUnique();
+            });
+
+            builder.Entity<VaultEntry>(entity =>
+            {
+                entity.HasKey(v => v.Id);
+
+                entity.Property(v => v.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(v => v.Category).HasMaxLength(100);
+                entity.Property(v => v.Username).HasMaxLength(200);
+                entity.Property(v => v.Url).HasMaxLength(500);
+                entity.Property(v => v.EncryptedPassword).IsRequired();
+                entity.Property(v => v.CreatedByName).HasMaxLength(200);
+                entity.Property(v => v.UpdatedByName).HasMaxLength(200);
+
+                entity.HasIndex(v => v.Name);
             });
 
             builder.Entity<PrivacyNoticeAcknowledgement>(entity =>

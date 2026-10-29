@@ -1,0 +1,87 @@
+@model HrPortal.ViewModels.VaultEntryViewModel
+
+@{
+    var editing = Model.Id != 0;
+}
+
+<div class="row">
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control"
+               placeholder="Office Wi-Fi, main router, Sage login" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Category" class="form-label"></label>
+        <input asp-for="Category" class="form-control"
+               list="vault-categories"
+               placeholder="Network, Software, Suppliers" />
+        <datalist id="vault-categories">
+            @foreach (var c in (ViewBag.Categories as List<string>) ?? new List<string>())
+            {
+                <option value="@c"></option>
+            }
+        </datalist>
+        <span asp-validation-for="Category" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <input asp-for="Username" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Url" class="form-label"></label>
+        <input asp-for="Url" class="form-control"
+               placeholder="https://192.168.1.1" />
+        <span asp-validation-for="Url" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="Password" class="form-label">
+            @(editing ? "New password" : "Password")
+        </label>
+        <div class="input-group">
+            <input asp-for="Password"
+                   class="form-control"
+                   autocomplete="new-password"
+                   data-vault-password-input />
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-vault-show-input>
+                Show
+            </button>
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-vault-generate>
+                Generate
+            </button>
+        </div>
+        <div class="form-text">
+            @if (editing)
+            {
+                <text>Leave blank to keep the stored password.</text>
+                @if (ViewBag.PasswordChangedAt is DateTime changed)
+                {
+                    <text> It was last changed on @changed.ToLocalTime().ToString("d MMM yyyy").</text>
+                }
+            }
+            else
+            {
+                <text>Generate makes a random 20 character password.</text>
+            }
+        </div>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="col-12 mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3"
+                  placeholder="Recovery codes, who to call, licence numbers. Held encrypted like the password."></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+</div>

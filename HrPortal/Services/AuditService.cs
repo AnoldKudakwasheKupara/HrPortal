@@ -35,6 +35,9 @@ namespace HrPortal.Services
         public const string DocumentUploaded = "Document Uploaded";
         public const string PersonalDetailsViewed = "Personal Details Viewed";
         public const string BackupDownloaded = "Backup Downloaded";
+        public const string VaultOpened = "Vault Opened";
+        public const string VaultUnlockFailed = "Vault Unlock Failed";
+        public const string VaultPasswordViewed = "Vault Password Viewed";
 
         public async Task LogAsync(
             string action,

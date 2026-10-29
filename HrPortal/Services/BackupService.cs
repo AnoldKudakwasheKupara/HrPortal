@@ -253,6 +253,10 @@ namespace HrPortal.Services
                  the portal, keeping the folder structure.
               3. Start the portal. Everyone signs in again, because the keys
                  that protect sign-ins are not part of a backup.
+
+            The password vault is in the database but encrypted. Reading it
+            after a restore needs the same Vault__Key setting the portal
+            had, which is deliberately not in this file.
             """;
     }
 }

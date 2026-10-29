@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Password vault";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Password vault</h2>
+        <p class="text-muted">
+            Shared passwords for the IT team, held encrypted.
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">Set up the vault key first</div>
+
+        <div class="card-body">
+
+            <p>
+                Passwords in the vault are encrypted with a key that is
+                kept in the server's settings, not in the database. It
+                has not been set yet, so nothing can be stored.
+            </p>
+
+            <ol class="mb-3">
+                <li class="mb-2">
+                    Make a key on your own computer. In PowerShell:
+                    <pre class="mt-2 mb-0"><code>[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))</code></pre>
+                </li>
+                <li class="mb-2">
+                    In Render, open the portal's
+                    <strong>Environment</strong> settings and add
+                    <code>Vault__Key</code> with that value, then save
+                    and deploy.
+                </li>
+                <li>
+                    Keep a copy of the key somewhere safe away from the
+                    server. Without it the vault cannot be read, even
+                    from a backup.
+                </li>
+            </ol>
+
+            <p class="text-muted small mb-0">
+                Never change the key once passwords are stored: anything
+                saved under the old key could no longer be read.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
