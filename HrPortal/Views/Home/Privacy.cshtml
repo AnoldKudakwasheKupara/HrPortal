@@ -19,10 +19,29 @@
         @if (mustRead)
         {
             <div class="alert alert-info" role="status">
-                <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                Before you carry on, please read how the portal uses your
-                information. You only need to do this once, unless the
-                notice changes.
+
+                <p>
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    <strong>One step before you carry on.</strong>
+                    Please read how the portal uses your information below,
+                    then press <strong>I have read this notice</strong>.
+                    The rest of the portal opens once you have, and you
+                    will not be asked again unless the notice changes.
+                </p>
+
+                <form asp-controller="Privacy"
+                      asp-action="Acknowledge"
+                      method="post"
+                      class="mb-0">
+
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                    <button type="submit" class="btn btn-primary">
+                        I have read this notice
+                    </button>
+
+                </form>
+
             </div>
         }
         else
