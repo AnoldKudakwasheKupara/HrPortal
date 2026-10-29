@@ -78,13 +78,11 @@ public class ForgotPasswordModel : PageModel
         if (string.IsNullOrWhiteSpace(_options.PortalBaseUrl))
             link = $"{Request.Scheme}://{Request.Host}{link}";
 
-        var employee = user.EmployeeId == null
-            ? null
-            : await _context.Employees
-                .AsNoTracking()
-                .Where(e => e.Id == user.EmployeeId.Value)
-                .Select(e => new { e.Id, e.FirstName })
-                .FirstOrDefaultAsync();
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .Where(e => e.UserId == user.Id)
+            .Select(e => new { e.Id, e.FirstName })
+            .FirstOrDefaultAsync();
 
         var sent = await _email.SendNotificationAsync(
             new OutboundNotification(
