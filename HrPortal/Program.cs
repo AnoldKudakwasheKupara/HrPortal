@@ -8,6 +8,8 @@ using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
@@ -74,11 +76,48 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options =>
     options.ValidationInterval = TimeSpan.FromMinutes(5);
 });
 
+/// <summary>
+/// Cookies that carry a sign-in or a form token are only ever sent
+/// over HTTPS. Running locally under Development they follow the
+/// request, so the plain http profile still works.
+/// </summary>
+var cookieSecurity = builder.Environment.IsDevelopment()
+    ? CookieSecurePolicy.SameAsRequest
+    : CookieSecurePolicy.Always;
+
+/// <summary>
+/// Render ends HTTPS at its own proxy and passes the request on over
+/// plain http, saying in X-Forwarded-Proto and X-Forwarded-For how it
+/// arrived and from where. Reading those lets the portal know the
+/// visitor came in over HTTPS and see their real address, which the
+/// sign-in limits count by. Only the last hop is taken, which is the
+/// one Render adds, so a visitor cannot pass off an address of their
+/// own choosing.
+/// </summary>
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+builder.Services.AddAntiforgery(options =>
+    options.Cookie.SecurePolicy = cookieSecurity);
+
+builder.Services.Configure<CookieTempDataProviderOptions>(options =>
+    options.Cookie.SecurePolicy = cookieSecurity);
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
     options.LogoutPath = "/Identity/Account/Logout";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+
+    options.Cookie.SecurePolicy = cookieSecurity;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
 
     options.ExpireTimeSpan = SessionTimeout.CookieLifetime;
     options.SlidingExpiration = true;
@@ -298,6 +337,8 @@ using (var scope = app.Services.CreateScope())
         throw;
     }
 }
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
