@@ -86,7 +86,21 @@ repository, and fill in the two values it asks for:
 The administrator is created on the first start only, so the password
 variable can be deleted afterwards. Every push to `master` redeploys.
 
-Email is off until configured. Under the service's **Environment** tab, set
-`Email__Enabled` to `true` and fill in `Email__Host`, `Email__Port`,
-`Email__UserName`, `Email__Password`, `Email__FromAddress` and
-`Email__PortalBaseUrl` (the portal's address, used in links).
+Email is off until configured. It goes out through Microsoft Graph from a
+Microsoft 365 mailbox. Under the service's **Environment** tab, set
+`Email__Enabled` to `true`, `Email__Delivery` to `Graph`, and fill in
+`Email__FromAddress` (the sending mailbox), `Email__TenantId`,
+`Email__ClientId`, `Email__ClientSecret` and `Email__PortalBaseUrl` (the
+portal's address, used in links).
+
+The app registration needs no Graph permission of its own in Entra.
+Sending is granted in Exchange Online, limited to the one mailbox:
+
+```powershell
+New-ServicePrincipal -AppId <client id> -ObjectId <enterprise app object id> -DisplayName "My Intellego"
+New-ManagementScope -Name "My Intellego mailbox" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'noreply@intellego-ic.com'"
+New-ManagementRoleAssignment -App <enterprise app object id> -Role "Application Mail.Send" -CustomResourceScope "My Intellego mailbox"
+```
+
+Granting Mail.Send in Entra as well would let the app send as anyone, so
+leave it out there.
