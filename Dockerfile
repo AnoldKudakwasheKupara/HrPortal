@@ -17,7 +17,6 @@ WORKDIR /app
 COPY --from=build /app .
 
 ENV ASPNETCORE_ENVIRONMENT=Production \
-    ASPNETCORE_FORWARDEDHEADERS_ENABLED=true \
     TZ=Africa/Harare
 
 EXPOSE 10000
