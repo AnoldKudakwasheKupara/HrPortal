@@ -91,6 +91,11 @@ namespace HrPortal.ViewModels
 
     public class MyDashboardSection
     {
+        /// <summary>
+        /// From Friday, until this week's report is submitted.
+        /// </summary>
+        public bool WeeklyReportDue { get; set; }
+
         public decimal RemainingDays { get; set; }
 
         public string? HeadlineLeaveType { get; set; }
@@ -139,6 +144,12 @@ namespace HrPortal.ViewModels
 
     public class MdDashboardSection
     {
+        /// <summary>Staff who can sign in, and how many of them have
+        /// submitted this week's report.</summary>
+        public int WeeklyReportStaff { get; set; }
+
+        public int WeeklyReportsSubmitted { get; set; }
+
         public int AwaitingFinalApproval { get; set; }
 
         public int ApprovedThisMonth { get; set; }
@@ -185,8 +196,6 @@ namespace HrPortal.ViewModels
         public int ActivitiesThisWeek { get; set; }
 
         public int ActivitiesOutstanding { get; set; }
-
-        public bool WeeklyReportDue { get; set; }
 
         /// <summary>
         /// Whether anybody holds the role. Nobody means requests

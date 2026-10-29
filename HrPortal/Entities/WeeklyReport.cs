@@ -4,6 +4,14 @@ namespace HrPortal.Entities
     {
         public int Id { get; set; }
 
+        /// <summary>
+        /// Whose report this is. Each person writes their own; only
+        /// the IT department reports made before that have none.
+        /// </summary>
+        public int? EmployeeId { get; set; }
+
+        public Employee? Employee { get; set; }
+
         public DateTime PeriodStart { get; set; }
 
         public DateTime PeriodEnd { get; set; }

@@ -13,22 +13,8 @@
     </div>
 
     <div class="alert alert-warning">
-        @if (Model.Status == WeeklyReportStatus.Final)
-        {
-            <text>
-                <strong>This report has already been issued.</strong>
-                Deleting it leaves no record of what was reported for
-                this period, and the next draft will carry forward the
-                priorities from an earlier week instead.
-            </text>
-        }
-        else
-        {
-            <text>
-                Its @Model.Sections.Count sections and
-                @Model.Priorities.Count priorities go with it.
-            </text>
-        }
+        This draft, its @Model.Sections.Count piece(s) of work and
+        @Model.Priorities.Count priorities will be removed.
     </div>
 
     <div class="card shadow-sm">

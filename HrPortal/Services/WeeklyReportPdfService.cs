@@ -56,12 +56,12 @@ namespace HrPortal.Services
                     page.Content().Element(e =>
                         Content(e, report, sections, priorities, issued));
 
-                    page.Footer().Element(Footer);
+                    page.Footer().Element(e => Footer(e, report));
                 });
             });
         }
 
-        private void Footer(IContainer container)
+        private void Footer(IContainer container, WeeklyReport report)
         {
             DocumentStyle.Gutters(container)
                 .PaddingBottom(16)
@@ -73,7 +73,7 @@ namespace HrPortal.Services
                 {
                     row.RelativeItem()
                         .Text($"{_branding.OrganisationName} | " +
-                              $"{_branding.DepartmentName}")
+                              $"{DepartmentOf(report)}")
                         .FontSize(8)
                         .FontColor(DocumentStyle.Muted);
 
@@ -100,13 +100,17 @@ namespace HrPortal.Services
             {
                 column.Spacing(14);
 
-                column.Item().Element(TitleBlock);
+                column.Item().Element(e => TitleBlock(e, report));
 
                 column.Item().Element(e => PeriodStrip(e, report));
 
                 if (!string.IsNullOrWhiteSpace(report.ExecutiveOverview))
                 {
-                    column.Item().Element(e => Heading(e, "Executive Overview"));
+                    column.Item().Element(e => Heading(
+                        e,
+                        report.EmployeeId == null
+                            ? "Executive Overview"
+                            : "Summary of the Week"));
 
                     column.Item()
                         .Text(report.ExecutiveOverview.Trim())
@@ -139,7 +143,7 @@ namespace HrPortal.Services
                 }
 
                 column.Item().PaddingTop(16).AlignCenter()
-                    .Text($"END OF REPORT | {_branding.DepartmentName} " +
+                    .Text($"END OF REPORT | {DepartmentOf(report)} " +
                           $"— {_branding.OrganisationName} " +
                           $"| {issued:dd MMMM yyyy}")
                     .FontSize(8)
@@ -157,19 +161,42 @@ namespace HrPortal.Services
             !string.IsNullOrWhiteSpace(s.Body) ||
             !string.IsNullOrWhiteSpace(s.Workstream);
 
-        private void TitleBlock(IContainer container)
+        /// <summary>
+        /// A personal report is headed with the person's name and
+        /// post; the old IT department reports keep their own heading.
+        /// </summary>
+        private string TitleOf(WeeklyReport report) =>
+            report.Employee == null
+                ? _branding.DepartmentName
+                : $"{report.Employee.FirstName} {report.Employee.LastName}";
+
+        private string SubtitleOf(WeeklyReport report) =>
+            report.Employee == null
+                ? _branding.Subtitle
+                : string.Join(
+                    " | ",
+                    new[] { report.Employee.JobTitle, report.Employee.Department?.Name }
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .DefaultIfEmpty("WEEKLY REPORT")).ToUpperInvariant();
+
+        private string DepartmentOf(WeeklyReport report) =>
+            report.Employee == null
+                ? _branding.DepartmentName
+                : report.Employee.Department?.Name ?? "Weekly Report";
+
+        private void TitleBlock(IContainer container, WeeklyReport report)
         {
             container.Column(column =>
             {
                 column.Item()
-                    .Text(_branding.DepartmentName.ToUpperInvariant())
+                    .Text(TitleOf(report).ToUpperInvariant())
                     .FontSize(26)
                     .Bold()
                     .FontColor(DocumentStyle.Ink)
                     .LineHeight(1.1f);
 
                 column.Item().PaddingTop(6)
-                    .Text(_branding.Subtitle)
+                    .Text(SubtitleOf(report))
                     .FontSize(10)
                     .FontColor(DocumentStyle.Muted)
                     .LetterSpacing(0.1f);

@@ -48,6 +48,11 @@ namespace HrPortal.Services
                 "course application(s)");
 
             Add(
+                await _context.WeeklyReports
+                    .CountAsync(r => r.EmployeeId == employeeId),
+                "weekly report(s)");
+
+            Add(
                 await _context.CourseApplicationHistories
                     .CountAsync(h => h.ActionedByEmployeeId == employeeId),
                 "course approval action(s)");

@@ -31,29 +31,46 @@ namespace HrPortal.Services
             _ => 5
         };
 
+        /// <summary>
+        /// Somebody's report for a week, started from their own last
+        /// one: the pieces of work they were on carry over without
+        /// last week's notes, unless they were finished, and so do
+        /// the priorities they set themselves.
+        ///
+        /// Somebody in the IT department starts instead from the IT
+        /// headings, filled in from the week's activity log.
+        /// </summary>
         public async Task<WeeklyReport> BuildDraftAsync(
+            Employee owner,
             DateTime periodStart,
             DateTime periodEnd,
             string preparedBy)
         {
-            var activities = await _context.ItActivities
-                .Include(a => a.RaisedByEmployee)
-                .Include(a => a.Asset)
-                .Where(a =>
-                    a.LoggedOn >= periodStart &&
-                    a.LoggedOn <= periodEnd)
-                .OrderBy(a => a.LoggedOn)
-                .ToListAsync();
+            var fromActivityLog = ItDepartment.Matches(owner.Department?.Name);
+
+            var activities = fromActivityLog
+                ? await _context.ItActivities
+                    .Include(a => a.RaisedByEmployee)
+                    .Include(a => a.Asset)
+                    .Where(a =>
+                        a.LoggedOn >= periodStart &&
+                        a.LoggedOn <= periodEnd)
+                    .OrderBy(a => a.LoggedOn)
+                    .ToListAsync()
+                : new List<ItActivity>();
 
             var previous = await _context.WeeklyReports
                 .Include(r => r.Sections)
                 .Include(r => r.Priorities)
-                .Where(r => r.PeriodStart < periodStart)
+                .Where(r =>
+                    r.EmployeeId == owner.Id &&
+                    r.PeriodStart < periodStart)
                 .OrderByDescending(r => r.PeriodStart)
                 .FirstOrDefaultAsync();
 
             var report = new WeeklyReport
             {
+                EmployeeId = owner.Id,
                 PeriodStart = periodStart,
                 PeriodEnd = periodEnd,
                 PreparedBy = preparedBy,
@@ -61,22 +78,42 @@ namespace HrPortal.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            foreach (var (order, heading) in Template)
+            if (fromActivityLog)
             {
-                var carried = previous?.Sections
-                    .FirstOrDefault(s => s.Order == order);
-
-                report.Sections.Add(new WeeklyReportSection
+                foreach (var (order, heading) in Template)
                 {
-                    Order = order,
-                    Heading = heading,
+                    var carried = previous?.Sections
+                        .FirstOrDefault(s => s.Order == order);
 
-                    Workstream = carried?.Workstream,
-                    WorkstreamStatus =
-                        carried?.WorkstreamStatus ?? WorkstreamStatus.None,
+                    report.Sections.Add(new WeeklyReportSection
+                    {
+                        Order = order,
+                        Heading = heading,
 
-                    Body = BodyFor(order, activities, periodStart, periodEnd)
-                });
+                        Workstream = carried?.Workstream,
+                        WorkstreamStatus =
+                            carried?.WorkstreamStatus ?? WorkstreamStatus.None,
+
+                        Body = BodyFor(order, activities, periodStart, periodEnd)
+                    });
+                }
+            }
+            else if (previous != null)
+            {
+                var order = 1;
+
+                foreach (var carried in previous.Sections
+                    .Where(s => s.WorkstreamStatus != WorkstreamStatus.Completed)
+                    .OrderBy(s => s.Order))
+                {
+                    report.Sections.Add(new WeeklyReportSection
+                    {
+                        Order = order++,
+                        Heading = carried.Heading,
+                        Workstream = carried.Workstream,
+                        WorkstreamStatus = carried.WorkstreamStatus
+                    });
+                }
             }
 
             var nextOrder = 1;
@@ -193,6 +230,10 @@ namespace HrPortal.Services
                 _ => string.Join(", ", items.Take(items.Count - 1)) +
                      " and " + items[^1]
             };
+        /// <summary>The Monday of the week the day falls in.</summary>
+        public static DateTime WeekStart(DateTime day) =>
+            day.Date.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+
         public static DateTime NextPeriodStart(DateTime? lastPeriodStart)
         {
             if (lastPeriodStart.HasValue)
@@ -236,7 +277,9 @@ namespace HrPortal.Services
             var lines = WeeklyReportPdfService.Lines(text);
 
             var previousTexts = await _context.WeeklyReportPriorities
-                .Where(p => p.Report.PeriodStart < report.PeriodStart)
+                .Where(p =>
+                    p.Report.EmployeeId == report.EmployeeId &&
+                    p.Report.PeriodStart < report.PeriodStart)
                 .Select(p => p.Text)
                 .ToListAsync();
 

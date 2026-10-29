@@ -13,7 +13,15 @@
 
     var priorities = Model.Priorities.OrderBy(p => p.Order).ToList();
 
-    var nextNumber = (sections.Any() ? sections.Max(s => s.Order) : 0) + 1;
+    var nextNumber = sections.Count + 1;
+
+    var owns = ViewBag.Owns == true;
+    var submitted = Model.Status == WeeklyReportStatus.Final;
+    var personal = Model.EmployeeId != null;
+
+    var who = Model.Employee == null
+        ? Model.PreparedBy
+        : $"{Model.Employee.FirstName} {Model.Employee.LastName}";
 }
 
 <div class="container-fluid">
@@ -21,37 +29,66 @@
     <div class="page-head">
         <div>
             <h2>
+                @(personal && !owns ? who + ": " : "")
+                Week of
                 @Model.PeriodStart.ToString("dd MMM")
                 &ndash;
                 @Model.PeriodEnd.ToString("dd MMM yyyy")
             </h2>
 
             <div class="detail-badges">
-                @if (Model.Status == WeeklyReportStatus.Final)
+                @if (submitted)
                 {
                     <span class="badge bg-success">
-                        Issued @(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "")
+                        @(personal ? "Submitted" : "Issued")
+                        @(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "")
                     </span>
                 }
                 else
                 {
-                    <span class="badge bg-warning text-dark">Draft</span>
+                    <span class="badge bg-warning text-dark">Draft &middot; only you can see it</span>
                 }
 
                 <span class="badge bg-light text-dark">
-                    Prepared by @Model.PreparedBy
+                    @who@(Model.Employee?.Department == null ? "" : $", {Model.Employee.Department.Name}")
                 </span>
             </div>
         </div>
 
         <div class="page-head-actions">
             <a asp-action="Pdf" asp-route-id="@Model.Id"
-               class="btn btn-primary">Download PDF</a>
+               class="btn btn-outline-primary">Download PDF</a>
 
-            <a asp-action="Edit" asp-route-id="@Model.Id"
-               class="btn btn-outline-primary">Edit</a>
+            @if (owns && !submitted)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id"
+                   class="btn btn-outline-primary">Edit</a>
 
-            <a asp-action="Index" class="btn btn-secondary">Back</a>
+                <form asp-action="Submit" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-primary">
+                        @(personal ? "Submit" : "Issue")
+                    </button>
+                </form>
+            }
+            else if (owns)
+            {
+                <form asp-action="Reopen" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        Take back to change
+                    </button>
+                </form>
+            }
+
+            @if (owns)
+            {
+                <a asp-action="Index" class="btn btn-secondary">Back</a>
+            }
+            else
+            {
+                <a asp-action="Overview"
+                   asp-route-week="@Model.PeriodStart.ToString("yyyy-MM-dd")"
+                   class="btn btn-secondary">Back to overview</a>
+            }
         </div>
     </div>
 
@@ -60,31 +97,36 @@
         <div class="alert alert-success">@TempData["Success"]</div>
     }
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
     <div class="card shadow-sm mb-3">
 
-        <div class="card-header">Executive Overview</div>
+        <div class="card-header">@(personal ? "Summary of the week" : "Executive Overview")</div>
 
         <div class="card-body">
             @if (!string.IsNullOrWhiteSpace(Model.ExecutiveOverview))
             {
-                <div class="field-value mb-0">@Model.ExecutiveOverview</div>
+                <div class="field-value mb-0" style="white-space: pre-line;">@Model.ExecutiveOverview</div>
             }
             else
             {
-                <div class="field-value is-empty mb-0">
-                    Not written yet. The report cannot be issued without it.
-                </div>
+                <div class="field-value is-empty mb-0">No summary written.</div>
             }
         </div>
 
     </div>
 
-    @foreach (var s in sections)
+    @for (var n = 0; n < sections.Count; n++)
     {
+        var s = sections[n];
+
         <div class="card shadow-sm mb-3">
 
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>@s.Order.ToString("00"). @s.Heading</span>
+                <span>@((n + 1).ToString("00")). @s.Heading</span>
 
                 @if (WeeklyReportPdfService.StatusLabel(s.WorkstreamStatus) is string label)
                 {
@@ -115,7 +157,7 @@
                 else
                 {
                     <div class="field-value is-empty mb-0">
-                        Nothing recorded under this section.
+                        Nothing written under this heading.
                     </div>
                 }
 
@@ -127,7 +169,7 @@
     <div class="card shadow-sm mb-4">
 
         <div class="card-header">
-            @nextNumber.ToString("00"). Priorities for the Next Reporting Period
+            @nextNumber.ToString("00"). Priorities for next week
         </div>
 
         <div class="card-body">
@@ -151,7 +193,7 @@
             else
             {
                 <div class="field-value is-empty mb-0">
-                    No priorities recorded for the next period.
+                    No priorities recorded for next week.
                 </div>
             }
         </div>

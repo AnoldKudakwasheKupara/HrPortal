@@ -942,7 +942,13 @@ namespace HrPortal.DbContexts
 
                 entity.Property(r => r.ExecutiveOverview).HasMaxLength(4000);
 
-                entity.HasIndex(r => r.PeriodStart).IsUnique();
+                entity.HasOne(r => r.Employee)
+                    .WithMany()
+                    .HasForeignKey(r => r.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(r => new { r.EmployeeId, r.PeriodStart })
+                    .IsUnique();
             });
 
             builder.Entity<WeeklyReportSection>(entity =>

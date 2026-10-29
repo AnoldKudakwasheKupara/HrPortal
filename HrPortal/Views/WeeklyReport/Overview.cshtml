@@ -1,0 +1,178 @@
+@using HrPortal.ViewModels
+@model HrPortal.ViewModels.WeeklyOverviewViewModel
+
+@{
+    ViewData["Title"] = Model.AllStaff ? "Weekly progress" : "My team's weekly reports";
+
+    var previous = Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd");
+    var next = Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd");
+    var isCurrent = Model.WeekStart == HrPortal.Services.WeeklyReportBuilder.WeekStart(DateTime.Today);
+
+    static string Short(string? text, int length) =>
+        string.IsNullOrWhiteSpace(text)
+            ? string.Empty
+            : text.Length <= length ? text : text[..length].TrimEnd() + "…";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>@ViewData["Title"]</h2>
+            <p class="text-muted mb-0">
+                Week of @Model.WeekStart.ToString("d MMM") &ndash; @Model.WeekEnd.ToString("d MMM yyyy").
+                @(Model.AllStaff
+                    ? "Everybody who can sign in, by department."
+                    : "The people who report to you.")
+                Drafts stay private until they are submitted.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Overview" asp-route-week="@previous" class="btn btn-outline-secondary">
+                <i class="fas fa-chevron-left" aria-hidden="true"></i> Previous week
+            </a>
+            @if (!isCurrent)
+            {
+                <a asp-action="Overview" class="btn btn-outline-secondary">This week</a>
+                <a asp-action="Overview" asp-route-week="@next" class="btn btn-outline-secondary">
+                    Next week <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-secondary">My reports</a>
+        </div>
+    </div>
+
+    <div class="report-stats">
+
+        <div class="report-stat is-good">
+            <span class="report-stat-label">Submitted</span>
+            <span class="report-stat-value">@Model.Submitted</span>
+            <span class="report-stat-note">of @Model.Rows.Count</span>
+        </div>
+
+        <div class="report-stat">
+            <span class="report-stat-label">In draft</span>
+            <span class="report-stat-value">@Model.Drafts</span>
+            <span class="report-stat-note">Started, not yet submitted</span>
+        </div>
+
+        <div class="report-stat @(Model.NotStarted > 0 ? "is-warning" : "")">
+            <span class="report-stat-label">Not started</span>
+            <span class="report-stat-value">@Model.NotStarted</span>
+            <span class="report-stat-note">No report this week</span>
+        </div>
+
+    </div>
+
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-center text-muted py-4">
+                Nobody to show for this week.
+            </div>
+        </div>
+    }
+
+    @foreach (var department in Model.Rows.GroupBy(r => r.Department ?? "No department"))
+    {
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header d-flex justify-content-between">
+                <span>@department.Key</span>
+                <span class="text-muted small">
+                    @department.Count(r => r.Progress == WeeklyProgress.Submitted)
+                    of @department.Count() submitted
+                </span>
+            </div>
+
+            <div class="card-body is-table">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                @if (Model.AllStaff)
+                                {
+                                    <th>Supervisor</th>
+                                }
+                                <th>Status</th>
+                                <th class="num">Work</th>
+                                <th>Summary</th>
+                                <th class="col-actions"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        @foreach (var row in department)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@row.Name</strong>
+                                    @if (!string.IsNullOrWhiteSpace(row.JobTitle))
+                                    {
+                                        <div class="text-muted small">@row.JobTitle</div>
+                                    }
+                                </td>
+
+                                @if (Model.AllStaff)
+                                {
+                                    <td class="text-muted">@(row.Supervisor ?? "None")</td>
+                                }
+
+                                <td>
+                                    @switch (row.Progress)
+                                    {
+                                        case WeeklyProgress.Submitted:
+                                            <span class="badge bg-success">
+                                                Submitted @(row.SubmittedOn?.ToString("d MMM") ?? "")
+                                            </span>
+                                            break;
+                                        case WeeklyProgress.Draft:
+                                            <span class="badge bg-warning text-dark">In draft</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">Not started</span>
+                                            break;
+                                    }
+                                </td>
+
+                                <td class="num">
+                                    @if (row.Progress == WeeklyProgress.Submitted)
+                                    {
+                                        <span title="@row.Completed completed">
+                                            @row.Items
+                                            @if (row.Completed > 0)
+                                            {
+                                                <span class="text-success small">(@row.Completed done)</span>
+                                            }
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="small" style="max-width: 420px;">
+                                    @Short(row.Summary, 180)
+                                </td>
+
+                                <td class="col-actions">
+                                    @if (row.ReportId is int reportId)
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Details" asp-route-id="@reportId">
+                                            Read
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    }
+
+</div>

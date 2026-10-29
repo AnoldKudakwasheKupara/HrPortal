@@ -137,6 +137,13 @@ namespace HrPortal.Services
 
                 DaysTakenThisYear = daysTaken,
 
+                WeeklyReportDue =
+                    today.DayOfWeek >= DayOfWeek.Friday &&
+                    !await _context.WeeklyReports.AnyAsync(r =>
+                        r.EmployeeId == employeeId &&
+                        r.PeriodStart == WeekStart(today) &&
+                        r.Status == WeeklyReportStatus.Final),
+
                 RecentRequests = await _context.LeaveRequests
                     .Include(r => r.LeaveType)
                     .Where(r => r.EmployeeId == employeeId)
@@ -234,6 +241,17 @@ namespace HrPortal.Services
 
             return new MdDashboardSection
             {
+                WeeklyReportStaff = await _context.Employees
+                    .CountAsync(e => e.IsActive && e.UserId != null),
+
+                WeeklyReportsSubmitted = await _context.WeeklyReports
+                    .CountAsync(r =>
+                        r.EmployeeId != null &&
+                        r.PeriodStart == WeekStart(today) &&
+                        r.Status == WeeklyReportStatus.Final &&
+                        r.Employee!.IsActive &&
+                        r.Employee.UserId != null),
+
                 AwaitingFinalApproval = await _context.LeaveRequests
                     .CountAsync(r =>
                         r.Status == LeaveRequestStatus.HRApproved ||
@@ -350,11 +368,6 @@ namespace HrPortal.Services
 
                 ActivitiesOutstanding = await _context.ItActivities
                     .CountAsync(a => a.Status != ItActivityStatus.Resolved),
-
-                WeeklyReportDue =
-                    today.DayOfWeek >= DayOfWeek.Friday &&
-                    !await _context.WeeklyReports
-                        .AnyAsync(r => r.PeriodStart == weekStart),
 
                 HasHrOfficer = await _approvers.AnybodyAsync(
                     ApprovalRole.HROfficer),
@@ -496,15 +509,15 @@ namespace HrPortal.Services
                 });
             }
 
-            if (model.Admin is { WeeklyReportDue: true })
+            if (model.Mine is { WeeklyReportDue: true })
             {
                 focus.Add(new DashboardFocusItem
                 {
                     Icon = "fa-file-lines",
-                    Label = "Weekly IT report",
-                    Note = "The report for this week is not drafted yet.",
+                    Label = "Your weekly report",
+                    Note = "Not submitted for this week yet.",
                     Tone = "is-warning",
-                    Controller = "ItActivity",
+                    Controller = "WeeklyReport",
                     Action = "Index"
                 });
             }

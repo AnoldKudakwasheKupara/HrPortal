@@ -72,9 +72,10 @@
         tiles.Add(("Helpdesk", "fa-headset", "IT activity", a.ActivitiesThisWeek.ToString("N0"),
             a.ActivitiesOutstanding == 0 ? "nothing outstanding" : $"{a.ActivitiesOutstanding:N0} still open",
             "Open the log", a.ActivitiesOutstanding > 0 ? "tone-amber" : "tone-teal", "ItActivity", "Index"));
-        tiles.Add(("Report", "fa-file-lines", "Weekly report", a.WeeklyReportDue ? "Due" : "Done",
-            a.WeeklyReportDue ? "this week's is not drafted" : "this week is covered", "Open",
-            a.WeeklyReportDue ? "tone-gold" : "tone-green", "WeeklyReport", "Index"));
+        var reportDue = Model.Mine?.WeeklyReportDue == true;
+        tiles.Add(("Report", "fa-file-lines", "My weekly report", reportDue ? "Due" : "Open",
+            reportDue ? "not submitted this week" : "write and submit yours", "Open",
+            reportDue ? "tone-gold" : "tone-green", "WeeklyReport", "Index"));
 
         jumps.Add(("This week", "fa-headset", "IT activity log",
             "Everything raised and resolved this week, and what is still open against a machine or a person.",
@@ -86,7 +87,7 @@
             null, null, "New employee", "tone-teal", "Employee", "Create"));
         jumps.Add(("Estate", "fa-box", "Register an asset", "Bring new hardware into the register.",
             null, null, "New asset", "tone-green", "Asset", "Create"));
-        jumps.Add(("Report", "fa-file-lines", "Weekly IT report", "Draft, issue and share this week's report.",
+        jumps.Add(("Report", "fa-file-lines", "My weekly report", "Write this week's report and submit it to your supervisor.",
             null, null, "Open reports", "tone-gold", "WeeklyReport", "Index"));
         jumps.Add(("Insight", "fa-chart-column", "Reports", "Assets, vendors, licences, activity and the audit trail.",
             null, null, "See reports", "tone-violet", "Reports", "Index"));
@@ -145,11 +146,17 @@
             "this month", "See them", "tone-slate", "LeaveRequest", "Index"));
         tiles.Add(("Today", "fa-umbrella-beach", "On leave today", m.OnLeaveToday.ToString("N0"),
             "staff away right now", "Absence report", "tone-teal", "Reports", "Absence"));
+        tiles.Add(("Progress", "fa-file-lines", "Weekly reports", m.WeeklyReportsSubmitted.ToString("N0"),
+            $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview",
+            m.WeeklyReportsSubmitted >= m.WeeklyReportStaff ? "tone-green" : "tone-violet", "WeeklyReport", "Overview"));
 
         jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
             "Requests that have cleared the supervisor and HR and now wait on the Managing Director.",
             m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
             "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
+        jumps.Add(("Progress", "fa-table-columns", "Weekly progress", "What everybody worked on this week, who has submitted and who has not.",
+            m.WeeklyReportsSubmitted.ToString("N0"), $"of {m.WeeklyReportStaff:N0} submitted",
+            "Open the overview", "tone-violet", "WeeklyReport", "Overview"));
         jumps.Add(("Finance", "fa-hand-holding-dollar", "Loan applications", "Staff loans to sanction, return or decline.",
             null, null, "Open", "tone-ink", "LoanApproval", "Index"));
         jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what.",

@@ -1,28 +1,28 @@
-using HrPortal.Data;
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
 using HrPortal.Services;
 using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
     /// <summary>
-    /// Everybody signed in may read an issued report; only an
-    /// administrator may write one. The class guard is therefore the
-    /// weaker of the two and every action that changes something
-    /// carries its own, so a new action is private by omission
-    /// rather than public by it.
+    /// Everybody writes their own weekly report. While it is a draft
+    /// only they can see it; once submitted, their supervisor and the
+    /// Managing Director can read it too. The MD has an overview of
+    /// everybody's week, and a supervisor the same for their team.
+    ///
+    /// Reports from before this, written by an administrator for the
+    /// IT department as a whole, belong to nobody in particular. They
+    /// stay readable by administrators and the MD, and an
+    /// administrator can still look after them.
     /// </summary>
     [Authorize]
     public class WeeklyReportController : Controller
     {
-        private const string Managers = Roles.AdminOnly;
-
         private const int PageSize = 50;
 
         private readonly ApplicationDbContext _context;
@@ -30,120 +30,236 @@ namespace HrPortal.Controllers
         private readonly WeeklyReportPdfService _pdf;
         private readonly AuditService _audit;
         private readonly CurrentUserService _currentUser;
+        private readonly NotificationService _notifications;
 
         public WeeklyReportController(
             ApplicationDbContext context,
             WeeklyReportBuilder builder,
             WeeklyReportPdfService pdf,
             AuditService audit,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            NotificationService notifications)
         {
             _context = context;
             _builder = builder;
             _pdf = pdf;
             _audit = audit;
             _currentUser = currentUser;
+            _notifications = notifications;
+        }
+
+        private bool IsMd => User.IsInRole(Roles.Md);
+
+        private bool IsAdmin => User.IsInRole(Roles.Administrator);
+
+        private async Task<int?> MeAsync() =>
+            await _currentUser.GetEmployeeIdAsync();
+
+        private async Task<bool> SupervisesAsync(int? me, int? employeeId) =>
+            me != null &&
+            employeeId != null &&
+            await _context.Employees.AnyAsync(e =>
+                e.Id == employeeId && e.SupervisorId == me);
+
+        private async Task<bool> CanReadAsync(WeeklyReport report)
+        {
+            if (report.EmployeeId == null)
+                return IsAdmin || IsMd;
+
+            var me = await MeAsync();
+
+            if (report.EmployeeId == me)
+                return true;
+
+            if (report.Status != WeeklyReportStatus.Final)
+                return false;
+
+            return IsMd || await SupervisesAsync(me, report.EmployeeId);
         }
 
         /// <summary>
-        /// A report is a draft until somebody issues it. Only the
-        /// people who write them can see one before that.
+        /// Only a draft can be changed, and only by whoever it belongs
+        /// to: its author, or an administrator for the old IT reports.
         /// </summary>
-        private bool CanManage => User.IsInRole(Roles.Administrator);
-
-        /// <summary>A draft is for its authors only.</summary>
-        private bool Visible(WeeklyReport report) =>
-            CanManage || report.Status == WeeklyReportStatus.Final;
-
-        /// <summary>
-        /// What the person asking is allowed to see.
-        /// </summary>
-        private IQueryable<WeeklyReport> Readable() =>
-            CanManage
-                ? _context.WeeklyReports
-                : _context.WeeklyReports
-                    .Where(r => r.Status == WeeklyReportStatus.Final);
+        private async Task<bool> OwnsAsync(WeeklyReport report) =>
+            report.EmployeeId == null
+                ? IsAdmin
+                : report.EmployeeId == await MeAsync();
 
         public async Task<IActionResult> Index(int page = 1)
         {
-            var reports = await Readable()
+            var me = await MeAsync();
+            var thisWeek = WeeklyReportBuilder.WeekStart(DateTime.Today);
+
+            ViewBag.HasEmployeeRecord = me != null;
+            ViewBag.ThisWeek = thisWeek;
+            ViewBag.IsMd = IsMd;
+            ViewBag.HasTeam = me != null &&
+                await _context.Employees.AnyAsync(e =>
+                    e.SupervisorId == me && e.IsActive);
+
+            ViewBag.ThisWeeksReport = me == null
+                ? null
+                : await _context.WeeklyReports
+                    .Where(r => r.EmployeeId == me && r.PeriodStart == thisWeek)
+                    .Select(r => (int?)r.Id)
+                    .FirstOrDefaultAsync();
+
+            ViewBag.Earlier = IsAdmin || IsMd
+                ? await _context.WeeklyReports
+                    .AsNoTracking()
+                    .Where(r => r.EmployeeId == null)
+                    .OrderByDescending(r => r.PeriodStart)
+                    .ToListAsync()
+                : new List<WeeklyReport>();
+
+            var mine = await _context.WeeklyReports
                 .AsNoTracking()
                 .Include(r => r.Sections)
-                .Include(r => r.Priorities)
+                .Where(r => me != null && r.EmployeeId == me)
                 .OrderByDescending(r => r.PeriodStart)
                 .ToPagedResultAsync(page, PageSize);
 
-            ViewBag.CanManage = CanManage;
-
-            ViewBag.Issued = await _context.WeeklyReports
-                .CountAsync(r => r.Status == WeeklyReportStatus.Final);
-
-            if (!CanManage)
-                return View(reports);
-
-            ViewBag.Drafts = await _context.WeeklyReports
-                .CountAsync(r => r.Status == WeeklyReportStatus.Draft);
-
-            var lastPeriod = await _context.WeeklyReports
-                .OrderByDescending(r => r.PeriodStart)
-                .Select(r => (DateTime?)r.PeriodStart)
-                .FirstOrDefaultAsync();
-
-            ViewBag.NextPeriodStart = WeeklyReportBuilder.NextPeriodStart(lastPeriod);
-
-            ViewBag.UnloggedDays = await _builder.UnloggedDaysAsync(
-                (DateTime)ViewBag.NextPeriodStart);
-
-            return View(reports);
+            return View(mine);
         }
 
-        [Authorize(Roles = Managers)]
-        public async Task<IActionResult> Create()
+        /// <summary>
+        /// Everybody's week at a glance: who has submitted, who has a
+        /// draft going and who has not started, with what each
+        /// submitted report says. The MD sees all staff; a supervisor
+        /// sees the people who report to them.
+        /// </summary>
+        public async Task<IActionResult> Overview(DateTime? week)
         {
-            var lastPeriod = await _context.WeeklyReports
-                .OrderByDescending(r => r.PeriodStart)
-                .Select(r => (DateTime?)r.PeriodStart)
-                .FirstOrDefaultAsync();
+            var me = await MeAsync();
+            var allStaff = IsMd;
 
-            var start = WeeklyReportBuilder.NextPeriodStart(lastPeriod);
-
-            return View(new WeeklyReportCreateViewModel
+            if (!allStaff &&
+                (me == null ||
+                 !await _context.Employees.AnyAsync(e => e.SupervisorId == me)))
             {
-                PeriodStart = start,
-                PeriodEnd = start.AddDays(4),
-                PreparedBy = await _currentUser.GetDisplayNameAsync() ?? string.Empty
-            });
+                return Forbid();
+            }
+
+            var start = WeeklyReportBuilder.WeekStart(week ?? DateTime.Today);
+
+            var people = _context.Employees
+                .AsNoTracking()
+                .Where(e => e.IsActive);
+
+            people = allStaff
+                ? people.Where(e => e.UserId != null)
+                : people.Where(e => e.SupervisorId == me);
+
+            var staff = await people
+                .Select(e => new
+                {
+                    e.Id,
+                    Name = e.FirstName + " " + e.LastName,
+                    e.JobTitle,
+                    Department = e.Department == null ? null : e.Department.Name,
+                    Supervisor = e.Supervisor == null
+                        ? null
+                        : e.Supervisor.FirstName + " " + e.Supervisor.LastName
+                })
+                .ToListAsync();
+
+            var ids = staff.Select(s => s.Id).ToList();
+
+            var reports = await _context.WeeklyReports
+                .AsNoTracking()
+                .Include(r => r.Sections)
+                .Where(r =>
+                    r.PeriodStart == start &&
+                    r.EmployeeId != null &&
+                    ids.Contains(r.EmployeeId.Value))
+                .ToDictionaryAsync(r => r.EmployeeId!.Value);
+
+            var model = new WeeklyOverviewViewModel
+            {
+                WeekStart = start,
+                AllStaff = allStaff,
+                Rows = staff
+                    .Select(s =>
+                    {
+                        reports.TryGetValue(s.Id, out var report);
+
+                        var submitted = report?.Status == WeeklyReportStatus.Final;
+
+                        return new WeeklyOverviewRow
+                        {
+                            EmployeeId = s.Id,
+                            Name = s.Name,
+                            JobTitle = s.JobTitle,
+                            Department = s.Department,
+                            Supervisor = s.Supervisor,
+                            ReportId = submitted ? report!.Id : null,
+                            Progress = report == null
+                                ? WeeklyProgress.NotStarted
+                                : submitted
+                                    ? WeeklyProgress.Submitted
+                                    : WeeklyProgress.Draft,
+                            SubmittedOn = submitted ? report!.FinalisedOn : null,
+                            Items = submitted ? report!.Sections.Count(Filled) : 0,
+                            Completed = submitted
+                                ? report!.Sections.Count(x =>
+                                    x.WorkstreamStatus == WorkstreamStatus.Completed)
+                                : 0,
+                            Summary = submitted ? report!.ExecutiveOverview : null
+                        };
+                    })
+                    .OrderBy(r => r.Department)
+                    .ThenBy(r => r.Name)
+                    .ToList()
+            };
+
+            return View(model);
         }
+
+        public IActionResult Create() =>
+            View(new WeeklyReportCreateViewModel
+            {
+                PeriodStart = WeeklyReportBuilder.WeekStart(DateTime.Today)
+            });
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Create(WeeklyReportCreateViewModel model)
         {
-            if (model.PeriodEnd < model.PeriodStart)
+            var me = await MeAsync();
+
+            if (me == null)
             {
-                ModelState.AddModelError(
-                    nameof(model.PeriodEnd),
-                    "The period cannot end before it starts.");
+                TempData["Error"] =
+                    "Your sign-in is not linked to an employee record, so " +
+                    "there is nobody to write a report for. Ask HR.";
+
+                return RedirectToAction(nameof(Index));
             }
 
-            var clash = await _context.WeeklyReports
-                .AnyAsync(r => r.PeriodStart == model.PeriodStart);
+            var start = WeeklyReportBuilder.WeekStart(model.PeriodStart);
 
-            if (clash)
+            var existing = await _context.WeeklyReports
+                .Where(r => r.EmployeeId == me && r.PeriodStart == start)
+                .Select(r => (int?)r.Id)
+                .FirstOrDefaultAsync();
+
+            if (existing != null)
             {
-                ModelState.AddModelError(
-                    nameof(model.PeriodStart),
-                    "A report already exists for that period.");
+                TempData["Success"] = "You already have a report for that week.";
+
+                return RedirectToAction(nameof(Details), new { id = existing });
             }
 
-            if (!ModelState.IsValid)
-                return View(model);
+            var owner = await _context.Employees
+                .Include(e => e.Department)
+                .FirstAsync(e => e.Id == me);
 
             var report = await _builder.BuildDraftAsync(
-                model.PeriodStart,
-                model.PeriodEnd,
-                model.PreparedBy.Trim());
+                owner,
+                start,
+                start.AddDays(4),
+                $"{owner.FirstName} {owner.LastName}");
 
             _context.WeeklyReports.Add(report);
 
@@ -153,33 +269,30 @@ namespace HrPortal.Controllers
                 AuditService.Created,
                 nameof(WeeklyReport),
                 report.Id.ToString(),
-                $"Weekly report drafted for " +
-                $"{report.PeriodStart:dd MMM} to {report.PeriodEnd:dd MMM yyyy}.");
-
-            TempData["Success"] =
-                "Draft created from the activity log. " +
-                "Write the overview and fill in the week's specifics.";
+                $"Weekly report started for {report.PeriodStart:dd MMM yyyy}.");
 
             return RedirectToAction(nameof(Edit), new { id = report.Id });
         }
 
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return NotFound();
 
-            var report = await _context.WeeklyReports
-                .Include(r => r.Sections)
-                .Include(r => r.Priorities)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var report = await LoadFullAsync(id.Value);
 
-            if (report == null)
+            if (report == null || !await OwnsAsync(report))
                 return NotFound();
 
+            if (report.Status == WeeklyReportStatus.Final)
+                return RedirectToAction(nameof(Details), new { id });
+
             var previous = await _context.WeeklyReports
+                .AsNoTracking()
                 .Include(r => r.Sections)
-                .Where(r => r.PeriodStart < report.PeriodStart)
+                .Where(r =>
+                    r.EmployeeId == report.EmployeeId &&
+                    r.PeriodStart < report.PeriodStart)
                 .OrderByDescending(r => r.PeriodStart)
                 .FirstOrDefaultAsync();
 
@@ -188,17 +301,11 @@ namespace HrPortal.Controllers
                 : $"{previous.PeriodStart:dd MMM} to " +
                   $"{previous.PeriodEnd:dd MMM yyyy}";
 
-            ViewBag.ActivityCount = await _context.ItActivities
-                .CountAsync(a =>
-                    a.LoggedOn >= report.PeriodStart &&
-                    a.LoggedOn <= report.PeriodEnd);
-
             return View(ToEditModel(report, previous));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Edit(
             int id,
             WeeklyReportEditViewModel model)
@@ -206,40 +313,33 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            var report = await _context.WeeklyReports
-                .Include(r => r.Sections)
-                .Include(r => r.Priorities)
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var report = await LoadFullAsync(id);
 
-            if (report == null)
+            if (report == null || !await OwnsAsync(report))
                 return NotFound();
+
+            if (report.Status == WeeklyReportStatus.Final)
+            {
+                TempData["Error"] =
+                    "This report has been submitted. Take it back first " +
+                    "to change it.";
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.ActivityCount = await _context.ItActivities
-                    .CountAsync(a =>
-                        a.LoggedOn >= report.PeriodStart &&
-                        a.LoggedOn <= report.PeriodEnd);
+                var fresh = ToEditModel(report, null);
+                model.OwnerName = fresh.OwnerName;
+                model.OwnerDepartment = fresh.OwnerDepartment;
+                model.FixedHeadings = fresh.FixedHeadings;
 
                 return View(model);
             }
 
-            report.PreparedBy = model.PreparedBy.Trim();
             report.ExecutiveOverview = model.ExecutiveOverview?.Trim();
 
-            foreach (var posted in model.Sections)
-            {
-                var section = report.Sections
-                    .FirstOrDefault(s => s.Id == posted.Id);
-
-                if (section == null)
-                    continue;
-
-                section.Heading = posted.Heading.Trim();
-                section.Workstream = posted.Workstream?.Trim();
-                section.WorkstreamStatus = posted.WorkstreamStatus;
-                section.Body = WeeklyReportBuilder.NormaliseBody(posted.Body);
-            }
+            ApplySections(report, model);
 
             await _builder.ReplacePrioritiesAsync(report, model.PrioritiesText);
 
@@ -251,13 +351,85 @@ namespace HrPortal.Controllers
                 report.Id.ToString(),
                 $"Weekly report for {report.PeriodStart:dd MMM yyyy} edited.");
 
-            TempData["Success"] = "Report saved.";
+            if (Request.Form["thenSubmit"] == "true")
+                return await SubmitAsync(report);
+
+            TempData["Success"] = "Saved. It is still a draft only you can see.";
 
             if (Request.Form["thenPreview"] == "true")
                 return RedirectToAction(nameof(Details), new { id = report.Id });
 
             return RedirectToAction(nameof(Edit), new { id = report.Id });
         }
+
+        /// <summary>
+        /// The IT headings are fixed, so only their contents change.
+        /// Anybody else's pieces of work can be added, renamed and
+        /// taken out; an item left with nothing in it is dropped.
+        /// </summary>
+        private void ApplySections(
+            WeeklyReport report,
+            WeeklyReportEditViewModel model)
+        {
+            var fixedHeadings = HasFixedHeadings(report);
+
+            foreach (var posted in model.Sections)
+            {
+                var section = posted.Id == 0
+                    ? null
+                    : report.Sections.FirstOrDefault(s => s.Id == posted.Id);
+
+                var heading = posted.Heading?.Trim();
+                var body = WeeklyReportBuilder.NormaliseBody(posted.Body);
+                var workstream = posted.Workstream?.Trim();
+
+                var empty =
+                    string.IsNullOrEmpty(heading) &&
+                    body == null &&
+                    string.IsNullOrEmpty(workstream);
+
+                if (!fixedHeadings && (posted.Remove || empty))
+                {
+                    if (section != null)
+                        _context.WeeklyReportSections.Remove(section);
+
+                    continue;
+                }
+
+                if (section == null)
+                {
+                    if (fixedHeadings)
+                        continue;
+
+                    section = new WeeklyReportSection();
+                    report.Sections.Add(section);
+                }
+
+                if (!fixedHeadings)
+                    section.Heading = string.IsNullOrEmpty(heading) ? "Other work" : heading;
+
+                section.Workstream = workstream;
+                section.WorkstreamStatus = posted.WorkstreamStatus;
+                section.Body = body;
+            }
+
+            var order = 1;
+
+            foreach (var section in report.Sections
+                .Where(s => _context.Entry(s).State != EntityState.Deleted)
+                .OrderBy(s => s.Order == 0 ? int.MaxValue : s.Order))
+            {
+                section.Order = order++;
+            }
+        }
+
+        private static bool HasFixedHeadings(WeeklyReport report) =>
+            report.EmployeeId == null ||
+            ItDepartment.Matches(report.Employee?.Department?.Name);
+
+        private static bool Filled(WeeklyReportSection section) =>
+            !string.IsNullOrWhiteSpace(section.Body) ||
+            !string.IsNullOrWhiteSpace(section.Workstream);
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -266,8 +438,10 @@ namespace HrPortal.Controllers
 
             var report = await LoadFullAsync(id.Value);
 
-            if (report == null || !Visible(report))
+            if (report == null || !await CanReadAsync(report))
                 return NotFound();
+
+            ViewBag.Owns = await OwnsAsync(report);
 
             return View(report);
         }
@@ -279,13 +453,17 @@ namespace HrPortal.Controllers
 
             var report = await LoadFullAsync(id.Value);
 
-            if (report == null || !Visible(report))
+            if (report == null || !await CanReadAsync(report))
                 return NotFound();
 
             var bytes = _pdf.Render(report);
 
+            var who = report.Employee == null
+                ? "IT"
+                : $"{report.Employee.FirstName}_{report.Employee.LastName}";
+
             var name =
-                $"IT_Weekly_Report_{report.PeriodEnd:dd-MM-yyyy}" +
+                $"Weekly_Report_{who}_{report.PeriodEnd:dd-MM-yyyy}" +
                 (report.Status == WeeklyReportStatus.Draft ? "_DRAFT" : "") +
                 ".pdf";
 
@@ -294,24 +472,45 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Managers)]
-        public async Task<IActionResult> Finalise(int id)
+        public async Task<IActionResult> Submit(int id)
         {
-            var report = await _context.WeeklyReports.FindAsync(id);
+            var report = await LoadFullAsync(id);
 
-            if (report == null)
+            if (report == null || !await OwnsAsync(report))
                 return NotFound();
 
-            if (string.IsNullOrWhiteSpace(report.ExecutiveOverview))
+            return await SubmitAsync(report);
+        }
+
+        /// <summary>
+        /// Hands the report over: from here the supervisor and the MD
+        /// can read it, and the supervisor is told it is in.
+        /// </summary>
+        private async Task<IActionResult> SubmitAsync(WeeklyReport report)
+        {
+            if (string.IsNullOrWhiteSpace(report.ExecutiveOverview) &&
+                !report.Sections.Any(Filled))
             {
                 TempData["Error"] =
-                    "Write the executive overview before issuing the report.";
+                    "Write a summary of the week, or at least one piece of " +
+                    "work, before submitting.";
 
-                return RedirectToAction(nameof(Edit), new { id });
+                return RedirectToAction(nameof(Edit), new { id = report.Id });
             }
 
             report.Status = WeeklyReportStatus.Final;
             report.FinalisedOn = DateTime.Today;
+
+            if (report.Employee?.SupervisorId is int supervisor)
+            {
+                _notifications.Notify(
+                    supervisor,
+                    "Weekly report submitted",
+                    $"{report.Employee.FirstName} {report.Employee.LastName} " +
+                    "submitted their report for the week of " +
+                    $"{report.PeriodStart:d MMM yyyy}.",
+                    $"/WeeklyReport/Details/{report.Id}");
+            }
 
             await _context.SaveChangesAsync();
 
@@ -319,21 +518,23 @@ namespace HrPortal.Controllers
                 AuditService.Updated,
                 nameof(WeeklyReport),
                 report.Id.ToString(),
-                $"Weekly report for {report.PeriodStart:dd MMM yyyy} issued.");
+                $"Weekly report for {report.PeriodStart:dd MMM yyyy} submitted.");
 
-            TempData["Success"] = "Report issued.";
+            TempData["Success"] = report.EmployeeId == null
+                ? "Report issued."
+                : "Submitted. Your supervisor and the Managing Director can " +
+                  "now read it.";
 
-            return RedirectToAction(nameof(Details), new { id });
+            return RedirectToAction(nameof(Details), new { id = report.Id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Reopen(int id)
         {
             var report = await _context.WeeklyReports.FindAsync(id);
 
-            if (report == null)
+            if (report == null || !await OwnsAsync(report))
                 return NotFound();
 
             report.Status = WeeklyReportStatus.Draft;
@@ -346,14 +547,14 @@ namespace HrPortal.Controllers
                 nameof(WeeklyReport),
                 report.Id.ToString(),
                 $"Weekly report for {report.PeriodStart:dd MMM yyyy} " +
-                "reopened for editing.");
+                "taken back to change.");
 
-            TempData["Success"] = "Report reopened.";
+            TempData["Success"] =
+                "Taken back as a draft. Submit it again once it is right.";
 
             return RedirectToAction(nameof(Edit), new { id });
         }
 
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -361,8 +562,12 @@ namespace HrPortal.Controllers
 
             var report = await LoadFullAsync(id.Value);
 
-            if (report == null)
+            if (report == null ||
+                report.Status == WeeklyReportStatus.Final ||
+                !await OwnsAsync(report))
+            {
                 return NotFound();
+            }
 
             return View(report);
         }
@@ -370,13 +575,16 @@ namespace HrPortal.Controllers
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = Managers)]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var report = await _context.WeeklyReports.FindAsync(id);
 
-            if (report == null)
+            if (report == null ||
+                report.Status == WeeklyReportStatus.Final ||
+                !await OwnsAsync(report))
+            {
                 return NotFound();
+            }
 
             _context.WeeklyReports.Remove(report);
 
@@ -388,7 +596,7 @@ namespace HrPortal.Controllers
                 report.Id.ToString(),
                 $"Weekly report for {report.PeriodStart:dd MMM yyyy} deleted.");
 
-            TempData["Success"] = "Report deleted.";
+            TempData["Success"] = "Draft deleted.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -397,6 +605,8 @@ namespace HrPortal.Controllers
             await _context.WeeklyReports
                 .Include(r => r.Sections)
                 .Include(r => r.Priorities)
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e!.Department)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
         private static WeeklyReportEditViewModel ToEditModel(
@@ -407,9 +617,13 @@ namespace HrPortal.Controllers
                 Id = report.Id,
                 PeriodStart = report.PeriodStart,
                 PeriodEnd = report.PeriodEnd,
-                PreparedBy = report.PreparedBy,
+                OwnerName = report.Employee == null
+                    ? report.PreparedBy
+                    : $"{report.Employee.FirstName} {report.Employee.LastName}",
+                OwnerDepartment = report.Employee?.Department?.Name,
                 ExecutiveOverview = report.ExecutiveOverview,
                 Status = report.Status,
+                FixedHeadings = HasFixedHeadings(report),
 
                 Sections = report.Sections
                     .OrderBy(s => s.Order)
@@ -422,7 +636,7 @@ namespace HrPortal.Controllers
                         WorkstreamStatus = s.WorkstreamStatus,
                         Body = s.Body,
                         PreviousBody = previous?.Sections
-                            .FirstOrDefault(p => p.Order == s.Order)?.Body
+                            .FirstOrDefault(p => p.Heading == s.Heading)?.Body
                     })
                     .ToList(),
 

@@ -1845,6 +1845,9 @@ namespace HrPortal.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<int?>("EmployeeId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ExecutiveOverview")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -1870,7 +1873,7 @@ namespace HrPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PeriodStart")
+                    b.HasIndex("EmployeeId", "PeriodStart")
                         .IsUnique();
 
                     b.ToTable("WeeklyReports");
@@ -2509,6 +2512,16 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TrainingCourse");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.WeeklyReport", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.WeeklyReportPriority", b =>
