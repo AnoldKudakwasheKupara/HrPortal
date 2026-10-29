@@ -33,6 +33,26 @@ namespace HrPortal.Services
                 "leave approval action(s)");
 
             Add(
+                await _context.LoanApplications
+                    .CountAsync(l => l.EmployeeId == employeeId),
+                "loan application(s)");
+
+            Add(
+                await _context.LoanApplicationHistories
+                    .CountAsync(h => h.ActionedByEmployeeId == employeeId),
+                "loan approval action(s)");
+
+            Add(
+                await _context.CourseApplications
+                    .CountAsync(c => c.EmployeeId == employeeId),
+                "course application(s)");
+
+            Add(
+                await _context.CourseApplicationHistories
+                    .CountAsync(h => h.ActionedByEmployeeId == employeeId),
+                "course approval action(s)");
+
+            Add(
                 await _context.TrainingCourses
                     .CountAsync(c => c.CreatedByEmployeeId == employeeId),
                 "training course(s) they created");
@@ -90,6 +110,12 @@ namespace HrPortal.Services
                 await _context.Notifications
                     .CountAsync(n => n.EmployeeId == employeeId),
                 "notification(s)");
+
+            Add(
+                await _context.Employees
+                    .CountAsync(e => e.SupervisorId == employeeId),
+                "link(s) to people they supervise, who will have no " +
+                "supervisor until one is set");
 
             return removals;
         }

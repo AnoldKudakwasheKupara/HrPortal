@@ -1001,9 +1001,29 @@ namespace HrPortal.Controllers
                 "and their balances, training assignments, " +
                 "documents and notifications were deleted.";
 
+            var reports = await _context.Employees
+                .Where(e => e.SupervisorId == employee.Id)
+                .ToListAsync();
+
+            foreach (var report in reports)
+                report.SupervisorId = null;
+
             _context.Employees.Remove(employee);
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Error"] =
+                    "This employee cannot be deleted because their " +
+                    "record is still referenced elsewhere in the portal. " +
+                    "Mark them as having left instead, on the edit page, " +
+                    "which keeps their file.";
+
+                return RedirectToAction(nameof(Index));
+            }
 
             foreach (var filePath in filePaths)
             {
