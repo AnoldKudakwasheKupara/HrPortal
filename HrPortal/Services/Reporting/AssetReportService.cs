@@ -325,8 +325,8 @@ namespace HrPortal.Services.Reporting
                         m.Status == MaintenanceStatus.Scheduled &&
                         m.ScheduledFor < today,
                     DaysToComplete = m.CompletedOn != null
-                        ? EF.Functions.DateDiffDay(
-                            m.ScheduledFor, m.CompletedOn.Value)
+                        ? (m.CompletedOn.Value.Date - m.ScheduledFor.Date)
+                            .Days
                         : (int?)null
                 })
                 .ToListAsync();
@@ -530,8 +530,7 @@ namespace HrPortal.Services.Reporting
                         .OrderByDescending(r => r.RenewedOn)
                         .Select(r => (DateTime?)r.RenewedOn)
                         .FirstOrDefault(),
-                    DaysToExpiry = EF.Functions.DateDiffDay(
-                        today, l.ExpiryDate)
+                    DaysToExpiry = (l.ExpiryDate.Date - today).Days
                 })
                 .ToListAsync();
 

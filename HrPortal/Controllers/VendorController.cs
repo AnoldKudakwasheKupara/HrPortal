@@ -79,14 +79,14 @@ namespace HrPortal.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim();
+                var term = search.Trim().ToLowerInvariant();
 
                 query = query.Where(v =>
-                    v.Name.Contains(term) ||
-                    v.ProductOrService.Contains(term) ||
+                    v.Name.ToLower().Contains(term) ||
+                    v.ProductOrService.ToLower().Contains(term) ||
                     (v.ContactPerson != null &&
-                     v.ContactPerson.Contains(term)) ||
-                    (v.Email != null && v.Email.Contains(term)));
+                     v.ContactPerson.ToLower().Contains(term)) ||
+                    (v.Email != null && v.Email.ToLower().Contains(term)));
             }
 
             if (!string.IsNullOrWhiteSpace(category))

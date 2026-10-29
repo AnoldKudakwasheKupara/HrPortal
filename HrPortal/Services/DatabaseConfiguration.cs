@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace HrPortal.Services
 {
@@ -26,7 +26,7 @@ namespace HrPortal.Services
 
         private static readonly object Gate = new();
 
-        public static SqlException? LastLoadError { get; private set; }
+        public static NpgsqlException? LastLoadError { get; private set; }
 
         public static bool SettingsAreLive => LastLoadError == null;
 
@@ -47,27 +47,34 @@ namespace HrPortal.Services
 
             try
             {
-                using var connection = new SqlConnection(_connectionString);
+                using var connection = new NpgsqlConnection(_connectionString);
                 connection.Open();
 
-                using var command = connection.CreateCommand();
+                using var exists = connection.CreateCommand();
 
-                command.CommandText =
-                    @"IF OBJECT_ID('dbo.AppSettings', 'U') IS NOT NULL
-                          SELECT [Key], [Value] FROM dbo.AppSettings;";
+                exists.CommandText =
+                    "SELECT to_regclass('public.\"AppSettings\"') IS NOT NULL";
 
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
+                if (exists.ExecuteScalar() is true)
                 {
-                    var key = reader.GetString(0);
+                    using var command = connection.CreateCommand();
 
-                    data[key] = reader.IsDBNull(1)
-                        ? null
-                        : reader.GetString(1);
+                    command.CommandText =
+                        "SELECT \"Key\", \"Value\" FROM \"AppSettings\"";
+
+                    using var reader = command.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        var key = reader.GetString(0);
+
+                        data[key] = reader.IsDBNull(1)
+                            ? null
+                            : reader.GetString(1);
+                    }
                 }
             }
-            catch (SqlException ex)
+            catch (NpgsqlException ex)
             {
                 LastLoadError = ex;
 

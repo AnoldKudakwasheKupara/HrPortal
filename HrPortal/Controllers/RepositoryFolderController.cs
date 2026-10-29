@@ -188,7 +188,7 @@ namespace HrPortal.Controllers
 
             var clash = await _context.RepositoryFolders
                 .AnyAsync(f =>
-                    f.Name == name &&
+                    f.Name.ToLower() == name.ToLower() &&
                     (excludeId == null || f.Id != excludeId.Value));
 
             if (clash)

@@ -31,13 +31,13 @@ namespace HrPortal.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim();
+                var term = search.Trim().ToLowerInvariant();
 
                 query = query.Where(e =>
-                    e.FirstName.Contains(term) ||
-                    e.LastName.Contains(term) ||
-                    (e.JobTitle != null && e.JobTitle.Contains(term)) ||
-                    e.Email.Contains(term));
+                    e.FirstName.ToLower().Contains(term) ||
+                    e.LastName.ToLower().Contains(term) ||
+                    (e.JobTitle != null && e.JobTitle.ToLower().Contains(term)) ||
+                    e.Email.ToLower().Contains(term));
             }
 
             var people = await query

@@ -277,7 +277,7 @@ namespace HrPortal.Controllers
 
             var emailExists =
                 await _context.Employees
-                    .AnyAsync(e => e.Email == model.Email);
+                    .AnyAsync(e => e.Email.ToLower() == model.Email.ToLower());
 
             if (emailExists)
             {

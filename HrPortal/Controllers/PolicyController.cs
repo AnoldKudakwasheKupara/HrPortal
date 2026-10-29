@@ -108,12 +108,12 @@ namespace HrPortal.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim();
+                var term = search.Trim().ToLowerInvariant();
 
                 query = query.Where(p =>
-                    p.Title.Contains(term) ||
-                    (p.Summary != null && p.Summary.Contains(term)) ||
-                    (p.Reference != null && p.Reference.Contains(term)));
+                    p.Title.ToLower().Contains(term) ||
+                    (p.Summary != null && p.Summary.ToLower().Contains(term)) ||
+                    (p.Reference != null && p.Reference.ToLower().Contains(term)));
             }
 
             var policies = await query

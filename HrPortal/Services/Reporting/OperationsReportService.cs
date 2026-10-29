@@ -83,7 +83,7 @@ namespace HrPortal.Services.Reporting
                     ResolvedOn = a.ResolvedOn,
                     LoggedBy = a.LoggedBy,
                     DaysToResolve = a.ResolvedOn != null
-                        ? EF.Functions.DateDiffDay(a.LoggedOn, a.ResolvedOn.Value)
+                        ? (a.ResolvedOn.Value.Date - a.LoggedOn.Date).Days
                         : (int?)null
                 })
                 .ToListAsync();

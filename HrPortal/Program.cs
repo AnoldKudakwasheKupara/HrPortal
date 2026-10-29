@@ -8,10 +8,12 @@ using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
+using Npgsql;
 using System.IO.Compression;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,24 +22,27 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 QuestPDF.Settings.ThrowOnMissingTextGlyphs = false;
 
 var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? PostgresUrl.ToConnectionString(
+        builder.Configuration["DATABASE_URL"]);
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
-        "No 'DefaultConnection' connection string was found. Set one in " +
-        "appsettings.Development.json, in user secrets " +
-        "(dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" " +
-        "\"...\"), or in the ConnectionStrings__DefaultConnection " +
-        "environment variable.");
+        "No database was configured. Set a PostgreSQL connection " +
+        "string in user secrets (dotnet user-secrets set " +
+        "\"ConnectionStrings:DefaultConnection\" \"Host=...;" +
+        "Database=...;Username=...;Password=...\"), in the " +
+        "ConnectionStrings__DefaultConnection environment variable, " +
+        "or as a postgres:// address in DATABASE_URL.");
 }
 
 builder.Configuration.AddDatabaseSettings(connectionString);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         connectionString,
-        sql => sql.EnableRetryOnFailure()
+        npgsql => npgsql.EnableRetryOnFailure()
     ));
 
 builder.Services
@@ -255,9 +260,9 @@ using (var scope = app.Services.CreateScope())
                 .GetRequiredService<ILoggerFactory>()
                 .CreateLogger("Uploads"));
     }
-    catch (SqlException ex)
+    catch (NpgsqlException ex)
     {
-        var target = new SqlConnectionStringBuilder(connectionString);
+        var target = new NpgsqlConnectionStringBuilder(connectionString);
 
         var logger = services
             .GetRequiredService<ILoggerFactory>()
@@ -265,13 +270,12 @@ using (var scope = app.Services.CreateScope())
 
         logger.LogError(
             ex,
-            "Could not prepare the database '{Database}' on server " +
-            "'{Server}'. Check that SQL Server is installed and running " +
-            "on this machine and that your Windows account can reach it, " +
-            "or point 'ConnectionStrings:DefaultConnection' at a server " +
-            "you can use. See README.md for first-run setup.",
-            target.InitialCatalog,
-            target.DataSource);
+            "Could not prepare the database '{Database}' on '{Host}'. " +
+            "Check that PostgreSQL is running and that the login in the " +
+            "connection string can reach it and create databases. See " +
+            "README.md for first-run setup.",
+            target.Database,
+            target.Host);
 
         throw;
     }

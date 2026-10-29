@@ -69,12 +69,12 @@ namespace HrPortal.Controllers
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim();
+                var term = search.Trim().ToLowerInvariant();
 
                 documents = documents.Where(d =>
-                    d.Title.Contains(term) ||
-                    d.OriginalFileName.Contains(term) ||
-                    (d.Description != null && d.Description.Contains(term)));
+                    d.Title.ToLower().Contains(term) ||
+                    d.OriginalFileName.ToLower().Contains(term) ||
+                    (d.Description != null && d.Description.ToLower().Contains(term)));
             }
 
             ViewBag.Folders = folders;
