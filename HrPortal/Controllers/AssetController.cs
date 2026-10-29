@@ -2,6 +2,7 @@ using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
 using HrPortal.Services;
+using HrPortal.Services.Notifications;
 using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,17 +18,20 @@ namespace HrPortal.Controllers
         private readonly AuditService _audit;
         private readonly RecordDocumentPdfService _pdf;
         private readonly ListDocumentPdfService _lists;
+        private readonly NotificationService _notifications;
 
         public AssetController(
             ApplicationDbContext context,
             AuditService audit,
             RecordDocumentPdfService pdf,
-            ListDocumentPdfService lists)
+            ListDocumentPdfService lists,
+            NotificationService notifications)
         {
             _context = context;
             _audit = audit;
             _pdf = pdf;
             _lists = lists;
+            _notifications = notifications;
         }
 
         /// <summary>
@@ -294,6 +298,8 @@ namespace HrPortal.Controllers
 
             _context.Assets.Add(asset);
 
+            TellHolder(asset);
+
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
@@ -354,7 +360,10 @@ namespace HrPortal.Controllers
             if (asset == null)
                 return NotFound();
 
-            if (asset.AssignedToEmployeeId != model.AssignedToEmployeeId)
+            var reassigned =
+                asset.AssignedToEmployeeId != model.AssignedToEmployeeId;
+
+            if (reassigned)
             {
                 asset.AssignedOn = model.AssignedToEmployeeId == null
                     ? null
@@ -370,6 +379,9 @@ namespace HrPortal.Controllers
             asset.Notes = model.Notes?.Trim();
             asset.IsInUse = model.IsInUse;
             asset.AssignedToEmployeeId = model.AssignedToEmployeeId;
+
+            if (reassigned)
+                TellHolder(asset);
 
             await _context.SaveChangesAsync();
 
@@ -423,6 +435,31 @@ namespace HrPortal.Controllers
             TempData["Success"] = "Asset deleted successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Tells the person an asset has just been handed to that it
+        /// is now theirs to look after. Nothing goes when it is taken
+        /// back, since there is nothing for them to do.
+        /// </summary>
+        private void TellHolder(Asset asset)
+        {
+            if (asset.AssignedToEmployeeId is not int holder)
+                return;
+
+            var serial = string.IsNullOrWhiteSpace(asset.SerialNumber)
+                ? string.Empty
+                : $" (serial number {asset.SerialNumber})";
+
+            _notifications.Notify(
+                holder,
+                $"{asset.DeviceModel} has been assigned to you",
+                $"{asset.DeviceModel}{serial} is now recorded against " +
+                "you in the asset register. Please look after it, and " +
+                "tell IT if anything about it is wrong or it needs " +
+                "attention.",
+                "/MyAssets",
+                EmailKind.AssetAssigned);
         }
 
         private async Task LoadLookups()

@@ -18,6 +18,8 @@ namespace HrPortal.Services.Notifications
         SessionReminder,
         PasswordReset,
         PolicyPublished,
-        PolicyUpdated
+        PolicyUpdated,
+        AssetAssigned,
+        DocumentAdded
     }
 }
