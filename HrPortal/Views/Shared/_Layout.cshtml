@@ -146,6 +146,38 @@
 
                             </form>
 
+                            <dialog id="idle-warning"
+                                    class="idle-dialog"
+                                    aria-labelledby="idle-warning-title"
+                                    data-idle-seconds="@((int)HrPortal.Services.SessionTimeout.Idle.TotalSeconds)"
+                                    data-warning-seconds="@((int)HrPortal.Services.SessionTimeout.Warning.TotalSeconds)"
+                                    data-keepalive-seconds="@((int)HrPortal.Services.SessionTimeout.KeepAliveEvery.TotalSeconds)"
+                                    data-keepalive-url="@Url.Action("KeepAlive", "Session", new { area = "" })"
+                                    data-login-url="@Url.Page("/Account/Login", new { area = "Identity" })">
+
+                                <div class="idle-dialog-icon" aria-hidden="true">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+
+                                <h2 id="idle-warning-title">Are you still there?</h2>
+
+                                <p>
+                                    You have not used My Intellego for a while. To keep
+                                    your information safe, you will be signed out in
+                                    <strong><span data-idle-countdown>60</span> seconds</strong>.
+                                </p>
+
+                                <div class="idle-dialog-actions">
+                                    <button type="button" class="btn btn-outline-primary" data-idle-signout>
+                                        Sign out now
+                                    </button>
+                                    <button type="button" class="btn btn-primary" data-idle-stay>
+                                        Stay signed in
+                                    </button>
+                                </div>
+
+                            </dialog>
+
                         </div>
 
                     </div>
@@ -165,6 +197,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/ux.js" asp-append-version="true"></script>
+    <script src="~/js/idle.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

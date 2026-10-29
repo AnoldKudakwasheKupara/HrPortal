@@ -80,8 +80,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/Identity/Account/Logout";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 
-    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.ExpireTimeSpan = SessionTimeout.CookieLifetime;
     options.SlidingExpiration = true;
+
+    var validate = options.Events.OnValidatePrincipal;
+
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        await validate(context);
+
+        if (context.Principal != null)
+            context.ShouldRenew = true;
+    };
 });
 
 builder.Services.AddAuthorization(options =>

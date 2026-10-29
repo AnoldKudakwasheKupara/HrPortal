@@ -10,6 +10,15 @@
     <p>Sign in with your work account to continue.</p>
 </div>
 
+@if (Request.Query["timedOut"] == "1")
+{
+    <div class="alert alert-info" role="status">
+        <i class="fas fa-hourglass-end" aria-hidden="true"></i>
+        You were signed out after @HrPortal.Services.SessionTimeout.Idle.TotalMinutes minutes without activity. Sign in
+        again to carry on where you left off.
+    </div>
+}
+
 <form id="account" method="post">
 
     <div asp-validation-summary="ModelOnly"
