@@ -63,6 +63,8 @@ namespace HrPortal.Services.Notifications
                 new("Content overdue", "#c53030", "#fdeded", "Post the content"),
             EmailKind.SessionReminder =>
                 new("Coming up", "#016a6a", "#e2efed", "View the training"),
+            EmailKind.PasswordReset =>
+                new("Password reset", Primary, "#e2efed", "Choose a new password"),
             _ =>
                 new("Notification", Primary, "#e2efed", "Open My Intellego")
         };
@@ -237,6 +239,13 @@ namespace HrPortal.Services.Notifications
 
         private static string? AbsoluteLink(string? portalBaseUrl, string? link)
         {
+            if (Uri.TryCreate(link, UriKind.Absolute, out var absolute) &&
+                (absolute.Scheme == Uri.UriSchemeHttps ||
+                 absolute.Scheme == Uri.UriSchemeHttp))
+            {
+                return link;
+            }
+
             if (string.IsNullOrWhiteSpace(link) ||
                 string.IsNullOrWhiteSpace(portalBaseUrl))
             {

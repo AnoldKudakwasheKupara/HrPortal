@@ -15,6 +15,7 @@ namespace HrPortal.Services.Notifications
         TrainerAssigned,
         ContentDue,
         ContentOverdue,
-        SessionReminder
+        SessionReminder,
+        PasswordReset
     }
 }
