@@ -3,6 +3,9 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using HrPortal.Services.Notifications;
 using MimeKit;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace HrPortal.Services
 {
@@ -10,15 +13,24 @@ namespace HrPortal.Services
     {
         private readonly EmailOptions _options;
         private readonly BrandAssets _brand;
+        private readonly IHttpClientFactory _http;
         private readonly ILogger<EmailService> _logger;
+
+        private readonly SemaphoreSlim _tokenGate = new(1, 1);
+
+        private string? _graphToken;
+
+        private DateTimeOffset _graphTokenExpires;
 
         public EmailService(
             IOptions<EmailOptions> options,
             BrandAssets brand,
+            IHttpClientFactory http,
             ILogger<EmailService> logger)
         {
             _options = options.Value;
             _brand = brand;
+            _http = http;
             _logger = logger;
         }
 
@@ -49,17 +61,37 @@ namespace HrPortal.Services
                 return false;
             }
 
+            if (_options.Delivery == EmailDelivery.Graph &&
+                (string.IsNullOrWhiteSpace(_options.TenantId) ||
+                 string.IsNullOrWhiteSpace(_options.ClientId) ||
+                 string.IsNullOrWhiteSpace(_options.ClientSecret)))
+            {
+                _logger.LogWarning(
+                    "Email is set to go through Microsoft Graph but " +
+                    "Email:TenantId, Email:ClientId or Email:ClientSecret " +
+                    "is not set, so nothing can be sent.");
+
+                return false;
+            }
+
             try
             {
                 var message = Build(notification);
 
-                if (_options.Delivery == EmailDelivery.File)
+                switch (_options.Delivery)
                 {
-                    await WriteToPickupAsync(message, cancellationToken);
-                    return true;
-                }
+                    case EmailDelivery.File:
+                        await WriteToPickupAsync(message, cancellationToken);
+                        break;
 
-                await SendOverSmtpAsync(message, cancellationToken);
+                    case EmailDelivery.Graph:
+                        await SendOverGraphAsync(message, cancellationToken);
+                        break;
+
+                    default:
+                        await SendOverSmtpAsync(message, cancellationToken);
+                        break;
+                }
 
                 return true;
             }
@@ -142,6 +174,129 @@ namespace HrPortal.Services
             await client.SendAsync(message, cancellationToken);
 
             await client.DisconnectAsync(true, cancellationToken);
+        }
+
+        /// <summary>
+        /// Hands the finished message to Microsoft Graph as it
+        /// stands, so the branded body and the embedded logo arrive
+        /// exactly as they were built. Graph takes it base64-encoded,
+        /// answers 202 when it has accepted it, and files a copy in
+        /// the sending mailbox's Sent Items.
+        /// </summary>
+        private async Task SendOverGraphAsync(
+            MimeMessage message,
+            CancellationToken cancellationToken)
+        {
+            var token = await GraphTokenAsync(cancellationToken);
+
+            using var mime = new MemoryStream();
+
+            await message.WriteToAsync(mime, cancellationToken);
+
+            var content = new StringContent(
+                Convert.ToBase64String(mime.ToArray()));
+
+            content.Headers.ContentType =
+                new MediaTypeHeaderValue("text/plain");
+
+            var url =
+                $"{_options.GraphBase.TrimEnd('/')}/v1.0/users/" +
+                $"{Uri.EscapeDataString(_options.FromAddress)}/sendMail";
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = content
+            };
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            using var response = await _http.CreateClient()
+                .SendAsync(request, cancellationToken);
+
+            if (response.StatusCode != HttpStatusCode.Accepted)
+            {
+                var detail = await response.Content
+                    .ReadAsStringAsync(cancellationToken);
+
+                throw new InvalidOperationException(
+                    "Microsoft Graph did not accept the message from " +
+                    $"{_options.FromAddress} ({(int)response.StatusCode}): " +
+                    detail);
+            }
+        }
+
+        /// <summary>
+        /// A token for Graph, signed in as the app. Kept until five
+        /// minutes before it runs out, so a morning of reminders
+        /// shares one sign-in rather than taking one each.
+        /// </summary>
+        private async Task<string> GraphTokenAsync(
+            CancellationToken cancellationToken)
+        {
+            if (_graphToken != null &&
+                DateTimeOffset.UtcNow < _graphTokenExpires)
+            {
+                return _graphToken;
+            }
+
+            await _tokenGate.WaitAsync(cancellationToken);
+
+            try
+            {
+                if (_graphToken != null &&
+                    DateTimeOffset.UtcNow < _graphTokenExpires)
+                {
+                    return _graphToken;
+                }
+
+                var url =
+                    $"{_options.GraphLoginBase.TrimEnd('/')}/" +
+                    $"{Uri.EscapeDataString(_options.TenantId!)}" +
+                    "/oauth2/v2.0/token";
+
+                var form = new FormUrlEncodedContent(
+                    new Dictionary<string, string>
+                    {
+                        ["client_id"] = _options.ClientId!,
+                        ["client_secret"] = _options.ClientSecret!,
+                        ["scope"] =
+                            $"{_options.GraphBase.TrimEnd('/')}/.default",
+                        ["grant_type"] = "client_credentials"
+                    });
+
+                using var response = await _http.CreateClient()
+                    .PostAsync(url, form, cancellationToken);
+
+                var body = await response.Content
+                    .ReadAsStringAsync(cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new InvalidOperationException(
+                        "Microsoft Entra ID did not sign the portal in " +
+                        $"({(int)response.StatusCode}): {body}");
+                }
+
+                using var json = JsonDocument.Parse(body);
+
+                _graphToken = json.RootElement
+                    .GetProperty("access_token")
+                    .GetString();
+
+                var lifetime = json.RootElement
+                    .GetProperty("expires_in")
+                    .GetInt32();
+
+                _graphTokenExpires = DateTimeOffset.UtcNow
+                    .AddSeconds(Math.Max(60, lifetime - 300));
+
+                return _graphToken!;
+            }
+            finally
+            {
+                _tokenGate.Release();
+            }
         }
 
         private async Task WriteToPickupAsync(

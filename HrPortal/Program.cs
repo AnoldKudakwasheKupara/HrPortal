@@ -131,6 +131,7 @@ builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
 
 
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton<EmailService>();
 
 builder.Services.AddScoped<INotificationChannel, EmailNotificationChannel>();
