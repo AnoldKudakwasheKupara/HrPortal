@@ -2,6 +2,7 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
+using HrPortal.Services.Notifications;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -27,6 +28,7 @@ namespace HrPortal.Controllers
         private readonly RecordScope _scope;
 
         private readonly RecordDocumentPdfService _pdf;
+        private readonly NotificationService _notifications;
 
         public EmployeeDocumentController(
             ApplicationDbContext context,
@@ -34,7 +36,8 @@ namespace HrPortal.Controllers
             CurrentUserService currentUser,
             AuditService audit,
             RecordScope scope,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            NotificationService notifications)
         {
             _context = context;
             _fileStorage = fileStorage;
@@ -42,6 +45,7 @@ namespace HrPortal.Controllers
             _audit = audit;
             _scope = scope;
             _pdf = pdf;
+            _notifications = notifications;
         }
 
         /// <summary>
@@ -289,6 +293,8 @@ namespace HrPortal.Controllers
 
             _context.EmployeeDocuments.Add(document);
 
+            await TellOwnerAsync(document);
+
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
@@ -443,6 +449,37 @@ namespace HrPortal.Controllers
                 "Document deleted successfully.";
 
             return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Tells the person a document has been filed against them.
+        /// Not for a restricted category, which they cannot see, and
+        /// not when they filed it themselves.
+        /// </summary>
+        private async Task TellOwnerAsync(EmployeeDocument document)
+        {
+            if (document.EmployeeId == document.UploadedByEmployeeId)
+                return;
+
+            var category = await _context.DocumentCategories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == document.DocumentCategoryId);
+
+            if (category == null || category.IsRestricted)
+                return;
+
+            var described = string.IsNullOrWhiteSpace(document.Description)
+                ? string.Empty
+                : $" ({document.Description})";
+
+            _notifications.Notify(
+                document.EmployeeId,
+                "A document has been added to your file",
+                $"{document.UploadedByName ?? "HR"} added " +
+                $"{document.OriginalFileName}{described} to your file " +
+                $"under {category.Name}.",
+                "/MyProfile",
+                EmailKind.DocumentAdded);
         }
 
         private async Task LoadLookups()
