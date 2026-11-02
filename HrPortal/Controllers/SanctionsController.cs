@@ -26,6 +26,7 @@ namespace HrPortal.Controllers
         private readonly SanctionsService _sanctions;
         private readonly SanctionsReportPdfService _reports;
         private readonly FileStorageService _files;
+        private readonly AuditService _audit;
         private readonly ILogger<SanctionsController> _logger;
 
         public SanctionsController(
@@ -33,12 +34,14 @@ namespace HrPortal.Controllers
             SanctionsService sanctions,
             SanctionsReportPdfService reports,
             FileStorageService files,
+            AuditService audit,
             ILogger<SanctionsController> logger)
         {
             _context = context;
             _sanctions = sanctions;
             _reports = reports;
             _files = files;
+            _audit = audit;
             _logger = logger;
         }
 
@@ -202,6 +205,8 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var review = await _sanctions.LoadAsync(id);
+
+            ViewBag.CorrectedBy = await _sanctions.CorrectedByAsync(id);
 
             var references = review.Concerns
                 .Where(c => c.Reference != null)
@@ -417,9 +422,16 @@ namespace HrPortal.Controllers
             {
                 var path = _files.ResolveExistingPath(review.ReportPath);
 
-                return path == null
-                    ? NotFound()
-                    : PhysicalFile(path, "application/pdf", $"{review.ReviewNumber} Sanctions Screening Report.pdf");
+                if (path == null)
+                    return NotFound();
+
+                await _audit.LogAsync(
+                    AuditService.SanctionsReportDownloaded,
+                    nameof(SanctionsReview),
+                    review.ReviewNumber,
+                    $"Report {review.ReviewNumber} downloaded.");
+
+                return PhysicalFile(path, "application/pdf", $"{review.ReviewNumber} Sanctions Screening Report.pdf");
             }
 
             return File(
@@ -547,11 +559,13 @@ namespace HrPortal.Controllers
 
         /// <summary>
         /// Checks a report somebody has been shown against the ones the
-        /// portal made. A copy that has been altered in any way will
-        /// not match.
+        /// portal made. Only the SHA-256 the portal kept decides whether
+        /// it is genuine; the review number inside the file is used only
+        /// to say which report an altered copy claims to be.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(FileStorageService.MaxFileSizeBytes + 1024 * 1024)]
         public async Task<IActionResult> Verify(IFormFile? file)
         {
             if (file == null || file.Length == 0)
@@ -563,14 +577,54 @@ namespace HrPortal.Controllers
             using var memory = new MemoryStream();
             await file.CopyToAsync(memory);
 
-            var hash = SanctionsService.Sha256Of(memory.ToArray());
+            var bytes = memory.ToArray();
+            var hash = SanctionsService.Sha256Of(bytes);
 
-            ViewBag.Hash = hash;
-            ViewBag.Match = await _context.SanctionsReviews
+            var match = await _context.SanctionsReviews
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.ReportSha256 == hash);
 
+            SanctionsReview? claimed = null;
+
+            if (match == null && ReportVerifier.ClaimedReviewNumber(bytes) is { } number)
+            {
+                claimed = await _context.SanctionsReviews
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.ReviewNumber == number && r.ReportSha256 != null);
+            }
+
+            var verdict = match != null
+                ? ReportVerdict.Genuine
+                : claimed != null ? ReportVerdict.Altered : ReportVerdict.NotFound;
+
+            ViewBag.Hash = hash;
+            ViewBag.Verdict = verdict;
+            ViewBag.Match = match ?? claimed;
+
+            await _audit.LogAsync(
+                AuditService.SanctionsReportVerified,
+                nameof(SanctionsReview),
+                (match ?? claimed)?.ReviewNumber,
+                $"Report {Path.GetFileName(file.FileName)} checked: {verdict} (SHA-256 {hash}).");
+
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Correct(int id)
+        {
+            try
+            {
+                var correction = await _sanctions.CorrectAsync(id);
+                TempData["Success"] = $"{correction.ReviewNumber} started to correct this review. The original and its report are kept as they were.";
+                return RedirectToAction(nameof(Result), new { id = correction.Id });
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Result), new { id });
+            }
         }
     }
 }

@@ -1,8 +1,10 @@
+@using HrPortal.Services.Sanctions
 @{
     ViewData["Title"] = "Verify a report";
 
     var hash = ViewBag.Hash as string;
     var match = ViewBag.Match as HrPortal.Entities.SanctionsReview;
+    var verdict = ViewBag.Verdict as ReportVerdict?;
 }
 
 <div class="container">
@@ -11,8 +13,9 @@
         <h2>Verify a report</h2>
         <p class="text-muted">
             Upload a sanctions screening report you have been given. The portal works out
-            its SHA-256 and checks it against every report it has made. Any change to the
-            file, however small, means it will not match.
+            its SHA-256 fingerprint and checks it against the fingerprint it kept for every
+            report it made. Any change to the file, however small, means it will not match.
+            Nothing printed inside the report is relied on.
         </p>
     </div>
 
@@ -23,26 +26,41 @@
 
     @if (hash != null)
     {
-        if (match != null)
+        if (verdict == ReportVerdict.Genuine)
         {
             <div class="alert alert-success">
-                <strong>Genuine and unaltered.</strong>
+                <strong>Authentic and unchanged.</strong>
                 This is the report for
-                <a asp-action="Result" asp-route-id="@match.Id">@match.ReviewNumber</a>,
+                <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
                 finalised by @match.FinalisedByName on
                 @match.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
             </div>
         }
-        else
+        else if (verdict == ReportVerdict.Altered)
         {
             <div class="alert alert-danger">
-                <strong>Not recognised.</strong>
-                This file does not match any report the portal made. It may have been
-                altered, or it is not a report from this portal.
+                <strong>Altered.</strong>
+                This file says it is the report for
+                <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
+                but it is not the report the portal made and kept for that review. Do not rely on it;
+                download the original from the review instead.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                <strong>Report not found.</strong>
+                This file does not match any report the portal made, and does not say which
+                review it belongs to. It is not a report from this portal, or it has been altered
+                beyond recognition.
             </div>
         }
 
         <p class="small text-muted">SHA-256 of the file checked: <code>@hash</code></p>
+        @if (verdict == ReportVerdict.Altered)
+        {
+            <p class="small text-muted">SHA-256 the portal kept for @match!.ReviewNumber: <code>@match.ReportSha256</code></p>
+        }
     }
 
     <div class="card shadow-sm" style="max-width: 640px;">

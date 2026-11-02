@@ -44,6 +44,22 @@
         </div>
     </div>
 
+    @if (R.CorrectsReview != null)
+    {
+        <div class="alert alert-info">
+            This review corrects <a asp-action="Result" asp-route-id="@R.CorrectsReviewId">@R.CorrectsReview.ReviewNumber</a>,
+            whose report is kept exactly as it was.
+        </div>
+    }
+
+    @if (ViewBag.CorrectedBy is SanctionsReview correctedBy)
+    {
+        <div class="alert alert-warning">
+            This review has been corrected by <a asp-action="Result" asp-route-id="@correctedBy.Id">@correctedBy.ReviewNumber</a>.
+            Its report is kept unchanged for the record.
+        </div>
+    }
+
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -276,7 +292,15 @@
                     @R.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
                     @R.Note
                 </p>
-                <p class="small text-muted mb-0">Report SHA-256 <code>@R.ReportSha256</code></p>
+                <p class="small text-muted mb-2">Report SHA-256 <code>@R.ReportSha256</code></p>
+                @if (ViewBag.CorrectedBy == null)
+                {
+                    <form asp-action="Correct" asp-route-id="@R.Id" method="post" class="mb-0"
+                          onsubmit="return confirm('Start a new review of the same documents to correct this one? This review and its report stay exactly as they are.');">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Correct this review</button>
+                        <span class="small text-muted ms-2">Starts a new review of the same documents; this one and its report stay as they are.</span>
+                    </form>
+                }
             }
             else if (Model.FinaliseBlockers.Any())
             {

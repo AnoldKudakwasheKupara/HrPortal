@@ -129,7 +129,7 @@ namespace HrPortal.Services.Sanctions
             }
 
             await _audit.LogAsync(
-                AuditService.Created,
+                AuditService.SanctionsUploaded,
                 nameof(SanctionsDocument),
                 document.Id.ToString(),
                 $"Sanctions document {document.OriginalFileName} uploaded " +
@@ -183,9 +183,15 @@ namespace HrPortal.Services.Sanctions
         /// as a retry does, returns the review already made rather than
         /// a second one.
         /// </summary>
-        public async Task<SanctionsReview> CompareAsync(int newDocumentId, int? previousDocumentId)
+        public Task<SanctionsReview> CompareAsync(int newDocumentId, int? previousDocumentId) =>
+            CompareAsync(newDocumentId, previousDocumentId, previousDocumentId != null, null);
+
+        private async Task<SanctionsReview> CompareAsync(
+            int newDocumentId,
+            int? previousDocumentId,
+            bool chosen,
+            int? corrects)
         {
-            var chosen = previousDocumentId != null;
 
             previousDocumentId ??= (await PreviousApplicableAsync(newDocumentId))?.Id;
 
@@ -196,6 +202,8 @@ namespace HrPortal.Services.Sanctions
                 .Include(r => r.Concerns)
                 .Where(r => r.NewDocumentId == newDocumentId &&
                             r.PreviousDocumentId == previousDocumentId &&
+                            r.PreviousChosen == chosen &&
+                            r.CorrectsReviewId == corrects &&
                             r.FinalisedAt == null &&
                             r.CreatedAt > since)
                 .OrderByDescending(r => r.Id)
@@ -246,6 +254,8 @@ namespace HrPortal.Services.Sanctions
                 ReviewNumber = await NextReviewNumberAsync(),
                 NewDocumentId = current.Id,
                 PreviousDocumentId = previous?.Id,
+                PreviousChosen = chosen,
+                CorrectsReviewId = corrects,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByName = await WhoAsync(),
                 UnchangedCount = comparison.Unchanged,
@@ -863,14 +873,54 @@ namespace HrPortal.Services.Sanctions
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
-                AuditService.Updated,
+                AuditService.SanctionsFinalised,
                 nameof(SanctionsReview),
                 review.ReviewNumber,
-                $"Sanctions review finalised. Report SHA-256 {review.ReportSha256}.");
+                $"Sanctions review finalised and its report made. Report SHA-256 {review.ReportSha256}.");
         }
+
+        /// <summary>
+        /// Starts a new review of the same documents to correct a
+        /// finalised one. The finalised review and its report are left
+        /// exactly as they were; the new one says which it corrects,
+        /// and false positives cleared in it carry forward as usual.
+        /// </summary>
+        public async Task<SanctionsReview> CorrectAsync(int reviewId)
+        {
+            var original = await _context.SanctionsReviews.AsNoTracking().FirstAsync(r => r.Id == reviewId);
+
+            if (original.FinalisedAt == null)
+                throw new InvalidOperationException("Only a finalised review needs correcting; this one can still be changed.");
+
+            var correction = await CompareAsync(
+                original.NewDocumentId,
+                original.PreviousChosen ? original.PreviousDocumentId : null,
+                original.PreviousChosen,
+                original.Id);
+
+            if (!correction.Screened)
+                await ScreenAsync(correction.Id);
+
+            await _audit.LogAsync(
+                AuditService.SanctionsCompared,
+                nameof(SanctionsReview),
+                correction.ReviewNumber,
+                $"{correction.ReviewNumber} started to correct {original.ReviewNumber}.");
+
+            return correction;
+        }
+
+        /// <summary>The review that corrects this one, if there is one.</summary>
+        public Task<SanctionsReview?> CorrectedByAsync(int reviewId) =>
+            _context.SanctionsReviews
+                .AsNoTracking()
+                .Where(r => r.CorrectsReviewId == reviewId)
+                .OrderByDescending(r => r.Id)
+                .FirstOrDefaultAsync();
 
         public Task<SanctionsReview> LoadAsync(int reviewId) =>
             _context.SanctionsReviews
+                .Include(r => r.CorrectsReview)
                 .Include(r => r.NewDocument)
                 .Include(r => r.PreviousDocument)
                 .Include(r => r.ClientList)

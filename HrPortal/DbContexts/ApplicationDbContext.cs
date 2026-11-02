@@ -430,6 +430,11 @@ namespace HrPortal.DbContexts
                     .WithMany()
                     .HasForeignKey(r => r.ClientListId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.CorrectsReview)
+                    .WithMany()
+                    .HasForeignKey(r => r.CorrectsReviewId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<SanctionsChange>(entity =>

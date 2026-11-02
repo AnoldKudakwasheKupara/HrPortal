@@ -148,6 +148,14 @@ namespace HrPortal.Entities
         /// <summary>None when the new document is the very first.</summary>
         public int? PreviousDocumentId { get; set; }
 
+        /// <summary>The officer chose the previous document, rather than the portal finding it.</summary>
+        public bool PreviousChosen { get; set; }
+
+        /// <summary>A finalised review this one corrects; that one's report is kept as it was.</summary>
+        public int? CorrectsReviewId { get; set; }
+
+        public SanctionsReview? CorrectsReview { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public string? CreatedByName { get; set; }

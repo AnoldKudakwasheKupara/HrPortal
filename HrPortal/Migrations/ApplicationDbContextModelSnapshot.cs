@@ -2004,6 +2004,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<int?>("CorrectsReviewId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -2030,6 +2033,9 @@ namespace HrPortal.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
+
+                    b.Property<bool>("PreviousChosen")
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("PreviousDocumentId")
                         .HasColumnType("integer");
@@ -2065,6 +2071,8 @@ namespace HrPortal.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientListId");
+
+                    b.HasIndex("CorrectsReviewId");
 
                     b.HasIndex("NewDocumentId");
 
@@ -3045,6 +3053,11 @@ namespace HrPortal.Migrations
                         .HasForeignKey("ClientListId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("HrPortal.Entities.SanctionsReview", "CorrectsReview")
+                        .WithMany()
+                        .HasForeignKey("CorrectsReviewId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("HrPortal.Entities.SanctionsDocument", "NewDocument")
                         .WithMany()
                         .HasForeignKey("NewDocumentId")
@@ -3057,6 +3070,8 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ClientList");
+
+                    b.Navigation("CorrectsReview");
 
                     b.Navigation("NewDocument");
 
