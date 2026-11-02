@@ -410,6 +410,7 @@ namespace HrPortal.DbContexts
                 entity.Property(r => r.CreatedByName).HasMaxLength(200);
                 entity.Property(r => r.FinalisedByName).HasMaxLength(200);
                 entity.Property(r => r.Note).HasMaxLength(4000);
+                entity.Property(r => r.ComparisonNote).HasMaxLength(4000);
                 entity.Property(r => r.ReportPath).HasMaxLength(500);
                 entity.Property(r => r.ReportSha256).HasMaxLength(64);
                 entity.HasIndex(r => r.ReportSha256);
@@ -436,6 +437,7 @@ namespace HrPortal.DbContexts
                 entity.Property(c => c.Type).HasConversion<string>().HasMaxLength(20);
                 entity.Property(c => c.Reference).IsRequired().HasMaxLength(20);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(500);
+                entity.Property(c => c.Note).HasMaxLength(1000);
 
                 entity.HasOne(c => c.Review)
                     .WithMany(r => r.Changes)

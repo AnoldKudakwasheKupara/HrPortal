@@ -134,30 +134,29 @@
                 return post(panel.dataset.uploadUrl, newData);
             }, function (doc) { return { lines: readLines(doc), warn: (doc.warnings || []).length > 0 }; });
 
-            if (mode === "last") {
-                await run("Finding the last uploaded document", function () { return Promise.resolve(); }, function () {
-                    return {
-                        lines: [panel.dataset.lastLabel
-                            ? "Comparing with " + panel.dataset.lastLabel
-                            : "Nothing was uploaded before, so this document becomes the starting point."]
-                    };
-                });
-            }
-
-            var comparison = await run("Comparing the two documents name by name", function () {
-                return post(panel.dataset.compareUrl, {
-                    newDocumentId: current.id,
-                    previousDocumentId: previous ? previous.id : null
-                });
-            }, function (c) {
-                if (!c.previous) return { lines: ["No earlier document to compare with."] };
-                return {
-                    lines: ["Compared with " + c.previous.label + " (" + c.previous.entries + " names)"]
+            var comparison = await run(
+                mode === "last" ? "Finding the earlier version and comparing name by name" : "Comparing the two documents name by name",
+                function () {
+                    return post(panel.dataset.compareUrl, {
+                        newDocumentId: current.id,
+                        previousDocumentId: previous ? previous.id : null
+                    });
+                }, function (c) {
+                    var lines = [];
+                    if (c.previous) {
+                        lines.push("Compared with " + c.previous.label + " (" + c.previous.entries + " names)");
+                    } else if (!c.isNotice) {
+                        return { lines: ["No earlier full list of this list has been uploaded, so this document becomes the starting point."].concat(c.notes) };
+                    } else {
+                        lines.push("Each name compared with its latest earlier version uploaded");
+                    }
+                    lines = lines
                         .concat(list(c.added.length + " added", c.added, "No names were added."))
                         .concat(list(c.removed.length + " removed", c.removed, "No names were removed."))
-                        .concat(list(c.changed.length + " changed", c.changed, "No names were changed."))
-                };
-            });
+                        .concat(list(c.changed.length + " amended", c.changed, "No names were amended."));
+                    if (!c.isNotice) lines.push(c.unchanged + " unchanged.");
+                    return { lines: lines.concat(c.notes), warn: c.inconclusive };
+                });
 
             await run("Checking for discrepancies", function () { return Promise.resolve(comparison); }, function (c) {
                 return c.discrepancies.length

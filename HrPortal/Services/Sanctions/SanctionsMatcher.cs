@@ -102,7 +102,7 @@ namespace HrPortal.Services.Sanctions
                     if (used.Contains(i))
                         continue;
 
-                    var score = JaroWinkler(word, longer[i]);
+                    var score = WordSimilarity(word, longer[i]);
 
                     if (score > bestScore)
                     {
@@ -140,6 +140,55 @@ namespace HrPortal.Services.Sanctions
                 .Where(char.IsLetterOrDigit)
                 .Select(char.ToUpperInvariant)
                 .ToArray());
+
+        /// <summary>
+        /// How alike two words are, 0 to 1. Two spellings of the same
+        /// transliterated name (Muttaqi and Motaqi, Mansoor and Mansur)
+        /// count as nearly the same word.
+        /// </summary>
+        public static double WordSimilarity(string a, string b)
+        {
+            if (a == b)
+                return 1;
+
+            var similarity = JaroWinkler(a, b);
+
+            return a.Length >= 3 && b.Length >= 3 && Transliteration(a) == Transliteration(b)
+                ? Math.Max(similarity, 0.95)
+                : similarity;
+        }
+
+        /// <summary>
+        /// A word reduced to how it sounds once written in Latin
+        /// letters: the vowel and consonant pairs that different
+        /// transliterations swap are made the same, and doubled letters
+        /// single.
+        /// </summary>
+        public static string Transliteration(string word)
+        {
+            var s = word
+                .Replace("KH", "K")
+                .Replace("GH", "G")
+                .Replace("PH", "F")
+                .Replace("CK", "K")
+                .Replace("Q", "K")
+                .Replace("OO", "U")
+                .Replace("OU", "U")
+                .Replace("EE", "I")
+                .Replace("O", "U")
+                .Replace("E", "I")
+                .Replace("Y", "I");
+
+            var single = new System.Text.StringBuilder(s.Length);
+
+            foreach (var c in s)
+            {
+                if (single.Length == 0 || single[^1] != c)
+                    single.Append(c);
+            }
+
+            return single.Length > 1 && single[^1] == 'H' ? single.ToString(0, single.Length - 1) : single.ToString();
+        }
 
         /// <summary>
         /// Jaro-Winkler similarity, 0 to 1: how alike two words are,

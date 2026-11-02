@@ -91,6 +91,7 @@ namespace HrPortal.Services.Sanctions
                 ListName = Cap(parsed.ListName, 200),
                 Source = Cap(parsed.Source, 100),
                 PageCount = parsed.PageCount,
+                EntryCount = parsed.Entries.Count,
                 FileSize = bytes.LongLength,
                 OriginalFileName = Path.GetFileName(file.FileName),
                 FilePath = filePath,
@@ -128,21 +129,72 @@ namespace HrPortal.Services.Sanctions
             return (document, false);
         }
 
-        /// <summary>The document uploaded most recently before this one.</summary>
-        public Task<SanctionsDocument?> PreviousOfAsync(int documentId) =>
-            _context.SanctionsDocuments
+        /// <summary>
+        /// The document a new one is compared with when the officer
+        /// asks for "the last uploaded". For a full list, the last full
+        /// list of the same list before it: a notice cannot stand in for
+        /// a whole list. For a notice, the last document before it that
+        /// gives any of the names the notice changes.
+        /// </summary>
+        public async Task<SanctionsDocument?> PreviousApplicableAsync(int documentId)
+        {
+            var current = await _context.SanctionsDocuments
                 .AsNoTracking()
-                .Where(d => d.Id < documentId)
+                .Include(d => d.Entries)
+                .FirstAsync(d => d.Id == documentId);
+
+            if (current.Kind == SanctionsDocumentKind.FullList)
+            {
+                return await _context.SanctionsDocuments
+                    .AsNoTracking()
+                    .Where(d => d.Id < documentId &&
+                                d.Kind == SanctionsDocumentKind.FullList &&
+                                d.ListName == current.ListName)
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefaultAsync();
+            }
+
+            var references = current.Entries.Select(e => e.Reference).Distinct().ToList();
+
+            return await _context.SanctionsDocuments
+                .AsNoTracking()
+                .Where(d => d.Id < documentId && d.Entries.Any(e => references.Contains(e.Reference)))
                 .OrderByDescending(d => d.Id)
                 .FirstOrDefaultAsync();
+        }
 
         /// <summary>
-        /// Compares two documents entry by entry, matched on the UN
-        /// reference, and records what was added, removed and changed,
-        /// and anything that does not add up.
+        /// Compares a new document with an earlier one and records what
+        /// was added, removed and amended, what is unchanged, and
+        /// anything that does not add up. Without a previous document
+        /// chosen, the last applicable one is used, and a notice's
+        /// entries are each compared with their latest earlier version.
+        ///
+        /// Asking again for the same comparison within half an hour,
+        /// as a retry does, returns the review already made rather than
+        /// a second one.
         /// </summary>
         public async Task<SanctionsReview> CompareAsync(int newDocumentId, int? previousDocumentId)
         {
+            var chosen = previousDocumentId != null;
+
+            previousDocumentId ??= (await PreviousApplicableAsync(newDocumentId))?.Id;
+
+            var since = DateTime.UtcNow.AddMinutes(-30);
+
+            var recent = await _context.SanctionsReviews
+                .Include(r => r.Changes)
+                .Include(r => r.Concerns)
+                .Where(r => r.NewDocumentId == newDocumentId &&
+                            r.PreviousDocumentId == previousDocumentId &&
+                            r.FinalisedAt == null &&
+                            r.CreatedAt > since)
+                .OrderByDescending(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            if (recent != null)
+                return recent;
+
             var current = await _context.SanctionsDocuments
                 .Include(d => d.Entries)
                 .FirstAsync(d => d.Id == newDocumentId);
@@ -153,24 +205,53 @@ namespace HrPortal.Services.Sanctions
                     .Include(d => d.Entries)
                     .FirstAsync(d => d.Id == previousDocumentId);
 
+            var references = current.Entries.Select(e => e.Reference).Distinct().ToList();
+
+            var earlier = current.Kind == SanctionsDocumentKind.FullList
+                ? new Dictionary<string, EntryVersion>()
+                : (await _context.SanctionsEntries
+                        .AsNoTracking()
+                        .Include(e => e.Document)
+                        .Where(e => references.Contains(e.Reference) &&
+                                    e.SanctionsDocumentId != current.Id &&
+                                    (chosen
+                                        ? e.SanctionsDocumentId == previousDocumentId
+                                        : e.SanctionsDocumentId < current.Id))
+                        .ToListAsync())
+                    .GroupBy(e => e.Reference)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderByDescending(e => e.SanctionsDocumentId).First() is var e
+                            ? new EntryVersion(e, e.Document.Label)
+                            : null!);
+
+            var comparison = SanctionsComparer.Compare(
+                current,
+                current.Entries.ToList(),
+                previous,
+                previous?.Entries.ToList() ?? new List<SanctionsEntry>(),
+                reference => earlier.GetValueOrDefault(reference));
+
             var review = new SanctionsReview
             {
                 ReviewNumber = await NextReviewNumberAsync(),
                 NewDocumentId = current.Id,
                 PreviousDocumentId = previous?.Id,
                 CreatedAt = DateTime.UtcNow,
-                CreatedByName = await WhoAsync()
+                CreatedByName = await WhoAsync(),
+                UnchangedCount = comparison.Unchanged,
+                NotComparedCount = comparison.NotCompared,
+                Inconclusive = comparison.Inconclusive,
+                ComparisonNote = comparison.Notes.Count == 0 ? null : Cap(string.Join("\n", comparison.Notes), 4000)
             };
 
             var now = DateTime.UtcNow;
 
-            void Discrepancy(string reason, SanctionsEntry? entry = null) =>
+            void Discrepancy(string reason) =>
                 review.Concerns.Add(new SanctionsConcern
                 {
                     Category = SanctionsConcernCategory.Discrepancy,
                     Status = SanctionsConcernStatus.Open,
-                    Reference = entry?.Reference,
-                    ListedName = entry?.Name,
                     Reason = Cap(reason, 2000)!,
                     RaisedAt = now
                 });
@@ -178,64 +259,29 @@ namespace HrPortal.Services.Sanctions
             foreach (var warning in Lines(current.ReadingWarnings))
                 Discrepancy($"Reading {current.Label}: {warning}");
 
-            if (previous != null)
+            if (previous != null && previous.Id != current.Id)
             {
                 foreach (var warning in Lines(previous.ReadingWarnings))
                     Discrepancy($"Reading {previous.Label}: {warning}");
+            }
 
-                if (previous.Sha256 == current.Sha256)
+            foreach (var discrepancy in comparison.Discrepancies)
+                Discrepancy(discrepancy);
+
+            foreach (var change in comparison.Changes)
+            {
+                review.Changes.Add(new SanctionsChange
                 {
-                    Discrepancy("The two documents are the same file. Check that the right " +
-                                "document was received.");
-                }
-
-                if (current.IssuedOn != null && previous.IssuedOn != null &&
-                    current.IssuedOn < previous.IssuedOn)
-                {
-                    Discrepancy($"The new document is dated {current.IssuedOn:d MMM yyyy}, " +
-                                $"earlier than the previous one ({previous.IssuedOn:d MMM yyyy}).");
-                }
-
-                if (current.LooksLikeNotice || previous.LooksLikeNotice)
-                {
-                    Discrepancy(
-                        "At least one of the documents is a notice of additions, amendments " +
-                        "or removals rather than the full list. Names a notice does not " +
-                        "mention will show as removed or added; compare two full lists for " +
-                        "a complete picture.");
-                }
-
-                var before = previous.Entries.GroupBy(e => e.Reference).ToDictionary(g => g.Key, g => g.First());
-                var after = current.Entries.GroupBy(e => e.Reference).ToDictionary(g => g.Key, g => g.First());
-
-                foreach (var (reference, entry) in after.OrderBy(p => p.Key))
-                {
-                    if (!before.TryGetValue(reference, out var old))
-                    {
-                        Change(review, SanctionsChangeType.Added, entry, null);
-                    }
-                    else if (old.Fingerprint != entry.Fingerprint)
-                    {
-                        Change(review, SanctionsChangeType.Changed, entry, Differences(Fields(old), Fields(entry)));
-
-                        if (SanctionsListParser.Normalise(old.Name) != SanctionsListParser.Normalise(entry.Name) &&
-                            SanctionsMatcher.Match(
-                                new ScreeningSubject("", null, old.Name, null),
-                                new ScreeningTarget(reference, entry.Name, Lines(entry.Aliases), new List<string>())) == null)
-                        {
-                            Discrepancy(
-                                $"{reference} is given as {old.Name} in the previous document but as " +
-                                $"{entry.Name} in the new one. Check it is the same listed party.",
-                                entry);
-                        }
-                    }
-                }
-
-                foreach (var (reference, entry) in before.OrderBy(p => p.Key))
-                {
-                    if (!after.ContainsKey(reference))
-                        Change(review, SanctionsChangeType.Removed, entry, null);
-                }
+                    Type = change.Type,
+                    Reference = change.Entry.Reference,
+                    Name = Cap(change.Entry.Name, 500)!,
+                    Differences = change.Differences.Count == 0
+                        ? null
+                        : string.Join("\n", change.Differences.Select(d =>
+                            $"{d.Field}: {d.Before ?? "none"} → {d.After ?? "none"}")),
+                    Note = Cap(change.Note, 1000),
+                    Page = change.Entry.Page
+                });
             }
 
             _context.SanctionsReviews.Add(review);
@@ -243,32 +289,19 @@ namespace HrPortal.Services.Sanctions
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
-                AuditService.Created,
+                AuditService.SanctionsCompared,
                 nameof(SanctionsReview),
                 review.ReviewNumber,
-                previous == null
-                    ? $"{current.Label} recorded as the first document."
-                    : $"{current.Label} compared with {previous.Label}: " +
+                previous == null && current.Kind == SanctionsDocumentKind.FullList
+                    ? $"{current.Label} recorded as the first document of its list."
+                    : $"{current.Label} compared{(previous == null ? "" : $" with {previous.Label}")}: " +
                       $"{review.Changes.Count(c => c.Type == SanctionsChangeType.Added)} added, " +
                       $"{review.Changes.Count(c => c.Type == SanctionsChangeType.Removed)} removed, " +
-                      $"{review.Changes.Count(c => c.Type == SanctionsChangeType.Changed)} changed.");
+                      $"{review.Changes.Count(c => c.Type == SanctionsChangeType.Changed)} amended, " +
+                      $"{review.UnchangedCount} unchanged{(review.Inconclusive ? "; inconclusive" : "")}.");
 
             return review;
         }
-
-        private static void Change(
-            SanctionsReview review,
-            SanctionsChangeType type,
-            SanctionsEntry entry,
-            string? differences) =>
-            review.Changes.Add(new SanctionsChange
-            {
-                Type = type,
-                Reference = entry.Reference,
-                Name = entry.Name,
-                Differences = differences
-            });
-
         private async Task<string> NextReviewNumberAsync()
         {
             var prefix = $"SAN-{DateTime.UtcNow.Year}-";
@@ -581,62 +614,21 @@ namespace HrPortal.Services.Sanctions
                 Details = e.Details
             };
 
-            entry.Fingerprint = Sha256Of(Encoding.UTF8.GetBytes(string.Join(
-                "|",
-                Fields(entry).Select(f => SanctionsListParser.Normalise(f.Value)))));
+            entry.Fingerprint = FingerprintOf(entry);
 
             return entry;
         }
 
         /// <summary>
-        /// The parts of an entry that are compared, by label. The name
-        /// in original script is left out: it does not survive being
-        /// read out of a PDF reliably, so it would show changes that
-        /// are not there.
+        /// A hash of the compared fields, lists in a fixed order, so two
+        /// versions that read the same have the same fingerprint.
         /// </summary>
-        private static (string Label, string? Value)[] Fields(SanctionsEntry e) =>
-            new (string, string?)[]
-            {
-                ("Name", e.Name),
-                ("Aliases", e.Aliases),
-                ("Title", e.Title),
-                ("Designation", e.Designation),
-                ("Date of birth", e.DateOfBirth),
-                ("Place of birth", e.PlaceOfBirth),
-                ("Nationality", e.Nationality),
-                ("Passport numbers", e.Passports),
-                ("National ID numbers", e.NationalIds),
-                ("Address", e.Address),
-                ("Listed on and amended", e.ListedOn),
-                ("Other information", e.OtherInformation)
-            };
-
-        /// <summary>
-        /// What changed in an entry, field by field, in words, ignoring
-        /// case, punctuation and how the PDF happened to break lines.
-        /// </summary>
-        private static string Differences(
-            IReadOnlyList<(string Label, string? Value)> before,
-            IReadOnlyList<(string Label, string? Value)> after)
-        {
-            var lines = new List<string>();
-
-            for (var i = 0; i < before.Count; i++)
-            {
-                var a = before[i].Value;
-                var b = after[i].Value;
-
-                if (SanctionsListParser.Normalise(a) != SanctionsListParser.Normalise(b))
-                    lines.Add($"{before[i].Label}: {Flat(a) ?? "none"} → {Flat(b) ?? "none"}");
-            }
-
-            return lines.Count == 0 ? "No difference in the details." : string.Join("\n", lines);
-        }
-
-        private static string? Flat(string? value) =>
-            string.IsNullOrWhiteSpace(value)
-                ? null
-                : string.Join("; ", Lines(value));
+        public static string FingerprintOf(SanctionsEntry entry) =>
+            Sha256Of(Encoding.UTF8.GetBytes(string.Join(
+                "|",
+                SanctionsComparer.Fields(entry).Select(f => f.IsList
+                    ? string.Join(";", Lines(f.Value).Select(SanctionsListParser.Normalise).OrderBy(v => v, StringComparer.Ordinal))
+                    : SanctionsListParser.Normalise(f.Value)))));
 
         public static List<string> Lines(string? value) =>
             string.IsNullOrWhiteSpace(value)

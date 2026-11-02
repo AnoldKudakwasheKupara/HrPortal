@@ -794,3 +794,40 @@
     border-top: 2px solid var(--primary, #10675d);
     padding-top: 1rem;
 }
+
+.sanctions-tally {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
+.sanctions-tally > div {
+    min-width: 6.5rem;
+    padding: .5rem .75rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: .5rem;
+}
+
+.sanctions-tally strong {
+    display: block;
+    font-size: 1.35rem;
+    line-height: 1.2;
+}
+
+.sanctions-tally span {
+    font-size: .8rem;
+    color: var(--muted, #6b6f74);
+}
+
+.sanctions-change {
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.sanctions-change:last-child { border-bottom: 0; }
+
+.sanctions-change > summary {
+    cursor: pointer;
+}
+
+.sanctions-change > summary .badge { margin-right: .35rem; }

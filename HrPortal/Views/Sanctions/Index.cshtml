@@ -39,9 +39,11 @@
                     <label class="form-check-label" for="mode-last">
                         <strong>Compare with the last uploaded document</strong>
                         <span class="d-block text-muted small">
+                            A full list is compared with the last full list of the same list; a notice,
+                            name by name with each name's latest earlier version.
                             @(last == null
-                                ? "Nothing has been uploaded yet, so this first document becomes the starting point."
-                                : $"That is {last.Label}, uploaded {last.UploadedAt.ToLocalTime():d MMM yyyy HH:mm}.")
+                                ? "Nothing has been uploaded yet, so the first full list becomes the starting point."
+                                : $"Last uploaded: {last.Label}.")
                         </span>
                     </label>
                 </div>
@@ -81,8 +83,7 @@
          data-upload-url="@Url.Action("UploadDocument")"
          data-compare-url="@Url.Action("Compare")"
          data-screen-url="@Url.Action("Screen")"
-         data-result-url="@Url.Action("Result", new { id = 0 })"
-         data-last-label="@last?.Label">
+         data-result-url="@Url.Action("Result", new { id = 0 })">
         <div class="card-header">Working through it</div>
         <div class="card-body">
             <ol class="sanctions-steps list-unstyled mb-0" data-steps></ol>

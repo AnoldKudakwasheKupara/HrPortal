@@ -38,6 +38,9 @@ namespace HrPortal.Entities
 
         public int PageCount { get; set; }
 
+        /// <summary>How many entries were read from it.</summary>
+        public int EntryCount { get; set; }
+
         public long FileSize { get; set; }
 
         /// <summary>The document's own reference, such as SC/16494.</summary>
@@ -149,6 +152,18 @@ namespace HrPortal.Entities
 
         public string? CreatedByName { get; set; }
 
+        /// <summary>Entries on both documents that read the same.</summary>
+        public int UnchangedCount { get; set; }
+
+        /// <summary>Entries on the new document that could not be compared with anything.</summary>
+        public int NotComparedCount { get; set; }
+
+        /// <summary>The comparison could not be completed and must not be read as complete.</summary>
+        public bool Inconclusive { get; set; }
+
+        /// <summary>What the officer needs to know to read the comparison rightly, one point per line.</summary>
+        public string? ComparisonNote { get; set; }
+
         public bool Screened { get; set; }
 
         public int ScreenedStaff { get; set; }
@@ -202,6 +217,12 @@ namespace HrPortal.Entities
 
         /// <summary>For a change: field by field, "Field: before → after", one per line.</summary>
         public string? Differences { get; set; }
+
+        /// <summary>How the change was worked out, when that is not obvious.</summary>
+        public string? Note { get; set; }
+
+        /// <summary>The page of the new document the entry is on.</summary>
+        public int? Page { get; set; }
 
         public SanctionsReview Review { get; set; } = null!;
     }

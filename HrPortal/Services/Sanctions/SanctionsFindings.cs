@@ -15,22 +15,48 @@ namespace HrPortal.Services.Sanctions
             var added = review.Changes.Count(c => c.Type == SanctionsChangeType.Added);
             var removed = review.Changes.Count(c => c.Type == SanctionsChangeType.Removed);
             var changed = review.Changes.Count(c => c.Type == SanctionsChangeType.Changed);
+            var isNotice = review.NewDocument.Kind != SanctionsDocumentKind.FullList;
 
-            if (review.PreviousDocument == null)
+            if (review.NewDocument.EntryCount == 0 && review.Inconclusive)
+            {
+                sentences.Add("No names could be read from the new document, so it could not be compared.");
+            }
+            else if (review.PreviousDocument == null && !isNotice)
             {
                 sentences.Add(
-                    "This is the first document, so there was nothing to compare it with. " +
-                    "It is the starting point for the next comparison.");
+                    "This is the first full list of its kind uploaded, so there was nothing to compare it " +
+                    "with. It is the starting point for the next comparison.");
             }
             else if (added + removed + changed == 0)
             {
-                sentences.Add("No names were added, removed or changed between the two documents.");
+                sentences.Add(isNotice
+                    ? "The names this notice changes already read the same in the earlier version uploaded."
+                    : "No names were added, removed or amended between the two documents.");
             }
             else
             {
-                var text = $"{Names(added, "added")}, {Names(removed, "removed")} and {Names(changed, "changed")}.";
+                var text = $"{Names(added, "added")}, {Names(removed, "removed")} and {Names(changed, "amended")}";
+
+                text += isNotice || review.UnchangedCount == 0
+                    ? "."
+                    : $"; {Names(review.UnchangedCount, "unchanged", "is", "are")}.";
 
                 sentences.Add(char.ToUpperInvariant(text[0]) + text[1..]);
+            }
+
+            if (isNotice)
+            {
+                sentences.Add(
+                    $"The new document is a {SanctionsText.Kind(review.NewDocument.Kind).ToLowerInvariant()}: " +
+                    "it only speaks for the names it gives. Names it does not mention are not affected and " +
+                    "were not counted as removed.");
+            }
+
+            if (review.Inconclusive)
+            {
+                sentences.Add(review.NotComparedCount > 0
+                    ? $"The comparison is incomplete: {Names(review.NotComparedCount, "compared with anything", "could not be", "could not be")}."
+                    : "The comparison is incomplete: part of it could not be worked out. See the discrepancies.");
             }
 
             var discrepancies = review.Concerns.Count(c => c.Category == SanctionsConcernCategory.Discrepancy);
@@ -77,12 +103,12 @@ namespace HrPortal.Services.Sanctions
             return sentences;
         }
 
-        private static string Names(int n, string what) =>
+        private static string Names(int n, string what, string one = "was", string many = "were") =>
             n switch
             {
-                0 => $"no names were {what}",
-                1 => $"1 name was {what}",
-                _ => $"{n} names were {what}"
+                0 => $"no names {many} {what}",
+                1 => $"1 name {one} {what}",
+                _ => $"{n} names {many} {what}"
             };
     }
 }

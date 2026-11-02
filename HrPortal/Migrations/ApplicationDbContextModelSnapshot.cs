@@ -1539,6 +1539,13 @@ namespace HrPortal.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Reference")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1710,6 +1717,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int>("EntryCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1876,6 +1886,10 @@ namespace HrPortal.Migrations
                     b.Property<int?>("ClientListId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ComparisonNote")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -1890,7 +1904,13 @@ namespace HrPortal.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("Inconclusive")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("NewDocumentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NotComparedCount")
                         .HasColumnType("integer");
 
                     b.Property<string>("Note")
@@ -1923,6 +1943,9 @@ namespace HrPortal.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ScreenedVendors")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UnchangedCount")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");

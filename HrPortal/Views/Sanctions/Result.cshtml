@@ -13,12 +13,9 @@
         .ThenByDescending(c => c.Score)
         .ToList();
 
-    var groups = new[]
-    {
-        (Type: SanctionsChangeType.Added, Heading: "Added", Empty: "No names were added."),
-        (Type: SanctionsChangeType.Removed, Heading: "Removed", Empty: "No names were removed."),
-        (Type: SanctionsChangeType.Changed, Heading: "Changed", Empty: "No names were changed.")
-    };
+    var isNotice = Model.NewDocument.Kind != SanctionsDocumentKind.FullList;
+    var compared = Model.PreviousDocument != null || isNotice;
+    var changes = Model.Changes.OrderBy(c => c.Type).ThenBy(c => c.Reference).ToList();
 }
 
 <div class="container-fluid">
@@ -70,12 +67,28 @@
                     <div class="card-body">
                         @if (document == null)
                         {
-                            <p class="text-muted mb-0">Nothing. This was the first document uploaded.</p>
+                            <p class="text-muted mb-0">
+                                @(isNotice
+                                    ? "Each name in the notice was compared with its latest earlier version uploaded."
+                                    : "Nothing. This was the first full list of its kind uploaded.")
+                            </p>
                         }
                         else
                         {
                             <p class="mb-1"><strong>@document.Label</strong></p>
                             <p class="small mb-1">@document.Title</p>
+                            <p class="small mb-1">
+                                @SanctionsText.Kind(document.Kind)@(document.ListName == null ? "" : $" of the {document.ListName}")
+                                &middot; @document.EntryCount names
+                                @if (document.PageCount > 0)
+                                {
+                                    <span>&middot; @document.PageCount pages</span>
+                                }
+                                @if (document.Source != null)
+                                {
+                                    <span>&middot; issued by the @document.Source</span>
+                                }
+                            </p>
                             <p class="small mb-1">
                                 <a asp-action="Document" asp-route-id="@document.Id">@document.OriginalFileName</a>
                                 &middot; uploaded @document.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @document.UploadedByName
@@ -88,38 +101,83 @@
         }
     </div>
 
-    @if (Model.PreviousDocument != null)
+    @if (compared)
     {
-        <div class="row g-3 mb-3">
-            @foreach (var group in groups)
-            {
-                var items = Model.Changes.Where(c => c.Type == group.Type).OrderBy(c => c.Reference).ToList();
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">What changed</div>
+            <div class="card-body">
 
-                <div class="col-lg-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header d-flex justify-content-between">
-                            <span>@group.Heading</span>
-                            <span class="badge @(items.Any() ? "bg-warning text-dark" : "bg-light text-dark")">@items.Count</span>
-                        </div>
-                        <div class="card-body">
-                            @if (!items.Any())
+                <div class="sanctions-tally mb-3">
+                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Added)</strong><span>Added</span></div>
+                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</strong><span>Removed</span></div>
+                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</strong><span>Amended</span></div>
+                    <div><strong>@Model.UnchangedCount</strong><span>Unchanged</span></div>
+                    @if (Model.NotComparedCount > 0)
+                    {
+                        <div><strong>@Model.NotComparedCount</strong><span>Not compared</span></div>
+                    }
+                </div>
+
+                @foreach (var note in SanctionsService.Lines(Model.ComparisonNote))
+                {
+                    <p class="small text-muted mb-2">@note</p>
+                }
+
+                @if (changes.Count == 0)
+                {
+                    <p class="mb-0">No names were added, removed or amended.</p>
+                }
+
+                @foreach (var change in changes)
+                {
+                    var rows = SanctionsText.Differences(change.Differences);
+
+                    <details class="sanctions-change">
+                        <summary>
+                            <span class="badge @(change.Type == SanctionsChangeType.Added ? "bg-danger" : change.Type == SanctionsChangeType.Removed ? "bg-secondary" : "bg-warning text-dark")">@SanctionsText.ChangeType(change.Type)</span>
+                            <strong>@change.Reference</strong> @change.Name
+                            @if (change.Page != null)
                             {
-                                <p class="text-muted mb-0">@group.Empty</p>
+                                <span class="text-muted small">&middot; page @change.Page</span>
                             }
-                            @foreach (var item in items)
+                        </summary>
+                        <div class="pt-2">
+                            @if (change.Note != null)
                             {
-                                <div class="mb-2">
-                                    <strong>@item.Reference</strong> @item.Name
-                                    @if (item.Differences != null)
-                                    {
-                                        <div class="small text-muted" style="white-space: pre-line;">@item.Differences</div>
-                                    }
+                                <p class="small text-muted mb-2">@change.Note</p>
+                            }
+                            @if (rows.Count > 0)
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-top mb-0">
+                                        <thead>
+                                            <tr><th>Field</th><th>Previous information</th><th>New information</th></tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var row in rows)
+                                        {
+                                            <tr>
+                                                <td>@row.Field</td>
+                                                <td>@(row.Before ?? "—")</td>
+                                                <td>@(row.After ?? "—")</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </table>
                                 </div>
                             }
+                            else if (change.Type != SanctionsChangeType.Changed)
+                            {
+                                <p class="small mb-0">
+                                    @(change.Type == SanctionsChangeType.Added ? "A new listing." : "No longer listed.")
+                                    <a asp-action="Document" asp-route-id="@(change.Type == SanctionsChangeType.Removed && Model.PreviousDocumentId != null ? Model.PreviousDocumentId : Model.NewDocumentId)">Open the document</a> to read the entry in full.
+                                </p>
+                            }
                         </div>
-                    </div>
-                </div>
-            }
+                    </details>
+                }
+
+            </div>
         </div>
     }
 

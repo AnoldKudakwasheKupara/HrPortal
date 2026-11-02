@@ -38,6 +38,15 @@ namespace HrPortal.Services
         public const string VaultOpened = "Vault Opened";
         public const string VaultUnlockFailed = "Vault Unlock Failed";
         public const string VaultPasswordViewed = "Vault Password Viewed";
+        public const string SanctionsUploaded = "Sanctions Document Uploaded";
+        public const string SanctionsCompared = "Sanctions Documents Compared";
+        public const string SanctionsScreened = "Sanctions Screening Run";
+        public const string SanctionsMatterRecorded = "Sanctions Matter Recorded";
+        public const string SanctionsNoteAdded = "Sanctions Note Added";
+        public const string SanctionsFinalised = "Sanctions Review Finalised";
+        public const string SanctionsReportDownloaded = "Sanctions Report Downloaded";
+        public const string SanctionsReportVerified = "Sanctions Report Verified";
+        public const string SanctionsClientsImported = "Sanctions Clients Imported";
 
         public async Task LogAsync(
             string action,

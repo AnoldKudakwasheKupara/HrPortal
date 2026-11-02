@@ -125,22 +125,30 @@ namespace HrPortal.Controllers
             if (!await _context.SanctionsDocuments.AnyAsync(d => d.Id == newDocumentId))
                 return BadRequest(new { error = "The new document was not found." });
 
-            previousDocumentId ??= (await _sanctions.PreviousOfAsync(newDocumentId))?.Id;
+            if (previousDocumentId == newDocumentId)
+                return BadRequest(new { error = "Both uploads are the same file. Choose two different documents." });
 
             var review = await _sanctions.CompareAsync(newDocumentId, previousDocumentId);
 
-            var previous = previousDocumentId == null
+            var current = await _context.SanctionsDocuments.AsNoTracking().FirstAsync(d => d.Id == newDocumentId);
+
+            var previous = review.PreviousDocumentId == null
                 ? null
-                : await _context.SanctionsDocuments.AsNoTracking().FirstAsync(d => d.Id == previousDocumentId);
+                : await _context.SanctionsDocuments.AsNoTracking().FirstAsync(d => d.Id == review.PreviousDocumentId);
 
             return Json(new
             {
                 reviewId = review.Id,
                 reviewNumber = review.ReviewNumber,
+                isNotice = current.Kind != SanctionsDocumentKind.FullList,
                 previous = previous == null ? null : new { previous.Label, entries = await _context.SanctionsEntries.CountAsync(e => e.SanctionsDocumentId == previous.Id) },
                 added = review.Changes.Where(c => c.Type == SanctionsChangeType.Added).Select(c => $"{c.Reference} {c.Name}"),
                 removed = review.Changes.Where(c => c.Type == SanctionsChangeType.Removed).Select(c => $"{c.Reference} {c.Name}"),
                 changed = review.Changes.Where(c => c.Type == SanctionsChangeType.Changed).Select(c => $"{c.Reference} {c.Name}"),
+                unchanged = review.UnchangedCount,
+                notCompared = review.NotComparedCount,
+                inconclusive = review.Inconclusive,
+                notes = SanctionsService.Lines(review.ComparisonNote),
                 discrepancies = review.Concerns
                     .Where(c => c.Category == SanctionsConcernCategory.Discrepancy)
                     .Select(c => c.Reason)
