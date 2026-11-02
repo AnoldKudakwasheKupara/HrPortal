@@ -1,22 +1,110 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace HrPortal.Services.Sanctions
 {
-    public sealed record ClientRow(string Name, string? IdNumber, string? Reference);
+    /// <summary>The details a client list can give about a client.</summary>
+    public enum ClientField
+    {
+        FullName,
+        FirstName,
+        MiddleName,
+        LastName,
+        CompanyName,
+        DateOfBirth,
+        Nationality,
+        IdNumber,
+        PassportNumber,
+        RegistrationNumber,
+        Reference
+    }
+
+    public sealed record ClientRow(
+        int RowNumber,
+        string Name,
+        bool? IsCompany,
+        string? IdNumber,
+        string? PassportNumber,
+        string? RegistrationNumber,
+        DateTime? DateOfBirth,
+        string? Nationality,
+        string? Reference);
+
+    /// <summary>A spreadsheet as read: its heading row and the rows under it.</summary>
+    public sealed class ClientTable
+    {
+        public List<string> Headings { get; init; } = new();
+
+        public List<List<string>> Rows { get; init; } = new();
+
+        public string? Cell(List<string> row, int column) =>
+            column >= 0 && column < row.Count && !string.IsNullOrWhiteSpace(row[column])
+                ? row[column].Trim()
+                : null;
+    }
+
+    public sealed class ClientImport
+    {
+        public List<ClientRow> Clients { get; } = new();
+
+        public int Received { get; set; }
+
+        public int Invalid { get; set; }
+
+        public int Duplicates { get; set; }
+
+        /// <summary>Each row that was left out or only partly read, and why.</summary>
+        public List<string> Problems { get; } = new();
+    }
 
     /// <summary>
     /// Reads the client list the compliance officer uploads, from a
-    /// CSV file or the first sheet of an Excel workbook. The columns
-    /// are found by their headings: one with "name" in it, one with
-    /// "ID", "passport" or "registration", and one with "reference",
-    /// "code" or "account". Without recognisable headings the first
-    /// column is taken as the name.
+    /// CSV file or the first sheet of an Excel workbook, with a heading
+    /// row. Columns are recognised by their headings in the usual ways
+    /// they are written; when they cannot be, the officer says which
+    /// column is which.
+    ///
+    /// Every row is checked: a row without a name is left out, a date
+    /// of birth that cannot be read is left blank rather than guessed,
+    /// and a row that repeats another exactly is counted as a duplicate.
     /// </summary>
     public static class ClientListReader
     {
-        public static List<ClientRow> Read(Stream file, string fileName)
+        private static readonly Dictionary<ClientField, string[]> Headings = new()
+        {
+            [ClientField.FullName] = new[] { "full name", "fullname", "name", "client name", "customer name", "client", "customer", "account name", "names" },
+            [ClientField.FirstName] = new[] { "first name", "firstname", "forename", "forenames", "given name", "given names", "first names" },
+            [ClientField.MiddleName] = new[] { "middle name", "middlename", "middle names", "other names" },
+            [ClientField.LastName] = new[] { "last name", "lastname", "surname", "family name" },
+            [ClientField.CompanyName] = new[] { "company name", "company", "business name", "entity name", "organisation", "organization", "organisation name", "organization name", "trading name", "registered name" },
+            [ClientField.DateOfBirth] = new[] { "date of birth", "dob", "d.o.b", "d.o.b.", "birth date", "birthdate", "born" },
+            [ClientField.Nationality] = new[] { "nationality", "citizenship", "country of citizenship" },
+            [ClientField.IdNumber] = new[] { "id number", "id no", "id no.", "id", "national id", "national id number", "national id no", "identity number", "identity no", "id/passport", "id / passport", "id or passport" },
+            [ClientField.PassportNumber] = new[] { "passport number", "passport no", "passport no.", "passport" },
+            [ClientField.RegistrationNumber] = new[] { "registration number", "registration no", "registration no.", "company registration", "company registration number", "reg number", "reg no", "reg no.", "company number" },
+            [ClientField.Reference] = new[] { "client reference", "reference", "ref", "client code", "code", "account number", "account no", "account", "client number", "customer number", "client id", "customer id" }
+        };
+
+        public static string Describe(ClientField field) =>
+            field switch
+            {
+                ClientField.FullName => "Full name",
+                ClientField.FirstName => "First name",
+                ClientField.MiddleName => "Middle name",
+                ClientField.LastName => "Last name",
+                ClientField.CompanyName => "Company name",
+                ClientField.DateOfBirth => "Date of birth",
+                ClientField.Nationality => "Nationality",
+                ClientField.IdNumber => "ID number",
+                ClientField.PassportNumber => "Passport number",
+                ClientField.RegistrationNumber => "Registration number",
+                _ => "Client reference"
+            };
+
+        public static ClientTable ReadTable(Stream file, string fileName)
         {
             var rows = Path.GetExtension(fileName).ToLowerInvariant() switch
             {
@@ -26,46 +114,163 @@ namespace HrPortal.Services.Sanctions
                     "Upload the client list as an Excel workbook (.xlsx) or a CSV file.")
             };
 
-            return ToClients(rows);
-        }
-
-        private static List<ClientRow> ToClients(List<List<string>> rows)
-        {
             rows = rows.Where(r => r.Any(c => !string.IsNullOrWhiteSpace(c))).ToList();
 
             if (rows.Count == 0)
-                return new List<ClientRow>();
+                return new ClientTable();
 
-            var header = rows[0].Select(h => h.Trim().ToLowerInvariant()).ToList();
-
-            var name = header.FindIndex(h => h.Contains("name"));
-            var id = header.FindIndex(h =>
-                h.Contains("passport") || h.Contains("registration") ||
-                h == "id" || h.Contains("id no") || h.Contains("id number") ||
-                h.Contains("national id") || h.Contains("identity"));
-            var reference = header.FindIndex(h =>
-                h.Contains("ref") || h.Contains("code") || h.Contains("account"));
-
-            var hasHeader = name >= 0;
-
-            if (!hasHeader)
-                name = 0;
-
-            string? Cell(List<string> row, int index) =>
-                index >= 0 && index < row.Count && !string.IsNullOrWhiteSpace(row[index])
-                    ? row[index].Trim()
-                    : null;
-
-            return rows
-                .Skip(hasHeader ? 1 : 0)
-                .Select(r => new ClientRow(
-                    Cell(r, name) ?? string.Empty,
-                    Cell(r, id),
-                    Cell(r, reference)))
-                .Where(c => c.Name.Length > 0)
-                .ToList();
+            return new ClientTable
+            {
+                Headings = rows[0].Select(h => h.Trim()).ToList(),
+                Rows = rows.Skip(1).ToList()
+            };
         }
 
+        /// <summary>The columns recognised from their headings.</summary>
+        public static Dictionary<ClientField, int> AutoMap(IReadOnlyList<string> headings)
+        {
+            var map = new Dictionary<ClientField, int>();
+
+            static string Simple(string h) => Regex.Replace(h.Trim().ToLowerInvariant(), @"[\s_]+", " ");
+
+            for (var i = 0; i < headings.Count; i++)
+            {
+                var heading = Simple(headings[i]);
+
+                foreach (var (field, names) in Headings)
+                {
+                    if (!map.ContainsKey(field) && names.Contains(heading))
+                    {
+                        map[field] = i;
+                        break;
+                    }
+                }
+            }
+
+            return map;
+        }
+
+        /// <summary>Whether the columns chosen give a name for each client.</summary>
+        public static bool HasName(IReadOnlyDictionary<ClientField, int> map) =>
+            map.ContainsKey(ClientField.FullName) ||
+            map.ContainsKey(ClientField.CompanyName) ||
+            map.ContainsKey(ClientField.FirstName) ||
+            map.ContainsKey(ClientField.LastName);
+
+        public static ClientImport Import(ClientTable table, IReadOnlyDictionary<ClientField, int> map)
+        {
+            var result = new ClientImport { Received = table.Rows.Count };
+            var seen = new HashSet<string>();
+
+            string? Get(List<string> row, ClientField field) =>
+                map.TryGetValue(field, out var column) ? table.Cell(row, column) : null;
+
+            for (var i = 0; i < table.Rows.Count; i++)
+            {
+                var row = table.Rows[i];
+                var number = i + 2;
+
+                var company = Get(row, ClientField.CompanyName);
+                var person = Get(row, ClientField.FullName) ??
+                             string.Join(" ", new[]
+                                 {
+                                     Get(row, ClientField.FirstName),
+                                     Get(row, ClientField.MiddleName),
+                                     Get(row, ClientField.LastName)
+                                 }
+                                 .Where(p => p != null));
+
+                var name = !string.IsNullOrWhiteSpace(person) ? person : company;
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    result.Invalid++;
+                    result.Problems.Add($"Row {number}: no name, so it was left out.");
+                    continue;
+                }
+
+                if (name.Length > 500)
+                {
+                    result.Invalid++;
+                    result.Problems.Add($"Row {number}: the name is longer than 500 characters, so it was left out.");
+                    continue;
+                }
+
+                var dobText = Get(row, ClientField.DateOfBirth);
+                var dob = ParseDate(dobText);
+
+                if (dobText != null && dob == null)
+                    result.Problems.Add($"Row {number}: the date of birth \"{dobText}\" could not be read, so it was left blank.");
+
+                var client = new ClientRow(
+                    number,
+                    Regex.Replace(name.Trim(), @"\s+", " "),
+                    string.IsNullOrWhiteSpace(person) ? true
+                        : company != null || map.ContainsKey(ClientField.FirstName) || map.ContainsKey(ClientField.LastName) ? false
+                        : null,
+                    Cap(Get(row, ClientField.IdNumber)),
+                    Cap(Get(row, ClientField.PassportNumber)),
+                    Cap(Get(row, ClientField.RegistrationNumber)),
+                    dob,
+                    Cap(Get(row, ClientField.Nationality)),
+                    Cap(Get(row, ClientField.Reference)));
+
+                var key = string.Join("|",
+                    SanctionsListParser.Normalise(client.Name),
+                    SanctionsListParser.Normalise(client.IdNumber),
+                    SanctionsListParser.Normalise(client.PassportNumber),
+                    SanctionsListParser.Normalise(client.RegistrationNumber),
+                    client.DateOfBirth?.ToString("yyyy-MM-dd"),
+                    SanctionsListParser.Normalise(client.Reference));
+
+                if (!seen.Add(key))
+                {
+                    result.Duplicates++;
+                    result.Problems.Add($"Row {number}: the same as an earlier row ({client.Name}), so it was counted once.");
+                    continue;
+                }
+
+                result.Clients.Add(client);
+            }
+
+            return result;
+        }
+
+        private static string? Cap(string? value) =>
+            value == null ? null : value.Length <= 100 ? value : value[..100];
+
+        /// <summary>
+        /// A date of birth as clients' records write it: day first, as
+        /// in Zimbabwe (31/12/1980, 31-12-1980, 31 Dec 1980), ISO
+        /// (1980-12-31), or an Excel date number. Anything else is not
+        /// guessed at.
+        /// </summary>
+        public static DateTime? ParseDate(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            text = text.Trim();
+
+            if (Regex.IsMatch(text, @"^\d{5}(\.\d+)?$") &&
+                double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var serial) &&
+                serial > 1 && serial < 80000)
+            {
+                return DateTime.FromOADate(Math.Floor(serial)).Date;
+            }
+
+            var formats = new[]
+            {
+                "d/M/yyyy", "d-M-yyyy", "d.M.yyyy", "yyyy-M-d", "yyyy/M/d",
+                "d MMM yyyy", "d MMMM yyyy", "d-MMM-yyyy", "d MMM. yyyy",
+                "d/M/yyyy H:mm", "yyyy-MM-ddTHH:mm:ss", "yyyy-M-d H:mm:ss"
+            };
+
+            return DateTime.TryParseExact(text, formats, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var date) &&
+                   date.Year >= 1900 && date <= DateTime.Today
+                ? date.Date
+                : null;
+        }
         private static List<List<string>> ReadCsv(Stream file)
         {
             using var reader = new StreamReader(file, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);

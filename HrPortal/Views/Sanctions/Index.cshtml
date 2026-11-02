@@ -22,7 +22,7 @@
 
         <div class="d-flex gap-2 flex-wrap">
             <a asp-action="Clients" class="btn btn-outline-secondary">
-                Client list (@(clientList?.Clients.Count ?? 0))
+                Client list (@(clientList?.RowsImported ?? 0))
             </a>
             <a asp-action="Verify" class="btn btn-outline-secondary">Verify a report</a>
         </div>

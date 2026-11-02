@@ -493,6 +493,10 @@ namespace HrPortal.DbContexts
                 entity.Property(l => l.FilePath).IsRequired().HasMaxLength(500);
                 entity.Property(l => l.Sha256).IsRequired().HasMaxLength(64);
                 entity.Property(l => l.UploadedByName).HasMaxLength(200);
+                entity.Property(l => l.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(l => l.ColumnMap).HasMaxLength(1000);
+                entity.Property(l => l.Problems).HasMaxLength(8000);
+                entity.HasIndex(l => new { l.Status, l.UploadedAt });
             });
 
             builder.Entity<SanctionsClient>(entity =>
@@ -500,6 +504,9 @@ namespace HrPortal.DbContexts
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(500);
                 entity.Property(c => c.IdNumber).HasMaxLength(100);
+                entity.Property(c => c.PassportNumber).HasMaxLength(100);
+                entity.Property(c => c.RegistrationNumber).HasMaxLength(100);
+                entity.Property(c => c.Nationality).HasMaxLength(100);
                 entity.Property(c => c.ClientReference).HasMaxLength(100);
 
                 entity.HasOne(c => c.ClientList)

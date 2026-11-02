@@ -1,9 +1,13 @@
+@using HrPortal.Entities
+@using HrPortal.Services.Sanctions
 @model List<HrPortal.Entities.SanctionsClientList>
 
 @{
     ViewData["Title"] = "Client list";
 
-    var latest = Model.FirstOrDefault();
+    var current = ViewBag.Current as SanctionsClientList;
+    var shown = current == null ? null : Model.FirstOrDefault(l => l.Id == current.Id);
+    var waiting = Model.Where(l => l.Status == SanctionsClientListStatus.AwaitingColumns).ToList();
 }
 
 <div class="container-fluid">
@@ -12,8 +16,9 @@
         <div>
             <h2>Client list</h2>
             <p class="text-muted mb-0">
-                The clients and counterparties to screen. The newest list uploaded is the
-                one screened; earlier ones are kept for the record.
+                The clients and counterparties to screen. The latest list imported is checked in
+                every review until another is imported, so an unchanged list never needs uploading
+                again. Every file uploaded is kept.
             </p>
         </div>
         <a asp-action="Index" class="btn btn-secondary">Back</a>
@@ -29,14 +34,27 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3" style="max-width: 760px;">
+    @foreach (var list in waiting)
+    {
+        <div class="alert alert-warning d-flex justify-content-between flex-wrap gap-2 align-items-center">
+            <span>
+                <strong>@list.OriginalFileName</strong> is waiting: say which column holds which detail to import it.
+            </span>
+            <a asp-action="Columns" asp-route-id="@list.Id" class="btn btn-sm btn-primary">Choose the columns</a>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3" style="max-width: 820px;">
         <div class="card-header">Upload a client list</div>
         <div class="card-body">
-            <p class="text-muted small">
-                An Excel workbook (.xlsx) or CSV file with a heading row. The portal looks
-                for a column with <strong>Name</strong> in its heading, and optionally one for
-                the <strong>ID or passport number</strong> and one for your
-                <strong>client reference</strong>. ID numbers make matching far more reliable.
+            <p class="text-muted small mb-2">
+                An Excel workbook (.xlsx) or CSV file with a heading row. Headings such as
+                <strong>Full Name</strong> or <strong>First Name</strong>, <strong>Middle Name</strong> and
+                <strong>Last Name</strong>, <strong>Company Name</strong>, <strong>Date of Birth</strong>,
+                <strong>Nationality</strong>, <strong>ID Number</strong>, <strong>Passport Number</strong>,
+                <strong>Registration Number</strong> and <strong>Client Reference</strong> are recognised;
+                if yours are different, you will be asked which column is which. Dates of birth and ID
+                numbers make matching far more reliable.
             </p>
             <form asp-action="Clients" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
                 <input name="file" type="file" accept=".xlsx,.csv" class="form-control" style="max-width: 420px;" required aria-label="Client list file" />
@@ -45,23 +63,58 @@
         </div>
     </div>
 
-    @if (latest != null)
+    @if (shown != null)
     {
         <div class="card shadow-sm mb-3">
             <div class="card-header d-flex justify-content-between flex-wrap gap-2">
-                <span>Being screened: @latest.OriginalFileName</span>
+                <span>Being screened: <a asp-action="ClientFile" asp-route-id="@shown.Id">@shown.OriginalFileName</a></span>
                 <span class="text-muted small">
-                    @latest.Clients.Count clients · uploaded @latest.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @latest.UploadedByName
+                    uploaded @shown.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @shown.UploadedByName
                 </span>
             </div>
-            <div class="card-body is-table">
+            <div class="card-body">
+                <div class="sanctions-tally mb-3">
+                    <div><strong>@shown.RowsReceived</strong><span>Rows received</span></div>
+                    <div><strong>@shown.RowsImported</strong><span>Imported</span></div>
+                    <div class="@(shown.RowsInvalid > 0 ? "is-attention" : "")"><strong>@shown.RowsInvalid</strong><span>Invalid</span></div>
+                    <div><strong>@shown.RowsDuplicated</strong><span>Duplicates</span></div>
+                </div>
+
+                @if (shown.Problems != null)
+                {
+                    <details class="mb-3">
+                        <summary class="small">Rows left out or only partly read (@SanctionsService.Lines(shown.Problems).Count)</summary>
+                        <ul class="small mb-0 mt-1">
+                            @foreach (var problem in SanctionsService.Lines(shown.Problems))
+                            {
+                                <li>@problem</li>
+                            }
+                        </ul>
+                    </details>
+                }
+
                 <div class="table-responsive" style="max-height: 480px;">
                     <table class="table table-sm align-middle">
-                        <thead><tr><th>Name</th><th>ID / passport</th><th>Client reference</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Row</th><th>Name</th><th>Type</th><th>Date of birth</th><th>Nationality</th>
+                                <th>ID</th><th>Passport</th><th>Registration</th><th>Reference</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                        @foreach (var client in latest.Clients.OrderBy(c => c.Name))
+                        @foreach (var client in shown.Clients.OrderBy(c => c.RowNumber).ThenBy(c => c.Name))
                         {
-                            <tr><td>@client.Name</td><td>@client.IdNumber</td><td>@client.ClientReference</td></tr>
+                            <tr>
+                                <td class="text-muted">@(client.RowNumber == 0 ? "" : client.RowNumber.ToString())</td>
+                                <td>@client.Name</td>
+                                <td>@(client.IsCompany switch { true => "Company", false => "Person", _ => "" })</td>
+                                <td>@client.DateOfBirth?.ToString("d MMM yyyy")</td>
+                                <td>@client.Nationality</td>
+                                <td>@client.IdNumber</td>
+                                <td>@client.PassportNumber</td>
+                                <td>@client.RegistrationNumber</td>
+                                <td>@client.ClientReference</td>
+                            </tr>
                         }
                         </tbody>
                     </table>
@@ -70,25 +123,29 @@
         </div>
     }
 
-    @if (Model.Count > 1)
+    @if (Model.Any(l => shown == null || l.Id != shown.Id))
     {
         <div class="card shadow-sm">
-            <div class="card-header">Earlier lists</div>
+            <div class="card-header">Every list uploaded</div>
             <div class="card-body is-table">
-                <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>File</th><th>Clients</th><th>Uploaded</th><th>SHA-256</th></tr></thead>
-                    <tbody>
-                    @foreach (var list in Model.Skip(1))
-                    {
-                        <tr>
-                            <td>@list.OriginalFileName</td>
-                            <td>@list.Clients.Count</td>
-                            <td>@list.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @list.UploadedByName</td>
-                            <td class="small"><code>@list.Sha256</code></td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>File</th><th>Status</th><th class="num">Imported</th><th>Uploaded</th><th>Size</th><th>SHA-256</th></tr></thead>
+                        <tbody>
+                        @foreach (var list in Model.Where(l => shown == null || l.Id != shown.Id))
+                        {
+                            <tr>
+                                <td><a asp-action="ClientFile" asp-route-id="@list.Id">@list.OriginalFileName</a></td>
+                                <td>@(list.Status == SanctionsClientListStatus.AwaitingColumns ? "Waiting for columns" : "Replaced")</td>
+                                <td class="num">@list.RowsImported</td>
+                                <td>@list.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @list.UploadedByName</td>
+                                <td>@(list.FileSize > 0 ? SanctionsText.Size(list.FileSize) : "")</td>
+                                <td class="small"><code>@list.Sha256</code></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     }

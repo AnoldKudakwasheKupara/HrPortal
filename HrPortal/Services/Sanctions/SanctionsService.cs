@@ -561,22 +561,40 @@ namespace HrPortal.Services.Sanctions
         public const string VendorContact = "Vendor contact";
         public const string Client = "Client";
 
-        private static ScreeningSubject ClientSubject(SanctionsClient c) =>
-            new(Client, c.Id, c.Name, c.IdNumber);
+        public static ScreeningSubject ClientSubject(SanctionsClient c) =>
+            new(
+                Client,
+                c.Id,
+                c.Name,
+                c.IdNumber,
+                c.DateOfBirth,
+                c.Nationality,
+                new[] { c.PassportNumber, c.RegistrationNumber }.Where(i => i != null).Select(i => i!).ToList(),
+                c.IsCompany);
 
         /// <summary>What the client list gives about a client, for comparing side by side.</summary>
         public static List<(string Label, string Value)> ClientDetails(SanctionsClient c) =>
             new()
             {
-                ("Client", c.Name),
-                ("Client reference", c.ClientReference ?? "Not recorded"),
-                ("ID number", c.IdNumber ?? "Not recorded")
+                (c.IsCompany == true ? "Company" : "Client", c.Name),
+                ("Client reference", c.ClientReference ?? "Not given"),
+                ("ID number", c.IdNumber ?? "Not given"),
+                ("Passport number", c.PassportNumber ?? "Not given"),
+                ("Registration number", c.RegistrationNumber ?? "Not given"),
+                ("Date of birth", c.DateOfBirth?.ToString("d MMM yyyy") ?? "Not given"),
+                ("Nationality", c.Nationality ?? "Not given"),
+                ("Row of the client list", c.RowNumber == 0 ? "Not recorded" : c.RowNumber.ToString())
             };
 
-        /// <summary>The client list screened: the latest one uploaded.</summary>
+        /// <summary>
+        /// The client list screened: the latest one imported. It keeps
+        /// being used for every review until another is imported, so
+        /// an unchanged list never has to be uploaded again.
+        /// </summary>
         public Task<SanctionsClientList?> CurrentClientListAsync() =>
             _context.SanctionsClientLists
                 .AsNoTracking()
+                .Where(c => c.Status == SanctionsClientListStatus.Imported)
                 .OrderByDescending(c => c.UploadedAt)
                 .FirstOrDefaultAsync();
 
@@ -860,6 +878,12 @@ namespace HrPortal.Services.Sanctions
                 .Include(r => r.Concerns).ThenInclude(c => c.Notes)
                 .FirstAsync(r => r.Id == reviewId);
 
+        /// <summary>
+        /// Keeps a client list exactly as uploaded and imports it when
+        /// its columns can be recognised. When they cannot, the list
+        /// waits for the officer to say which column is which, and the
+        /// client list already in use stays in use.
+        /// </summary>
         public async Task<SanctionsClientList> UploadClientsAsync(IFormFile file)
         {
             byte[] bytes;
@@ -870,10 +894,13 @@ namespace HrPortal.Services.Sanctions
                 bytes = memory.ToArray();
             }
 
-            List<ClientRow> rows;
+            ClientTable table;
 
             using (var stream = new MemoryStream(bytes))
-                rows = ClientListReader.Read(stream, file.FileName);
+                table = ClientListReader.ReadTable(stream, file.FileName);
+
+            if (table.Headings.Count == 0)
+                throw new InvalidDataException("The file is empty.");
 
             var (_, filePath) = await _files.SaveAsync(file, ClientFolder);
 
@@ -882,32 +909,107 @@ namespace HrPortal.Services.Sanctions
                 OriginalFileName = Path.GetFileName(file.FileName),
                 FilePath = filePath,
                 Sha256 = Sha256Of(bytes),
+                FileSize = bytes.LongLength,
                 UploadedAt = DateTime.UtcNow,
-                UploadedByName = await WhoAsync()
+                UploadedByName = await WhoAsync(),
+                Status = SanctionsClientListStatus.AwaitingColumns,
+                RowsReceived = table.Rows.Count
             };
 
-            foreach (var row in rows)
+            _context.SanctionsClientLists.Add(list);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                _files.Delete(filePath);
+                throw;
+            }
+
+            var map = ClientListReader.AutoMap(table.Headings);
+
+            if (ClientListReader.HasName(map))
+                await ImportClientsAsync(list, table, map);
+
+            return list;
+        }
+
+        /// <summary>The kept file of a client list, read again.</summary>
+        public async Task<ClientTable> ReadClientTableAsync(SanctionsClientList list)
+        {
+            var path = _files.ResolveExistingPath(list.FilePath)
+                ?? throw new InvalidDataException("The uploaded file can no longer be found.");
+
+            await using var stream = File.OpenRead(path);
+
+            return ClientListReader.ReadTable(stream, list.OriginalFileName);
+        }
+
+        /// <summary>Imports a list waiting for its columns, with the columns the officer chose.</summary>
+        public async Task<SanctionsClientList> ImportClientsAsync(int listId, IReadOnlyDictionary<ClientField, int> map)
+        {
+            var list = await _context.SanctionsClientLists.FirstAsync(l => l.Id == listId);
+
+            if (list.Status != SanctionsClientListStatus.AwaitingColumns)
+                throw new InvalidOperationException("This client list has already been imported.");
+
+            if (!ClientListReader.HasName(map))
+                throw new InvalidOperationException("Choose the column with the client's name: a full name, a company name, or first and last names.");
+
+            await ImportClientsAsync(list, await ReadClientTableAsync(list), map);
+
+            return list;
+        }
+
+        private async Task ImportClientsAsync(
+            SanctionsClientList list,
+            ClientTable table,
+            IReadOnlyDictionary<ClientField, int> map)
+        {
+            var import = ClientListReader.Import(table, map);
+
+            foreach (var row in import.Clients)
             {
                 list.Clients.Add(new SanctionsClient
                 {
+                    RowNumber = row.RowNumber,
                     Name = Cap(row.Name, 500)!,
-                    IdNumber = Cap(row.IdNumber, 100),
-                    ClientReference = Cap(row.Reference, 100)
+                    IsCompany = row.IsCompany,
+                    IdNumber = row.IdNumber,
+                    PassportNumber = row.PassportNumber,
+                    RegistrationNumber = row.RegistrationNumber,
+                    DateOfBirth = row.DateOfBirth,
+                    Nationality = row.Nationality,
+                    ClientReference = row.Reference
                 });
             }
 
-            _context.SanctionsClientLists.Add(list);
+            list.Status = SanctionsClientListStatus.Imported;
+            list.ColumnMap = string.Join("\n", map.OrderBy(m => m.Key).Select(m => $"{m.Key}={m.Value}"));
+            list.RowsReceived = import.Received;
+            list.RowsImported = import.Clients.Count;
+            list.RowsInvalid = import.Invalid;
+            list.RowsDuplicated = import.Duplicates;
+            list.Problems = import.Problems.Count == 0 ? null : Cap(string.Join("\n", import.Problems), 8000);
 
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
-                AuditService.Created,
+                AuditService.SanctionsClientsImported,
                 nameof(SanctionsClientList),
                 list.Id.ToString(),
-                $"Client list {list.OriginalFileName} uploaded with {rows.Count} client(s).");
-
-            return list;
+                $"Client list {list.OriginalFileName} imported: {import.Received} rows received, " +
+                $"{import.Clients.Count} imported, {import.Invalid} invalid, {import.Duplicates} duplicates " +
+                $"(SHA-256 {list.Sha256}).");
         }
+
+        public static Dictionary<ClientField, int> ParseColumnMap(string? stored) =>
+            Lines(stored)
+                .Select(l => l.Split('='))
+                .Where(p => p.Length == 2 && Enum.TryParse<ClientField>(p[0], out _) && int.TryParse(p[1], out _))
+                .ToDictionary(p => Enum.Parse<ClientField>(p[0]), p => int.Parse(p[1]));
 
         private static SanctionsEntry ToEntry(ParsedSanctionsEntry e)
         {

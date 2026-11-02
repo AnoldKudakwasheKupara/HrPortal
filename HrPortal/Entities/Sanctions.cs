@@ -351,9 +351,18 @@ namespace HrPortal.Entities
         public SanctionsConcern Concern { get; set; } = null!;
     }
 
+    public enum SanctionsClientListStatus
+    {
+        /// <summary>Kept, but the officer still has to say which column is which.</summary>
+        AwaitingColumns,
+
+        Imported
+    }
+
     /// <summary>
     /// The company's clients and counterparties, as uploaded by the
-    /// compliance officer. The latest one is screened.
+    /// compliance officer. The latest one imported is screened, and
+    /// keeps being screened until another is imported.
     /// </summary>
     public class SanctionsClientList
     {
@@ -365,9 +374,27 @@ namespace HrPortal.Entities
 
         public string Sha256 { get; set; } = string.Empty;
 
+        public long FileSize { get; set; }
+
         public DateTime UploadedAt { get; set; }
 
         public string? UploadedByName { get; set; }
+
+        public SanctionsClientListStatus Status { get; set; } = SanctionsClientListStatus.Imported;
+
+        /// <summary>Which column holds which detail, as "Field=column" a line.</summary>
+        public string? ColumnMap { get; set; }
+
+        public int RowsReceived { get; set; }
+
+        public int RowsImported { get; set; }
+
+        public int RowsInvalid { get; set; }
+
+        public int RowsDuplicated { get; set; }
+
+        /// <summary>Rows left out or only partly read, and why, one per line.</summary>
+        public string? Problems { get; set; }
 
         public ICollection<SanctionsClient> Clients { get; set; } = new List<SanctionsClient>();
     }
@@ -378,9 +405,23 @@ namespace HrPortal.Entities
 
         public int SanctionsClientListId { get; set; }
 
+        /// <summary>The row of the uploaded file the client came from.</summary>
+        public int RowNumber { get; set; }
+
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>True for a company, false for a person, unknown when the list does not say.</summary>
+        public bool? IsCompany { get; set; }
+
         public string? IdNumber { get; set; }
+
+        public string? PassportNumber { get; set; }
+
+        public string? RegistrationNumber { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        public string? Nationality { get; set; }
 
         public string? ClientReference { get; set; }
 

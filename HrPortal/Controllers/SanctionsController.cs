@@ -49,11 +49,7 @@ namespace HrPortal.Controllers
                 .OrderByDescending(d => d.Id)
                 .FirstOrDefaultAsync();
 
-            ViewBag.ClientList = await _context.SanctionsClientLists
-                .AsNoTracking()
-                .Include(c => c.Clients)
-                .OrderByDescending(c => c.UploadedAt)
-                .FirstOrDefaultAsync();
+            ViewBag.ClientList = await _sanctions.CurrentClientListAsync();
 
             return View(await _context.SanctionsReviews
                 .AsNoTracking()
@@ -445,6 +441,8 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Clients()
         {
+            ViewBag.Current = await _sanctions.CurrentClientListAsync();
+
             return View(await _context.SanctionsClientLists
                 .AsNoTracking()
                 .Include(c => c.Clients)
@@ -454,6 +452,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(FileStorageService.MaxFileSizeBytes + 1024 * 1024)]
         public async Task<IActionResult> Clients(IFormFile? file)
         {
             var extension = Path.GetExtension(file?.FileName ?? string.Empty).ToLowerInvariant();
@@ -464,13 +463,20 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Clients));
             }
 
+            if (file.Length > FileStorageService.MaxFileSizeBytes)
+            {
+                TempData["Error"] = $"{file.FileName} is larger than 10 MB.";
+                return RedirectToAction(nameof(Clients));
+            }
+
             try
             {
                 var list = await _sanctions.UploadClientsAsync(file);
 
-                TempData["Success"] = list.Clients.Count == 0
-                    ? "The file was kept, but no clients could be read from it. Check it has a Name column."
-                    : $"{list.Clients.Count} clients read. They will be checked from the next comparison.";
+                if (list.Status == SanctionsClientListStatus.AwaitingColumns)
+                    return RedirectToAction(nameof(Columns), new { id = list.Id });
+
+                TempData["Success"] = ImportSummary(list);
             }
             catch (Exception ex) when (ex is InvalidDataException or System.Xml.XmlException or IOException)
             {
@@ -478,6 +484,63 @@ namespace HrPortal.Controllers
             }
 
             return RedirectToAction(nameof(Clients));
+        }
+
+        private static string ImportSummary(SanctionsClientList list) =>
+            $"{list.RowsReceived} rows received, {list.RowsImported} clients imported" +
+            (list.RowsInvalid > 0 ? $", {list.RowsInvalid} invalid" : "") +
+            (list.RowsDuplicated > 0 ? $", {list.RowsDuplicated} duplicates" : "") +
+            ". They will be checked from the next comparison onwards, and every one after it until another list is imported.";
+
+        /// <summary>Saying which column is which, for a list whose headings were not recognised.</summary>
+        public async Task<IActionResult> Columns(int id)
+        {
+            var list = await _context.SanctionsClientLists.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+
+            if (list == null)
+                return NotFound();
+
+            if (list.Status != SanctionsClientListStatus.AwaitingColumns)
+                return RedirectToAction(nameof(Clients));
+
+            var table = await _sanctions.ReadClientTableAsync(list);
+
+            ViewBag.List = list;
+            ViewBag.Suggested = ClientListReader.AutoMap(table.Headings);
+
+            return View(table);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Columns(int id, Dictionary<string, int>? columns)
+        {
+            var map = (columns ?? new Dictionary<string, int>())
+                .Where(c => c.Value >= 0 && Enum.TryParse<ClientField>(c.Key, out _))
+                .ToDictionary(c => Enum.Parse<ClientField>(c.Key), c => c.Value);
+
+            try
+            {
+                var list = await _sanctions.ImportClientsAsync(id, map);
+                TempData["Success"] = ImportSummary(list);
+                return RedirectToAction(nameof(Clients));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Columns), new { id });
+            }
+        }
+
+        public async Task<IActionResult> ClientFile(int id)
+        {
+            var list = await _context.SanctionsClientLists.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+
+            var path = list == null ? null : _files.ResolveExistingPath(list.FilePath);
+
+            return path == null
+                ? NotFound()
+                : PhysicalFile(path, "application/octet-stream", list!.OriginalFileName);
         }
 
         public IActionResult Verify() => View();
