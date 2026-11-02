@@ -63,6 +63,12 @@ dotnet ef migrations add <Name> --project HrPortal/HrPortal.csproj
 
 `dotnet ef` is a global tool: `dotnet tool install --global dotnet-ef`.
 
+Tests live in `HrPortal.Tests` and run without a database:
+
+```bash
+dotnet test
+```
+
 Dates are stored as `timestamp without time zone`, the way SQL Server's
 `datetime2` stored them, through Npgsql's legacy timestamp switch at the top
 of `Program.cs`. Remove it and every date typed into a form will be refused
@@ -116,3 +122,11 @@ database. Make one on your own computer and set it as `Vault__Key`:
 Keep a copy somewhere safe away from Render. A restored backup's vault
 can only be read with the same key, and changing the key makes anything
 already stored unreadable.
+
+Sanctions screening (Compliance → Sanctions Screening) is open only to
+users with the Compliance Officer role; administrators do not see it
+unless they are given that role too. Names are raised as possible matches
+from a similarity of 75 out of 100; to raise fewer, set
+`Sanctions__NameMatchThreshold` higher (60 to 99). It reads PDFs that
+contain text; a scanned image is kept but reported as unreadable, to be
+checked by hand.
