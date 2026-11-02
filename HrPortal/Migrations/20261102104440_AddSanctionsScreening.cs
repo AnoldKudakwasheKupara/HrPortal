@@ -30,25 +30,34 @@ namespace HrPortal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SanctionsDocuments",
+                name: "SanctionsRegister",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    DocumentReference = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    IssuedOn = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    OriginalFileName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    FilePath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Sha256 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    UploadedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    UploadedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    LooksLikeNotice = table.Column<bool>(type: "boolean", nullable: false),
-                    ReadingWarnings = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true)
+                    Reference = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsEntity = table.Column<bool>(type: "boolean", nullable: false),
+                    Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Aliases = table.Column<string>(type: "text", nullable: true),
+                    DateOfBirth = table.Column<string>(type: "text", nullable: true),
+                    Nationality = table.Column<string>(type: "text", nullable: true),
+                    Identifiers = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    Designation = table.Column<string>(type: "text", nullable: true),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    PlaceOfBirth = table.Column<string>(type: "text", nullable: true),
+                    ListedOn = table.Column<string>(type: "text", nullable: true),
+                    OtherInformation = table.Column<string>(type: "text", nullable: true),
+                    Details = table.Column<string>(type: "text", nullable: false),
+                    Fingerprint = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    FirstListId = table.Column<int>(type: "integer", nullable: false),
+                    LastListId = table.Column<int>(type: "integer", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SanctionsDocuments", x => x.Id);
+                    table.PrimaryKey("PK_SanctionsRegister", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -74,80 +83,42 @@ namespace HrPortal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SanctionsEntries",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SanctionsDocumentId = table.Column<int>(type: "integer", nullable: false),
-                    Reference = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    IsEntity = table.Column<bool>(type: "boolean", nullable: false),
-                    Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Aliases = table.Column<string>(type: "text", nullable: true),
-                    Title = table.Column<string>(type: "text", nullable: true),
-                    Designation = table.Column<string>(type: "text", nullable: true),
-                    DateOfBirth = table.Column<string>(type: "text", nullable: true),
-                    PlaceOfBirth = table.Column<string>(type: "text", nullable: true),
-                    Nationality = table.Column<string>(type: "text", nullable: true),
-                    Identifiers = table.Column<string>(type: "text", nullable: true),
-                    Address = table.Column<string>(type: "text", nullable: true),
-                    ListedOn = table.Column<string>(type: "text", nullable: true),
-                    OtherInformation = table.Column<string>(type: "text", nullable: true),
-                    Details = table.Column<string>(type: "text", nullable: false),
-                    Fingerprint = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SanctionsEntries", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SanctionsEntries_SanctionsDocuments_SanctionsDocumentId",
-                        column: x => x.SanctionsDocumentId,
-                        principalTable: "SanctionsDocuments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SanctionsReviews",
+                name: "SanctionsLists",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ReviewNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    NewDocumentId = table.Column<int>(type: "integer", nullable: false),
-                    PreviousDocumentId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CreatedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Screened = table.Column<bool>(type: "boolean", nullable: false),
+                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    DocumentReference = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    IssuedOn = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    Kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    OriginalFileName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    FilePath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Sha256 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    UploadedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    AppliedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    AppliedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     ScreenedStaff = table.Column<int>(type: "integer", nullable: false),
                     ScreenedVendors = table.Column<int>(type: "integer", nullable: false),
                     ScreenedClients = table.Column<int>(type: "integer", nullable: false),
                     ClientListId = table.Column<int>(type: "integer", nullable: true),
-                    FinalisedAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    FinalisedByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Note = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    RegisterSizeAfter = table.Column<int>(type: "integer", nullable: false),
+                    SignedOffAt = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    SignedOffByName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    SignOffNote = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     ReportPath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ReportSha256 = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SanctionsReviews", x => x.Id);
+                    table.PrimaryKey("PK_SanctionsLists", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SanctionsReviews_SanctionsClientLists_ClientListId",
+                        name: "FK_SanctionsLists_SanctionsClientLists_ClientListId",
                         column: x => x.ClientListId,
                         principalTable: "SanctionsClientLists",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SanctionsReviews_SanctionsDocuments_NewDocumentId",
-                        column: x => x.NewDocumentId,
-                        principalTable: "SanctionsDocuments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SanctionsReviews_SanctionsDocuments_PreviousDocumentId",
-                        column: x => x.PreviousDocumentId,
-                        principalTable: "SanctionsDocuments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -158,7 +129,7 @@ namespace HrPortal.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SanctionsReviewId = table.Column<int>(type: "integer", nullable: false),
+                    SanctionsListId = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Reference = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
@@ -168,9 +139,9 @@ namespace HrPortal.Migrations
                 {
                     table.PrimaryKey("PK_SanctionsChanges", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SanctionsChanges_SanctionsReviews_SanctionsReviewId",
-                        column: x => x.SanctionsReviewId,
-                        principalTable: "SanctionsReviews",
+                        name: "FK_SanctionsChanges_SanctionsLists_SanctionsListId",
+                        column: x => x.SanctionsListId,
+                        principalTable: "SanctionsLists",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -181,12 +152,11 @@ namespace HrPortal.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SanctionsReviewId = table.Column<int>(type: "integer", nullable: false),
+                    SanctionsListId = table.Column<int>(type: "integer", nullable: false),
                     Category = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Reference = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     ListedName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    EntryFingerprint = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     SubjectType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     SubjectId = table.Column<int>(type: "integer", nullable: true),
                     SubjectName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -201,17 +171,52 @@ namespace HrPortal.Migrations
                 {
                     table.PrimaryKey("PK_SanctionsConcerns", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SanctionsConcerns_SanctionsReviews_SanctionsReviewId",
-                        column: x => x.SanctionsReviewId,
-                        principalTable: "SanctionsReviews",
+                        name: "FK_SanctionsConcerns_SanctionsLists_SanctionsListId",
+                        column: x => x.SanctionsListId,
+                        principalTable: "SanctionsLists",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SanctionsListEntries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SanctionsListId = table.Column<int>(type: "integer", nullable: false),
+                    Reference = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    IsEntity = table.Column<bool>(type: "boolean", nullable: false),
+                    Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Aliases = table.Column<string>(type: "text", nullable: true),
+                    DateOfBirth = table.Column<string>(type: "text", nullable: true),
+                    Nationality = table.Column<string>(type: "text", nullable: true),
+                    Identifiers = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    Designation = table.Column<string>(type: "text", nullable: true),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    PlaceOfBirth = table.Column<string>(type: "text", nullable: true),
+                    ListedOn = table.Column<string>(type: "text", nullable: true),
+                    OtherInformation = table.Column<string>(type: "text", nullable: true),
+                    Details = table.Column<string>(type: "text", nullable: false),
+                    Fingerprint = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    MarkedRemoved = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SanctionsListEntries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SanctionsListEntries_SanctionsLists_SanctionsListId",
+                        column: x => x.SanctionsListId,
+                        principalTable: "SanctionsLists",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsChanges_SanctionsReviewId",
+                name: "IX_SanctionsChanges_SanctionsListId",
                 table: "SanctionsChanges",
-                column: "SanctionsReviewId");
+                column: "SanctionsListId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SanctionsClients_SanctionsClientListId",
@@ -219,44 +224,35 @@ namespace HrPortal.Migrations
                 column: "SanctionsClientListId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsConcerns_SanctionsReviewId",
+                name: "IX_SanctionsConcerns_SanctionsListId",
                 table: "SanctionsConcerns",
-                column: "SanctionsReviewId");
+                column: "SanctionsListId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsDocuments_UploadedAt",
-                table: "SanctionsDocuments",
-                column: "UploadedAt");
+                name: "IX_SanctionsListEntries_SanctionsListId_Reference",
+                table: "SanctionsListEntries",
+                columns: new[] { "SanctionsListId", "Reference" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsEntries_SanctionsDocumentId_Reference",
-                table: "SanctionsEntries",
-                columns: new[] { "SanctionsDocumentId", "Reference" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SanctionsReviews_ClientListId",
-                table: "SanctionsReviews",
+                name: "IX_SanctionsLists_ClientListId",
+                table: "SanctionsLists",
                 column: "ClientListId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsReviews_NewDocumentId",
-                table: "SanctionsReviews",
-                column: "NewDocumentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SanctionsReviews_PreviousDocumentId",
-                table: "SanctionsReviews",
-                column: "PreviousDocumentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SanctionsReviews_ReportSha256",
-                table: "SanctionsReviews",
+                name: "IX_SanctionsLists_ReportSha256",
+                table: "SanctionsLists",
                 column: "ReportSha256");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SanctionsReviews_ReviewNumber",
-                table: "SanctionsReviews",
+                name: "IX_SanctionsLists_ReviewNumber",
+                table: "SanctionsLists",
                 column: "ReviewNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SanctionsRegister_Reference",
+                table: "SanctionsRegister",
+                column: "Reference",
                 unique: true);
         }
 
@@ -273,16 +269,16 @@ namespace HrPortal.Migrations
                 name: "SanctionsConcerns");
 
             migrationBuilder.DropTable(
-                name: "SanctionsEntries");
+                name: "SanctionsListEntries");
 
             migrationBuilder.DropTable(
-                name: "SanctionsReviews");
+                name: "SanctionsRegister");
+
+            migrationBuilder.DropTable(
+                name: "SanctionsLists");
 
             migrationBuilder.DropTable(
                 name: "SanctionsClientLists");
-
-            migrationBuilder.DropTable(
-                name: "SanctionsDocuments");
         }
     }
 }

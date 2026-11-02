@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HrPortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261102110952_AddSanctionsScreening")]
-    partial class AddSanctionsScreening
+    [Migration("20261102111518_SimplifySanctionsScreening")]
+    partial class SimplifySanctionsScreening
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
