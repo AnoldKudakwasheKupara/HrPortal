@@ -164,6 +164,8 @@ builder.Services.AddScoped<PrivacyNoticeService>();
 builder.Services.AddScoped<BackupService>();
 builder.Services.AddSingleton<VaultCipher>();
 builder.Services.AddSingleton<VaultLock>();
+builder.Services.AddScoped<HrPortal.Services.Sanctions.SanctionsService>();
+builder.Services.AddSingleton<HrPortal.Services.Sanctions.SanctionsReportPdfService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<DailyReminderWorker>();
 builder.Services.AddScoped<SupervisorService>();

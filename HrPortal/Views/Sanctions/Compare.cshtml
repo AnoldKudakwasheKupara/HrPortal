@@ -1,0 +1,107 @@
+@using HrPortal.Entities
+@model List<HrPortal.Services.Sanctions.SanctionsComparisonRow>
+
+@{
+    ViewData["Title"] = "Compare two documents";
+
+    var lists = (List<SanctionsList>)ViewBag.Lists;
+    var a = ViewBag.A as int?;
+    var b = ViewBag.B as int?;
+    var compared = a != null && b != null && a != b;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Compare two documents</h2>
+            <p class="text-muted mb-0">
+                Any two uploads side by side, entry by entry, matched on their reference.
+                Most useful for two full lists: two notices only share the names each
+                happens to mention.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label" for="a">Earlier</label>
+                    <select id="a" name="a" class="form-select">
+                        @foreach (var list in lists)
+                        {
+                            <option value="@list.Id" selected="@(list.Id == a)">
+                                @list.ReviewNumber · @(list.DocumentReference ?? list.OriginalFileName) · @list.UploadedAt.ToLocalTime().ToString("d MMM yyyy")
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="b">Later</label>
+                    <select id="b" name="b" class="form-select">
+                        @foreach (var list in lists)
+                        {
+                            <option value="@list.Id" selected="@(list.Id == b)">
+                                @list.ReviewNumber · @(list.DocumentReference ?? list.OriginalFileName) · @list.UploadedAt.ToLocalTime().ToString("d MMM yyyy")
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Compare</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (compared)
+    {
+        <div class="report-stats">
+            <div class="report-stat">
+                <span class="report-stat-label">Added</span>
+                <span class="report-stat-value">@Model.Count(r => r.Type == SanctionsChangeType.Added)</span>
+                <span class="report-stat-note">In the later, not the earlier</span>
+            </div>
+            <div class="report-stat">
+                <span class="report-stat-label">Removed</span>
+                <span class="report-stat-value">@Model.Count(r => r.Type == SanctionsChangeType.Removed)</span>
+                <span class="report-stat-note">In the earlier, not the later</span>
+            </div>
+            <div class="report-stat">
+                <span class="report-stat-label">Changed</span>
+                <span class="report-stat-value">@Model.Count(r => r.Type == SanctionsChangeType.Amended)</span>
+                <span class="report-stat-note">In both, reading differently</span>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body is-table">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr><th>Difference</th><th>Reference</th><th>Name</th><th>What changed</th></tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.Count == 0)
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-4">The two documents list the same entries in the same terms.</td></tr>
+                        }
+                        @foreach (var row in Model)
+                        {
+                            <tr>
+                                <td>@(row.Type == SanctionsChangeType.Amended ? "Changed" : row.Type.ToString())</td>
+                                <td><strong>@row.Reference</strong></td>
+                                <td>@row.Name</td>
+                                <td class="small" style="white-space: pre-line;">@row.Differences</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>

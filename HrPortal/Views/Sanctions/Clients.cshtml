@@ -1,0 +1,96 @@
+@model List<HrPortal.Entities.SanctionsClientList>
+
+@{
+    ViewData["Title"] = "Client list";
+
+    var latest = Model.FirstOrDefault();
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Client list</h2>
+            <p class="text-muted mb-0">
+                The clients and counterparties to screen. The newest list uploaded is the
+                one screened; earlier ones are kept for the record.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow-sm mb-3" style="max-width: 760px;">
+        <div class="card-header">Upload a client list</div>
+        <div class="card-body">
+            <p class="text-muted small">
+                An Excel workbook (.xlsx) or CSV file with a heading row. The portal looks
+                for a column with <strong>Name</strong> in its heading, and optionally one for
+                the <strong>ID or passport number</strong> and one for your
+                <strong>client reference</strong>. ID numbers make matching far more reliable.
+            </p>
+            <form asp-action="Clients" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
+                <input name="file" type="file" accept=".xlsx,.csv" class="form-control" style="max-width: 420px;" required aria-label="Client list file" />
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    @if (latest != null)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+                <span>Being screened: @latest.OriginalFileName</span>
+                <span class="text-muted small">
+                    @latest.Clients.Count clients · uploaded @latest.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @latest.UploadedByName
+                </span>
+            </div>
+            <div class="card-body is-table">
+                <div class="table-responsive" style="max-height: 480px;">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Name</th><th>ID / passport</th><th>Client reference</th></tr></thead>
+                        <tbody>
+                        @foreach (var client in latest.Clients.OrderBy(c => c.Name))
+                        {
+                            <tr><td>@client.Name</td><td>@client.IdNumber</td><td>@client.ClientReference</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Count > 1)
+    {
+        <div class="card shadow-sm">
+            <div class="card-header">Earlier lists</div>
+            <div class="card-body is-table">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>File</th><th>Clients</th><th>Uploaded</th><th>SHA-256</th></tr></thead>
+                    <tbody>
+                    @foreach (var list in Model.Skip(1))
+                    {
+                        <tr>
+                            <td>@list.OriginalFileName</td>
+                            <td>@list.Clients.Count</td>
+                            <td>@list.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @list.UploadedByName</td>
+                            <td class="small"><code>@list.Sha256</code></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+</div>

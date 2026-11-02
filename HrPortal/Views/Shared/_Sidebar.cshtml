@@ -37,6 +37,7 @@
 
     var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
+    var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
 }
 
 <nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation">
@@ -336,6 +337,16 @@
                 <i class="fas fa-sliders"></i> Settings
             </a>
         }
+    }
+
+    @if (isCompliance)
+    {
+        <div class="nav-group">Compliance</div>
+
+        <a class="nav-item @On("Sanctions")"
+           asp-controller="Sanctions" asp-action="Index">
+            <i class="fas fa-user-shield"></i> Sanctions Screening
+        </a>
     }
 
     <div class="sidebar-foot">

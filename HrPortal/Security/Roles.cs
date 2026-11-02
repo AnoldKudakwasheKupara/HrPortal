@@ -10,6 +10,14 @@
 
         public const string Employee = "Employee";
 
+        /// <summary>
+        /// Looks after sanctions screening. Nobody else sees it, not
+        /// even administrators, unless they are given this role too.
+        /// </summary>
+        public const string ComplianceOfficer = "Compliance Officer";
+
+        public const string ComplianceOnly = ComplianceOfficer;
+
         public const string AdminOnly = Administrator;
 
         public const string AdminOrHr =

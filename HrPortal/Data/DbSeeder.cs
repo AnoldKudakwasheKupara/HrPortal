@@ -64,7 +64,8 @@ namespace HrPortal.Data
             "Administrator",
             "HR Officer",
             "MD",
-            "Employee"
+            "Employee",
+            "Compliance Officer"
         };
 
         public static async Task SeedAdministratorAsync(

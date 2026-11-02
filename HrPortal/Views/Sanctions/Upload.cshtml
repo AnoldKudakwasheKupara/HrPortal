@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Upload a sanctions document";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Upload a sanctions document</h2>
+        <p class="text-muted">
+            The PDF exactly as the FIU sent it: a full list, or a notice of
+            names added, amended or removed. The portal keeps the file, reads
+            every entry and shows you what it found before anything changes.
+        </p>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <div class="card shadow-sm" style="max-width: 640px;">
+        <div class="card-body">
+            <form asp-action="Upload" method="post" enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label for="file" class="form-label">The document (PDF)</label>
+                    <input id="file" name="file" type="file" accept=".pdf,application/pdf"
+                           class="form-control" required />
+                    <div class="form-text">Up to 10 MB.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Upload and read it</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>

@@ -1523,6 +1523,439 @@ namespace HrPortal.Migrations
                     b.ToTable("RepositoryFolders");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.SanctionsChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Differences")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SanctionsListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanctionsListId");
+
+                    b.ToTable("SanctionsChanges");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClientReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("IdNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("SanctionsClientListId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanctionsClientListId");
+
+                    b.ToTable("SanctionsClients");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsClientList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UploadedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SanctionsClientLists");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsConcern", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ListedName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RaisedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Resolution")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ResolvedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SanctionsListId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubjectName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SubjectType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanctionsListId");
+
+                    b.ToTable("SanctionsConcerns");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AppliedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("AppliedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("ClientListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DocumentReference")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("IssuedOn")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("RegisterSizeAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReportPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ReportSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ReviewNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("ScreenedClients")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScreenedStaff")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScreenedVendors")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("SignOffNote")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("SignedOffAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("SignedOffByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("UploadedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientListId");
+
+                    b.HasIndex("ReportSha256");
+
+                    b.HasIndex("ReviewNumber")
+                        .IsUnique();
+
+                    b.ToTable("SanctionsLists");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsListEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Aliases")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DateOfBirth")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Designation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Identifiers")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsEntity")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ListedOn")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("MarkedRemoved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OtherInformation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PlaceOfBirth")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SanctionsListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanctionsListId", "Reference");
+
+                    b.ToTable("SanctionsListEntries");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsRegisterEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Aliases")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DateOfBirth")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Designation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("FirstListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Identifiers")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEntity")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ListedOn")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OtherInformation")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PlaceOfBirth")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.ToTable("SanctionsRegister");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.TrainingAssignment", b =>
                 {
                     b.Property<int>("Id")
@@ -2428,6 +2861,60 @@ namespace HrPortal.Migrations
                     b.Navigation("Folder");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.SanctionsChange", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsList", "List")
+                        .WithMany("Changes")
+                        .HasForeignKey("SanctionsListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("List");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsClient", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsClientList", "ClientList")
+                        .WithMany("Clients")
+                        .HasForeignKey("SanctionsClientListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClientList");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsConcern", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsList", "List")
+                        .WithMany("Concerns")
+                        .HasForeignKey("SanctionsListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("List");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsList", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsClientList", "ClientList")
+                        .WithMany()
+                        .HasForeignKey("ClientListId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ClientList");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsListEntry", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsList", "List")
+                        .WithMany("Entries")
+                        .HasForeignKey("SanctionsListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("List");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.TrainingAssignment", b =>
                 {
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
@@ -2660,6 +3147,20 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.RepositoryFolder", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsClientList", b =>
+                {
+                    b.Navigation("Clients");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsList", b =>
+                {
+                    b.Navigation("Changes");
+
+                    b.Navigation("Concerns");
+
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.TrainingAssignment", b =>

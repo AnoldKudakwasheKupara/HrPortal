@@ -32,6 +32,14 @@ namespace HrPortal.DbContexts
 
         public DbSet<VaultEntry> VaultEntries { get; set; }
 
+        public DbSet<SanctionsList> SanctionsLists { get; set; }
+        public DbSet<SanctionsListEntry> SanctionsListEntries { get; set; }
+        public DbSet<SanctionsRegisterEntry> SanctionsRegister { get; set; }
+        public DbSet<SanctionsChange> SanctionsChanges { get; set; }
+        public DbSet<SanctionsConcern> SanctionsConcerns { get; set; }
+        public DbSet<SanctionsClientList> SanctionsClientLists { get; set; }
+        public DbSet<SanctionsClient> SanctionsClients { get; set; }
+
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
         public DbSet<EmployeeDocument> EmployeeDocuments { get; set; }
@@ -358,6 +366,109 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(a => new { a.UserId, a.Version })
                     .IsUnique();
+            });
+
+            builder.Entity<SanctionsList>(entity =>
+            {
+                entity.HasKey(l => l.Id);
+                entity.Property(l => l.ReviewNumber).IsRequired().HasMaxLength(20);
+                entity.HasIndex(l => l.ReviewNumber).IsUnique();
+                entity.Property(l => l.Title).HasMaxLength(500);
+                entity.Property(l => l.DocumentReference).HasMaxLength(50);
+                entity.Property(l => l.Kind).HasConversion<string>().HasMaxLength(20);
+                entity.Property(l => l.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(l => l.OriginalFileName).IsRequired().HasMaxLength(255);
+                entity.Property(l => l.FilePath).IsRequired().HasMaxLength(500);
+                entity.Property(l => l.Sha256).IsRequired().HasMaxLength(64);
+                entity.Property(l => l.ReportPath).HasMaxLength(500);
+                entity.Property(l => l.ReportSha256).HasMaxLength(64);
+                entity.HasIndex(l => l.ReportSha256);
+                entity.Property(l => l.UploadedByName).HasMaxLength(200);
+                entity.Property(l => l.AppliedByName).HasMaxLength(200);
+                entity.Property(l => l.SignedOffByName).HasMaxLength(200);
+                entity.Property(l => l.SignOffNote).HasMaxLength(4000);
+
+                entity.HasOne(l => l.ClientList)
+                    .WithMany()
+                    .HasForeignKey(l => l.ClientListId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<SanctionsListEntry>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Reference).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Fingerprint).IsRequired().HasMaxLength(64);
+                entity.HasIndex(e => new { e.SanctionsListId, e.Reference });
+
+                entity.HasOne(e => e.List)
+                    .WithMany(l => l.Entries)
+                    .HasForeignKey(e => e.SanctionsListId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<SanctionsRegisterEntry>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Reference).IsRequired().HasMaxLength(20);
+                entity.HasIndex(e => e.Reference).IsUnique();
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Fingerprint).IsRequired().HasMaxLength(64);
+            });
+
+            builder.Entity<SanctionsChange>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Type).HasConversion<string>().HasMaxLength(20);
+                entity.Property(c => c.Reference).IsRequired().HasMaxLength(20);
+                entity.Property(c => c.Name).IsRequired().HasMaxLength(500);
+
+                entity.HasOne(c => c.List)
+                    .WithMany(l => l.Changes)
+                    .HasForeignKey(c => c.SanctionsListId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<SanctionsConcern>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Category).HasConversion<string>().HasMaxLength(30);
+                entity.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(c => c.Reference).HasMaxLength(20);
+                entity.Property(c => c.ListedName).HasMaxLength(500);
+                entity.Property(c => c.SubjectType).HasMaxLength(20);
+                entity.Property(c => c.SubjectName).HasMaxLength(500);
+                entity.Property(c => c.Reason).IsRequired().HasMaxLength(2000);
+                entity.Property(c => c.Resolution).HasMaxLength(4000);
+                entity.Property(c => c.ResolvedByName).HasMaxLength(200);
+
+                entity.HasOne(c => c.List)
+                    .WithMany(l => l.Concerns)
+                    .HasForeignKey(c => c.SanctionsListId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<SanctionsClientList>(entity =>
+            {
+                entity.HasKey(l => l.Id);
+                entity.Property(l => l.OriginalFileName).IsRequired().HasMaxLength(255);
+                entity.Property(l => l.FilePath).IsRequired().HasMaxLength(500);
+                entity.Property(l => l.Sha256).IsRequired().HasMaxLength(64);
+                entity.Property(l => l.UploadedByName).HasMaxLength(200);
+            });
+
+            builder.Entity<SanctionsClient>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Name).IsRequired().HasMaxLength(500);
+                entity.Property(c => c.IdNumber).HasMaxLength(100);
+                entity.Property(c => c.ClientReference).HasMaxLength(100);
+
+                entity.HasOne(c => c.ClientList)
+                    .WithMany(l => l.Clients)
+                    .HasForeignKey(c => c.SanctionsClientListId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<ExpiryReminder>(entity =>

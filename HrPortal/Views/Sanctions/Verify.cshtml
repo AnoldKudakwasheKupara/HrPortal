@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Verify a report";
+
+    var hash = ViewBag.Hash as string;
+    var match = ViewBag.Match as HrPortal.Entities.SanctionsList;
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+        <h2>Verify a report</h2>
+        <p class="text-muted">
+            Upload a sanctions screening report you have been given. The portal works out
+            its SHA-256 and checks it against every report it has made. Any change to the
+            file, however small, means it will not match.
+        </p>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (hash != null)
+    {
+        if (match != null)
+        {
+            <div class="alert alert-success">
+                <strong>Genuine and unaltered.</strong>
+                This is the report for
+                <a asp-action="Review" asp-route-id="@match.Id">@match.ReviewNumber</a>,
+                signed off by @match.SignedOffByName on
+                @match.SignedOffAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                <strong>Not recognised.</strong>
+                This file does not match any report the portal made. It may have been
+                altered, or it is not a report from this portal.
+            </div>
+        }
+
+        <p class="small text-muted">SHA-256 of the file checked: <code>@hash</code></p>
+    }
+
+    <div class="card shadow-sm" style="max-width: 640px;">
+        <div class="card-body">
+            <form asp-action="Verify" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label">The report (PDF)</label>
+                    <input id="file" name="file" type="file" accept=".pdf" class="form-control" required />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Check it</button>
+                    <a asp-action="Index" class="btn btn-secondary">Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
