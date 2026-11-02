@@ -5,11 +5,12 @@ using QuestPDF.Infrastructure;
 namespace HrPortal.Services.Sanctions
 {
     /// <summary>
-    /// The record of one sanctions review: the document it was based
-    /// on and its SHA-256, what changed on the register, who was
-    /// screened, every matter raised and how it was resolved, and who
-    /// signed it off. It is made once, at sign-off, and kept with its
-    /// own SHA-256 so that any copy can later be checked against it.
+    /// The record of one sanctions review: what it found in plain
+    /// words, the two documents compared and their SHA-256, every
+    /// difference, every discrepancy, who was checked and every match
+    /// with how it was resolved, and who finalised it. It is made once,
+    /// at finalising, and kept with its own SHA-256 so any copy can
+    /// later be checked against it.
     /// </summary>
     public class SanctionsReportPdfService
     {
@@ -22,10 +23,10 @@ namespace HrPortal.Services.Sanctions
             _brand = brand;
         }
 
-        public byte[] Render(SanctionsList list) =>
-            Build(list).GeneratePdf();
+        public byte[] Render(SanctionsReview review) =>
+            Build(review).GeneratePdf();
 
-        public IDocument Build(SanctionsList list) =>
+        public IDocument Build(SanctionsReview review) =>
             Document.Create(container =>
             {
                 container.Page(page =>
@@ -33,29 +34,42 @@ namespace HrPortal.Services.Sanctions
                     DocumentStyle.Apply(page);
 
                     page.Header().Element(e => DocumentStyle.Head(
-                        e, _brand, Title, list.ReviewNumber));
+                        e, _brand, Title, review.ReviewNumber));
 
-                    page.Content().Element(e => Content(e, list));
+                    page.Content().Element(e => Content(e, review));
 
-                    page.Footer().Element(e => DocumentStyle.Footer(e, list.ReviewNumber));
+                    page.Footer().Element(e => DocumentStyle.Footer(e, review.ReviewNumber));
                 });
             });
 
         private static string Stamp(DateTime? at) => DocumentStyle.Stamp(at) ?? "Not recorded";
 
-        private static void Content(IContainer container, SanctionsList list)
+        private static (string, string?)[] DocumentRows(string which, SanctionsDocument? d) =>
+            d == null
+                ? new (string, string?)[] { (which, "None. This was the first document.") }
+                : new (string, string?)[]
+                {
+                    (which, d.Title ?? d.OriginalFileName),
+                    ("Reference and date", $"{d.DocumentReference ?? "No reference"}, " +
+                                            (d.IssuedOn?.ToString("d MMMM yyyy") ?? "undated")),
+                    ("File", d.OriginalFileName),
+                    ("SHA-256", d.Sha256),
+                    ("Uploaded", $"{Stamp(d.UploadedAt)} by {d.UploadedByName}")
+                };
+
+        private static void Content(IContainer container, SanctionsReview review)
         {
-            var matches = list.Concerns
+            var matches = review.Concerns
                 .Where(c => c.Category == SanctionsConcernCategory.PossibleMatch)
                 .OrderByDescending(c => c.Score)
                 .ToList();
 
-            var discrepancies = list.Concerns
+            var discrepancies = review.Concerns
                 .Where(c => c.Category == SanctionsConcernCategory.Discrepancy)
                 .OrderBy(c => c.RaisedAt)
                 .ToList();
 
-            var changes = list.Changes
+            var changes = review.Changes
                 .OrderBy(c => c.Type)
                 .ThenBy(c => c.Reference)
                 .ToList();
@@ -67,43 +81,38 @@ namespace HrPortal.Services.Sanctions
                     column.Spacing(10);
 
                     column.Item().Element(e => DocumentStyle.Section(
-                        e, "01", "The document", "What was received and exactly which file"));
+                        e, "01", "Findings", "What this review found"));
 
-                    column.Item().Element(e => DocumentStyle.DetailTable(e, new (string, string?)[]
-                    {
-                        ("Title", list.Title),
-                        ("Document reference", list.DocumentReference),
-                        ("Dated", list.IssuedOn?.ToString("d MMMM yyyy")),
-                        ("Treated as", list.Kind switch
-                        {
-                            Sanctions.SanctionsListKind.FullList => "Full list (replaces the register)",
-                            Sanctions.SanctionsListKind.Removals => "Removals",
-                            _ => "Additions and amendments"
-                        }),
-                        ("File", list.OriginalFileName),
-                        ("SHA-256 of the file", list.Sha256),
-                        ("Uploaded", $"{Stamp(list.UploadedAt)} by {list.UploadedByName}"),
-                        ("Applied", $"{Stamp(list.AppliedAt)} by {list.AppliedByName}")
-                    }));
+                    foreach (var sentence in SanctionsFindings.Sentences(review))
+                        column.Item().Text(sentence).FontSize(10);
 
                     column.Item().Element(DocumentStyle.Divider);
 
                     column.Item().Element(e => DocumentStyle.Section(
-                        e, "02", "Changes to the register", "Compared with the register before this document"));
+                        e, "02", "Documents compared", "Exactly which files were used"));
+
+                    column.Item().Element(e => DocumentStyle.DetailTable(
+                        e,
+                        DocumentRows("New document", review.NewDocument)
+                            .Concat(DocumentRows("Compared with", review.PreviousDocument))));
+
+                    column.Item().Element(DocumentStyle.Divider);
+
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e, "03", "Differences", "Names added, removed or changed"));
 
                     column.Item().Element(e => DocumentStyle.Tally(e, new[]
                     {
                         ("Added", changes.Count(c => c.Type == SanctionsChangeType.Added).ToString()),
-                        ("Amended", changes.Count(c => c.Type == SanctionsChangeType.Amended).ToString()),
                         ("Removed", changes.Count(c => c.Type == SanctionsChangeType.Removed).ToString()),
-                        ("On the register", list.RegisterSizeAfter.ToString())
+                        ("Changed", changes.Count(c => c.Type == SanctionsChangeType.Changed).ToString())
                     }));
 
                     column.Item().Element(e => DocumentStyle.ListTable(
                         e,
                         new[]
                         {
-                            new ListColumn("Change", 1.1f),
+                            new ListColumn("Difference", 1.1f),
                             new ListColumn("Reference", 1.4f),
                             new ListColumn("Name", 2.5f),
                             new ListColumn("What changed", 4)
@@ -114,27 +123,46 @@ namespace HrPortal.Services.Sanctions
                                 c.Type.ToString(), c.Reference, c.Name, c.Differences
                             })
                             .ToList(),
-                        "Nothing on the register changed."));
+                        review.PreviousDocument == null
+                            ? "Nothing to compare: this was the first document."
+                            : "No differences."));
 
                     column.Item().Element(DocumentStyle.Divider);
 
                     column.Item().Element(e => DocumentStyle.Section(
-                        e, "03", "Screening", "Everybody the company deals with, checked against the whole register"));
+                        e, "04", "Discrepancies", "Anything in the documents that did not add up"));
+
+                    column.Item().Element(e => DocumentStyle.ListTable(
+                        e,
+                        new[]
+                        {
+                            new ListColumn("Matter", 4),
+                            new ListColumn("Outcome", 3)
+                        },
+                        discrepancies
+                            .Select(c => (IReadOnlyList<string?>)new[] { c.Reason, Outcome(c) })
+                            .ToList(),
+                        "No discrepancies were found."));
+
+                    column.Item().Element(DocumentStyle.Divider);
+
+                    column.Item().Element(e => DocumentStyle.Section(
+                        e, "05", "Staff, vendors and clients", "Checked against every name on the new document"));
 
                     column.Item().Element(e => DocumentStyle.Tally(e, new[]
                     {
-                        ("Staff", list.ScreenedStaff.ToString()),
-                        ("Vendors", list.ScreenedVendors.ToString()),
-                        ("Clients", list.ScreenedClients.ToString()),
+                        ("Staff", review.ScreenedStaff.ToString()),
+                        ("Vendors", review.ScreenedVendors.ToString()),
+                        ("Clients", review.ScreenedClients.ToString()),
                         ("Possible matches", matches.Count.ToString())
                     }));
 
                     column.Item().Element(e => DocumentStyle.Note(
                         e,
-                        list.ClientList == null
-                            ? "No client list had been uploaded, so no clients were screened."
-                            : $"Clients from {list.ClientList.OriginalFileName}, uploaded " +
-                              $"{Stamp(list.ClientList.UploadedAt)} (SHA-256 {list.ClientList.Sha256})."));
+                        review.ClientList == null
+                            ? "No client list had been uploaded, so no clients were checked."
+                            : $"Clients from {review.ClientList.OriginalFileName}, uploaded " +
+                              $"{Stamp(review.ClientList.UploadedAt)} (SHA-256 {review.ClientList.Sha256})."));
 
                     column.Item().Element(e => DocumentStyle.ListTable(
                         e,
@@ -154,42 +182,25 @@ namespace HrPortal.Services.Sanctions
                                 Outcome(c)
                             })
                             .ToList(),
-                        "Nobody the company deals with matched anyone on the register."));
+                        "Nobody the company deals with is on the new document."));
 
                     column.Item().Element(DocumentStyle.Divider);
 
                     column.Item().Element(e => DocumentStyle.Section(
-                        e, "04", "Discrepancies", "Anything in the document that did not add up"));
-
-                    column.Item().Element(e => DocumentStyle.ListTable(
-                        e,
-                        new[]
-                        {
-                            new ListColumn("Matter", 4),
-                            new ListColumn("Outcome", 3)
-                        },
-                        discrepancies
-                            .Select(c => (IReadOnlyList<string?>)new[] { c.Reason, Outcome(c) })
-                            .ToList(),
-                        "No discrepancies were found."));
-
-                    column.Item().Element(DocumentStyle.Divider);
-
-                    column.Item().Element(e => DocumentStyle.Section(
-                        e, "05", "Sign-off", "Every matter was resolved before this was signed"));
+                        e, "06", "Finalised", "Every matter was resolved before this was made"));
 
                     column.Item().Element(e => DocumentStyle.DetailTable(e, new (string, string?)[]
                     {
-                        ("Signed off by", list.SignedOffByName),
-                        ("Signed off", Stamp(list.SignedOffAt)),
-                        ("Note", list.SignOffNote ?? "None")
+                        ("Finalised by", review.FinalisedByName),
+                        ("Finalised", Stamp(review.FinalisedAt)),
+                        ("Note", review.Note ?? "None")
                     }));
 
                     column.Item().Element(e => DocumentStyle.Note(
                         e,
                         "The portal keeps this report exactly as it was made, with its SHA-256. " +
                         "To confirm a copy is genuine and unaltered, upload it under Sanctions " +
-                        "screening → Verify a report."));
+                        "Screening → Verify a report."));
                 });
         }
 

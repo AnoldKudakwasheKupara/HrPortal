@@ -1,30 +1,12 @@
-using HrPortal.Services.Sanctions;
-
 namespace HrPortal.Entities
 {
-    public enum SanctionsReviewStatus
-    {
-        /// <summary>Read, not yet applied to the register.</summary>
-        Pending,
-
-        /// <summary>Applied and screened; matters may be open.</summary>
-        InReview,
-
-        /// <summary>Every matter resolved and the review signed off.</summary>
-        SignedOff
-    }
-
     /// <summary>
     /// One document received from the FIU, kept exactly as it came
-    /// with a SHA-256 of the file, so any report can be tied to the
-    /// very document it was based on.
+    /// with a SHA-256 of the file, and every entry read from it.
     /// </summary>
-    public class SanctionsList
+    public class SanctionsDocument
     {
         public int Id { get; set; }
-
-        /// <summary>The portal's own reference for the review, SAN-2026-0001.</summary>
-        public string ReviewNumber { get; set; } = string.Empty;
 
         public string? Title { get; set; }
 
@@ -32,10 +14,6 @@ namespace HrPortal.Entities
         public string? DocumentReference { get; set; }
 
         public DateTime? IssuedOn { get; set; }
-
-        public SanctionsListKind Kind { get; set; }
-
-        public SanctionsReviewStatus Status { get; set; }
 
         public string OriginalFileName { get; set; } = string.Empty;
 
@@ -47,11 +25,85 @@ namespace HrPortal.Entities
 
         public string? UploadedByName { get; set; }
 
-        public DateTime? AppliedAt { get; set; }
+        /// <summary>The title announces additions, amendments or removals rather than the whole list.</summary>
+        public bool LooksLikeNotice { get; set; }
 
-        public string? AppliedByName { get; set; }
+        /// <summary>Anything the reader could not make sense of, one per line.</summary>
+        public string? ReadingWarnings { get; set; }
 
-        /// <summary>How many people and companies were screened, by source.</summary>
+        public ICollection<SanctionsEntry> Entries { get; set; } = new List<SanctionsEntry>();
+
+        /// <summary>How the document is named on screen and in reports.</summary>
+        public string Label =>
+            (DocumentReference ?? OriginalFileName) +
+            (IssuedOn is DateTime d ? $" of {d:d MMM yyyy}" : $", uploaded {UploadedAt.ToLocalTime():d MMM yyyy}");
+    }
+
+    /// <summary>One listed party as one document gives it.</summary>
+    public class SanctionsEntry
+    {
+        public int Id { get; set; }
+
+        public int SanctionsDocumentId { get; set; }
+
+        public string Reference { get; set; } = string.Empty;
+
+        public bool IsEntity { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public string? Aliases { get; set; }
+
+        public string? Title { get; set; }
+
+        public string? Designation { get; set; }
+
+        public string? DateOfBirth { get; set; }
+
+        public string? PlaceOfBirth { get; set; }
+
+        public string? Nationality { get; set; }
+
+        public string? Identifiers { get; set; }
+
+        public string? Address { get; set; }
+
+        public string? ListedOn { get; set; }
+
+        public string? OtherInformation { get; set; }
+
+        public string Details { get; set; } = string.Empty;
+
+        /// <summary>A hash of the compared fields, to tell at a glance whether an entry changed.</summary>
+        public string Fingerprint { get; set; } = string.Empty;
+
+        public SanctionsDocument Document { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// One comparison: a new document against the one before it (or
+    /// against a second document uploaded with it), what differs,
+    /// anything that did not add up, and who among staff, vendors and
+    /// clients resembles anybody on the new document.
+    /// </summary>
+    public class SanctionsReview
+    {
+        public int Id { get; set; }
+
+        /// <summary>The portal's own reference, SAN-2026-0001.</summary>
+        public string ReviewNumber { get; set; } = string.Empty;
+
+        public int NewDocumentId { get; set; }
+
+        /// <summary>None when the new document is the very first.</summary>
+        public int? PreviousDocumentId { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public string? CreatedByName { get; set; }
+
+        public bool Screened { get; set; }
+
         public int ScreenedStaff { get; set; }
 
         public int ScreenedVendors { get; set; }
@@ -60,134 +112,40 @@ namespace HrPortal.Entities
 
         public int? ClientListId { get; set; }
 
-        public int RegisterSizeAfter { get; set; }
+        public DateTime? FinalisedAt { get; set; }
 
-        public DateTime? SignedOffAt { get; set; }
+        public string? FinalisedByName { get; set; }
 
-        public string? SignedOffByName { get; set; }
-
-        public string? SignOffNote { get; set; }
+        public string? Note { get; set; }
 
         public string? ReportPath { get; set; }
 
         public string? ReportSha256 { get; set; }
 
-        public ICollection<SanctionsListEntry> Entries { get; set; } = new List<SanctionsListEntry>();
+        public SanctionsDocument NewDocument { get; set; } = null!;
+
+        public SanctionsDocument? PreviousDocument { get; set; }
+
+        public SanctionsClientList? ClientList { get; set; }
 
         public ICollection<SanctionsChange> Changes { get; set; } = new List<SanctionsChange>();
 
         public ICollection<SanctionsConcern> Concerns { get; set; } = new List<SanctionsConcern>();
-
-        public SanctionsClientList? ClientList { get; set; }
-    }
-
-    /// <summary>What one entry looked like in one document.</summary>
-    public class SanctionsListEntry
-    {
-        public int Id { get; set; }
-
-        public int SanctionsListId { get; set; }
-
-        public string Reference { get; set; } = string.Empty;
-
-        public bool IsEntity { get; set; }
-
-        public string Name { get; set; } = string.Empty;
-
-        public string? Aliases { get; set; }
-
-        public string? DateOfBirth { get; set; }
-
-        public string? Nationality { get; set; }
-
-        public string? Identifiers { get; set; }
-
-        public string? Address { get; set; }
-
-        public string? Designation { get; set; }
-
-        public string? Title { get; set; }
-
-        public string? PlaceOfBirth { get; set; }
-
-        public string? ListedOn { get; set; }
-
-        public string? OtherInformation { get; set; }
-
-        public string Details { get; set; } = string.Empty;
-
-        public string Fingerprint { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Marked by the compliance officer on a notice that takes
-        /// some entries off and changes others.
-        /// </summary>
-        public bool MarkedRemoved { get; set; }
-
-        public SanctionsList List { get; set; } = null!;
-    }
-
-    /// <summary>
-    /// Everybody currently sanctioned, as far as the documents
-    /// received so far say. Each upload brings it up to date, and
-    /// screening is always against the whole of it.
-    /// </summary>
-    public class SanctionsRegisterEntry
-    {
-        public int Id { get; set; }
-
-        public string Reference { get; set; } = string.Empty;
-
-        public bool IsActive { get; set; } = true;
-
-        public bool IsEntity { get; set; }
-
-        public string Name { get; set; } = string.Empty;
-
-        public string? Aliases { get; set; }
-
-        public string? DateOfBirth { get; set; }
-
-        public string? Nationality { get; set; }
-
-        public string? Identifiers { get; set; }
-
-        public string? Address { get; set; }
-
-        public string? Designation { get; set; }
-
-        public string? Title { get; set; }
-
-        public string? PlaceOfBirth { get; set; }
-
-        public string? ListedOn { get; set; }
-
-        public string? OtherInformation { get; set; }
-
-        public string Details { get; set; } = string.Empty;
-
-        public string Fingerprint { get; set; } = string.Empty;
-
-        public int FirstListId { get; set; }
-
-        public int LastListId { get; set; }
-
-        public DateTime UpdatedAt { get; set; }
     }
 
     public enum SanctionsChangeType
     {
         Added,
-        Amended,
+        Changed,
         Removed
     }
 
-    /// <summary>What an upload changed in the register.</summary>
+    /// <summary>One difference between the two documents.</summary>
     public class SanctionsChange
     {
         public int Id { get; set; }
 
-        public int SanctionsListId { get; set; }
+        public int SanctionsReviewId { get; set; }
 
         public SanctionsChangeType Type { get; set; }
 
@@ -195,18 +153,18 @@ namespace HrPortal.Entities
 
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>For an amendment: field by field, "Field: before -> after", one per line.</summary>
+        /// <summary>For a change: field by field, "Field: before → after", one per line.</summary>
         public string? Differences { get; set; }
 
-        public SanctionsList List { get; set; } = null!;
+        public SanctionsReview Review { get; set; } = null!;
     }
 
     public enum SanctionsConcernCategory
     {
-        /// <summary>Somebody the company deals with resembles a listed entry.</summary>
+        /// <summary>Somebody the company deals with resembles a listed party.</summary>
         PossibleMatch,
 
-        /// <summary>Something in the document does not add up.</summary>
+        /// <summary>Something in the documents does not add up.</summary>
         Discrepancy
     }
 
@@ -224,15 +182,12 @@ namespace HrPortal.Entities
         Resolved
     }
 
-    /// <summary>
-    /// A matter the compliance officer must look into before the
-    /// review can be signed off.
-    /// </summary>
+    /// <summary>A matter to look into before the review is finalised.</summary>
     public class SanctionsConcern
     {
         public int Id { get; set; }
 
-        public int SanctionsListId { get; set; }
+        public int SanctionsReviewId { get; set; }
 
         public SanctionsConcernCategory Category { get; set; }
 
@@ -242,14 +197,16 @@ namespace HrPortal.Entities
 
         public string? ListedName { get; set; }
 
-        /// <summary>Staff, Vendor or Client.</summary>
+        /// <summary>The listed entry's fingerprint when the matter was raised.</summary>
+        public string? EntryFingerprint { get; set; }
+
+        /// <summary>Staff, Vendor, Vendor contact or Client.</summary>
         public string? SubjectType { get; set; }
 
         public int? SubjectId { get; set; }
 
         public string? SubjectName { get; set; }
 
-        /// <summary>Why it was raised, in words.</summary>
         public string Reason { get; set; } = string.Empty;
 
         /// <summary>0 to 100: how close the match is.</summary>
@@ -263,7 +220,7 @@ namespace HrPortal.Entities
 
         public string? ResolvedByName { get; set; }
 
-        public SanctionsList List { get; set; } = null!;
+        public SanctionsReview Review { get; set; } = null!;
     }
 
     /// <summary>

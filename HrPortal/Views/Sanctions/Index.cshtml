@@ -1,147 +1,164 @@
 @using HrPortal.Entities
-@model List<HrPortal.Entities.SanctionsList>
+@model List<HrPortal.Entities.SanctionsReview>
 
 @{
-    ViewData["Title"] = "Sanctions screening";
+    ViewData["Title"] = "Sanctions Screening";
 
-    var registerSize = (int)ViewBag.RegisterSize;
+    var last = ViewBag.LastDocument as SanctionsDocument;
     var clientList = ViewBag.ClientList as SanctionsClientList;
-    var openMatters = (int)ViewBag.OpenMatters;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
         <div>
-            <h2>Sanctions screening</h2>
+            <h2>Sanctions Screening</h2>
             <p class="text-muted mb-0">
-                Every document received from the FIU, what it changed on the
-                register, and the screening of staff, vendors and clients
-                against it. Only compliance officers can see this.
+                Upload the document from the FIU. The portal compares it with the previous
+                one, tells you which names were added or removed, and checks that nobody
+                the company deals with is on it.
             </p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Upload" class="btn btn-primary">
-                <i class="fas fa-upload" aria-hidden="true"></i> Upload a document
+            <a asp-action="Clients" class="btn btn-outline-secondary">
+                Client list (@(clientList?.Clients.Count ?? 0))
             </a>
-            <a asp-action="Register" class="btn btn-outline-secondary">Register</a>
-            <a asp-action="Compare" class="btn btn-outline-secondary">Compare two</a>
-            <a asp-action="Clients" class="btn btn-outline-secondary">Client list</a>
             <a asp-action="Verify" class="btn btn-outline-secondary">Verify a report</a>
         </div>
     </div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
+    <div class="card shadow-sm mb-3" id="sanctions-start">
+        <div class="card-header">Check a new document</div>
+        <div class="card-body">
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
+            <form id="sanctions-form" autocomplete="off">
 
-    <div class="report-stats">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="mode" id="mode-last" value="last" checked />
+                    <label class="form-check-label" for="mode-last">
+                        <strong>Compare with the last uploaded document</strong>
+                        <span class="d-block text-muted small">
+                            @(last == null
+                                ? "Nothing has been uploaded yet, so this first document becomes the starting point."
+                                : $"That is {last.Label}, uploaded {last.UploadedAt.ToLocalTime():d MMM yyyy HH:mm}.")
+                        </span>
+                    </label>
+                </div>
 
-        <a class="report-stat" asp-action="Register">
-            <span class="report-stat-label">On the register</span>
-            <span class="report-stat-value">@registerSize</span>
-            <span class="report-stat-note">Listed parties screened against</span>
-        </a>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="mode" id="mode-two" value="two" />
+                    <label class="form-check-label" for="mode-two">
+                        <strong>Compare two documents</strong>
+                        <span class="d-block text-muted small">Upload both: the previous one and the new one.</span>
+                    </label>
+                </div>
 
-        <a class="report-stat @(clientList == null ? "is-warning" : "")" asp-action="Clients">
-            <span class="report-stat-label">Clients</span>
-            <span class="report-stat-value">@(clientList?.Clients.Count ?? 0)</span>
-            <span class="report-stat-note">
-                @(clientList == null
-                    ? "No client list uploaded yet"
-                    : $"From {clientList.UploadedAt.ToLocalTime():d MMM yyyy}")
-            </span>
-        </a>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6" data-previous-file hidden>
+                        <label class="form-label" for="previous-file">Previous document (PDF)</label>
+                        <input class="form-control" type="file" id="previous-file" accept=".pdf,application/pdf" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="new-file">New document (PDF)</label>
+                        <input class="form-control" type="file" id="new-file" accept=".pdf,application/pdf" required />
+                    </div>
+                </div>
 
-        <div class="report-stat @(openMatters > 0 ? "is-warning" : "is-good")">
-            <span class="report-stat-label">Open matters</span>
-            <span class="report-stat-value">@openMatters</span>
-            <span class="report-stat-note">To resolve before sign-off</span>
+                <div class="alert alert-danger d-none" data-form-error></div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-play" aria-hidden="true"></i> Start
+                </button>
+
+                @Html.AntiForgeryToken()
+            </form>
+
         </div>
-
     </div>
 
-    @if (registerSize == 0)
-    {
-        <div class="alert alert-info">
-            The register is empty. Screening checks people against the register,
-            so start by uploading the full UN consolidated list (or the FIU's full
-            list). After that, each notice the FIU sends brings it up to date.
+    <div class="card shadow-sm mb-3" id="sanctions-progress" hidden
+         data-upload-url="@Url.Action("UploadDocument")"
+         data-compare-url="@Url.Action("Compare")"
+         data-screen-url="@Url.Action("Screen")"
+         data-result-url="@Url.Action("Result", new { id = 0 })"
+         data-last-label="@last?.Label">
+        <div class="card-header">Working through it</div>
+        <div class="card-body">
+            <ol class="sanctions-steps list-unstyled mb-0" data-steps></ol>
+
+            <div class="sanctions-summary mt-3" data-summary hidden>
+                <h3 class="h5">What was found</h3>
+                <ul class="mb-3" data-findings></ul>
+                <a class="btn btn-primary" data-result-link href="#">See the full results</a>
+                <button type="button" class="btn btn-outline-secondary ms-2" onclick="location.reload()">Check another document</button>
+            </div>
         </div>
-    }
+    </div>
 
     <div class="card shadow-sm">
-        <div class="card-header">Documents received</div>
+        <div class="card-header">Earlier comparisons</div>
         <div class="card-body is-table">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-
                     <thead>
                         <tr>
                             <th>Review</th>
-                            <th>Document</th>
-                            <th>Dated</th>
+                            <th>New document</th>
+                            <th>Compared with</th>
                             <th class="num">Added</th>
-                            <th class="num">Amended</th>
                             <th class="num">Removed</th>
-                            <th class="num">Open matters</th>
+                            <th class="num">Changed</th>
                             <th>Status</th>
                             <th class="col-actions"></th>
                         </tr>
                     </thead>
-
                     <tbody>
-
                     @if (Model.Count == 0)
                     {
-                        <tr>
-                            <td colspan="9" class="text-center text-muted py-4">
-                                Nothing uploaded yet.
-                            </td>
-                        </tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">No comparisons yet.</td></tr>
                     }
-
-                    @foreach (var list in Model)
+                    @foreach (var review in Model)
                     {
+                        var open = review.Concerns.Count(c => c.Status == SanctionsConcernStatus.Open);
+
                         <tr>
                             <td>
-                                <strong>@list.ReviewNumber</strong>
-                                <div class="text-muted small">
-                                    uploaded @list.UploadedAt.ToLocalTime().ToString("d MMM yyyy")
-                                </div>
+                                <strong>@review.ReviewNumber</strong>
+                                <div class="text-muted small">@review.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</div>
                             </td>
-                            <td style="max-width: 380px;">
-                                @(list.Title ?? list.OriginalFileName)
-                                @if (list.DocumentReference != null)
+                            <td>@review.NewDocument.Label</td>
+                            <td>@(review.PreviousDocument?.Label ?? "Nothing (first document)")</td>
+                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Added)</td>
+                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</td>
+                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</td>
+                            <td>
+                                @if (review.FinalisedAt != null)
                                 {
-                                    <div class="text-muted small">@list.DocumentReference</div>
+                                    <span class="badge bg-success">Finalised</span>
+                                }
+                                else if (open > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@open to look into</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Ready to finalise</span>
                                 }
                             </td>
-                            <td>@list.IssuedOn?.ToString("d MMM yyyy")</td>
-                            <td class="num">@list.Changes.Count(c => c.Type == SanctionsChangeType.Added)</td>
-                            <td class="num">@list.Changes.Count(c => c.Type == SanctionsChangeType.Amended)</td>
-                            <td class="num">@list.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</td>
-                            <td class="num">@list.Concerns.Count(c => c.Status == SanctionsConcernStatus.Open)</td>
-                            <td><partial name="_SanctionsStatus" model="list.Status" /></td>
                             <td class="col-actions">
-                                <a class="btn btn-sm btn-outline-primary"
-                                   asp-action="Review" asp-route-id="@list.Id">Open</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Result" asp-route-id="@review.Id">Open</a>
                             </td>
                         </tr>
                     }
-
                     </tbody>
-
                 </table>
             </div>
         </div>
     </div>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/sanctions.js" asp-append-version="true"></script>
+}

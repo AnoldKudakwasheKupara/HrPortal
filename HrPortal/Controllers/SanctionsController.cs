@@ -13,6 +13,10 @@ namespace HrPortal.Controllers
     /// Sanctions screening, for compliance officers only. Nobody else
     /// can open any of it, administrators included, unless they are
     /// given the Compliance Officer role.
+    ///
+    /// The start page runs a review as three steps the officer watches
+    /// one after another: upload and read, compare, check people. Each
+    /// is its own request so the page can show what each one found.
     /// </summary>
     [Authorize(Roles = Roles.ComplianceOnly)]
     public class SanctionsController : Controller
@@ -39,7 +43,10 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.RegisterSize = await _context.SanctionsRegister.CountAsync(r => r.IsActive);
+            ViewBag.LastDocument = await _context.SanctionsDocuments
+                .AsNoTracking()
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefaultAsync();
 
             ViewBag.ClientList = await _context.SanctionsClientLists
                 .AsNoTracking()
@@ -47,124 +54,142 @@ namespace HrPortal.Controllers
                 .OrderByDescending(c => c.UploadedAt)
                 .FirstOrDefaultAsync();
 
-            ViewBag.OpenMatters = await _context.SanctionsConcerns
-                .CountAsync(c => c.Status == SanctionsConcernStatus.Open);
-
-            return View(await _context.SanctionsLists
+            return View(await _context.SanctionsReviews
                 .AsNoTracking()
-                .Include(l => l.Changes)
-                .Include(l => l.Concerns)
-                .OrderByDescending(l => l.UploadedAt)
+                .Include(r => r.NewDocument)
+                .Include(r => r.PreviousDocument)
+                .Include(r => r.Changes)
+                .Include(r => r.Concerns)
+                .OrderByDescending(r => r.Id)
+                .Take(50)
                 .ToListAsync());
         }
 
-        public IActionResult Upload() => View();
-
+        /// <summary>Step one: keep and read a document.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(FileStorageService.MaxFileSizeBytes + 1024 * 1024)]
-        public async Task<IActionResult> Upload(IFormFile? file)
+        public async Task<IActionResult> UploadDocument(IFormFile? file)
         {
             if (file == null || file.Length == 0)
-            {
-                ViewBag.Error = "Choose the PDF the FIU sent.";
-                return View();
-            }
+                return BadRequest(new { error = "Choose the PDF the FIU sent." });
 
             if (!string.Equals(Path.GetExtension(file.FileName), ".pdf", StringComparison.OrdinalIgnoreCase))
-            {
-                ViewBag.Error = "Upload the document as a PDF.";
-                return View();
-            }
+                return BadRequest(new { error = $"{file.FileName} is not a PDF." });
 
             if (file.Length > FileStorageService.MaxFileSizeBytes)
-            {
-                ViewBag.Error = "The file is larger than 10 MB.";
-                return View();
-            }
+                return BadRequest(new { error = $"{file.FileName} is larger than 10 MB." });
 
             try
             {
-                var list = await _sanctions.UploadAsync(file);
+                var document = await _sanctions.UploadAsync(file);
 
-                return RedirectToAction(nameof(Review), new { id = list.Id });
+                return Json(new
+                {
+                    id = document.Id,
+                    label = document.Label,
+                    title = document.Title,
+                    entries = document.Entries.Count,
+                    individuals = document.Entries.Count(e => !e.IsEntity),
+                    entities = document.Entries.Count(e => e.IsEntity),
+                    warnings = SanctionsService.Lines(document.ReadingWarnings)
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "A sanctions document could not be read.");
 
-                ViewBag.Error =
-                    "The PDF could not be read. It may be damaged, protected or a " +
-                    "scanned image without text.";
-
-                return View();
+                return BadRequest(new
+                {
+                    error = $"{file.FileName} could not be read. It may be damaged, protected " +
+                            "or a scanned image without text."
+                });
             }
         }
 
-        public async Task<IActionResult> Review(int id)
+        /// <summary>
+        /// Step two: compare. Without a previous document given, the
+        /// one uploaded just before the new one is used.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Compare(int newDocumentId, int? previousDocumentId)
         {
-            var list = await _context.SanctionsLists
-                .AsNoTracking()
-                .Include(l => l.Entries)
-                .Include(l => l.Changes)
-                .Include(l => l.Concerns)
-                .Include(l => l.ClientList)
-                .FirstOrDefaultAsync(l => l.Id == id);
+            if (!await _context.SanctionsDocuments.AnyAsync(d => d.Id == newDocumentId))
+                return BadRequest(new { error = "The new document was not found." });
 
-            if (list == null)
+            previousDocumentId ??= (await _sanctions.PreviousOfAsync(newDocumentId))?.Id;
+
+            var review = await _sanctions.CompareAsync(newDocumentId, previousDocumentId);
+
+            var previous = previousDocumentId == null
+                ? null
+                : await _context.SanctionsDocuments.AsNoTracking().FirstAsync(d => d.Id == previousDocumentId);
+
+            return Json(new
+            {
+                reviewId = review.Id,
+                reviewNumber = review.ReviewNumber,
+                previous = previous == null ? null : new { previous.Label, entries = await _context.SanctionsEntries.CountAsync(e => e.SanctionsDocumentId == previous.Id) },
+                added = review.Changes.Where(c => c.Type == SanctionsChangeType.Added).Select(c => $"{c.Reference} {c.Name}"),
+                removed = review.Changes.Where(c => c.Type == SanctionsChangeType.Removed).Select(c => $"{c.Reference} {c.Name}"),
+                changed = review.Changes.Where(c => c.Type == SanctionsChangeType.Changed).Select(c => $"{c.Reference} {c.Name}"),
+                discrepancies = review.Concerns
+                    .Where(c => c.Category == SanctionsConcernCategory.Discrepancy)
+                    .Select(c => c.Reason)
+            });
+        }
+
+        /// <summary>Step three: check staff, vendors and clients.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Screen(int reviewId)
+        {
+            var review = await _sanctions.ScreenAsync(reviewId);
+
+            var matches = review.Concerns
+                .Where(c => c.Category == SanctionsConcernCategory.PossibleMatch)
+                .ToList();
+
+            return Json(new
+            {
+                staff = review.ScreenedStaff,
+                vendors = review.ScreenedVendors,
+                clients = review.ScreenedClients,
+                matches = matches.Select(c => $"{c.SubjectType} {c.SubjectName} resembles {c.Reference} {c.ListedName}"),
+                carriedForward = matches.Count(c => c.ResolvedByName == SanctionsService.CarriedForwardBy),
+                findings = SanctionsFindings.Sentences(await _sanctions.LoadAsync(reviewId))
+            });
+        }
+
+        public async Task<IActionResult> Result(int id)
+        {
+            if (!await _context.SanctionsReviews.AnyAsync(r => r.Id == id))
                 return NotFound();
 
-            ViewBag.Others = await _context.SanctionsLists
-                .AsNoTracking()
-                .Where(l => l.Id != id)
-                .OrderByDescending(l => l.UploadedAt)
-                .Select(l => new { l.Id, l.ReviewNumber, l.Title, l.UploadedAt })
-                .ToListAsync();
-
-            return View(list);
+            return View(await _sanctions.LoadAsync(id));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Apply(int id, SanctionsListKind kind, int[]? removed)
+        public async Task<IActionResult> CheckAgain(int id)
         {
-            try
-            {
-                await _sanctions.ApplyAsync(id, kind, (removed ?? Array.Empty<int>()).ToHashSet());
+            var review = await _context.SanctionsReviews.FindAsync(id);
 
-                TempData["Success"] =
-                    "Applied to the register and screened. Resolve each matter, then sign off.";
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["Error"] = ex.Message;
-            }
-
-            return RedirectToAction(nameof(Review), new { id });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Rescreen(int id)
-        {
-            var list = await _context.SanctionsLists.FindAsync(id);
-
-            if (list == null)
+            if (review == null)
                 return NotFound();
 
-            if (list.Status != SanctionsReviewStatus.InReview)
+            if (review.FinalisedAt != null)
             {
-                TempData["Error"] = "Only a review in progress can be screened again.";
-                return RedirectToAction(nameof(Review), new { id });
+                TempData["Error"] = "This review has been finalised.";
+                return RedirectToAction(nameof(Result), new { id });
             }
 
-            var raised = await _sanctions.ScreenAsync(list);
+            await _sanctions.ScreenAsync(id);
 
-            TempData["Success"] = raised == 0
-                ? "Screened again. Nothing new was found."
-                : $"Screened again. {raised} new matter(s) raised.";
+            TempData["Success"] = "Staff, vendors and clients checked again.";
 
-            return RedirectToAction(nameof(Review), new { id });
+            return RedirectToAction(nameof(Result), new { id });
         }
 
         [HttpPost]
@@ -178,143 +203,74 @@ namespace HrPortal.Controllers
             if (outcome == SanctionsConcernStatus.Open || string.IsNullOrWhiteSpace(resolution))
             {
                 TempData["Error"] = "Choose an outcome and write down what was found.";
-                return RedirectToAction(nameof(Review), new { id });
+                return RedirectToAction(nameof(Result), new { id });
             }
 
             try
             {
                 await _sanctions.ResolveAsync(concernId, outcome, resolution);
-                TempData["Success"] = "Matter recorded.";
+                TempData["Success"] = "Recorded.";
             }
             catch (InvalidOperationException ex)
             {
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Review), new { id });
+            return RedirectToAction(nameof(Result), new { id });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SignOff(int id, string? note)
+        public async Task<IActionResult> Finalise(int id, string? note)
         {
             try
             {
-                await _sanctions.SignOffAsync(id, note);
-                TempData["Success"] = "Signed off. The report has been made and kept.";
+                await _sanctions.FinaliseAsync(id, note);
+                TempData["Success"] = "Finalised. The report has been made and kept.";
             }
             catch (InvalidOperationException ex)
             {
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Review), new { id });
+            return RedirectToAction(nameof(Result), new { id });
         }
 
         /// <summary>
-        /// The kept report once signed off; until then a preview,
-        /// marked as such by its file name and not kept.
+        /// The kept report once finalised; until then a preview, named
+        /// as such and not kept.
         /// </summary>
         public async Task<IActionResult> Report(int id)
         {
-            var list = await _context.SanctionsLists.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+            var review = await _context.SanctionsReviews.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
 
-            if (list == null)
+            if (review == null)
                 return NotFound();
 
-            if (list.Status == SanctionsReviewStatus.SignedOff && list.ReportPath != null)
+            if (review.FinalisedAt != null && review.ReportPath != null)
             {
-                var path = _files.ResolveExistingPath(list.ReportPath);
+                var path = _files.ResolveExistingPath(review.ReportPath);
 
-                if (path == null)
-                    return NotFound();
-
-                return PhysicalFile(path, "application/pdf", $"{list.ReviewNumber} Sanctions Screening Report.pdf");
+                return path == null
+                    ? NotFound()
+                    : PhysicalFile(path, "application/pdf", $"{review.ReviewNumber} Sanctions Screening Report.pdf");
             }
 
-            var full = await _sanctions.LoadForReportAsync(id);
-
             return File(
-                _reports.Render(full),
+                _reports.Render(await _sanctions.LoadAsync(id)),
                 "application/pdf",
-                $"{list.ReviewNumber} Sanctions Screening Report PREVIEW.pdf");
+                $"{review.ReviewNumber} Sanctions Screening Report PREVIEW.pdf");
         }
 
         public async Task<IActionResult> Document(int id)
         {
-            var list = await _context.SanctionsLists.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
+            var document = await _context.SanctionsDocuments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
 
-            var path = list == null ? null : _files.ResolveExistingPath(list.FilePath);
+            var path = document == null ? null : _files.ResolveExistingPath(document.FilePath);
 
-            if (path == null)
-                return NotFound();
-
-            return PhysicalFile(path, "application/pdf", list!.OriginalFileName);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var list = await _context.SanctionsLists.FindAsync(id);
-
-            if (list == null)
-                return NotFound();
-
-            if (list.Status != SanctionsReviewStatus.Pending)
-            {
-                TempData["Error"] =
-                    "Only a document not yet applied can be deleted. Applied documents are " +
-                    "part of the register's history.";
-
-                return RedirectToAction(nameof(Review), new { id });
-            }
-
-            _context.SanctionsLists.Remove(list);
-            await _context.SaveChangesAsync();
-            _files.Delete(list.FilePath);
-
-            TempData["Success"] = $"{list.ReviewNumber} deleted.";
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Register(string? search, bool removed = false)
-        {
-            var entries = _context.SanctionsRegister.AsNoTracking().Where(r => r.IsActive != removed);
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var term = $"%{search.Trim()}%";
-
-                entries = entries.Where(r =>
-                    EF.Functions.ILike(r.Reference, term) ||
-                    EF.Functions.ILike(r.Name, term) ||
-                    (r.Aliases != null && EF.Functions.ILike(r.Aliases, term)) ||
-                    (r.Identifiers != null && EF.Functions.ILike(r.Identifiers, term)));
-            }
-
-            ViewBag.Search = search;
-            ViewBag.Removed = removed;
-
-            return View(await entries.OrderBy(r => r.Reference).Take(500).ToListAsync());
-        }
-
-        public async Task<IActionResult> Compare(int? a, int? b)
-        {
-            var lists = await _context.SanctionsLists
-                .AsNoTracking()
-                .OrderByDescending(l => l.UploadedAt)
-                .ToListAsync();
-
-            ViewBag.Lists = lists;
-            ViewBag.A = a;
-            ViewBag.B = b;
-
-            if (a == null || b == null || a == b)
-                return View(new List<SanctionsComparisonRow>());
-
-            return View(await _sanctions.CompareAsync(a.Value, b.Value));
+            return path == null
+                ? NotFound()
+                : PhysicalFile(path, "application/pdf", document!.OriginalFileName);
         }
 
         public async Task<IActionResult> Clients()
@@ -344,8 +300,7 @@ namespace HrPortal.Controllers
 
                 TempData["Success"] = list.Clients.Count == 0
                     ? "The file was kept, but no clients could be read from it. Check it has a Name column."
-                    : $"{list.Clients.Count} clients read. They will be screened from the next review, " +
-                      "or use Screen again on a review in progress.";
+                    : $"{list.Clients.Count} clients read. They will be checked from the next comparison.";
             }
             catch (Exception ex) when (ex is InvalidDataException or System.Xml.XmlException or IOException)
             {
@@ -378,9 +333,9 @@ namespace HrPortal.Controllers
             var hash = SanctionsService.Sha256Of(memory.ToArray());
 
             ViewBag.Hash = hash;
-            ViewBag.Match = await _context.SanctionsLists
+            ViewBag.Match = await _context.SanctionsReviews
                 .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.ReportSha256 == hash);
+                .FirstOrDefaultAsync(r => r.ReportSha256 == hash);
 
             return View();
         }

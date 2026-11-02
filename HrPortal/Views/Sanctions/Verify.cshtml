@@ -2,7 +2,7 @@
     ViewData["Title"] = "Verify a report";
 
     var hash = ViewBag.Hash as string;
-    var match = ViewBag.Match as HrPortal.Entities.SanctionsList;
+    var match = ViewBag.Match as HrPortal.Entities.SanctionsReview;
 }
 
 <div class="container">
@@ -28,9 +28,9 @@
             <div class="alert alert-success">
                 <strong>Genuine and unaltered.</strong>
                 This is the report for
-                <a asp-action="Review" asp-route-id="@match.Id">@match.ReviewNumber</a>,
-                signed off by @match.SignedOffByName on
-                @match.SignedOffAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
+                <a asp-action="Result" asp-route-id="@match.Id">@match.ReviewNumber</a>,
+                finalised by @match.FinalisedByName on
+                @match.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
             </div>
         }
         else

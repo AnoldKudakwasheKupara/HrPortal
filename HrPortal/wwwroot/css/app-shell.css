@@ -759,3 +759,38 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
 }
+
+.sanctions-step {
+    display: flex;
+    gap: .75rem;
+    padding: .65rem 0;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.sanctions-step:last-child { border-bottom: 0; }
+
+.sanctions-step-icon {
+    flex: 0 0 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.sanctions-step.is-running .sanctions-step-icon { color: var(--primary, #10675d); }
+.sanctions-step.is-done .sanctions-step-icon { color: #157a55; }
+.sanctions-step.is-warning .sanctions-step-icon { color: #b7791f; }
+.sanctions-step.is-failed .sanctions-step-icon { color: #c53030; }
+
+.sanctions-step-detail {
+    list-style: none;
+    padding: 0;
+    margin: .25rem 0 0;
+    font-size: .875rem;
+    color: var(--muted, #6b6f74);
+    white-space: pre-wrap;
+}
+
+.sanctions-summary {
+    border-top: 2px solid var(--primary, #10675d);
+    padding-top: 1rem;
+}

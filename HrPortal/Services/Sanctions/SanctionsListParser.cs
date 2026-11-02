@@ -6,24 +6,6 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
 namespace HrPortal.Services.Sanctions
 {
-    /// <summary>What kind of document an upload is.</summary>
-    public enum SanctionsListKind
-    {
-        /// <summary>
-        /// The whole list. Whatever is not in it has been removed.
-        /// </summary>
-        FullList,
-
-        /// <summary>
-        /// A notice of entries added or amended. Anything not
-        /// mentioned is unchanged.
-        /// </summary>
-        Changes,
-
-        /// <summary>A notice of entries taken off the list.</summary>
-        Removals
-    }
-
     /// <summary>One entry as it appears in the document.</summary>
     public sealed class ParsedSanctionsEntry
     {
@@ -69,7 +51,8 @@ namespace HrPortal.Services.Sanctions
 
         public DateTime? IssuedOn { get; set; }
 
-        public SanctionsListKind KindGuess { get; set; }
+        /// <summary>The title announces changes rather than giving the whole list.</summary>
+        public bool LooksLikeNotice { get; set; }
 
         public List<ParsedSanctionsEntry> Entries { get; set; } = new();
 
@@ -170,7 +153,7 @@ namespace HrPortal.Services.Sanctions
                 IssuedOn = IssuedOn(flat)
             };
 
-            result.KindGuess = Guess(result.Title, flat);
+            result.LooksLikeNotice = LooksLikeNotice(result.Title, flat);
 
             var starts = EntryStart.Matches(flat).ToList();
 
@@ -401,20 +384,17 @@ namespace HrPortal.Services.Sanctions
                 : null;
         }
 
-        private static SanctionsListKind Guess(string? title, string flat)
+        /// <summary>
+        /// Whether the title announces changes ("Adds", "Amends",
+        /// "Removes") rather than giving the list as a whole.
+        /// </summary>
+        private static bool LooksLikeNotice(string? title, string flat)
         {
             var text = (title ?? flat[..Math.Min(flat.Length, 600)]).ToUpperInvariant();
 
-            if (Regex.IsMatch(text, @"\b(REMOVES|DELETES|DELISTS|REMOVAL)\b") &&
-                !Regex.IsMatch(text, @"\b(ADDS|AMENDS)\b"))
-            {
-                return SanctionsListKind.Removals;
-            }
-
-            if (Regex.IsMatch(text, @"\b(ADDS|AMENDS|AMENDMENT|AMENDMENTS|ADDITION)\b"))
-                return SanctionsListKind.Changes;
-
-            return SanctionsListKind.FullList;
+            return Regex.IsMatch(
+                text,
+                @"\b(ADDS|AMENDS|AMENDMENT|AMENDMENTS|ADDITION|REMOVES|DELETES|DELISTS|REMOVAL)\b");
         }
 
         private static string CutAtEnd(string body)

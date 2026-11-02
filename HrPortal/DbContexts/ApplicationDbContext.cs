@@ -32,9 +32,9 @@ namespace HrPortal.DbContexts
 
         public DbSet<VaultEntry> VaultEntries { get; set; }
 
-        public DbSet<SanctionsList> SanctionsLists { get; set; }
-        public DbSet<SanctionsListEntry> SanctionsListEntries { get; set; }
-        public DbSet<SanctionsRegisterEntry> SanctionsRegister { get; set; }
+        public DbSet<SanctionsDocument> SanctionsDocuments { get; set; }
+        public DbSet<SanctionsEntry> SanctionsEntries { get; set; }
+        public DbSet<SanctionsReview> SanctionsReviews { get; set; }
         public DbSet<SanctionsChange> SanctionsChanges { get; set; }
         public DbSet<SanctionsConcern> SanctionsConcerns { get; set; }
         public DbSet<SanctionsClientList> SanctionsClientLists { get; set; }
@@ -368,53 +368,60 @@ namespace HrPortal.DbContexts
                     .IsUnique();
             });
 
-            builder.Entity<SanctionsList>(entity =>
+            builder.Entity<SanctionsDocument>(entity =>
             {
-                entity.HasKey(l => l.Id);
-                entity.Property(l => l.ReviewNumber).IsRequired().HasMaxLength(20);
-                entity.HasIndex(l => l.ReviewNumber).IsUnique();
-                entity.Property(l => l.Title).HasMaxLength(500);
-                entity.Property(l => l.DocumentReference).HasMaxLength(50);
-                entity.Property(l => l.Kind).HasConversion<string>().HasMaxLength(20);
-                entity.Property(l => l.Status).HasConversion<string>().HasMaxLength(20);
-                entity.Property(l => l.OriginalFileName).IsRequired().HasMaxLength(255);
-                entity.Property(l => l.FilePath).IsRequired().HasMaxLength(500);
-                entity.Property(l => l.Sha256).IsRequired().HasMaxLength(64);
-                entity.Property(l => l.ReportPath).HasMaxLength(500);
-                entity.Property(l => l.ReportSha256).HasMaxLength(64);
-                entity.HasIndex(l => l.ReportSha256);
-                entity.Property(l => l.UploadedByName).HasMaxLength(200);
-                entity.Property(l => l.AppliedByName).HasMaxLength(200);
-                entity.Property(l => l.SignedOffByName).HasMaxLength(200);
-                entity.Property(l => l.SignOffNote).HasMaxLength(4000);
-
-                entity.HasOne(l => l.ClientList)
-                    .WithMany()
-                    .HasForeignKey(l => l.ClientListId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasKey(d => d.Id);
+                entity.Property(d => d.Title).HasMaxLength(500);
+                entity.Property(d => d.DocumentReference).HasMaxLength(50);
+                entity.Property(d => d.OriginalFileName).IsRequired().HasMaxLength(255);
+                entity.Property(d => d.FilePath).IsRequired().HasMaxLength(500);
+                entity.Property(d => d.Sha256).IsRequired().HasMaxLength(64);
+                entity.Property(d => d.UploadedByName).HasMaxLength(200);
+                entity.Property(d => d.ReadingWarnings).HasMaxLength(4000);
+                entity.HasIndex(d => d.UploadedAt);
+                entity.Ignore(d => d.Label);
             });
 
-            builder.Entity<SanctionsListEntry>(entity =>
+            builder.Entity<SanctionsEntry>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Reference).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.Fingerprint).IsRequired().HasMaxLength(64);
-                entity.HasIndex(e => new { e.SanctionsListId, e.Reference });
+                entity.HasIndex(e => new { e.SanctionsDocumentId, e.Reference });
 
-                entity.HasOne(e => e.List)
-                    .WithMany(l => l.Entries)
-                    .HasForeignKey(e => e.SanctionsListId)
+                entity.HasOne(e => e.Document)
+                    .WithMany(d => d.Entries)
+                    .HasForeignKey(e => e.SanctionsDocumentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            builder.Entity<SanctionsRegisterEntry>(entity =>
+            builder.Entity<SanctionsReview>(entity =>
             {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Reference).IsRequired().HasMaxLength(20);
-                entity.HasIndex(e => e.Reference).IsUnique();
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(500);
-                entity.Property(e => e.Fingerprint).IsRequired().HasMaxLength(64);
+                entity.HasKey(r => r.Id);
+                entity.Property(r => r.ReviewNumber).IsRequired().HasMaxLength(20);
+                entity.HasIndex(r => r.ReviewNumber).IsUnique();
+                entity.Property(r => r.CreatedByName).HasMaxLength(200);
+                entity.Property(r => r.FinalisedByName).HasMaxLength(200);
+                entity.Property(r => r.Note).HasMaxLength(4000);
+                entity.Property(r => r.ReportPath).HasMaxLength(500);
+                entity.Property(r => r.ReportSha256).HasMaxLength(64);
+                entity.HasIndex(r => r.ReportSha256);
+
+                entity.HasOne(r => r.NewDocument)
+                    .WithMany()
+                    .HasForeignKey(r => r.NewDocumentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.PreviousDocument)
+                    .WithMany()
+                    .HasForeignKey(r => r.PreviousDocumentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.ClientList)
+                    .WithMany()
+                    .HasForeignKey(r => r.ClientListId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<SanctionsChange>(entity =>
@@ -424,9 +431,9 @@ namespace HrPortal.DbContexts
                 entity.Property(c => c.Reference).IsRequired().HasMaxLength(20);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(500);
 
-                entity.HasOne(c => c.List)
-                    .WithMany(l => l.Changes)
-                    .HasForeignKey(c => c.SanctionsListId)
+                entity.HasOne(c => c.Review)
+                    .WithMany(r => r.Changes)
+                    .HasForeignKey(c => c.SanctionsReviewId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -437,15 +444,16 @@ namespace HrPortal.DbContexts
                 entity.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
                 entity.Property(c => c.Reference).HasMaxLength(20);
                 entity.Property(c => c.ListedName).HasMaxLength(500);
+                entity.Property(c => c.EntryFingerprint).HasMaxLength(64);
                 entity.Property(c => c.SubjectType).HasMaxLength(20);
                 entity.Property(c => c.SubjectName).HasMaxLength(500);
                 entity.Property(c => c.Reason).IsRequired().HasMaxLength(2000);
                 entity.Property(c => c.Resolution).HasMaxLength(4000);
                 entity.Property(c => c.ResolvedByName).HasMaxLength(200);
 
-                entity.HasOne(c => c.List)
-                    .WithMany(l => l.Concerns)
-                    .HasForeignKey(c => c.SanctionsListId)
+                entity.HasOne(c => c.Review)
+                    .WithMany(r => r.Concerns)
+                    .HasForeignKey(c => c.SanctionsReviewId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
