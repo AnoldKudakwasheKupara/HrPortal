@@ -453,6 +453,9 @@ namespace HrPortal.DbContexts
                 entity.Property(c => c.Reference).HasMaxLength(20);
                 entity.Property(c => c.ListedName).HasMaxLength(500);
                 entity.Property(c => c.EntryFingerprint).HasMaxLength(64);
+                entity.Property(c => c.SubjectFingerprint).HasMaxLength(64);
+                entity.Property(c => c.Strength).HasConversion<string>().HasMaxLength(20);
+                entity.Property(c => c.Evidence).HasMaxLength(2000);
                 entity.Property(c => c.SubjectType).HasMaxLength(20);
                 entity.Property(c => c.SubjectName).HasMaxLength(500);
                 entity.Property(c => c.Reason).IsRequired().HasMaxLength(2000);

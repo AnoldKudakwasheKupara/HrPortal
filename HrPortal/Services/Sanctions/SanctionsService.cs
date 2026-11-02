@@ -24,24 +24,33 @@ namespace HrPortal.Services.Sanctions
         /// <summary>Who a decision carried forward is recorded as made by.</summary>
         public const string CarriedForwardBy = "Portal, from the earlier decision";
 
+        /// <summary>Who a similar name ruled out by its date of birth is recorded as set aside by.</summary>
+        public const string SetAsideBy = "Portal, set aside automatically";
+
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _files;
         private readonly CurrentUserService _currentUser;
         private readonly AuditService _audit;
         private readonly SanctionsReportPdfService _reports;
+        private readonly int _threshold;
 
         public SanctionsService(
             ApplicationDbContext context,
             FileStorageService files,
             CurrentUserService currentUser,
             AuditService audit,
-            SanctionsReportPdfService reports)
+            SanctionsReportPdfService reports,
+            IConfiguration configuration)
         {
             _context = context;
             _files = files;
             _currentUser = currentUser;
             _audit = audit;
             _reports = reports;
+            _threshold = Math.Clamp(
+                configuration.GetValue("Sanctions:NameMatchThreshold", SanctionsMatcher.DefaultThreshold),
+                60,
+                99);
         }
 
         public static string Sha256Of(byte[] bytes) =>
@@ -318,11 +327,18 @@ namespace HrPortal.Services.Sanctions
         }
 
         /// <summary>
-        /// Checks every member of staff, every vendor and its contact,
-        /// and every client on the latest client list against every
-        /// name in the new document. A person cleared or confirmed in
-        /// an earlier review keeps that decision while neither they nor
-        /// the listed entry has changed.
+        /// Checks every active member of staff, every active vendor and
+        /// its contact, and every client on the latest client list
+        /// against every name on the new document.
+        ///
+        /// A possible match found and cleared as a false positive in an
+        /// earlier review keeps that decision only while nothing has
+        /// changed: the listed entry reads the same and the person's
+        /// name, ID numbers, date of birth and nationality are the same.
+        /// A confirmed match is never carried forward: it is raised
+        /// again, with the earlier decision noted, so it is looked at
+        /// each time. Similar names the date of birth rules out are
+        /// recorded as set aside, so they can be seen and reopened.
         /// </summary>
         public async Task<SanctionsReview> ScreenAsync(int reviewId)
         {
@@ -338,7 +354,14 @@ namespace HrPortal.Services.Sanctions
             var targets = entries
                 .GroupBy(e => e.Reference)
                 .Select(g => g.First())
-                .Select(e => (Entry: e, Target: new ScreeningTarget(e.Reference, e.Name, Lines(e.Aliases), Lines(e.Identifiers))))
+                .Select(e => (Entry: e, Target: new ScreeningTarget(
+                    e.Reference,
+                    e.Name,
+                    Lines(e.Aliases),
+                    Lines(e.Identifiers),
+                    e.IsEntity,
+                    e.DateOfBirth,
+                    e.Nationality)))
                 .ToList();
 
             var subjects = new List<ScreeningSubject>();
@@ -346,25 +369,24 @@ namespace HrPortal.Services.Sanctions
             var staff = await _context.Employees
                 .AsNoTracking()
                 .Where(e => e.IsActive)
-                .Select(e => new { e.Id, Name = e.FirstName + " " + e.LastName, e.NationalId })
+                .Select(e => new { e.Id, Name = e.FirstName + " " + e.LastName, e.NationalId, e.DateOfBirth })
                 .ToListAsync();
 
-            subjects.AddRange(staff.Select(s => new ScreeningSubject("Staff", s.Id, s.Name, s.NationalId)));
+            subjects.AddRange(staff.Select(s => new ScreeningSubject(
+                Staff, s.Id, s.Name, s.NationalId, s.DateOfBirth, IsOrganisation: false)));
 
             var vendors = await _context.Vendors
                 .AsNoTracking()
+                .Where(v => v.IsActive)
                 .Select(v => new { v.Id, v.Name, v.ContactPerson })
                 .ToListAsync();
 
-            subjects.AddRange(vendors.Select(v => new ScreeningSubject("Vendor", v.Id, v.Name, null)));
+            subjects.AddRange(vendors.Select(v => new ScreeningSubject(Vendor, v.Id, v.Name, null)));
             subjects.AddRange(vendors
                 .Where(v => !string.IsNullOrWhiteSpace(v.ContactPerson))
-                .Select(v => new ScreeningSubject("Vendor contact", v.Id, v.ContactPerson!, null)));
+                .Select(v => new ScreeningSubject(VendorContact, v.Id, v.ContactPerson!, null, IsOrganisation: false)));
 
-            var clientList = await _context.SanctionsClientLists
-                .AsNoTracking()
-                .OrderByDescending(c => c.UploadedAt)
-                .FirstOrDefaultAsync();
+            var clientList = await CurrentClientListAsync();
 
             var clients = clientList == null
                 ? new List<SanctionsClient>()
@@ -373,7 +395,7 @@ namespace HrPortal.Services.Sanctions
                     .Where(c => c.SanctionsClientListId == clientList.Id)
                     .ToListAsync();
 
-            subjects.AddRange(clients.Select(c => new ScreeningSubject("Client", c.Id, c.Name, c.IdNumber)));
+            subjects.AddRange(clients.Select(ClientSubject));
 
             var decisions = (await _context.SanctionsConcerns
                     .AsNoTracking()
@@ -381,6 +403,7 @@ namespace HrPortal.Services.Sanctions
                         c.SanctionsReviewId != review.Id &&
                         c.Category == SanctionsConcernCategory.PossibleMatch &&
                         c.ResolvedByName != CarriedForwardBy &&
+                        c.ResolvedByName != SetAsideBy &&
                         (c.Status == SanctionsConcernStatus.Cleared ||
                          c.Status == SanctionsConcernStatus.Confirmed))
                     .Select(c => new
@@ -388,7 +411,7 @@ namespace HrPortal.Services.Sanctions
                         c.Review.ReviewNumber,
                         c.SubjectType,
                         c.SubjectId,
-                        c.SubjectName,
+                        c.SubjectFingerprint,
                         c.Reference,
                         c.EntryFingerprint,
                         c.Status,
@@ -409,9 +432,11 @@ namespace HrPortal.Services.Sanctions
 
             foreach (var subject in subjects)
             {
+                var subjectFingerprint = FingerprintOf(subject);
+
                 foreach (var (entry, target) in targets)
                 {
-                    var hit = SanctionsMatcher.Match(subject, target);
+                    var hit = SanctionsMatcher.Match(subject, target, _threshold);
 
                     if (hit == null)
                         continue;
@@ -425,29 +450,52 @@ namespace HrPortal.Services.Sanctions
                     {
                         Category = SanctionsConcernCategory.PossibleMatch,
                         Status = SanctionsConcernStatus.Open,
+                        Strength = hit.Strength,
                         Reference = target.Reference,
-                        ListedName = target.Name,
+                        ListedName = Cap(target.Name, 500),
                         EntryFingerprint = entry.Fingerprint,
                         SubjectType = subject.Type,
                         SubjectId = subject.Id,
                         SubjectName = Cap(subject.Name, 500),
+                        SubjectFingerprint = subjectFingerprint,
                         Reason = Cap(hit.Reason, 2000)!,
+                        Evidence = Cap(string.Join("\n", hit.Evidence), 2000),
                         Score = hit.Score,
                         RaisedAt = now
                     };
 
-                    if (decisions.TryGetValue(key, out var earlier) &&
-                        earlier.SubjectName == concern.SubjectName &&
-                        earlier.EntryFingerprint == entry.Fingerprint)
+                    decisions.TryGetValue(key, out var earlier);
+
+                    if (hit.Strength == SanctionsMatchStrength.SetAside)
                     {
-                        concern.Status = earlier.Status;
+                        concern.Status = SanctionsConcernStatus.Cleared;
+                        concern.Resolution = Cap(hit.Reason, 4000);
+                        concern.ResolvedAt = now;
+                        concern.ResolvedByName = SetAsideBy;
+                    }
+                    else if (earlier != null &&
+                             EarlierDecision(earlier.Status, earlier.SubjectFingerprint, earlier.EntryFingerprint,
+                                 subjectFingerprint, entry.Fingerprint) == CarryForward.KeepCleared)
+                    {
+                        concern.Status = SanctionsConcernStatus.Cleared;
                         concern.Resolution = Cap(
                             $"Carried forward from {earlier.ReviewNumber}, where " +
-                            $"{earlier.ResolvedByName} recorded: {earlier.Resolution} " +
-                            "Neither the listed entry nor this person's name has changed since.",
+                            $"{earlier.ResolvedByName} found it a false positive: {earlier.Resolution} " +
+                            "Neither the listed entry nor this person's details have changed since.",
                             4000);
                         concern.ResolvedAt = now;
                         concern.ResolvedByName = CarriedForwardBy;
+                    }
+                    else if (earlier != null)
+                    {
+                        concern.Evidence = Cap(
+                            concern.Evidence + "\n" +
+                            (earlier.Status == SanctionsConcernStatus.Confirmed
+                                ? $"Earlier decision: confirmed as a match in {earlier.ReviewNumber} by " +
+                                  $"{earlier.ResolvedByName}. Check what has been done about it."
+                                : $"Earlier decision: cleared in {earlier.ReviewNumber}, but the listed " +
+                                  "entry or this person's details have changed since, so it is open again."),
+                            2000);
                     }
 
                     review.Concerns.Add(concern);
@@ -462,8 +510,83 @@ namespace HrPortal.Services.Sanctions
 
             await _context.SaveChangesAsync();
 
+            var raised = review.Concerns.Count(c =>
+                c.Category == SanctionsConcernCategory.PossibleMatch &&
+                c.Strength != SanctionsMatchStrength.SetAside);
+
+            await _audit.LogAsync(
+                AuditService.SanctionsScreened,
+                nameof(SanctionsReview),
+                review.ReviewNumber,
+                $"{staff.Count} staff, {vendors.Count} vendors and {clients.Count} clients checked against " +
+                $"{targets.Count} listed names: {raised} possible match(es).");
+
             return review;
         }
+
+        public enum CarryForward
+        {
+            /// <summary>Cleared before and nothing has changed: the decision stands.</summary>
+            KeepCleared,
+
+            /// <summary>Cleared before, but the person or the entry has changed: open again.</summary>
+            Reopen,
+
+            /// <summary>Confirmed before: raised again every time.</summary>
+            ConfirmedBefore
+        }
+
+        /// <summary>
+        /// What an earlier decision about the same person and listed
+        /// entry means now. Only a false positive is ever carried
+        /// forward, and only while both fingerprints are unchanged; a
+        /// decision recorded before fingerprints were kept is not.
+        /// </summary>
+        public static CarryForward EarlierDecision(
+            SanctionsConcernStatus status,
+            string? earlierSubject,
+            string? earlierEntry,
+            string subject,
+            string entry) =>
+            status == SanctionsConcernStatus.Confirmed
+                ? CarryForward.ConfirmedBefore
+                : status == SanctionsConcernStatus.Cleared &&
+                  earlierSubject != null && earlierSubject == subject &&
+                  earlierEntry != null && earlierEntry == entry
+                    ? CarryForward.KeepCleared
+                    : CarryForward.Reopen;
+
+        public const string Staff = "Staff";
+        public const string Vendor = "Vendor";
+        public const string VendorContact = "Vendor contact";
+        public const string Client = "Client";
+
+        private static ScreeningSubject ClientSubject(SanctionsClient c) =>
+            new(Client, c.Id, c.Name, c.IdNumber);
+
+        /// <summary>The client list screened: the latest one uploaded.</summary>
+        public Task<SanctionsClientList?> CurrentClientListAsync() =>
+            _context.SanctionsClientLists
+                .AsNoTracking()
+                .OrderByDescending(c => c.UploadedAt)
+                .FirstOrDefaultAsync();
+
+        /// <summary>
+        /// A hash of what identifies a person for screening, so an
+        /// earlier decision about them is only kept while it is the
+        /// same.
+        /// </summary>
+        public static string FingerprintOf(ScreeningSubject subject) =>
+            Sha256Of(Encoding.UTF8.GetBytes(string.Join(
+                "|",
+                SanctionsListParser.Normalise(subject.Name),
+                string.Join(";", new[] { subject.IdNumber }
+                    .Concat(subject.OtherIds ?? Array.Empty<string>())
+                    .Select(SanctionsListParser.Normalise)
+                    .Where(i => i.Length > 0)
+                    .OrderBy(i => i, StringComparer.Ordinal)),
+                subject.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
+                SanctionsListParser.Normalise(subject.Nationality))));
 
         public async Task ResolveAsync(int concernId, SanctionsConcernStatus outcome, string resolution)
         {

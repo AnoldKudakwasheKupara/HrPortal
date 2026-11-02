@@ -236,6 +236,19 @@ namespace HrPortal.Entities
         Discrepancy
     }
 
+    /// <summary>How strong the evidence for a possible match is.</summary>
+    public enum SanctionsMatchStrength
+    {
+        /// <summary>Strong evidence: needs looking at straight away.</summary>
+        Exact,
+
+        /// <summary>A similar name not ruled out: needs looking into.</summary>
+        Potential,
+
+        /// <summary>A similar name the date of birth rules out: kept on record, not raised.</summary>
+        SetAside
+    }
+
     public enum SanctionsConcernStatus
     {
         Open,
@@ -279,6 +292,15 @@ namespace HrPortal.Entities
 
         /// <summary>0 to 100: how close the match is.</summary>
         public int Score { get; set; }
+
+        /// <summary>For a possible match: how strong the evidence is.</summary>
+        public SanctionsMatchStrength? Strength { get; set; }
+
+        /// <summary>For a possible match: each detail compared and how it came out, one per line.</summary>
+        public string? Evidence { get; set; }
+
+        /// <summary>A hash of the person's name, ID numbers, date of birth and nationality when checked.</summary>
+        public string? SubjectFingerprint { get; set; }
 
         public DateTime RaisedAt { get; set; }
 

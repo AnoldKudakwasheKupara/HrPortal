@@ -164,14 +164,27 @@
                     : { lines: ["No discrepancies found."] };
             });
 
-            var screening = await run("Checking staff, vendors and clients against the new document", function () {
+            function people(count, noun, group, extra) {
+                var lines = [count + " " + noun + " checked."].concat(extra || []);
+                if (group.setAside) lines.push(group.setAside + " similar name" + (group.setAside === 1 ? "" : "s") + " set aside because the date of birth differs.");
+                if (!group.matches.length) return { lines: lines.concat(["Nobody matches a name on the new document."]) };
+                return {
+                    lines: lines.concat(list(group.matches.length + " possible match" + (group.matches.length === 1 ? "" : "es"), group.matches, "")),
+                    warn: true
+                };
+            }
+
+            var screening = await run("Checking staff", function () {
                 return post(panel.dataset.screenUrl, { reviewId: comparison.reviewId });
-            }, function (s) {
-                var lines = [s.staff + " staff, " + s.vendors + " vendors and " + s.clients + " clients checked."];
-                if (!s.matches.length) return { lines: lines.concat(["Nobody matches a name on the new document."]) };
-                lines = lines.concat(list(s.matches.length + " possible match" + (s.matches.length === 1 ? "" : "es"), s.matches, ""));
-                if (s.carriedForward) lines.push(s.carriedForward + " already looked into in an earlier review; that decision is carried forward.");
-                return { lines: lines, warn: true };
+            }, function (s) { return people(s.staff, "active staff", s.staffResult); });
+
+            await run("Checking vendors", function () { return Promise.resolve(screening); }, function (s) {
+                return people(s.vendors, "active vendors and their contact people", s.vendorResult);
+            });
+
+            await run("Checking clients", function () { return Promise.resolve(screening); }, function (s) {
+                if (!s.hasClientList) return { lines: ["No client list has been uploaded, so no clients were checked."], warn: true };
+                return people(s.clients, "clients", s.clientResult);
             });
 
             var findings = panel.querySelector("[data-findings]");

@@ -71,33 +71,56 @@ namespace HrPortal.Services.Sanctions
             {
                 var screened = review.ScreenedStaff + review.ScreenedVendors + review.ScreenedClients;
 
-                var found = review.Concerns
+                var all = review.Concerns
                     .Where(c => c.Category == SanctionsConcernCategory.PossibleMatch)
                     .ToList();
+
+                var found = all.Where(c => c.Strength != SanctionsMatchStrength.SetAside).ToList();
+                var setAside = all.Count - found.Count;
+                var exact = found.Count(c => c.Strength == SanctionsMatchStrength.Exact);
 
                 var carried = found.Count(c => c.ResolvedByName == SanctionsService.CarriedForwardBy);
                 var fresh = found.Count - carried;
 
+                var against = isNotice
+                    ? $"the {review.NewDocument.EntryCount} name{(review.NewDocument.EntryCount == 1 ? "" : "s")} this notice gives"
+                    : "the new document";
+
                 if (found.Count == 0)
                 {
-                    sentences.Add($"None of the {screened} staff, vendors and clients checked is on the new document.");
+                    sentences.Add($"None of the {screened} staff, vendors and clients checked matches {against}.");
                 }
                 else
                 {
                     var text = (found.Count == 1 ? "1 possible match was" : $"{found.Count} possible matches were") +
-                               $" found among the {screened} staff, vendors and clients checked";
+                               $" found among the {screened} staff, vendors and clients checked against {against}" +
+                               (exact == 0 ? "" : $" ({exact} exact)");
 
                     text += fresh == 0
                         ? found.Count == 1
-                            ? "; it was looked into in an earlier review and that decision still stands."
-                            : "; all were looked into in an earlier review and those decisions still stand."
+                            ? "; it was cleared in an earlier review and nothing about it has changed."
+                            : "; all were cleared in an earlier review and nothing about them has changed."
                         : carried == 0
                             ? "."
-                            : $"; {carried} {(carried == 1 ? "was" : "were")} looked into in an earlier review, " +
-                              $"{fresh} {(fresh == 1 ? "is" : "are")} new.";
+                            : $"; {carried} {(carried == 1 ? "was" : "were")} cleared in an earlier review and " +
+                              $"{(carried == 1 ? "has" : "have")} not changed, {fresh} {(fresh == 1 ? "needs" : "need")} looking into.";
 
                     sentences.Add(text);
                 }
+
+                if (setAside > 0)
+                {
+                    sentences.Add(
+                        $"{setAside} similar name{(setAside == 1 ? " was" : "s were")} set aside because the date of " +
+                        "birth differs; they are listed with the results and can be reopened.");
+                }
+
+                if (review.ClientListId == null)
+                    sentences.Add("No client list had been uploaded, so no clients were checked.");
+
+                sentences.Add(
+                    $"This covers only {against}, checked on {review.CreatedAt.ToLocalTime():d MMMM yyyy}. " +
+                    "It is not a finding about anybody beyond that.");
             }
 
             return sentences;

@@ -212,8 +212,13 @@
 
                     <div class="d-flex justify-content-between flex-wrap gap-2">
                         <div>
-                            <span class="badge @(isMatch ? "bg-danger" : "bg-secondary")">
-                                @(isMatch ? "Possible match" : "Discrepancy")
+                            <span class="badge @(isMatch ? (c.Strength == SanctionsMatchStrength.SetAside ? "bg-light text-dark" : "bg-danger") : "bg-secondary")">
+                                @(!isMatch ? "Discrepancy" : c.Strength switch
+                                {
+                                    SanctionsMatchStrength.Exact => "Exact match",
+                                    SanctionsMatchStrength.SetAside => "Set aside",
+                                    _ => "Potential match"
+                                })
                             </span>
                             @if (isMatch)
                             {
@@ -226,6 +231,16 @@
                     </div>
 
                     <p class="mt-2 mb-2">@c.Reason</p>
+
+                    @if (c.Evidence != null)
+                    {
+                        <ul class="small text-muted mb-2">
+                            @foreach (var line in SanctionsService.Lines(c.Evidence))
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    }
 
                     @if (c.Status != SanctionsConcernStatus.Open)
                     {

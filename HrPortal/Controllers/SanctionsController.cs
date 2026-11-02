@@ -160,19 +160,41 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Screen(int reviewId)
         {
+            if (!await _context.SanctionsReviews.AnyAsync(r => r.Id == reviewId && r.FinalisedAt == null))
+                return BadRequest(new { error = "This comparison was not found or has been finalised." });
+
             var review = await _sanctions.ScreenAsync(reviewId);
 
             var matches = review.Concerns
                 .Where(c => c.Category == SanctionsConcernCategory.PossibleMatch)
                 .ToList();
 
+            object Group(params string[] types)
+            {
+                var found = matches.Where(c => types.Contains(c.SubjectType)).ToList();
+                var raised = found.Where(c => c.Strength != SanctionsMatchStrength.SetAside).ToList();
+
+                return new
+                {
+                    matches = raised
+                        .OrderBy(c => c.Strength)
+                        .ThenByDescending(c => c.Score)
+                        .Select(c => $"{(c.Strength == SanctionsMatchStrength.Exact ? "Exact match" : "Potential match")}: " +
+                                     $"{c.SubjectName} and {c.Reference} {c.ListedName}" +
+                                     (c.ResolvedByName == SanctionsService.CarriedForwardBy ? " (cleared before, unchanged)" : "")),
+                    setAside = found.Count - raised.Count
+                };
+            }
+
             return Json(new
             {
                 staff = review.ScreenedStaff,
                 vendors = review.ScreenedVendors,
                 clients = review.ScreenedClients,
-                matches = matches.Select(c => $"{c.SubjectType} {c.SubjectName} resembles {c.Reference} {c.ListedName}"),
-                carriedForward = matches.Count(c => c.ResolvedByName == SanctionsService.CarriedForwardBy),
+                hasClientList = review.ClientListId != null,
+                staffResult = Group(SanctionsService.Staff),
+                vendorResult = Group(SanctionsService.Vendor, SanctionsService.VendorContact),
+                clientResult = Group(SanctionsService.Client),
                 findings = SanctionsFindings.Sentences(await _sanctions.LoadAsync(reviewId))
             });
         }
