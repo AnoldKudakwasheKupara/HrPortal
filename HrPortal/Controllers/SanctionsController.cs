@@ -82,16 +82,23 @@ namespace HrPortal.Controllers
 
             try
             {
-                var document = await _sanctions.UploadAsync(file);
+                var (document, alreadyUploaded) = await _sanctions.UploadAsync(file);
 
                 return Json(new
                 {
                     id = document.Id,
                     label = document.Label,
                     title = document.Title,
+                    kind = SanctionsText.Kind(document.Kind),
+                    listName = document.ListName,
+                    pages = document.PageCount,
                     entries = document.Entries.Count,
                     individuals = document.Entries.Count(e => !e.IsEntity),
                     entities = document.Entries.Count(e => e.IsEntity),
+                    marked = document.Entries.Count(e => e.AddedText != null || e.RemovedText != null),
+                    alreadyUploaded = alreadyUploaded
+                        ? $"This file was already uploaded on {document.UploadedAt.ToLocalTime():d MMM yyyy HH:mm}; the copy kept then is used."
+                        : null,
                     warnings = SanctionsService.Lines(document.ReadingWarnings)
                 });
             }

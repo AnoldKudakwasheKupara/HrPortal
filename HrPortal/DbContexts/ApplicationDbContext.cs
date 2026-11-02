@@ -378,7 +378,11 @@ namespace HrPortal.DbContexts
                 entity.Property(d => d.Sha256).IsRequired().HasMaxLength(64);
                 entity.Property(d => d.UploadedByName).HasMaxLength(200);
                 entity.Property(d => d.ReadingWarnings).HasMaxLength(4000);
+                entity.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
+                entity.Property(d => d.ListName).HasMaxLength(200);
+                entity.Property(d => d.Source).HasMaxLength(100);
                 entity.HasIndex(d => d.UploadedAt);
+                entity.HasIndex(d => d.Sha256);
                 entity.Ignore(d => d.Label);
             });
 
@@ -387,8 +391,10 @@ namespace HrPortal.DbContexts
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Reference).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.OriginalScriptName).HasMaxLength(500);
                 entity.Property(e => e.Fingerprint).IsRequired().HasMaxLength(64);
                 entity.HasIndex(e => new { e.SanctionsDocumentId, e.Reference });
+                entity.HasIndex(e => e.Reference);
 
                 entity.HasOne(e => e.Document)
                     .WithMany(d => d.Entries)

@@ -1,5 +1,23 @@
 namespace HrPortal.Entities
 {
+    /// <summary>What a sanctions document is: the whole list, or a notice of changes to it.</summary>
+    public enum SanctionsDocumentKind
+    {
+        FullList,
+
+        /// <summary>A notice that adds names.</summary>
+        Additions,
+
+        /// <summary>A notice that amends existing entries.</summary>
+        Amendments,
+
+        /// <summary>A notice that removes names.</summary>
+        Removals,
+
+        /// <summary>A notice of more than one kind of change.</summary>
+        Notice
+    }
+
     /// <summary>
     /// One document received from the FIU, kept exactly as it came
     /// with a SHA-256 of the file, and every entry read from it.
@@ -9,6 +27,18 @@ namespace HrPortal.Entities
         public int Id { get; set; }
 
         public string? Title { get; set; }
+
+        public SanctionsDocumentKind Kind { get; set; }
+
+        /// <summary>Which list it belongs to, such as the 1988 Sanctions List.</summary>
+        public string? ListName { get; set; }
+
+        /// <summary>Who issued it, as far as the document says.</summary>
+        public string? Source { get; set; }
+
+        public int PageCount { get; set; }
+
+        public long FileSize { get; set; }
 
         /// <summary>The document's own reference, such as SC/16494.</summary>
         public string? DocumentReference { get; set; }
@@ -52,6 +82,8 @@ namespace HrPortal.Entities
 
         public string Name { get; set; } = string.Empty;
 
+        public string? OriginalScriptName { get; set; }
+
         public string? Aliases { get; set; }
 
         public string? Title { get; set; }
@@ -64,7 +96,12 @@ namespace HrPortal.Entities
 
         public string? Nationality { get; set; }
 
+        /// <summary>Passport and identity numbers together, one per line, for screening.</summary>
         public string? Identifiers { get; set; }
+
+        public string? Passports { get; set; }
+
+        public string? NationalIds { get; set; }
 
         public string? Address { get; set; }
 
@@ -72,6 +109,16 @@ namespace HrPortal.Entities
 
         public string? OtherInformation { get; set; }
 
+        /// <summary>The page of the document the entry starts on.</summary>
+        public int? Page { get; set; }
+
+        /// <summary>What the document underlines in the entry, one passage per line.</summary>
+        public string? AddedText { get; set; }
+
+        /// <summary>What the document strikes through in the entry, one passage per line.</summary>
+        public string? RemovedText { get; set; }
+
+        /// <summary>The entry as it now reads, struck-through text left out.</summary>
         public string Details { get; set; } = string.Empty;
 
         /// <summary>A hash of the compared fields, to tell at a glance whether an entry changed.</summary>

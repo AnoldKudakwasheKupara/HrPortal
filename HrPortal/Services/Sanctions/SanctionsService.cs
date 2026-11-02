@@ -49,8 +49,12 @@ namespace HrPortal.Services.Sanctions
 
         private async Task<string?> WhoAsync() => await _currentUser.GetDisplayNameAsync();
 
-        /// <summary>Keeps the document exactly as received and reads every entry.</summary>
-        public async Task<SanctionsDocument> UploadAsync(IFormFile file)
+        /// <summary>
+        /// Keeps the document exactly as received and reads every
+        /// entry. The same file uploaded again is not kept twice: the
+        /// copy already kept is used, so a retry never duplicates it.
+        /// </summary>
+        public async Task<(SanctionsDocument Document, bool AlreadyUploaded)> UploadAsync(IFormFile file)
         {
             byte[] bytes;
 
@@ -59,6 +63,17 @@ namespace HrPortal.Services.Sanctions
                 await file.CopyToAsync(memory);
                 bytes = memory.ToArray();
             }
+
+            var sha256 = Sha256Of(bytes);
+
+            var existing = await _context.SanctionsDocuments
+                .Include(d => d.Entries)
+                .Where(d => d.Sha256 == sha256)
+                .OrderBy(d => d.Id)
+                .FirstOrDefaultAsync();
+
+            if (existing != null)
+                return (existing, true);
 
             ParsedSanctionsList parsed;
 
@@ -72,9 +87,14 @@ namespace HrPortal.Services.Sanctions
                 Title = Cap(parsed.Title, 500),
                 DocumentReference = Cap(parsed.Reference, 50),
                 IssuedOn = parsed.IssuedOn,
+                Kind = parsed.Kind,
+                ListName = Cap(parsed.ListName, 200),
+                Source = Cap(parsed.Source, 100),
+                PageCount = parsed.PageCount,
+                FileSize = bytes.LongLength,
                 OriginalFileName = Path.GetFileName(file.FileName),
                 FilePath = filePath,
-                Sha256 = Sha256Of(bytes),
+                Sha256 = sha256,
                 UploadedAt = DateTime.UtcNow,
                 UploadedByName = await WhoAsync(),
                 LooksLikeNotice = parsed.LooksLikeNotice,
@@ -105,7 +125,7 @@ namespace HrPortal.Services.Sanctions
                 $"Sanctions document {document.OriginalFileName} uploaded " +
                 $"({document.Entries.Count} entries, SHA-256 {document.Sha256}).");
 
-            return document;
+            return (document, false);
         }
 
         /// <summary>The document uploaded most recently before this one.</summary>
@@ -542,16 +562,22 @@ namespace HrPortal.Services.Sanctions
                 Reference = e.Reference,
                 IsEntity = e.IsEntity,
                 Name = Cap(e.Name, 500)!,
-                Aliases = e.Aliases.Count == 0 ? null : string.Join("\n", e.Aliases),
+                OriginalScriptName = Cap(e.OriginalScriptName, 500),
+                Aliases = Joined(e.Aliases),
                 Title = e.Title,
                 Designation = e.Designation,
                 DateOfBirth = e.DateOfBirth,
                 PlaceOfBirth = e.PlaceOfBirth,
                 Nationality = e.Nationality,
-                Identifiers = e.Identifiers.Count == 0 ? null : string.Join("\n", e.Identifiers),
+                Identifiers = Joined(e.Identifiers),
+                Passports = Joined(e.Passports),
+                NationalIds = Joined(e.NationalIds),
                 Address = e.Address,
                 ListedOn = e.ListedOn,
                 OtherInformation = e.OtherInformation,
+                Page = e.Page,
+                AddedText = Joined(e.AddedText),
+                RemovedText = Joined(e.RemovedText),
                 Details = e.Details
             };
 
@@ -578,7 +604,8 @@ namespace HrPortal.Services.Sanctions
                 ("Date of birth", e.DateOfBirth),
                 ("Place of birth", e.PlaceOfBirth),
                 ("Nationality", e.Nationality),
-                ("Passport and ID numbers", e.Identifiers),
+                ("Passport numbers", e.Passports),
+                ("National ID numbers", e.NationalIds),
                 ("Address", e.Address),
                 ("Listed on and amended", e.ListedOn),
                 ("Other information", e.OtherInformation)
@@ -615,6 +642,9 @@ namespace HrPortal.Services.Sanctions
             string.IsNullOrWhiteSpace(value)
                 ? new List<string>()
                 : value.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        private static string? Joined(List<string> values) =>
+            values.Count == 0 ? null : string.Join("\n", values);
 
         private static string? Cap(string? value, int length) =>
             value == null || value.Length <= length ? value : value[..length];

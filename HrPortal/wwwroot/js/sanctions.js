@@ -90,8 +90,12 @@
     }
 
     function readLines(doc) {
-        return [doc.label, doc.entries + " names found (" + doc.individuals + " people, " + doc.entities + " organisations)"]
-            .concat(doc.warnings || []);
+        var lines = [doc.label];
+        if (doc.alreadyUploaded) lines.push(doc.alreadyUploaded);
+        lines.push(doc.kind + (doc.listName ? " of the " + doc.listName : "") + ", " + doc.pages + " page" + (doc.pages === 1 ? "" : "s"));
+        lines.push(doc.entries + " names found (" + doc.individuals + " people, " + doc.entities + " organisations)");
+        if (doc.marked) lines.push(doc.marked + " of them with underlined or struck-through amendments");
+        return lines.concat(doc.warnings || []);
     }
 
     form.addEventListener("submit", async function (event) {

@@ -1715,8 +1715,20 @@ namespace HrPortal.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime?>("IssuedOn")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ListName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("LooksLikeNotice")
                         .HasColumnType("boolean");
@@ -1726,6 +1738,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<int>("PageCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ReadingWarnings")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -1734,6 +1749,10 @@ namespace HrPortal.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Title")
                         .HasMaxLength(500)
@@ -1748,6 +1767,8 @@ namespace HrPortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Sha256");
+
                     b.HasIndex("UploadedAt");
 
                     b.ToTable("SanctionsDocuments");
@@ -1760,6 +1781,9 @@ namespace HrPortal.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddedText")
+                        .HasColumnType("text");
 
                     b.Property<string>("Address")
                         .HasColumnType("text");
@@ -1796,10 +1820,23 @@ namespace HrPortal.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("NationalIds")
+                        .HasColumnType("text");
+
                     b.Property<string>("Nationality")
                         .HasColumnType("text");
 
+                    b.Property<string>("OriginalScriptName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("OtherInformation")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Passports")
                         .HasColumnType("text");
 
                     b.Property<string>("PlaceOfBirth")
@@ -1810,6 +1847,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("RemovedText")
+                        .HasColumnType("text");
+
                     b.Property<int>("SanctionsDocumentId")
                         .HasColumnType("integer");
 
@@ -1817,6 +1857,8 @@ namespace HrPortal.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Reference");
 
                     b.HasIndex("SanctionsDocumentId", "Reference");
 
