@@ -831,3 +831,55 @@
 }
 
 .sanctions-change > summary .badge { margin-right: .35rem; }
+
+.sanctions-tally > div.is-attention {
+    border-color: #b7791f;
+    background: #fff8e6;
+}
+
+.sanctions-matter {
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: .5rem;
+    padding: .9rem 1rem;
+    margin-bottom: .9rem;
+}
+
+.sanctions-matter.is-outstanding { border-color: #b7791f; }
+
+.sanctions-side {
+    height: 100%;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: .4rem;
+    padding: .5rem .75rem;
+    font-size: .85rem;
+}
+
+.sanctions-side-head {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: .35rem;
+}
+
+.sanctions-side dl {
+    display: grid;
+    grid-template-columns: minmax(7rem, 35%) 1fr;
+    gap: .15rem .5rem;
+}
+
+.sanctions-side dt {
+    font-weight: 400;
+    color: var(--muted, #6b6f74);
+}
+
+.sanctions-side dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.sanctions-note {
+    padding: .3rem 0;
+    border-top: 1px dashed var(--border, #e5e7eb);
+}
+
+details > summary.card-header { cursor: pointer; }

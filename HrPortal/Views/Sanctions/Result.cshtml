@@ -1,35 +1,43 @@
 @using HrPortal.Entities
 @using HrPortal.Services.Sanctions
-@model HrPortal.Entities.SanctionsReview
+@using HrPortal.ViewModels
+@model SanctionsResultViewModel
 
 @{
-    ViewData["Title"] = Model.ReviewNumber;
+    var R = Model.Review;
+    ViewData["Title"] = R.ReviewNumber;
 
-    var finalised = Model.FinalisedAt != null;
-    var open = Model.Concerns.Where(c => c.Status == SanctionsConcernStatus.Open).ToList();
-    var matters = Model.Concerns
-        .OrderBy(c => c.Status == SanctionsConcernStatus.Open ? 0 : 1)
-        .ThenBy(c => c.Category)
-        .ThenByDescending(c => c.Score)
-        .ToList();
+    var finalised = R.FinalisedAt != null;
+    var outstanding = Model.Outstanding;
+    var dealtWith = Model.DealtWith;
+    var setAside = Model.SetAside;
+    var raised = R.Concerns.Where(c => c.Category == SanctionsConcernCategory.PossibleMatch && c.Strength != SanctionsMatchStrength.SetAside).ToList();
 
-    var isNotice = Model.NewDocument.Kind != SanctionsDocumentKind.FullList;
-    var compared = Model.PreviousDocument != null || isNotice;
-    var changes = Model.Changes.OrderBy(c => c.Type).ThenBy(c => c.Reference).ToList();
+    var isNotice = R.NewDocument.Kind != SanctionsDocumentKind.FullList;
+    var compared = R.PreviousDocument != null || isNotice;
+    var changes = R.Changes.OrderBy(c => c.Type).ThenBy(c => c.Reference).ToList();
+
+    SanctionsMatterView View(SanctionsConcern c) => new(
+        c,
+        c.Reference != null && Model.Entries.TryGetValue(c.Reference, out var entry) ? entry : null,
+        Model.Subjects.TryGetValue(SanctionsResultViewModel.SubjectKey(c.SubjectType, c.SubjectId), out var subject) ? subject : null,
+        !finalised,
+        R.Id,
+        R.NewDocumentId);
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
         <div>
-            <h2>@Model.ReviewNumber</h2>
+            <h2>@R.ReviewNumber</h2>
             <p class="text-muted mb-0">
-                @Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @Model.CreatedByName
+                @R.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @R.CreatedByName
             </p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Report" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <a asp-action="Report" asp-route-id="@R.Id" class="btn btn-outline-primary">
                 @(finalised ? "Download the report" : "Preview the report")
             </a>
             <a asp-action="Index" class="btn btn-secondary">Back</a>
@@ -49,8 +57,21 @@
     <div class="card shadow-sm mb-3">
         <div class="card-header">What was found</div>
         <div class="card-body">
+            <div class="sanctions-tally mb-3">
+                @if (compared)
+                {
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Added)</strong><span>New listings</span></div>
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</strong><span>Removed</span></div>
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</strong><span>Amended</span></div>
+                    <div><strong>@R.UnchangedCount</strong><span>Unchanged</span></div>
+                }
+                <div><strong>@raised.Count(c => c.Strength == SanctionsMatchStrength.Exact)</strong><span>Exact matches</span></div>
+                <div><strong>@raised.Count(c => c.Strength == SanctionsMatchStrength.Potential)</strong><span>Potential matches</span></div>
+                <div><strong>@R.Concerns.Count(c => c.Category == SanctionsConcernCategory.Discrepancy)</strong><span>Discrepancies</span></div>
+                <div class="@(outstanding.Any() ? "is-attention" : "")"><strong>@outstanding.Count</strong><span>Need a decision</span></div>
+            </div>
             <ul class="mb-0">
-                @foreach (var sentence in SanctionsFindings.Sentences(Model))
+                @foreach (var sentence in SanctionsFindings.Sentences(R))
                 {
                     <li class="mb-1">@sentence</li>
                 }
@@ -59,7 +80,7 @@
     </div>
 
     <div class="row g-3 mb-3">
-        @foreach (var (heading, document) in new[] { ("New document", (SanctionsDocument?)Model.NewDocument), ("Compared with", Model.PreviousDocument) })
+        @foreach (var (heading, document) in new[] { ("New document", (SanctionsDocument?)R.NewDocument), ("Compared with", R.PreviousDocument) })
         {
             <div class="col-lg-6">
                 <div class="card shadow-sm h-100">
@@ -108,17 +129,17 @@
             <div class="card-body">
 
                 <div class="sanctions-tally mb-3">
-                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Added)</strong><span>Added</span></div>
-                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</strong><span>Removed</span></div>
-                    <div><strong>@Model.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</strong><span>Amended</span></div>
-                    <div><strong>@Model.UnchangedCount</strong><span>Unchanged</span></div>
-                    @if (Model.NotComparedCount > 0)
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Added)</strong><span>Added</span></div>
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</strong><span>Removed</span></div>
+                    <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</strong><span>Amended</span></div>
+                    <div><strong>@R.UnchangedCount</strong><span>Unchanged</span></div>
+                    @if (R.NotComparedCount > 0)
                     {
-                        <div><strong>@Model.NotComparedCount</strong><span>Not compared</span></div>
+                        <div><strong>@R.NotComparedCount</strong><span>Not compared</span></div>
                     }
                 </div>
 
-                @foreach (var note in SanctionsService.Lines(Model.ComparisonNote))
+                @foreach (var note in SanctionsService.Lines(R.ComparisonNote))
                 {
                     <p class="small text-muted mb-2">@note</p>
                 }
@@ -170,7 +191,7 @@
                             {
                                 <p class="small mb-0">
                                     @(change.Type == SanctionsChangeType.Added ? "A new listing." : "No longer listed.")
-                                    <a asp-action="Document" asp-route-id="@(change.Type == SanctionsChangeType.Removed && Model.PreviousDocumentId != null ? Model.PreviousDocumentId : Model.NewDocumentId)">Open the document</a> to read the entry in full.
+                                    <a asp-action="Document" asp-route-id="@(change.Type == SanctionsChangeType.Removed && R.PreviousDocumentId != null ? R.PreviousDocumentId : R.NewDocumentId)">Open the document</a> to read the entry in full.
                                 </p>
                             }
                         </div>
@@ -181,108 +202,69 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-3">
+
+    <div class="card shadow-sm mb-3" id="needs-decision">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Things to look into</span>
+            <span>Needs your decision</span>
             <div class="d-flex align-items-center gap-2">
-                <span class="text-muted small">@open.Count open of @matters.Count</span>
+                <span class="badge @(outstanding.Any() ? "bg-warning text-dark" : "bg-success")">@outstanding.Count</span>
                 @if (!finalised)
                 {
-                    <form asp-action="CheckAgain" asp-route-id="@Model.Id" method="post">
+                    <form asp-action="CheckAgain" asp-route-id="@R.Id" method="post">
                         <button type="submit" class="btn btn-sm btn-outline-secondary">Check people again</button>
                     </form>
                 }
             </div>
         </div>
         <div class="card-body">
-
-            @if (matters.Count == 0)
+            @if (outstanding.Count == 0)
             {
                 <p class="mb-0">
                     <i class="fas fa-circle-check text-success" aria-hidden="true"></i>
-                    Nothing to look into: no discrepancies, and nobody the company deals with is on the new document.
+                    Nothing needs a decision.
                 </p>
             }
 
-            @foreach (var c in matters)
+            @foreach (var c in outstanding)
             {
-                var isMatch = c.Category == SanctionsConcernCategory.PossibleMatch;
-
-                <div class="border rounded p-3 mb-3 @(c.Status == SanctionsConcernStatus.Open ? "border-warning" : "")">
-
-                    <div class="d-flex justify-content-between flex-wrap gap-2">
-                        <div>
-                            <span class="badge @(isMatch ? (c.Strength == SanctionsMatchStrength.SetAside ? "bg-light text-dark" : "bg-danger") : "bg-secondary")">
-                                @(!isMatch ? "Discrepancy" : c.Strength switch
-                                {
-                                    SanctionsMatchStrength.Exact => "Exact match",
-                                    SanctionsMatchStrength.SetAside => "Set aside",
-                                    _ => "Potential match"
-                                })
-                            </span>
-                            @if (isMatch)
-                            {
-                                <strong class="ms-1">@c.SubjectType @c.SubjectName</strong>
-                                <span class="text-muted">resembles</span>
-                                <strong>@c.Reference @c.ListedName</strong>
-                            }
-                        </div>
-                        <span class="badge @(c.Status == SanctionsConcernStatus.Open ? "bg-warning text-dark" : "bg-success")">@c.Status</span>
-                    </div>
-
-                    <p class="mt-2 mb-2">@c.Reason</p>
-
-                    @if (c.Evidence != null)
-                    {
-                        <ul class="small text-muted mb-2">
-                            @foreach (var line in SanctionsService.Lines(c.Evidence))
-                            {
-                                <li>@line</li>
-                            }
-                        </ul>
-                    }
-
-                    @if (c.Status != SanctionsConcernStatus.Open)
-                    {
-                        <p class="small mb-0">
-                            <strong>Outcome:</strong> @c.Resolution
-                            <span class="text-muted">&middot; @c.ResolvedByName, @c.ResolvedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
-                        </p>
-                    }
-                    else if (!finalised)
-                    {
-                        <form asp-action="Resolve" asp-route-id="@Model.Id" method="post" class="row g-2 align-items-end">
-                            <input type="hidden" name="concernId" value="@c.Id" />
-                            <div class="col-md-3">
-                                <label class="form-label small" for="outcome-@c.Id">Outcome</label>
-                                <select id="outcome-@c.Id" name="outcome" class="form-select form-select-sm">
-                                    @if (isMatch)
-                                    {
-                                        <option value="@SanctionsConcernStatus.Cleared">Not the same person</option>
-                                        <option value="@SanctionsConcernStatus.Confirmed">Same person: escalated</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@SanctionsConcernStatus.Resolved">Dealt with</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-7">
-                                <label class="form-label small" for="resolution-@c.Id">What you found</label>
-                                <input id="resolution-@c.Id" name="resolution" class="form-control form-control-sm" maxlength="4000" required
-                                       placeholder="@(isMatch ? "e.g. Different person: date of birth and ID number do not match" : "e.g. Checked with the FIU; the earlier notice was superseded")" />
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-sm btn-primary w-100">Save</button>
-                            </div>
-                        </form>
-                    }
-
-                </div>
+                <partial name="_SanctionsMatter" model="View(c)" />
             }
-
         </div>
     </div>
+
+    @if (dealtWith.Any())
+    {
+        <div class="card shadow-sm mb-3">
+            <details>
+                <summary class="card-header">Dealt with (@dealtWith.Count)</summary>
+                <div class="card-body">
+                    @foreach (var c in dealtWith)
+                    {
+                        <partial name="_SanctionsMatter" model="View(c)" />
+                    }
+                </div>
+            </details>
+        </div>
+    }
+
+    @if (setAside.Any())
+    {
+        <div class="card shadow-sm mb-3">
+            <details>
+                <summary class="card-header">Set aside automatically (@setAside.Count)</summary>
+                <div class="card-body">
+                    <p class="small text-muted">
+                        These names resemble a listed name, but the date of birth the portal holds clearly
+                        differs from the one listed, so they were not raised. Open any of them to look into it.
+                    </p>
+                    @foreach (var c in setAside)
+                    {
+                        <partial name="_SanctionsMatter" model="View(c)" />
+                    }
+                </div>
+            </details>
+        </div>
+    }
 
     <div class="card shadow-sm mb-4">
         <div class="card-header">Finalise</div>
@@ -290,26 +272,35 @@
             @if (finalised)
             {
                 <p class="mb-1">
-                    Finalised by <strong>@Model.FinalisedByName</strong> on
-                    @Model.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
-                    @Model.Note
+                    Finalised by <strong>@R.FinalisedByName</strong> on
+                    @R.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
+                    @R.Note
                 </p>
-                <p class="small text-muted mb-0">Report SHA-256 <code>@Model.ReportSha256</code></p>
+                <p class="small text-muted mb-0">Report SHA-256 <code>@R.ReportSha256</code></p>
             }
-            else if (open.Any())
+            else if (Model.FinaliseBlockers.Any())
             {
-                <p class="text-muted mb-0">
-                    Save an outcome for the @(open.Count == 1 ? "1 open item" : $"{open.Count} open items") above,
-                    then finalise to make the report.
-                </p>
+                <p class="mb-1">This review cannot be finalised yet:</p>
+                <ul class="mb-0">
+                    @foreach (var reason in Model.FinaliseBlockers)
+                    {
+                        <li>@reason</li>
+                    }
+                </ul>
             }
             else
             {
-                <form asp-action="Finalise" asp-route-id="@Model.Id" method="post">
+                <form asp-action="Finalise" asp-route-id="@R.Id" method="post">
                     <p>
                         Finalising records you as the reviewer and makes the report. The portal keeps
                         it with its SHA-256 so any copy can be checked later.
                     </p>
+                    @if (R.Concerns.Any(c => c.Status == SanctionsConcernStatus.UnableToDetermine))
+                    {
+                        <p class="small text-muted">
+                            Matters recorded as unable to determine will be listed in the report as outstanding.
+                        </p>
+                    }
                     <div class="mb-3">
                         <label for="note" class="form-label">Note for the report (optional)</label>
                         <textarea id="note" name="note" class="form-control" rows="2" maxlength="4000"></textarea>

@@ -42,6 +42,36 @@ namespace HrPortal.Services.Sanctions
             return rows;
         }
 
+        public static string Status(SanctionsConcernStatus status) =>
+            status switch
+            {
+                SanctionsConcernStatus.Open => "Open",
+                SanctionsConcernStatus.Cleared => "False positive",
+                SanctionsConcernStatus.Confirmed => "Confirmed match",
+                SanctionsConcernStatus.Resolved => "Dealt with",
+                SanctionsConcernStatus.FurtherInvestigation => "Further investigation required",
+                _ => "Unable to determine"
+            };
+
+        /// <summary>A matter's outcome, saying when the portal rather than a person closed it.</summary>
+        public static string Outcome(SanctionsConcern concern) =>
+            concern.ResolvedByName switch
+            {
+                SanctionsService.SetAsideBy => "Set aside",
+                SanctionsService.CarriedForwardBy => "False positive (earlier decision)",
+                _ => Status(concern.Status)
+            };
+
+        public static string Strength(SanctionsConcern concern) =>
+            concern.Category == SanctionsConcernCategory.Discrepancy
+                ? "Discrepancy"
+                : concern.Strength switch
+                {
+                    SanctionsMatchStrength.Exact => "Exact match",
+                    SanctionsMatchStrength.SetAside => "Set aside",
+                    _ => "Potential match"
+                };
+
         public static string ChangeType(SanctionsChangeType type) =>
             type switch
             {

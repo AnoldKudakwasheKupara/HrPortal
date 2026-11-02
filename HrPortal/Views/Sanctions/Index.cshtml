@@ -121,7 +121,7 @@
                     }
                     @foreach (var review in Model)
                     {
-                        var open = review.Concerns.Count(c => c.Status == SanctionsConcernStatus.Open);
+                        var open = review.Concerns.Count(HrPortal.Services.Sanctions.SanctionsService.IsOutstanding);
 
                         <tr>
                             <td>
@@ -140,7 +140,7 @@
                                 }
                                 else if (open > 0)
                                 {
-                                    <span class="badge bg-warning text-dark">@open to look into</span>
+                                    <span class="badge bg-warning text-dark">@open need@(open == 1 ? "s" : "") a decision</span>
                                 }
                                 else
                                 {

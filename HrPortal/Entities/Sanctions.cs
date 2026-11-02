@@ -260,7 +260,13 @@ namespace HrPortal.Entities
         Confirmed,
 
         /// <summary>A discrepancy that has been dealt with.</summary>
-        Resolved
+        Resolved,
+
+        /// <summary>Being looked into further; the review cannot be finalised until it is settled.</summary>
+        FurtherInvestigation,
+
+        /// <summary>Looked into, but it could not be settled either way; escalated and reported as outstanding.</summary>
+        UnableToDetermine
     }
 
     /// <summary>A matter to look into before the review is finalised.</summary>
@@ -310,7 +316,39 @@ namespace HrPortal.Entities
 
         public string? ResolvedByName { get; set; }
 
+        /// <summary>Who the matter was escalated to, such as the MD or the board.</summary>
+        public string? EscalatedTo { get; set; }
+
+        public DateTime? EscalatedAt { get; set; }
+
         public SanctionsReview Review { get; set; } = null!;
+
+        public ICollection<SanctionsConcernNote> Notes { get; set; } = new List<SanctionsConcernNote>();
+    }
+
+    /// <summary>
+    /// A comment on a matter, with any supporting file, kept in the
+    /// order written so how a decision was reached can be followed.
+    /// </summary>
+    public class SanctionsConcernNote
+    {
+        public int Id { get; set; }
+
+        public int SanctionsConcernId { get; set; }
+
+        public string Text { get; set; } = string.Empty;
+
+        public string? FileName { get; set; }
+
+        public string? FilePath { get; set; }
+
+        public string? Sha256 { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public string? CreatedByName { get; set; }
+
+        public SanctionsConcern Concern { get; set; } = null!;
     }
 
     /// <summary>

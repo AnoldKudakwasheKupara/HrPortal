@@ -207,7 +207,8 @@ namespace HrPortal.Services.Sanctions
         private static string Outcome(SanctionsConcern concern) =>
             concern.Status == SanctionsConcernStatus.Open
                 ? "Open"
-                : $"{concern.Status}: {concern.Resolution}\n" +
-                  $"{concern.ResolvedByName}, {DocumentStyle.Stamp(concern.ResolvedAt)}";
+                : $"{SanctionsText.Outcome(concern)}: {concern.Resolution}" +
+                  (concern.EscalatedTo == null ? "" : $" Escalated to {concern.EscalatedTo}.") +
+                  $"\n{concern.ResolvedByName}, {DocumentStyle.Stamp(concern.ResolvedAt)}";
     }
 }

@@ -3,6 +3,7 @@ using HrPortal.Entities;
 using HrPortal.Security;
 using HrPortal.Services;
 using HrPortal.Services.Sanctions;
+using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -204,7 +205,141 @@ namespace HrPortal.Controllers
             if (!await _context.SanctionsReviews.AnyAsync(r => r.Id == id))
                 return NotFound();
 
-            return View(await _sanctions.LoadAsync(id));
+            var review = await _sanctions.LoadAsync(id);
+
+            var references = review.Concerns
+                .Where(c => c.Reference != null)
+                .Select(c => c.Reference!)
+                .Distinct()
+                .ToList();
+
+            var model = new SanctionsResultViewModel
+            {
+                Review = review,
+                FinaliseBlockers = SanctionsService.FinaliseBlockers(review),
+                Entries = (await _context.SanctionsEntries
+                        .AsNoTracking()
+                        .Where(e => e.SanctionsDocumentId == review.NewDocumentId && references.Contains(e.Reference))
+                        .ToListAsync())
+                    .GroupBy(e => e.Reference)
+                    .ToDictionary(g => g.Key, g => g.First())
+            };
+
+            List<int> Ids(params string[] types) => review.Concerns
+                .Where(c => c.SubjectId != null && types.Contains(c.SubjectType))
+                .Select(c => c.SubjectId!.Value)
+                .Distinct()
+                .ToList();
+
+            static string Date(DateTime? d) => d?.ToString("d MMM yyyy") ?? "Not recorded";
+
+            var staffIds = Ids(SanctionsService.Staff);
+
+            foreach (var e in await _context.Employees
+                         .AsNoTracking()
+                         .Include(e => e.Department)
+                         .Where(e => staffIds.Contains(e.Id))
+                         .ToListAsync())
+            {
+                model.Subjects[SanctionsResultViewModel.SubjectKey(SanctionsService.Staff, e.Id)] = new()
+                {
+                    ("Name", $"{e.FirstName} {e.LastName}"),
+                    ("Employee number", e.EmployeeNumber),
+                    ("Job title", e.JobTitle ?? "Not recorded"),
+                    ("Department", e.Department.Name),
+                    ("National ID", e.NationalId ?? "Not recorded"),
+                    ("Date of birth", Date(e.DateOfBirth))
+                };
+            }
+
+            var vendorIds = Ids(SanctionsService.Vendor, SanctionsService.VendorContact);
+
+            foreach (var v in await _context.Vendors
+                         .AsNoTracking()
+                         .Where(v => vendorIds.Contains(v.Id))
+                         .ToListAsync())
+            {
+                var details = new List<(string, string)>
+                {
+                    ("Vendor", v.Name),
+                    ("Supplies", v.ProductOrService),
+                    ("Contact person", v.ContactPerson ?? "Not recorded"),
+                    ("Address", v.Address ?? "Not recorded")
+                };
+
+                model.Subjects[SanctionsResultViewModel.SubjectKey(SanctionsService.Vendor, v.Id)] = details;
+                model.Subjects[SanctionsResultViewModel.SubjectKey(SanctionsService.VendorContact, v.Id)] = details;
+            }
+
+            var clientIds = Ids(SanctionsService.Client);
+
+            foreach (var c in await _context.SanctionsClients
+                         .AsNoTracking()
+                         .Where(c => clientIds.Contains(c.Id))
+                         .ToListAsync())
+            {
+                model.Subjects[SanctionsResultViewModel.SubjectKey(SanctionsService.Client, c.Id)] = SanctionsService.ClientDetails(c);
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(FileStorageService.MaxFileSizeBytes + 1024 * 1024)]
+        public async Task<IActionResult> AddNote(int id, int concernId, string? text, IFormFile? file)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                TempData["Error"] = "Write the note.";
+                return Redirect(Url.Action(nameof(Result), new { id }) + $"#matter-{concernId}");
+            }
+
+            if (!await _context.SanctionsConcerns.AnyAsync(c => c.Id == concernId && c.SanctionsReviewId == id))
+                return NotFound();
+
+            try
+            {
+                await _sanctions.AddNoteAsync(concernId, text, file);
+                TempData["Success"] = "Note added.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return Redirect(Url.Action(nameof(Result), new { id }) + $"#matter-{concernId}");
+        }
+
+        public async Task<IActionResult> Evidence(int id)
+        {
+            var note = await _context.SanctionsConcernNotes.AsNoTracking().FirstOrDefaultAsync(n => n.Id == id);
+
+            var path = note?.FilePath == null ? null : _files.ResolveExistingPath(note.FilePath);
+
+            return path == null
+                ? NotFound()
+                : PhysicalFile(path, "application/octet-stream", note!.FileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reopen(int id, int concernId)
+        {
+            if (!await _context.SanctionsConcerns.AnyAsync(c => c.Id == concernId && c.SanctionsReviewId == id))
+                return NotFound();
+
+            try
+            {
+                await _sanctions.ReopenAsync(concernId);
+                TempData["Success"] = "Reopened. It is now with the matters that need a decision.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return Redirect(Url.Action(nameof(Result), new { id }) + $"#matter-{concernId}");
         }
 
         [HttpPost]
@@ -235,17 +370,15 @@ namespace HrPortal.Controllers
             int id,
             int concernId,
             SanctionsConcernStatus outcome,
-            string? resolution)
+            string? resolution,
+            string? escalatedTo)
         {
-            if (outcome == SanctionsConcernStatus.Open || string.IsNullOrWhiteSpace(resolution))
-            {
-                TempData["Error"] = "Choose an outcome and write down what was found.";
-                return RedirectToAction(nameof(Result), new { id });
-            }
+            if (!await _context.SanctionsConcerns.AnyAsync(c => c.Id == concernId && c.SanctionsReviewId == id))
+                return NotFound();
 
             try
             {
-                await _sanctions.ResolveAsync(concernId, outcome, resolution);
+                await _sanctions.ResolveAsync(concernId, outcome, resolution ?? string.Empty, escalatedTo);
                 TempData["Success"] = "Recorded.";
             }
             catch (InvalidOperationException ex)
@@ -253,7 +386,7 @@ namespace HrPortal.Controllers
                 TempData["Error"] = ex.Message;
             }
 
-            return RedirectToAction(nameof(Result), new { id });
+            return Redirect(Url.Action(nameof(Result), new { id }) + $"#matter-{concernId}");
         }
 
         [HttpPost]

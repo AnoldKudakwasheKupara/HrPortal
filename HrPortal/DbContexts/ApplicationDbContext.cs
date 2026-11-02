@@ -37,6 +37,7 @@ namespace HrPortal.DbContexts
         public DbSet<SanctionsReview> SanctionsReviews { get; set; }
         public DbSet<SanctionsChange> SanctionsChanges { get; set; }
         public DbSet<SanctionsConcern> SanctionsConcerns { get; set; }
+        public DbSet<SanctionsConcernNote> SanctionsConcernNotes { get; set; }
         public DbSet<SanctionsClientList> SanctionsClientLists { get; set; }
         public DbSet<SanctionsClient> SanctionsClients { get; set; }
 
@@ -449,7 +450,7 @@ namespace HrPortal.DbContexts
             {
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.Category).HasConversion<string>().HasMaxLength(30);
-                entity.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(c => c.Status).HasConversion<string>().HasMaxLength(30);
                 entity.Property(c => c.Reference).HasMaxLength(20);
                 entity.Property(c => c.ListedName).HasMaxLength(500);
                 entity.Property(c => c.EntryFingerprint).HasMaxLength(64);
@@ -461,10 +462,27 @@ namespace HrPortal.DbContexts
                 entity.Property(c => c.Reason).IsRequired().HasMaxLength(2000);
                 entity.Property(c => c.Resolution).HasMaxLength(4000);
                 entity.Property(c => c.ResolvedByName).HasMaxLength(200);
+                entity.Property(c => c.EscalatedTo).HasMaxLength(200);
+                entity.HasIndex(c => new { c.SubjectType, c.SubjectId, c.Reference });
 
                 entity.HasOne(c => c.Review)
                     .WithMany(r => r.Concerns)
                     .HasForeignKey(c => c.SanctionsReviewId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<SanctionsConcernNote>(entity =>
+            {
+                entity.HasKey(n => n.Id);
+                entity.Property(n => n.Text).IsRequired().HasMaxLength(4000);
+                entity.Property(n => n.FileName).HasMaxLength(255);
+                entity.Property(n => n.FilePath).HasMaxLength(500);
+                entity.Property(n => n.Sha256).HasMaxLength(64);
+                entity.Property(n => n.CreatedByName).HasMaxLength(200);
+
+                entity.HasOne(n => n.Concern)
+                    .WithMany(c => c.Notes)
+                    .HasForeignKey(n => n.SanctionsConcernId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

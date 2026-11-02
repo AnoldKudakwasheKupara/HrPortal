@@ -1,0 +1,205 @@
+@using HrPortal.Entities
+@using HrPortal.Services.Sanctions
+@model HrPortal.ViewModels.SanctionsMatterView
+
+@{
+    var c = Model.Concern;
+    var isMatch = c.Category == SanctionsConcernCategory.PossibleMatch;
+    var outstanding = SanctionsService.IsOutstanding(c);
+    var closedByPortal = c.ResolvedByName is SanctionsService.SetAsideBy or SanctionsService.CarriedForwardBy;
+    var e = Model.Entry;
+
+    var listed = e == null
+        ? new List<(string, string?)>()
+        : new List<(string, string?)>
+        {
+            ("Reference", e.Reference),
+            ("Name", e.Name),
+            ("Aliases", string.Join("; ", SanctionsService.Lines(e.Aliases))),
+            ("Date of birth", e.DateOfBirth),
+            ("Place of birth", e.PlaceOfBirth),
+            ("Nationality", e.Nationality),
+            ("Passport numbers", string.Join("; ", SanctionsService.Lines(e.Passports))),
+            ("National ID numbers", string.Join("; ", SanctionsService.Lines(e.NationalIds))),
+            ("Address", e.Address),
+            ("Listed on", e.ListedOn)
+        };
+}
+
+<div class="sanctions-matter @(outstanding ? "is-outstanding" : "")" id="matter-@c.Id">
+
+    <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>
+            <span class="badge @(c.Strength == SanctionsMatchStrength.Exact ? "bg-danger" : isMatch ? (c.Strength == SanctionsMatchStrength.SetAside ? "bg-light text-dark" : "bg-warning text-dark") : "bg-secondary")">
+                @SanctionsText.Strength(c)
+            </span>
+            @if (isMatch)
+            {
+                <strong class="ms-1">@c.SubjectType @c.SubjectName</strong>
+                <span class="text-muted">and</span>
+                <strong>@c.Reference @c.ListedName</strong>
+            }
+        </div>
+        <span class="badge @(outstanding ? "bg-warning text-dark" : c.Status == SanctionsConcernStatus.Confirmed ? "bg-danger" : c.Status == SanctionsConcernStatus.UnableToDetermine ? "bg-dark" : "bg-success")">
+            @SanctionsText.Outcome(c)
+        </span>
+    </div>
+
+    <p class="mt-2 mb-2">@c.Reason</p>
+
+    @if (isMatch)
+    {
+        <div class="row g-2 mb-2">
+            <div class="col-md-6">
+                <div class="sanctions-side">
+                    <div class="sanctions-side-head">What the portal holds</div>
+                    <dl class="mb-0">
+                        @if (Model.Subject == null)
+                        {
+                            <dt>@c.SubjectType</dt>
+                            <dd>@c.SubjectName <span class="text-muted">(no longer on record)</span></dd>
+                        }
+                        else
+                        {
+                            @foreach (var (label, value) in Model.Subject)
+                            {
+                                <dt>@label</dt>
+                                <dd>@value</dd>
+                            }
+                        }
+                    </dl>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="sanctions-side">
+                    <div class="sanctions-side-head">
+                        What the sanctions document gives
+                        @if (e?.Page != null)
+                        {
+                            <a class="small" asp-action="Document" asp-route-id="@Model.DocumentId" target="_blank">page @e.Page</a>
+                        }
+                    </div>
+                    <dl class="mb-0">
+                        @if (e == null)
+                        {
+                            <dt>Entry</dt>
+                            <dd>@c.Reference @c.ListedName</dd>
+                        }
+                        @foreach (var (label, value) in listed)
+                        {
+                            <dt>@label</dt>
+                            <dd>@(string.IsNullOrWhiteSpace(value) ? "Not given" : value)</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (c.Evidence != null)
+    {
+        <div class="small mb-2">
+            <strong>Why it was flagged</strong>
+            <ul class="mb-0">
+                @foreach (var line in SanctionsService.Lines(c.Evidence))
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!outstanding)
+    {
+        <p class="small mb-2">
+            <strong>Outcome:</strong> @SanctionsText.Outcome(c). @c.Resolution
+            @if (c.EscalatedTo != null)
+            {
+                <span>Escalated to @c.EscalatedTo.</span>
+            }
+            <span class="text-muted">&middot; @c.ResolvedByName, @c.ResolvedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
+        </p>
+    }
+
+    @if (c.Notes.Any())
+    {
+        <div class="sanctions-notes small mb-2">
+            @foreach (var note in c.Notes.OrderBy(n => n.CreatedAt))
+            {
+                <div class="sanctions-note">
+                    <span class="text-muted">@note.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm"), @note.CreatedByName:</span>
+                    @note.Text
+                    @if (note.FileName != null)
+                    {
+                        <a asp-action="Evidence" asp-route-id="@note.Id"><i class="fas fa-paperclip" aria-hidden="true"></i> @note.FileName</a>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.CanEdit && closedByPortal)
+    {
+        <form asp-action="Reopen" asp-route-id="@Model.ReviewId" method="post" class="mb-0">
+            <input type="hidden" name="concernId" value="@c.Id" />
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Look into it</button>
+        </form>
+    }
+
+    @if (Model.CanEdit && outstanding)
+    {
+        <form asp-action="Resolve" asp-route-id="@Model.ReviewId" method="post" class="row g-2 align-items-end mb-2">
+            <input type="hidden" name="concernId" value="@c.Id" />
+            <div class="col-md-4">
+                <label class="form-label small" for="outcome-@c.Id">Outcome</label>
+                <select id="outcome-@c.Id" name="outcome" class="form-select form-select-sm">
+                    @if (isMatch)
+                    {
+                        <option value="@SanctionsConcernStatus.Cleared">False positive: not the same person</option>
+                        <option value="@SanctionsConcernStatus.Confirmed">Confirmed match</option>
+                    }
+                    else
+                    {
+                        <option value="@SanctionsConcernStatus.Resolved">Dealt with</option>
+                    }
+                    <option value="@SanctionsConcernStatus.FurtherInvestigation" selected="@(c.Status == SanctionsConcernStatus.FurtherInvestigation)">Further investigation required</option>
+                    <option value="@SanctionsConcernStatus.UnableToDetermine">Unable to determine</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label small" for="resolution-@c.Id">What you found</label>
+                <input id="resolution-@c.Id" name="resolution" class="form-control form-control-sm" maxlength="4000" required
+                       placeholder="@(isMatch ? "e.g. Different person: date of birth and ID number do not match" : "e.g. Checked with the FIU; the earlier notice was superseded")" />
+            </div>
+            <div class="col-md-8">
+                <label class="form-label small" for="escalated-@c.Id">Escalated to <span class="text-muted">(needed for a confirmed match or unable to determine)</span></label>
+                <input id="escalated-@c.Id" name="escalatedTo" class="form-control form-control-sm" maxlength="200" placeholder="e.g. Managing Director, 2 Nov 2026" />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Save the outcome</button>
+            </div>
+        </form>
+    }
+
+    @if (Model.CanEdit && (outstanding || c.Status != SanctionsConcernStatus.Cleared || !closedByPortal))
+    {
+        <details class="small">
+            <summary>Add a note or supporting document</summary>
+            <form asp-action="AddNote" asp-route-id="@Model.ReviewId" method="post" enctype="multipart/form-data" class="row g-2 align-items-end mt-1">
+                <input type="hidden" name="concernId" value="@c.Id" />
+                <div class="col-md-6">
+                    <label class="form-label small" for="note-@c.Id">Note</label>
+                    <textarea id="note-@c.Id" name="text" class="form-control form-control-sm" rows="2" maxlength="4000" required></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small" for="file-@c.Id">Supporting document (optional)</label>
+                    <input id="file-@c.Id" name="file" type="file" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Add</button>
+                </div>
+            </form>
+        </details>
+    }
+
+</div>

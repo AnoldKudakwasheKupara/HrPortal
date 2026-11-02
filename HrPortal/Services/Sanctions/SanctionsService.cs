@@ -564,6 +564,15 @@ namespace HrPortal.Services.Sanctions
         private static ScreeningSubject ClientSubject(SanctionsClient c) =>
             new(Client, c.Id, c.Name, c.IdNumber);
 
+        /// <summary>What the client list gives about a client, for comparing side by side.</summary>
+        public static List<(string Label, string Value)> ClientDetails(SanctionsClient c) =>
+            new()
+            {
+                ("Client", c.Name),
+                ("Client reference", c.ClientReference ?? "Not recorded"),
+                ("ID number", c.IdNumber ?? "Not recorded")
+            };
+
         /// <summary>The client list screened: the latest one uploaded.</summary>
         public Task<SanctionsClientList?> CurrentClientListAsync() =>
             _context.SanctionsClientLists
@@ -588,7 +597,56 @@ namespace HrPortal.Services.Sanctions
                 subject.DateOfBirth?.ToString("yyyy-MM-dd") ?? "",
                 SanctionsListParser.Normalise(subject.Nationality))));
 
-        public async Task ResolveAsync(int concernId, SanctionsConcernStatus outcome, string resolution)
+        public const string EvidenceFolder = "sanctions-evidence";
+
+        /// <summary>
+        /// Whether an outcome can be recorded for a kind of matter, and
+        /// if not, why. A confirmed match, and anything that could not
+        /// be determined, must say who it was escalated to.
+        /// </summary>
+        public static string? CheckOutcome(
+            SanctionsConcernCategory category,
+            SanctionsConcernStatus outcome,
+            string? resolution,
+            string? escalatedTo)
+        {
+            if (string.IsNullOrWhiteSpace(resolution))
+                return "Write down what you found.";
+
+            var allowed = category == SanctionsConcernCategory.PossibleMatch
+                ? new[]
+                {
+                    SanctionsConcernStatus.Cleared, SanctionsConcernStatus.Confirmed,
+                    SanctionsConcernStatus.FurtherInvestigation, SanctionsConcernStatus.UnableToDetermine
+                }
+                : new[]
+                {
+                    SanctionsConcernStatus.Resolved,
+                    SanctionsConcernStatus.FurtherInvestigation, SanctionsConcernStatus.UnableToDetermine
+                };
+
+            if (!allowed.Contains(outcome))
+                return "Choose one of the outcomes offered.";
+
+            if (outcome is SanctionsConcernStatus.Confirmed or SanctionsConcernStatus.UnableToDetermine &&
+                string.IsNullOrWhiteSpace(escalatedTo))
+            {
+                return $"Say who the matter was escalated to: a {SanctionsText.Status(outcome).ToLowerInvariant()} must be escalated.";
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Records the outcome of a matter. Each outcome is also kept as
+        /// a note, so a matter first marked for further investigation
+        /// and later cleared shows both steps.
+        /// </summary>
+        public async Task ResolveAsync(
+            int concernId,
+            SanctionsConcernStatus outcome,
+            string resolution,
+            string? escalatedTo)
         {
             var concern = await _context.SanctionsConcerns
                 .Include(c => c.Review)
@@ -597,18 +655,164 @@ namespace HrPortal.Services.Sanctions
             if (concern.Review.FinalisedAt != null)
                 throw new InvalidOperationException("This review has been finalised.");
 
+            if (CheckOutcome(concern.Category, outcome, resolution, escalatedTo) is { } problem)
+                throw new InvalidOperationException(problem);
+
+            var who = await WhoAsync();
+            var now = DateTime.UtcNow;
+
             concern.Status = outcome;
-            concern.Resolution = resolution.Trim();
-            concern.ResolvedAt = DateTime.UtcNow;
-            concern.ResolvedByName = await WhoAsync();
+            concern.Resolution = Cap(resolution.Trim(), 4000);
+            concern.ResolvedAt = now;
+            concern.ResolvedByName = who;
+
+            if (!string.IsNullOrWhiteSpace(escalatedTo))
+            {
+                concern.EscalatedTo = Cap(escalatedTo.Trim(), 200);
+                concern.EscalatedAt ??= now;
+            }
+
+            _context.SanctionsConcernNotes.Add(new SanctionsConcernNote
+            {
+                SanctionsConcernId = concern.Id,
+                Text = Cap(
+                    $"Outcome: {SanctionsText.Status(outcome)}. {concern.Resolution}" +
+                    (concern.EscalatedTo == null ? "" : $" Escalated to {concern.EscalatedTo}."),
+                    4000)!,
+                CreatedAt = now,
+                CreatedByName = who
+            });
 
             await _context.SaveChangesAsync();
 
             await _audit.LogAsync(
-                AuditService.Updated,
+                AuditService.SanctionsMatterRecorded,
                 nameof(SanctionsConcern),
                 concern.Id.ToString(),
-                $"Matter on {concern.Review.ReviewNumber} marked {outcome}: {concern.Resolution}");
+                $"Matter on {concern.Review.ReviewNumber} recorded as {SanctionsText.Status(outcome)}: {concern.Resolution}" +
+                (concern.EscalatedTo == null ? "" : $" Escalated to {concern.EscalatedTo}."));
+        }
+
+        /// <summary>A comment on a matter, with a supporting file if one is given.</summary>
+        public async Task AddNoteAsync(int concernId, string text, IFormFile? file)
+        {
+            var concern = await _context.SanctionsConcerns
+                .Include(c => c.Review)
+                .FirstAsync(c => c.Id == concernId);
+
+            if (concern.Review.FinalisedAt != null)
+                throw new InvalidOperationException("This review has been finalised.");
+
+            var note = new SanctionsConcernNote
+            {
+                SanctionsConcernId = concern.Id,
+                Text = Cap(text.Trim(), 4000)!,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByName = await WhoAsync()
+            };
+
+            if (file != null && file.Length > 0)
+            {
+                if (FileStorageService.Validate(file) is { } problem)
+                    throw new InvalidOperationException(problem);
+
+                using var memory = new MemoryStream();
+                await file.CopyToAsync(memory);
+
+                var (_, path) = await _files.SaveAsync(file, EvidenceFolder);
+
+                note.FileName = Cap(Path.GetFileName(file.FileName), 255);
+                note.FilePath = path;
+                note.Sha256 = Sha256Of(memory.ToArray());
+            }
+
+            _context.SanctionsConcernNotes.Add(note);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                if (note.FilePath != null)
+                    _files.Delete(note.FilePath);
+                throw;
+            }
+
+            await _audit.LogAsync(
+                AuditService.SanctionsNoteAdded,
+                nameof(SanctionsConcern),
+                concern.Id.ToString(),
+                $"Note on a matter in {concern.Review.ReviewNumber}" +
+                (note.FileName == null ? "." : $", with {note.FileName} (SHA-256 {note.Sha256})."));
+        }
+
+        /// <summary>
+        /// Opens a matter the portal closed by itself, a similar name
+        /// set aside or a decision carried forward, so the officer can
+        /// look into it after all.
+        /// </summary>
+        public async Task ReopenAsync(int concernId)
+        {
+            var concern = await _context.SanctionsConcerns
+                .Include(c => c.Review)
+                .FirstAsync(c => c.Id == concernId);
+
+            if (concern.Review.FinalisedAt != null)
+                throw new InvalidOperationException("This review has been finalised.");
+
+            if (concern.ResolvedByName is not (SetAsideBy or CarriedForwardBy))
+                throw new InvalidOperationException("Only a matter the portal closed by itself can be reopened.");
+
+            var who = await WhoAsync();
+
+            _context.SanctionsConcernNotes.Add(new SanctionsConcernNote
+            {
+                SanctionsConcernId = concern.Id,
+                Text = $"Reopened to be looked into. It had been closed by the portal: {concern.Resolution}",
+                CreatedAt = DateTime.UtcNow,
+                CreatedByName = who
+            });
+
+            concern.Status = SanctionsConcernStatus.Open;
+            concern.Resolution = null;
+            concern.ResolvedAt = null;
+            concern.ResolvedByName = null;
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.SanctionsMatterRecorded,
+                nameof(SanctionsConcern),
+                concern.Id.ToString(),
+                $"Matter on {concern.Review.ReviewNumber} reopened.");
+        }
+
+        /// <summary>Matters that stop a review being finalised.</summary>
+        public static bool IsOutstanding(SanctionsConcern concern) =>
+            concern.Status is SanctionsConcernStatus.Open or SanctionsConcernStatus.FurtherInvestigation;
+
+        /// <summary>Why a review cannot be finalised yet, or nothing when it can.</summary>
+        public static List<string> FinaliseBlockers(SanctionsReview review)
+        {
+            var reasons = new List<string>();
+
+            if (review.FinalisedAt != null)
+                reasons.Add("It has already been finalised.");
+
+            if (!review.Screened)
+                reasons.Add("Staff, vendors and clients have not been checked yet.");
+
+            var open = review.Concerns.Count(c => c.Status == SanctionsConcernStatus.Open);
+            var further = review.Concerns.Count(c => c.Status == SanctionsConcernStatus.FurtherInvestigation);
+
+            if (open > 0)
+                reasons.Add($"{open} matter{(open == 1 ? " has" : "s have")} no outcome yet.");
+
+            if (further > 0)
+                reasons.Add($"{further} matter{(further == 1 ? " is" : "s are")} still under further investigation.");
+
+            return reasons;
         }
 
         /// <summary>
@@ -620,14 +824,8 @@ namespace HrPortal.Services.Sanctions
         {
             var review = await LoadAsync(reviewId);
 
-            if (review.FinalisedAt != null)
-                throw new InvalidOperationException("This review has already been finalised.");
-
-            if (!review.Screened)
-                throw new InvalidOperationException("Staff, vendors and clients have not been checked yet.");
-
-            if (review.Concerns.Any(c => c.Status == SanctionsConcernStatus.Open))
-                throw new InvalidOperationException("Every matter must be resolved before finalising.");
+            if (FinaliseBlockers(review) is { Count: > 0 } blockers)
+                throw new InvalidOperationException("It cannot be finalised yet. " + string.Join(" ", blockers));
 
             review.FinalisedAt = DateTime.UtcNow;
             review.FinalisedByName = await WhoAsync();
@@ -659,7 +857,7 @@ namespace HrPortal.Services.Sanctions
                 .Include(r => r.PreviousDocument)
                 .Include(r => r.ClientList)
                 .Include(r => r.Changes)
-                .Include(r => r.Concerns)
+                .Include(r => r.Concerns).ThenInclude(c => c.Notes)
                 .FirstAsync(r => r.Id == reviewId);
 
         public async Task<SanctionsClientList> UploadClientsAsync(IFormFile file)

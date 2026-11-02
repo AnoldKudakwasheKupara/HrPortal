@@ -1649,6 +1649,13 @@ namespace HrPortal.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<DateTime?>("EscalatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("EscalatedTo")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Evidence")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -1688,8 +1695,8 @@ namespace HrPortal.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("Strength")
                         .HasMaxLength(20)
@@ -1714,7 +1721,51 @@ namespace HrPortal.Migrations
 
                     b.HasIndex("SanctionsReviewId");
 
+                    b.HasIndex("SubjectType", "SubjectId", "Reference");
+
                     b.ToTable("SanctionsConcerns");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsConcernNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FileName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("SanctionsConcernId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SanctionsConcernId");
+
+                    b.ToTable("SanctionsConcernNotes");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.SanctionsDocument", b =>
@@ -2914,6 +2965,17 @@ namespace HrPortal.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.SanctionsConcernNote", b =>
+                {
+                    b.HasOne("HrPortal.Entities.SanctionsConcern", "Concern")
+                        .WithMany("Notes")
+                        .HasForeignKey("SanctionsConcernId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Concern");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.SanctionsEntry", b =>
                 {
                     b.HasOne("HrPortal.Entities.SanctionsDocument", "Document")
@@ -3187,6 +3249,11 @@ namespace HrPortal.Migrations
             modelBuilder.Entity("HrPortal.Entities.SanctionsClientList", b =>
                 {
                     b.Navigation("Clients");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.SanctionsConcern", b =>
+                {
+                    b.Navigation("Notes");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.SanctionsDocument", b =>
