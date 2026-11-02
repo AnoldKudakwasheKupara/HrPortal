@@ -415,7 +415,8 @@ namespace HrPortal.Services.Sanctions
                         c.ResolvedByName != CarriedForwardBy &&
                         c.ResolvedByName != SetAsideBy &&
                         (c.Status == SanctionsConcernStatus.Cleared ||
-                         c.Status == SanctionsConcernStatus.Confirmed))
+                         c.Status == SanctionsConcernStatus.Confirmed ||
+                         c.Status == SanctionsConcernStatus.UnableToDetermine))
                     .Select(c => new
                     {
                         c.Review.ReviewNumber,
@@ -427,7 +428,8 @@ namespace HrPortal.Services.Sanctions
                         c.Status,
                         c.Resolution,
                         c.ResolvedByName,
-                        c.ResolvedAt
+                        c.ResolvedAt,
+                        c.EscalatedTo
                     })
                     .ToListAsync())
                 .GroupBy(c => $"{c.SubjectType}|{c.SubjectId}|{c.Reference}")
@@ -500,11 +502,18 @@ namespace HrPortal.Services.Sanctions
                     {
                         concern.Evidence = Cap(
                             concern.Evidence + "\n" +
-                            (earlier.Status == SanctionsConcernStatus.Confirmed
-                                ? $"Earlier decision: confirmed as a match in {earlier.ReviewNumber} by " +
-                                  $"{earlier.ResolvedByName}. Check what has been done about it."
-                                : $"Earlier decision: cleared in {earlier.ReviewNumber}, but the listed " +
-                                  "entry or this person's details have changed since, so it is open again."),
+                            (earlier.Status switch
+                            {
+                                SanctionsConcernStatus.Confirmed =>
+                                    $"Earlier decision: confirmed as a match in {earlier.ReviewNumber} by " +
+                                    $"{earlier.ResolvedByName}. Check what has been done about it.",
+                                SanctionsConcernStatus.UnableToDetermine =>
+                                    $"Earlier decision: could not be determined in {earlier.ReviewNumber} and was " +
+                                    $"escalated to {earlier.EscalatedTo ?? "nobody recorded"}. Check whether it has been settled.",
+                                _ =>
+                                    $"Earlier decision: cleared in {earlier.ReviewNumber}, but the listed " +
+                                    "entry or this person's details have changed since, so it is open again."
+                            }),
                             2000);
                     }
 
