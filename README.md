@@ -167,5 +167,10 @@ the portal is Intellego. To add a company, say `mmc`:
    `icon-32.png`, `icon-180.png` and `icon-512.png`.
 3. Add its front page wording in `HrPortal/Views/Brands/mmc/_About.cshtml`. The
    page still works without it, showing no About section.
-4. Deploy a separate Render service and database with `Brand__Key` set to `mmc`.
-   The portal refuses to start if that company has no brand file.
+4. Deploy a separate Render service and database with `Brand__Key` set to the
+   company's key. The portal refuses to start if it has no brand file. MMC Capital's
+   is described in `render.mmc.yaml`: in Render choose **New → Blueprint**, pick this
+   repository and set the Blueprint path to that file. It needs its own email
+   settings, as above, and its own address.
+
+`dotnet test` checks every brand has its artwork and readable colours.
