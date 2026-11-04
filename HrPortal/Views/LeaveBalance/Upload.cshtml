@@ -50,6 +50,25 @@
         }
     }
 
+    @if (import != null && import.PartMatches.Any())
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Please check these names</div>
+            <div class="card-body">
+                <ul class="mb-2">
+                    @foreach (var match in import.PartMatches)
+                    {
+                        <li>@match</li>
+                    }
+                </ul>
+                <p class="small text-muted mb-0">
+                    The file gave only part of the name. If one is wrong, correct that person's balance
+                    under Leave Balances.
+                </p>
+            </div>
+        </div>
+    }
+
     @if (!types.Any())
     {
         <div class="alert alert-warning">

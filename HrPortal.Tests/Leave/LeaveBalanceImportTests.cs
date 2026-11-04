@@ -59,6 +59,50 @@ namespace HrPortal.Tests.Leave
             Assert.Contains(result.Problems, p => p.Contains("\"63111111\" is not a number"));
         }
 
+        [Theory]
+        [InlineData("Rudo", 1)]
+        [InlineData("Nyandoro", 1)]
+        [InlineData("Grace C", 4)]
+        public void Part_of_a_name_is_enough_when_it_fits_one_person_and_is_listed(string given, int id)
+        {
+            var employees = Employees.Append(new LeaveBalanceEmployee(4, "E004", "Grace Chikore", null)).ToList();
+
+            var result = LeaveBalanceImport.Parse(
+                ClientListReader.ReadTable(new MemoryStream(Encoding.UTF8.GetBytes($"Employee,LeaveDays C/fwd\n{given},7\n")), "b.csv"),
+                employees);
+
+            Assert.Equal(id, Assert.Single(result.Rows).EmployeeId);
+            Assert.Contains("was taken as", Assert.Single(result.PartMatches));
+        }
+
+        [Theory]
+        [InlineData("Tendai")]
+        [InlineData("Rudo X")]
+        [InlineData("Anorld")]
+        public void Part_of_a_name_is_not_guessed_at(string given)
+        {
+            var result = Parse($"Employee,Balance\n{given},7\n");
+
+            Assert.Empty(result.Rows);
+            Assert.Single(result.Problems);
+        }
+
+        [Fact]
+        public void Part_of_a_name_does_not_match_someone_who_has_left()
+        {
+            var result = LeaveBalanceImport.Parse(
+                ClientListReader.ReadTable(new MemoryStream(Encoding.UTF8.GetBytes("Employee,Balance\nOwen,7\n")), "b.csv"),
+                new[] { new LeaveBalanceEmployee(5, "E005", "Owen Dube", null, IsActive: false) });
+
+            Assert.Empty(result.Rows);
+        }
+
+        [Fact]
+        public void A_full_name_in_any_order_is_not_listed_for_checking()
+        {
+            Assert.Empty(Parse("Name,Days\nNyandoro Rudo,4\n").PartMatches);
+        }
+
         [Fact]
         public void A_file_without_the_right_columns_says_so()
         {

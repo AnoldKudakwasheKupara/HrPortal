@@ -92,9 +92,9 @@ namespace HrPortal.Controllers
             }
 
             var employees = (await _context.Employees.AsNoTracking()
-                    .Select(e => new { e.Id, e.EmployeeNumber, e.FirstName, e.LastName, e.Email })
+                    .Select(e => new { e.Id, e.EmployeeNumber, e.FirstName, e.LastName, e.Email, e.IsActive })
                     .ToListAsync())
-                .Select(e => new LeaveBalanceEmployee(e.Id, e.EmployeeNumber, $"{e.FirstName} {e.LastName}", e.Email))
+                .Select(e => new LeaveBalanceEmployee(e.Id, e.EmployeeNumber, $"{e.FirstName} {e.LastName}", e.Email, e.IsActive))
                 .ToList();
 
             var import = LeaveBalanceImport.Parse(table, employees);

@@ -4,7 +4,7 @@ using HrPortal.Services.Sanctions;
 
 namespace HrPortal.Services
 {
-    public sealed record LeaveBalanceEmployee(int Id, string Number, string Name, string? Email);
+    public sealed record LeaveBalanceEmployee(int Id, string Number, string Name, string? Email, bool IsActive = true);
 
     public sealed record LeaveBalanceRow(int RowNumber, int EmployeeId, string EmployeeName, decimal Days);
 
@@ -20,14 +20,19 @@ namespace HrPortal.Services
 
         /// <summary>Each row that was left out, and why.</summary>
         public List<string> Problems { get; } = new();
+
+        /// <summary>Rows matched on part of a name, for somebody to check.</summary>
+        public List<string> PartMatches { get; } = new();
     }
 
     /// <summary>
     /// Reads a file of leave balances: a column saying who (employee
     /// number, email or name) and a column with the days. A row with no
     /// days is skipped, so a template can be filled in part by part. A
-    /// row that cannot be tied to exactly one employee is left out and
-    /// reported, never guessed at.
+    /// name may be short, "Owen" or "Isaac Z", when it fits exactly one
+    /// active employee; those rows are listed for checking. A row that
+    /// cannot be tied to exactly one employee is left out and reported,
+    /// never guessed at.
     /// </summary>
     public static class LeaveBalanceImport
     {
@@ -47,7 +52,8 @@ namespace HrPortal.Services
         private static readonly string[] DaysHeadings =
         {
             "balance", "leave balance", "days", "leave days", "days balance", "leave days balance",
-            "annual leave", "annual leave balance", "annual leave days", "days remaining", "remaining"
+            "annual leave", "annual leave balance", "annual leave days", "days remaining", "remaining",
+            "leavedays c/fwd", "leave days c/fwd", "c/fwd"
         };
 
         public static LeaveBalanceImportResult Parse(
@@ -113,6 +119,14 @@ namespace HrPortal.Services
                     continue;
                 }
 
+                var given = table.Cell(row, name);
+
+                if (table.Cell(row, number) == null && table.Cell(row, email) == null &&
+                    given != null && NameKey(given) != NameKey(matches[0].Name))
+                {
+                    result.PartMatches.Add($"Row {rowNumber}: \"{given}\" was taken as {matches[0].Name}.");
+                }
+
                 result.Rows.Add(new LeaveBalanceRow(rowNumber, matches[0].Id, matches[0].Name, value));
             }
 
@@ -144,7 +158,33 @@ namespace HrPortal.Services
 
             var wanted = NameKey(name);
 
-            return employees.Where(e => NameKey(e.Name) == wanted).ToList();
+            var exact = employees.Where(e => NameKey(e.Name) == wanted).ToList();
+
+            return exact.Count > 0
+                ? exact
+                : employees.Where(e => e.IsActive && FitsPartOf(name, e.Name)).ToList();
+        }
+
+        /// <summary>
+        /// Whether every word given is a word of the full name, a single
+        /// letter counting as an initial, each used once.
+        /// </summary>
+        private static bool FitsPartOf(string given, string fullName)
+        {
+            var words = SanctionsListParser.Normalise(given).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var left = SanctionsListParser.Normalise(fullName).Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            foreach (var word in words.OrderByDescending(w => w.Length))
+            {
+                var at = left.FindIndex(w => w == word || (word.Length == 1 && w[0] == word[0]));
+
+                if (at < 0)
+                    return false;
+
+                left.RemoveAt(at);
+            }
+
+            return words.Length > 0;
         }
 
         private static string NameKey(string name) =>
