@@ -136,7 +136,8 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>
-        /// A file to fill in: every active employee, with what they have
+        /// A file to fill in: every active employee but interns, who have
+        /// no leave days, with what they have
         /// now where there is a balance already.
         /// </summary>
         public async Task<IActionResult> Template(int? leaveTypeId)
@@ -152,7 +153,7 @@ namespace HrPortal.Controllers
                         g => LeaveBalanceService.Available(g.OrderByDescending(b => b.Year).First()));
 
             var employees = await _context.Employees.AsNoTracking()
-                .Where(e => e.IsActive)
+                .Where(e => e.IsActive && e.EmploymentType != EmploymentType.Intern)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
                 .Select(e => new { e.Id, e.EmployeeNumber, e.FirstName, e.LastName })
@@ -280,6 +281,7 @@ namespace HrPortal.Controllers
             ViewBag.WithoutBalance = await _context.Employees
                 .CountAsync(e =>
                     e.IsActive &&
+                    e.EmploymentType != EmploymentType.Intern &&
                     !_context.LeaveBalances.Any(b => b.EmployeeId == e.Id && ratedIds.Contains(b.LeaveTypeId)));
 
             ViewBag.Years = years.OrderByDescending(y => y).ToList();

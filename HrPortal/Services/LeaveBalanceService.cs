@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +11,7 @@ namespace HrPortal.Services
     /// may go below zero, and carries across years. There is one row per
     /// year so past years can still be looked at, but only the latest is
     /// live, whatever year a request's dates fall in. Leave types without
-    /// a rate have no running balance.
+    /// a rate have no running balance, and interns have no leave days.
     /// </summary>
     public class LeaveBalanceService
     {
@@ -130,7 +130,8 @@ namespace HrPortal.Services
 
         /// <summary>
         /// Adds every month due to every active employee's balance, and
-        /// starts a balance for anyone who has just joined. It works from
+        /// starts a balance for anyone who has just joined. Interns are
+        /// left out of both. It works from
         /// the month each balance last earned, so a server that was off
         /// on the 1st catches up, and running it twice changes nothing.
         /// Returns how many months were added.
@@ -147,7 +148,12 @@ namespace HrPortal.Services
 
             var employees = await _context.Employees
                 .AsNoTracking()
-                .Select(e => new { e.Id, e.IsActive, e.DateJoined })
+                .Select(e => new
+                {
+                    e.Id,
+                    e.DateJoined,
+                    Earns = e.IsActive && e.EmploymentType != EmploymentType.Intern
+                })
                 .ToListAsync();
 
             var earned = 0;
@@ -163,7 +169,7 @@ namespace HrPortal.Services
 
                     if (row == null)
                     {
-                        if (!employee.IsActive || employee.DateJoined < thisMonth.AddMonths(-1))
+                        if (!employee.Earns || employee.DateJoined < thisMonth.AddMonths(-1))
                             continue;
 
                         row = new LeaveBalance
@@ -180,7 +186,7 @@ namespace HrPortal.Services
                         _context.LeaveBalances.Add(row);
                     }
 
-                    var added = employee.IsActive
+                    var added = employee.Earns
                         ? Earn(row, type.MonthlyAccrualDays, thisMonth)
                         : Skip(row, thisMonth);
 
@@ -240,8 +246,8 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Someone who has left earns nothing, and is not paid the
-        /// months in between should they come back.
+        /// Someone who has left or is an intern earns nothing, and is not
+        /// paid the months in between should that change.
         /// </summary>
         private static int Skip(LeaveBalance row, DateTime thisMonth)
         {

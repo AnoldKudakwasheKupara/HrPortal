@@ -33,7 +33,11 @@ namespace HrPortal.Tests.Leave
             _balances = new LeaveBalanceService(_db);
         }
 
-        private void AddEmployee(int id, DateTime joined, bool active = true) =>
+        private void AddEmployee(
+            int id,
+            DateTime joined,
+            bool active = true,
+            EmploymentType type = EmploymentType.Permanent) =>
             _db.Employees.Add(new Employee
             {
                 Id = id,
@@ -42,6 +46,7 @@ namespace HrPortal.Tests.Leave
                 LastName = $"Person{id}",
                 Email = $"e{id}@test.test",
                 DateJoined = joined,
+                EmploymentType = type,
                 IsActive = active
             });
 
@@ -236,6 +241,36 @@ namespace HrPortal.Tests.Leave
 
             Assert.Equal(2, Live(12).RemainingDays);
             Assert.DoesNotContain(_db.LeaveBalances, b => b.EmployeeId == Staff);
+        }
+
+        [Fact]
+        public async Task An_intern_who_just_joined_gets_no_balance()
+        {
+            AddEmployee(13, new DateTime(2026, 10, 28), type: EmploymentType.Intern);
+            await _db.SaveChangesAsync();
+
+            Assert.Equal(0, await _balances.EarnDueAsync(Nov4));
+            Assert.Equal(0, await _balances.EarnDueAsync(new DateTime(2026, 12, 1)));
+
+            Assert.DoesNotContain(_db.LeaveBalances, b => b.EmployeeId == 13);
+        }
+
+        [Fact]
+        public async Task An_intern_with_a_balance_earns_nothing_and_no_back_pay_if_taken_on()
+        {
+            AddEmployee(14, new DateTime(2020, 1, 1), type: EmploymentType.Intern);
+            await _db.SaveChangesAsync();
+
+            await _balances.SetBalanceAsync(14, Annual, 3, Nov4, "Upload");
+            await _balances.EarnDueAsync(new DateTime(2027, 2, 1));
+            Assert.Equal(3, Live(14).RemainingDays);
+
+            var employee = await _db.Employees.FindAsync(14);
+            employee!.EmploymentType = EmploymentType.Permanent;
+            await _db.SaveChangesAsync();
+
+            await _balances.EarnDueAsync(new DateTime(2027, 3, 1));
+            Assert.Equal(5, Live(14).RemainingDays);
         }
 
         [Fact]
