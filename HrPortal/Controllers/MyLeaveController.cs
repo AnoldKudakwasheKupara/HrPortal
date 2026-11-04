@@ -352,8 +352,12 @@ namespace HrPortal.Controllers
         /// </summary>
         private async Task LoadApplicationContext()
         {
+            var employee = await _currentUser.GetEmployeeAsync();
+
+            var intern = employee?.EmploymentType == EmploymentType.Intern;
+
             var leaveTypes = await _context.LeaveTypes
-                .Where(l => l.IsActive)
+                .Where(l => l.IsActive && !(intern && l.MonthlyAccrualDays > 0))
                 .OrderBy(l => l.Name)
                 .ToListAsync();
 
@@ -362,8 +366,6 @@ namespace HrPortal.Controllers
                     leaveTypes,
                     "Id",
                     "Name");
-
-            var employee = await _currentUser.GetEmployeeAsync();
 
             ViewBag.Applicant = employee;
 

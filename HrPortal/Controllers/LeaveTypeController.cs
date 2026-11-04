@@ -14,13 +14,59 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly AuditService _audit;
 
         public LeaveTypeController(
             ApplicationDbContext context,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            AuditService audit)
         {
             _context = context;
             _pdf = pdf;
+            _audit = audit;
+        }
+
+        /// <summary>
+        /// Removes a leave type that was never used. One with requests
+        /// or balances against it can only be deactivated, so that
+        /// history keeps its meaning.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var leaveType = await _context.LeaveTypes.FindAsync(id);
+
+            if (leaveType == null)
+                return NotFound();
+
+            var used =
+                await _context.LeaveRequests.AnyAsync(r => r.LeaveTypeId == id) ||
+                await _context.LeaveBalances.AnyAsync(b => b.LeaveTypeId == id) ||
+                await _context.LeaveBalanceEntries.AnyAsync(e => e.LeaveTypeId == id);
+
+            if (used)
+            {
+                TempData["Error"] =
+                    $"{leaveType.Name} has leave requests or balances against it, " +
+                    "so it cannot be deleted. Deactivate it instead.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            _context.LeaveTypes.Remove(leaveType);
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.Deleted,
+                nameof(LeaveType),
+                id.ToString(),
+                $"Leave type {leaveType.Name} deleted.");
+
+            TempData["Success"] = $"{leaveType.Name} deleted.";
+
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>

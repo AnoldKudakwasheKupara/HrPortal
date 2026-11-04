@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +43,29 @@ namespace HrPortal.Services
             int? excludeRequestId)
         {
             var result = new LeaveValidationResult();
+
+            var internAsksForEarnedLeave =
+                await _context.Employees.AnyAsync(e =>
+                    e.Id == employeeId &&
+                    e.EmploymentType == EmploymentType.Intern) &&
+                await _context.LeaveTypes.AnyAsync(t =>
+                    t.Id == leaveTypeId &&
+                    t.MonthlyAccrualDays > 0);
+
+            if (internAsksForEarnedLeave)
+            {
+                var typeName = await _context.LeaveTypes
+                    .Where(t => t.Id == leaveTypeId)
+                    .Select(t => t.Name)
+                    .FirstAsync();
+
+                result.Add(
+                    LeaveValidationResult.FormField,
+                    $"Interns do not have {typeName} days, so this request " +
+                    "cannot be made. Speak to HR if you need time off.");
+
+                return result;
+            }
 
             if (endDate.Date < startDate.Date)
             {

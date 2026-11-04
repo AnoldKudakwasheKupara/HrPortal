@@ -157,6 +157,24 @@
 
                                     </form>
 
+                                    @if (!leaveType.LeaveRequests.Any())
+                                    {
+                                        <form asp-action="Delete"
+                                              asp-route-id="@leaveType.Id"
+                                              method="post"
+                                              data-confirm="Delete the leave type @leaveType.Name? This cannot be undone."
+                                              onsubmit="return confirm(this.dataset.confirm);">
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+
+                                                Delete
+
+                                            </button>
+
+                                        </form>
+                                    }
+
                                 </div>
 
                             </td>
