@@ -1,4 +1,4 @@
-﻿@using HrPortal.Entities
+@using HrPortal.Entities
 @using HrPortal.Services
 @model HrPortal.ViewModels.MyLeaveIndexViewModel
 
@@ -57,7 +57,7 @@
                         <thead>
                             <tr>
                                 <th>Leave Type</th>
-                                <th>Allocated</th>
+                                <th>Opening + earned</th>
                                 <th>Used</th>
                                 <th>Pending</th>
                                 <th>Remaining</th>
@@ -74,7 +74,7 @@
                                 <td>@balance.UsedDays.ToString("0.##")</td>
                                 <td>@balance.PendingDays.ToString("0.##")</td>
                                 <td>
-                                    <span class="badge bg-success">
+                                    <span class="badge @(balance.RemainingDays < 0 ? "bg-danger" : "bg-success")">
                                         @balance.RemainingDays.ToString("0.##")
                                     </span>
                                 </td>
@@ -89,6 +89,18 @@
 
             </div>
 
+        </div>
+    }
+
+    @if (Model.Statement.Any())
+    {
+        <div class="card shadow-sm mb-4">
+            <details>
+                <summary class="card-header">How your balance was worked out</summary>
+                <div class="card-body">
+                    <partial name="_LeaveStatement" model="Model.Statement" />
+                </div>
+            </details>
         </div>
     }
 

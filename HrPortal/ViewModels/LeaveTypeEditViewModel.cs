@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HrPortal.ViewModels
 {
@@ -14,6 +14,10 @@ namespace HrPortal.ViewModels
         [Display(Name = "Description")]
         [StringLength(500)]
         public string? Description { get; set; }
+
+        [Display(Name = "Days earned per month")]
+        [Range(0, 31)]
+        public decimal MonthlyAccrualDays { get; set; }
 
         [Display(Name = "Active")]
         public bool IsActive { get; set; }

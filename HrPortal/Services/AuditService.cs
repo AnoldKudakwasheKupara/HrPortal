@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -38,6 +38,7 @@ namespace HrPortal.Services
         public const string VaultOpened = "Vault Opened";
         public const string VaultUnlockFailed = "Vault Unlock Failed";
         public const string VaultPasswordViewed = "Vault Password Viewed";
+        public const string LeaveBalancesUploaded = "Leave Balances Uploaded";
         public const string SanctionsUploaded = "Sanctions Document Uploaded";
         public const string SanctionsCompared = "Sanctions Documents Compared";
         public const string SanctionsScreened = "Sanctions Screening Run";

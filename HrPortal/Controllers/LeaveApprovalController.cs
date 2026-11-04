@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Security;
 using HrPortal.Services;
@@ -26,14 +26,17 @@ namespace HrPortal.Controllers
 
         private readonly LeaveApplicationPdfService _pdf;
         private readonly ListDocumentPdfService _lists;
+        private readonly LeaveBalanceService _balances;
 
         public LeaveApprovalController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
+            LeaveBalanceService balances,
             CurrentUserService currentUser,
             LeaveApplicationPdfService pdf,
             ListDocumentPdfService lists)
         {
+            _balances = balances;
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
@@ -264,13 +267,10 @@ namespace HrPortal.Controllers
             if (request == null || !await HasStandingAsync(request))
                 return NotFound();
 
-            var balance = await _context.LeaveBalances
-                .AsNoTracking()
-                .Include(b => b.LeaveType)
-                .FirstOrDefaultAsync(b =>
-                    b.EmployeeId == request.EmployeeId &&
-                    b.LeaveTypeId == request.LeaveTypeId &&
-                    b.Year == request.StartDate.Year);
+            var balance = await _balances.FindBalanceAsync(
+                request.EmployeeId,
+                request.LeaveTypeId,
+                request.StartDate.Year);
 
             var model = new LeaveApprovalViewModel
             {

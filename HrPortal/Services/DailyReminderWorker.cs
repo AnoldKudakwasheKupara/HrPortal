@@ -2,7 +2,8 @@ namespace HrPortal.Services
 {
     /// <summary>
     /// Runs the daily reminders: training coming up, and licences
-    /// and certifications about to expire.
+    /// and certifications about to expire. Also adds each month's leave
+    /// days to the balances, once the month has begun.
     ///
     /// It also runs shortly after the portal starts. A server that
     /// was off at seven in the morning would otherwise skip that
@@ -80,6 +81,25 @@ namespace HrPortal.Services
                 _logger.LogError(
                     ex,
                     "Could not send today's expiry reminders.");
+            }
+
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+
+                var balances = scope.ServiceProvider
+                    .GetRequiredService<LeaveBalanceService>();
+
+                var months = await balances.EarnDueAsync(DateTime.Today);
+
+                if (months > 0)
+                    _logger.LogInformation("Added {Months} month(s) of leave days to balances.", months);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Could not add this month's leave days.");
             }
         }
 

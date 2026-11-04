@@ -1,0 +1,104 @@
+@using HrPortal.Services
+@{
+    ViewData["Title"] = "Upload Leave Balances";
+
+    var types = ViewBag.RatedTypes as List<HrPortal.Entities.LeaveType> ?? new();
+    var import = ViewBag.Import as LeaveBalanceImportResult;
+}
+
+<div class="container">
+
+    <div class="page-head">
+        <div>
+            <h2>Upload Leave Balances</h2>
+            <p class="text-muted mb-0">
+                Sets what each employee has as of today. From then on the portal adds the monthly
+                days on the 1st and deducts approved leave.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (import != null)
+    {
+        <div class="alert @(import.Problems.Any() ? "alert-warning" : "alert-success")">
+            <strong>@ViewBag.Changed balance@((int)ViewBag.Changed == 1 ? "" : "s") set.</strong>
+            @ViewBag.Unchanged already had that figure,
+            @import.LeftBlank row@(import.LeftBlank == 1 ? "" : "s") left blank,
+            @import.Problems.Count left out.
+        </div>
+
+        @if (import.Problems.Any())
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">Rows left out</div>
+                <div class="card-body">
+                    <ul class="mb-2">
+                        @foreach (var problem in import.Problems)
+                        {
+                            <li>@problem</li>
+                        }
+                    </ul>
+                    <p class="small text-muted mb-0">The other rows went in. Fix these and upload them again.</p>
+                </div>
+            </div>
+        }
+    }
+
+    @if (!types.Any())
+    {
+        <div class="alert alert-warning">
+            No leave type earns days yet. Set <strong>Days earned per month</strong> on annual leave
+            under <a asp-controller="LeaveType" asp-action="Index">Leave Types</a> first.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <ol class="mb-3">
+                    <li>
+                        Download the
+                        <a asp-action="Template" asp-route-leaveTypeId="@types[0].Id">template</a>,
+                        which lists every active employee.
+                    </li>
+                    <li>
+                        Fill in <strong>Balance</strong> with the days each person has today, after any
+                        leave already approved and any days already earned this month. Leave a row
+                        blank to skip that person. A negative figure is allowed.
+                    </li>
+                    <li>Upload it here. You can upload again at any time to correct a figure.</li>
+                </ol>
+
+                <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label" for="leaveTypeId">Leave type</label>
+                            <select id="leaveTypeId" name="leaveTypeId" class="form-select">
+                                @foreach (var type in types)
+                                {
+                                    <option value="@type.Id">@type.Name (@type.MonthlyAccrualDays.ToString("0.##") days a month)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="file">File (.xlsx or .csv)</label>
+                            <input id="file" name="file" type="file" accept=".xlsx,.csv" class="form-control" required />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Upload</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    }
+
+</div>

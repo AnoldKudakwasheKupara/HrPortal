@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
@@ -54,7 +54,8 @@ namespace HrPortal.Controllers
 
             record.Section("Leave type", "How the type is set up")
                 .Add("Name", type.Name)
-                .Add("Active", type.IsActive);
+                .Add("Active", type.IsActive)
+                .Add("Days earned per month", type.MonthlyAccrualDays);
 
             record.Section($"Balances for {year}", "Across all staff")
                 .Add("Employees with a balance", balances.Count)
@@ -131,6 +132,7 @@ namespace HrPortal.Controllers
             {
                 Name = name,
                 Description = model.Description?.Trim(),
+                MonthlyAccrualDays = model.MonthlyAccrualDays,
                 IsActive = true
             };
 
@@ -160,6 +162,7 @@ namespace HrPortal.Controllers
                 Id = leaveType.Id,
                 Name = leaveType.Name,
                 Description = leaveType.Description,
+                MonthlyAccrualDays = leaveType.MonthlyAccrualDays,
                 IsActive = leaveType.IsActive
             };
 
@@ -202,6 +205,7 @@ namespace HrPortal.Controllers
 
             leaveType.Name = name;
             leaveType.Description = model.Description?.Trim();
+            leaveType.MonthlyAccrualDays = model.MonthlyAccrualDays;
             leaveType.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync();

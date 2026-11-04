@@ -1,0 +1,42 @@
+@using HrPortal.Entities
+@model IEnumerable<HrPortal.Entities.LeaveBalanceEntry>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>What happened</th>
+                <th class="num">Days</th>
+                <th class="num">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var entry in Model)
+        {
+            <tr>
+                <td>@entry.EntryDate.ToString("d MMM yyyy")</td>
+                <td>
+                    @(entry.Kind switch
+                    {
+                        LeaveBalanceEntryKind.Opening => "Balance set",
+                        LeaveBalanceEntryKind.Earned => "Earned",
+                        LeaveBalanceEntryKind.Taken => "Leave taken",
+                        _ => "Adjusted"
+                    })
+                    @if (entry.Note != null)
+                    {
+                        <span class="text-muted small d-block">@entry.Note</span>
+                    }
+                </td>
+                <td class="num">
+                    @(entry.Kind == LeaveBalanceEntryKind.Opening
+                        ? ""
+                        : entry.Days.ToString("+0.##;-0.##;0"))
+                </td>
+                <td class="num">@entry.BalanceAfter.ToString("0.##")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

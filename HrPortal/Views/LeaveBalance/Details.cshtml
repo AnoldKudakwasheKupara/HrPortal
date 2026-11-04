@@ -1,4 +1,4 @@
-﻿@model HrPortal.Entities.LeaveBalance
+@model HrPortal.Entities.LeaveBalance
 
 @{
     ViewData["Title"] = "Leave Balance Details";
@@ -146,5 +146,15 @@
         </div>
 
     </div>
+
+    @if (ViewBag.Statement is List<HrPortal.Entities.LeaveBalanceEntry> statement && statement.Any())
+    {
+        <div class="card shadow-sm mt-4">
+            <div class="card-header">How the balance was worked out</div>
+            <div class="card-body">
+                <partial name="_LeaveStatement" model="statement" />
+            </div>
+        </div>
+    }
 
 </div>

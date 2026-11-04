@@ -1,4 +1,4 @@
-﻿using HrPortal.Entities;
+using HrPortal.Entities;
 using HrPortal.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +21,7 @@ namespace HrPortal.DbContexts
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestHistory> LeaveRequestHistories { get; set; }
         public DbSet<LeaveBalance> LeaveBalances { get; set; }
+        public DbSet<LeaveBalanceEntry> LeaveBalanceEntries { get; set; }
         public DbSet<TrainingCourse> TrainingCourses { get; set; }
         public DbSet<TrainingMaterial> TrainingMaterials { get; set; }
 
@@ -169,6 +170,9 @@ namespace HrPortal.DbContexts
             {
                 entity.HasKey(l => l.Id);
 
+                entity.Property(t => t.MonthlyAccrualDays)
+                    .HasPrecision(5, 2);
+
                 entity.Property(l => l.Name)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -271,6 +275,30 @@ namespace HrPortal.DbContexts
                     l.LeaveTypeId,
                     l.Year
                 }).IsUnique();
+            });
+
+            builder.Entity<LeaveBalanceEntry>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+                entity.Property(e => e.Days).HasPrecision(10, 2);
+                entity.Property(e => e.BalanceAfter).HasPrecision(10, 2);
+                entity.Property(e => e.Note).HasMaxLength(500);
+                entity.Property(e => e.Period).HasMaxLength(7);
+
+                entity.HasOne(e => e.Employee)
+                    .WithMany()
+                    .HasForeignKey(e => e.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.LeaveType)
+                    .WithMany()
+                    .HasForeignKey(e => e.LeaveTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.Period })
+                    .IsUnique()
+                    .HasFilter("\"Period\" IS NOT NULL");
             });
 
             builder.Entity<TrainingCourse>(entity =>

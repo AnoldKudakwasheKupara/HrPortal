@@ -1,4 +1,4 @@
-﻿@model HrPortal.ViewModels.LeaveTypeEditViewModel
+@model HrPortal.ViewModels.LeaveTypeEditViewModel
 
 @{
     ViewData["Title"] = "Edit Leave Type";
@@ -61,6 +61,29 @@
                     </textarea>
 
                     <span asp-validation-for="Description"
+                          class="text-danger">
+                    </span>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label asp-for="MonthlyAccrualDays"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="MonthlyAccrualDays"
+                           class="form-control"
+                           style="max-width: 12rem;"
+                           step="0.25"
+                           min="0" />
+
+                    <div class="form-text">
+                        Days each employee gains on the 1st of every month. Leave at 0 if
+                        this type has no balance.
+                    </div>
+
+                    <span asp-validation-for="MonthlyAccrualDays"
                           class="text-danger">
                     </span>
 

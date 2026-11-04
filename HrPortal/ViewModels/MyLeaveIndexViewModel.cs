@@ -1,4 +1,4 @@
-﻿using HrPortal.Entities;
+using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
@@ -7,5 +7,7 @@ namespace HrPortal.ViewModels
         public List<LeaveRequest> Requests { get; set; } = new();
 
         public List<LeaveBalance> Balances { get; set; } = new();
+
+        public List<LeaveBalanceEntry> Statement { get; set; } = new();
     }
 }

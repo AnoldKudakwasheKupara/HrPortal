@@ -1,4 +1,4 @@
-﻿@model HrPortal.ViewModels.LeaveApprovalViewModel
+@model HrPortal.ViewModels.LeaveApprovalViewModel
 
 @{
     ViewData["Title"] = "Review Leave Request";
@@ -130,10 +130,18 @@
 
             <div class="card-body">
 
+                @if (Model.Balance.RemainingDays < 0)
+                {
+                    <div class="alert alert-warning">
+                        This leave takes the balance below zero, to
+                        <strong>@Model.Balance.RemainingDays.ToString("0.##") days</strong>.
+                    </div>
+                }
+
                 <div class="row text-center">
 
                     <div class="col">
-                        <span class="field-label">Allocated</span>
+                        <span class="field-label">Opening + earned</span>
                         <div class="field-value">@Model.Balance.AllocatedDays.ToString("0.##")</div>
                     </div>
 

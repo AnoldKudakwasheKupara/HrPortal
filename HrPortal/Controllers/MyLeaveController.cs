@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.ViewModels;
@@ -22,13 +22,17 @@ namespace HrPortal.Controllers
 
         private readonly LeaveApplicationPdfService _pdf;
 
+        private readonly LeaveBalanceService _balances;
+
         public MyLeaveController(
             ApplicationDbContext context,
             LeaveWorkflowService workflow,
+            LeaveBalanceService balances,
             CurrentUserService currentUser,
             IAuthorizationService authorization,
             LeaveApplicationPdfService pdf)
         {
+            _balances = balances;
             _context = context;
             _workflow = workflow;
             _currentUser = currentUser;
@@ -60,6 +64,12 @@ namespace HrPortal.Controllers
                     .ToListAsync()
             };
 
+            foreach (var balance in model.Balances.Where(b => b.LeaveType.MonthlyAccrualDays > 0))
+            {
+                model.Statement.AddRange(
+                    await _balances.StatementAsync(employeeId.Value, balance.LeaveTypeId));
+            }
+
             return View(model);
         }
 
@@ -75,12 +85,10 @@ namespace HrPortal.Controllers
             if (request == null)
                 return NotFound();
 
-            ViewBag.Balance = await _context.LeaveBalances
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b =>
-                    b.EmployeeId == request.EmployeeId &&
-                    b.LeaveTypeId == request.LeaveTypeId &&
-                    b.Year == request.StartDate.Year);
+            ViewBag.Balance = await _balances.FindBalanceAsync(
+                request.EmployeeId,
+                request.LeaveTypeId,
+                request.StartDate.Year);
 
             return View(request);
         }

@@ -795,6 +795,9 @@ namespace HrPortal.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<DateTime?>("EarnedThrough")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("EmployeeId")
                         .HasColumnType("integer");
 
@@ -824,6 +827,55 @@ namespace HrPortal.Migrations
                         .IsUnique();
 
                     b.ToTable("LeaveBalances");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LeaveBalanceEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("Days")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EntryDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("LeaveTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Period")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "Period")
+                        .IsUnique()
+                        .HasFilter("\"Period\" IS NOT NULL");
+
+                    b.ToTable("LeaveBalanceEntries");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.LeaveRequest", b =>
@@ -940,6 +992,10 @@ namespace HrPortal.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal>("MonthlyAccrualDays")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -2797,6 +2853,25 @@ namespace HrPortal.Migrations
                 });
 
             modelBuilder.Entity("HrPortal.Entities.LeaveBalance", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.LeaveBalanceEntry", b =>
                 {
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
                         .WithMany()

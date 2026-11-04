@@ -1,4 +1,4 @@
-﻿using HrPortal.Security;
+using HrPortal.Security;
 
 namespace HrPortal.Entities
 {
@@ -19,6 +19,9 @@ namespace HrPortal.Entities
         public decimal PendingDays { get; set; }
 
         public decimal RemainingDays { get; set; }
+
+        /// <summary>The first of the last month earned; empty until it starts earning.</summary>
+        public DateTime? EarnedThrough { get; set; }
 
         public Employee Employee { get; set; } = null!;
 

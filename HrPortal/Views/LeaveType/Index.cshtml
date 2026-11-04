@@ -1,4 +1,4 @@
-﻿@model IEnumerable<HrPortal.Entities.LeaveType>
+@model IEnumerable<HrPortal.Entities.LeaveType>
 
 @{
     ViewData["Title"] = "Leave Types";
@@ -50,6 +50,7 @@
                         <tr>
                             <th>Leave Type</th>
                             <th>Description</th>
+                            <th>Earned per month</th>
                             <th>Requests</th>
                             <th>Status</th>
                             <th class="col-actions">Actions</th>
@@ -61,7 +62,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="5"
+                            <td colspan="6"
                                 class="text-center text-muted py-4">
                                 No leave types have been added yet.
                             </td>
@@ -90,6 +91,12 @@
                                         No description
                                     </span>
                                 }
+                            </td>
+
+                            <td>
+                                @(leaveType.MonthlyAccrualDays > 0
+                                    ? $"{leaveType.MonthlyAccrualDays:0.##} days"
+                                    : "No balance")
                             </td>
 
                             <td>

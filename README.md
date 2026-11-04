@@ -130,3 +130,11 @@ from a similarity of 75 out of 100; to raise fewer, set
 `Sanctions__NameMatchThreshold` higher (60 to 99). It reads PDFs that
 contain text; a scanned image is kept but reported as unreadable, to be
 checked by hand.
+
+Leave balances: a leave type with **Days earned per month** set (Leave
+Types) has a running balance per employee. HR uploads the starting figures
+under Leave Balances → Upload Balances. The portal adds the monthly days on
+the 1st, catching up any months missed while it was off, deducts leave at
+final approval, allows the balance to go below zero, and carries it across
+years. Each change is listed on the balance's page and on the employee's My
+Leave page.
