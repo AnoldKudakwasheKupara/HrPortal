@@ -111,17 +111,12 @@ New-ManagementRoleAssignment -App <enterprise app object id> -Role "Application 
 Granting Mail.Send in Entra as well would let the app send as anyone, so
 leave it out there.
 
-The password vault (Administrators → Password Vault) encrypts what it
-stores with a key held only in the service's settings, never in the
-database. Make one on your own computer and set it as `Vault__Key`:
-
-```powershell
-[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-```
-
-Keep a copy somewhere safe away from Render. A restored backup's vault
-can only be read with the same key, and changing the key makes anything
-already stored unreadable.
+The password vault (Administrators → Password Vault) holds a service,
+username and password for each local system. There is nothing to set up: the
+portal makes its encryption key the first time it is needed and keeps it in
+`App_Data/keys/vault.key`, on the persistent disk. Backups include the key, so
+keep them safe, and do not delete that file: anything stored becomes unreadable
+without it.
 
 Sanctions screening (Compliance → Sanctions Screening) is open only to
 users with the Compliance Officer role; administrators do not see it

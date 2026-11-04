@@ -1,12 +1,12 @@
 namespace HrPortal.Entities
 {
     /// <summary>
-    /// A login the IT team shares: the office router, the Wi-Fi, a
-    /// supplier's portal, a software licence account.
+    /// A login for one of the company's local systems: the service, the
+    /// username and the password. Category, Url and EncryptedNotes are no
+    /// longer asked for.
     ///
-    /// The password and the notes are held encrypted. The key is not
-    /// in the database, so neither the database nor a backup of it is
-    /// enough to read them.
+    /// The password is held encrypted. The key is not in the database,
+    /// so the database alone is not enough to read it.
     /// </summary>
     public class VaultEntry
     {

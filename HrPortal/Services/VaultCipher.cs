@@ -4,13 +4,14 @@ using System.Text;
 namespace HrPortal.Services
 {
     /// <summary>
-    /// Encrypts what goes in the password vault with AES-256-GCM,
-    /// under a key read from Vault:Key: 32 random bytes, base64. It
-    /// lives in the host's settings and nowhere in the database, so
-    /// the database alone, or a backup of it, reads as noise.
+    /// Encrypts what goes in the password vault with AES-256-GCM. The
+    /// portal makes its own key the first time it is needed and keeps it
+    /// on the server's disk, beside the sign-in keys and outside the
+    /// database, so there is nothing to set up. Vault:Key, 32 random bytes
+    /// in base64, takes its place if it is set.
     ///
-    /// Losing the key loses the vault, so it should also be kept
-    /// somewhere safe away from the server.
+    /// The key goes in the portal's backups, because losing it loses the
+    /// vault.
     /// </summary>
     public class VaultCipher
     {
@@ -25,36 +26,76 @@ namespace HrPortal.Services
         private static readonly byte[] Purpose =
             Encoding.UTF8.GetBytes("HrPortal.Vault.v1");
 
-        private readonly byte[]? _key;
+        private readonly byte[] _key;
 
-        public VaultCipher(IConfiguration configuration)
+        public VaultCipher(IConfiguration configuration, IWebHostEnvironment environment)
         {
             var configured = configuration[KeySetting];
 
-            if (string.IsNullOrWhiteSpace(configured))
-                return;
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                _key = Parse(configured.Trim())
+                    ?? throw new InvalidOperationException($"{KeySetting} is not a 32 byte base64 key.");
 
+                return;
+            }
+
+            KeyFilePath = Path.Combine(environment.ContentRootPath, "App_Data", "keys", "vault.key");
+
+            _key = LoadOrCreate(KeyFilePath);
+        }
+
+        /// <summary>Where the key is kept, when the portal made it itself.</summary>
+        public string? KeyFilePath { get; }
+
+        private static byte[]? Parse(string text)
+        {
             try
             {
-                var key = Convert.FromBase64String(configured.Trim());
+                var key = Convert.FromBase64String(text);
 
-                if (key.Length == 32)
-                    _key = key;
+                return key.Length == 32 ? key : null;
             }
             catch (FormatException)
             {
+                return null;
             }
         }
 
-        /// <summary>
-        /// Whether a usable key is set. Without one the vault says
-        /// how to set it up and stores nothing.
-        /// </summary>
-        public bool IsReady => _key != null;
+        private static byte[] LoadOrCreate(string path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+            if (!File.Exists(path))
+            {
+                try
+                {
+                    var options = new FileStreamOptions
+                    {
+                        Mode = FileMode.CreateNew,
+                        Access = FileAccess.Write
+                    };
+
+                    if (!OperatingSystem.IsWindows())
+                        options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
+                    using var file = new FileStream(path, options);
+
+                    file.Write(Encoding.ASCII.GetBytes(
+                        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))));
+                }
+                catch (IOException) when (File.Exists(path))
+                {
+                }
+            }
+
+            return Parse(File.ReadAllText(path).Trim())
+                ?? throw new InvalidOperationException($"{path} does not hold a 32 byte base64 key.");
+        }
 
         public string Encrypt(string plain)
         {
-            var key = _key ?? throw NotReady();
+            var key = _key;
 
             var nonce = RandomNumberGenerator.GetBytes(NonceSize);
             var data = Encoding.UTF8.GetBytes(plain);
@@ -77,7 +118,7 @@ namespace HrPortal.Services
 
         public string Decrypt(string stored)
         {
-            var key = _key ?? throw NotReady();
+            var key = _key;
 
             if (!stored.StartsWith(Prefix, StringComparison.Ordinal))
                 throw new CryptographicException("Not a vault value.");
@@ -97,8 +138,5 @@ namespace HrPortal.Services
 
             return Encoding.UTF8.GetString(plain);
         }
-
-        private static InvalidOperationException NotReady() =>
-            new($"{KeySetting} is not set to a 32 byte base64 key.");
     }
 }

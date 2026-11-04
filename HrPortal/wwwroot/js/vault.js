@@ -1,33 +1,10 @@
 (function () {
-    var alphabet =
-        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!#$%&*+-=?@_";
-
-    function generate(length) {
-        var out = "";
-        var limit = 256 - (256 % alphabet.length);
-        var bytes = new Uint8Array(1);
-        while (out.length < length) {
-            crypto.getRandomValues(bytes);
-            if (bytes[0] < limit) out += alphabet[bytes[0] % alphabet.length];
-        }
-        return out;
-    }
-
     document.addEventListener("click", function (event) {
-        var gen = event.target.closest("[data-vault-generate]");
         var toggle = event.target.closest("[data-vault-show-input]");
-        if (!gen && !toggle) return;
+        if (!toggle) return;
 
         var input = event.target.closest(".input-group")
             .querySelector("[data-vault-password-input]");
-
-        if (gen) {
-            input.value = generate(20);
-            input.type = "text";
-            toggle = input.parentElement.querySelector("[data-vault-show-input]");
-            toggle.textContent = "Hide";
-            return;
-        }
 
         var showing = input.type === "text";
         input.type = showing ? "password" : "text";
@@ -68,21 +45,13 @@
 
     function hide(row) {
         row.querySelector("[data-vault-password]").textContent = masked;
-        var notes = row.querySelector("[data-vault-notes]");
-        notes.textContent = "";
-        notes.hidden = true;
-        row.querySelector("[data-vault-reveal]").textContent = "Reveal";
+        row.querySelector("[data-vault-reveal]").textContent = "Show";
         clearTimeout(row._vaultTimer);
         row._vaultTimer = null;
     }
 
     function show(row, secret) {
         row.querySelector("[data-vault-password]").textContent = secret.password;
-        var notes = row.querySelector("[data-vault-notes]");
-        if (secret.notes) {
-            notes.textContent = secret.notes;
-            notes.hidden = false;
-        }
         row.querySelector("[data-vault-reveal]").textContent = "Hide";
         clearTimeout(row._vaultTimer);
         row._vaultTimer = setTimeout(function () { hide(row); }, hideAfter);

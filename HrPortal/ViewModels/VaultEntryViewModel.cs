@@ -8,19 +8,12 @@ namespace HrPortal.ViewModels
 
         [Required]
         [StringLength(150)]
-        [Display(Name = "What it is for")]
+        [Display(Name = "Service")]
         public string Name { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string? Category { get; set; }
 
         [StringLength(200)]
         [Display(Name = "Username")]
         public string? Username { get; set; }
-
-        [StringLength(500)]
-        [Display(Name = "Web address")]
-        public string? Url { get; set; }
 
         /// <summary>
         /// Required when adding. When editing, left blank keeps the
@@ -29,8 +22,5 @@ namespace HrPortal.ViewModels
         [StringLength(500)]
         [DataType(DataType.Password)]
         public string? Password { get; set; }
-
-        [StringLength(4000)]
-        public string? Notes { get; set; }
     }
 }

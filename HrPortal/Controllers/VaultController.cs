@@ -15,7 +15,8 @@ using Microsoft.EntityFrameworkCore;
 namespace HrPortal.Controllers
 {
     /// <summary>
-    /// The IT team's shared passwords. Administrators only, behind a
+    /// Passwords for the company's local systems: a service, a username
+    /// and a password. Administrators only, behind a
     /// second password check, with every reveal, change and removal
     /// written to the audit log. The passwords themselves are never
     /// logged and never sent to the browser until somebody asks to
@@ -51,20 +52,14 @@ namespace HrPortal.Controllers
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         /// <summary>
-        /// Every page but the unlock page needs the key set up and
-        /// the vault open. Nothing from the vault is ever cached.
+        /// Every page but the unlock page needs the vault open. Nothing
+        /// from the vault is ever cached.
         /// </summary>
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             Response.Headers.CacheControl = "no-store";
 
             var action = context.ActionDescriptor.RouteValues["action"];
-
-            if (!_cipher.IsReady)
-            {
-                context.Result = View("NotSetUp");
-                return;
-            }
 
             if (action is nameof(Unlock) or nameof(Lock))
                 return;
@@ -137,7 +132,7 @@ namespace HrPortal.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        public async Task<IActionResult> Index(string? search, string? category)
+        public async Task<IActionResult> Index(string? search)
         {
             var entries = _context.VaultEntries.AsNoTracking();
 
@@ -147,20 +142,13 @@ namespace HrPortal.Controllers
 
                 entries = entries.Where(e =>
                     EF.Functions.ILike(e.Name, term) ||
-                    (e.Username != null && EF.Functions.ILike(e.Username, term)) ||
-                    (e.Url != null && EF.Functions.ILike(e.Url, term)));
+                    (e.Username != null && EF.Functions.ILike(e.Username, term)));
             }
 
-            if (!string.IsNullOrWhiteSpace(category))
-                entries = entries.Where(e => e.Category == category);
-
             ViewBag.Search = search;
-            ViewBag.CategoryFilter = category;
-            ViewBag.Categories = await Categories();
 
             return View(await entries
-                .OrderBy(e => e.Category)
-                .ThenBy(e => e.Name)
+                .OrderBy(e => e.Name)
                 .ToListAsync());
         }
 
@@ -190,10 +178,7 @@ namespace HrPortal.Controllers
             {
                 return Json(new
                 {
-                    password = _cipher.Decrypt(entry.EncryptedPassword),
-                    notes = entry.EncryptedNotes == null
-                        ? null
-                        : _cipher.Decrypt(entry.EncryptedNotes)
+                    password = _cipher.Decrypt(entry.EncryptedPassword)
                 });
             }
             catch (CryptographicException)
@@ -205,21 +190,15 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>
-        /// What to say when a stored value will not decrypt, which
-        /// only happens when Vault:Key has been changed since it was
-        /// saved.
+        /// What to say when a stored value will not decrypt, which only
+        /// happens when the vault's key has been lost or replaced.
         /// </summary>
         private static string WrongKey(VaultEntry entry) =>
             $"{entry.Name} was saved under a different vault key and " +
             "cannot be read with the current one. Put the original " +
-            "Vault__Key back, or store the password again.";
+            "key back, or store the password again.";
 
-        public async Task<IActionResult> Create()
-        {
-            ViewBag.Categories = await Categories();
-
-            return View(new VaultEntryViewModel());
-        }
+        public IActionResult Create() => View(new VaultEntryViewModel());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -233,21 +212,13 @@ namespace HrPortal.Controllers
             }
 
             if (!ModelState.IsValid)
-            {
-                ViewBag.Categories = await Categories();
                 return View(model);
-            }
 
             var entry = new VaultEntry
             {
                 Name = model.Name.Trim(),
-                Category = Tidy(model.Category),
                 Username = Tidy(model.Username),
-                Url = Tidy(model.Url),
                 EncryptedPassword = _cipher.Encrypt(model.Password!),
-                EncryptedNotes = string.IsNullOrWhiteSpace(model.Notes)
-                    ? null
-                    : _cipher.Encrypt(model.Notes.Trim()),
                 PasswordChangedAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByName = await _currentUser.GetDisplayNameAsync()
@@ -277,41 +248,11 @@ namespace HrPortal.Controllers
             if (entry == null)
                 return NotFound();
 
-            if (entry.EncryptedNotes != null)
-            {
-                await _audit.LogAsync(
-                    AuditService.VaultPasswordViewed,
-                    nameof(VaultEntry),
-                    entry.Id.ToString(),
-                    $"Notes for {entry.Name} shown for editing.");
-            }
-
-            string? notes;
-
-            try
-            {
-                notes = entry.EncryptedNotes == null
-                    ? null
-                    : _cipher.Decrypt(entry.EncryptedNotes);
-            }
-            catch (CryptographicException)
-            {
-                TempData["Error"] = WrongKey(entry);
-
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewBag.Categories = await Categories();
-            ViewBag.PasswordChangedAt = entry.PasswordChangedAt;
-
             return View(new VaultEntryViewModel
             {
                 Id = entry.Id,
                 Name = entry.Name,
-                Category = entry.Category,
-                Username = entry.Username,
-                Url = entry.Url,
-                Notes = notes
+                Username = entry.Username
             });
         }
 
@@ -328,21 +269,12 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             if (!ModelState.IsValid)
-            {
-                ViewBag.Categories = await Categories();
-                ViewBag.PasswordChangedAt = entry.PasswordChangedAt;
                 return View(model);
-            }
 
             var passwordChanged = !string.IsNullOrEmpty(model.Password);
 
             entry.Name = model.Name.Trim();
-            entry.Category = Tidy(model.Category);
             entry.Username = Tidy(model.Username);
-            entry.Url = Tidy(model.Url);
-            entry.EncryptedNotes = string.IsNullOrWhiteSpace(model.Notes)
-                ? null
-                : _cipher.Encrypt(model.Notes.Trim());
 
             if (passwordChanged)
             {
@@ -390,15 +322,6 @@ namespace HrPortal.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-        private Task<List<string>> Categories() =>
-            _context.VaultEntries
-                .AsNoTracking()
-                .Where(e => e.Category != null)
-                .Select(e => e.Category!)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToListAsync();
 
         private static string? Tidy(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();

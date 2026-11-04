@@ -24,13 +24,16 @@ namespace HrPortal.Services
         private readonly FileStorageService _files;
         private readonly IConfiguration _configuration;
         private readonly ILogger<BackupService> _logger;
+        private readonly VaultCipher _vault;
 
         public BackupService(
             ApplicationDbContext context,
             FileStorageService files,
             IConfiguration configuration,
-            ILogger<BackupService> logger)
+            ILogger<BackupService> logger,
+            VaultCipher vault)
         {
+            _vault = vault;
             _context = context;
             _files = files;
             _configuration = configuration;
@@ -91,6 +94,15 @@ namespace HrPortal.Services
                     await DumpDatabaseAsync(pgDump, zip, cancellationToken);
 
                     var fileCount = await AddUploadsAsync(zip, cancellationToken);
+
+                    if (_vault.KeyFilePath != null)
+                    {
+                        await WriteTextAsync(
+                            zip,
+                            "vault.key",
+                            await File.ReadAllTextAsync(_vault.KeyFilePath, cancellationToken),
+                            cancellationToken);
+                    }
 
                     await WriteTextAsync(
                         zip,
@@ -254,9 +266,10 @@ namespace HrPortal.Services
               3. Start the portal. Everyone signs in again, because the keys
                  that protect sign-ins are not part of a backup.
 
-            The password vault is in the database but encrypted. Reading it
-            after a restore needs the same Vault__Key setting the portal
-            had, which is deliberately not in this file.
+            The password vault is in the database, encrypted. To read it after a
+            restore, copy vault.key from this file into App_Data/keys/ beside
+            the portal. Anyone with this backup can read those passwords, so
+            keep it somewhere safe.
             """;
     }
 }
