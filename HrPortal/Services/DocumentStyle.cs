@@ -17,14 +17,14 @@ namespace HrPortal.Services
     public static class DocumentStyle
     {
 
-        /// <summary>The leading accent from intellego-ic.com.</summary>
-        public const string Teal = "#018080";
+        /// <summary>The leading accent from the company's website.</summary>
+        public static string Teal => Brand.Current.Colors.Link;
 
         /// <summary>Section titles and the company name.</summary>
-        public const string Green = "#10675d";
+        public static string Green => Brand.Current.Colors.Primary;
 
         /// <summary>The big section numerals and the footer rule.</summary>
-        public const string Gold = "#8a7a28";
+        public static string Gold => Brand.Current.Colors.PrintGold;
 
         /// <summary>Body text. Warmer and softer than pure black.</summary>
         public const string Ink = "#3f4245";
@@ -48,9 +48,9 @@ namespace HrPortal.Services
         public const string Wash = "#f1f3f4";
 
         /// <summary>Tints behind the employee card and the pledge.</summary>
-        public const string Mint = "#dceee7";
+        public static string Mint => Brand.Current.Colors.PrintMint;
 
-        public const string MintPale = "#f0f8f4";
+        public static string MintPale => Brand.Current.Colors.PrintMintPale;
 
         /// <summary>Required marks, and the declined box.</summary>
         public const string Alert = "#d93025";
@@ -148,15 +148,14 @@ namespace HrPortal.Services
                                     right.Item().AlignRight().PaddingTop(1)
                                         .Text(reference)
                                         .FontSize(11)
-                                        .FontColor("#d8ece5");
+                                        .FontColor(Brand.Current.Colors.PrintOnBanner);
                                 }
 
                                 right.Item().AlignRight().PaddingTop(8)
-                                    .Text("INVESTING IN PEOPLE  |  " +
-                                          "BUILDING TOMORROW")
+                                    .Text(Brand.Current.Tagline.ToUpperInvariant().Replace(" | ", "  |  "))
                                     .FontSize(6.5f)
                                     .SemiBold()
-                                    .FontColor("#c9b878")
+                                    .FontColor(Brand.Current.Colors.PrintOnBannerAccent)
                                     .LetterSpacing(0.16f);
                             });
                     });
@@ -171,7 +170,7 @@ namespace HrPortal.Services
                 return;
             }
 
-            container.Text("INTELLEGO INVESTMENT\nCONSULTANTS (PVT) LTD")
+            container.Text(Brand.Current.LetterheadName)
                 .FontSize(11)
                 .Bold()
                 .FontColor(Colors.White)
@@ -181,7 +180,7 @@ namespace HrPortal.Services
         private const float BannerHeight = 82f;
 
         /// <summary>The flat green the banner is painted.</summary>
-        private const string BannerBase = "#0b4b3e";
+        private static string BannerBase => Brand.Current.Colors.PrintBanner;
 
         /// <summary>
         /// The depth and the gold sweep over the flat green. Every
@@ -189,15 +188,15 @@ namespace HrPortal.Services
         /// gives the band its gradient without asking the SVG reader
         /// for one.
         /// </summary>
-        private const string BannerArt =
+        private static string BannerArt =>
             "<svg xmlns='http://www.w3.org/2000/svg' " +
             "viewBox='0 0 1024 168' preserveAspectRatio='none'>" +
             "<path d='M300 168 L1024 168 L1024 0 L560 0 Z' " +
-            "fill='#0f6151' opacity='0.55'/>" +
+            $"fill='{Brand.Current.Colors.PrintBannerDepth}' opacity='0.55'/>" +
             "<path d='M548 168 C676 128 744 52 800 -24 L1024 -24 " +
-            "L1024 168 Z' fill='#14715e' opacity='0.75'/>" +
+            $"L1024 168 Z' fill='{Brand.Current.Colors.PrintBannerSweep}' opacity='0.75'/>" +
             "<path d='M470 176 C612 120 688 40 736 -28' fill='none' " +
-            "stroke='#c9a94a' stroke-width='2.6'/>" +
+            $"stroke='{Brand.Current.Colors.PrintBannerLine}' stroke-width='2.6'/>" +
             "</svg>";
 
         /// <summary>
@@ -851,8 +850,7 @@ namespace HrPortal.Services
                     column.Item().PaddingTop(7).Row(row =>
                     {
                         row.AutoItem().AlignLeft()
-                            .Text("Intellego Investment Consultants " +
-                                  "(Pvt) Ltd")
+                            .Text(Brand.Current.LegalName)
                             .FontSize(7.5f)
                             .SemiBold()
                             .FontColor(Green);

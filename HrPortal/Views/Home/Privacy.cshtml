@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy notice";
 
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -27,8 +27,7 @@
         <h1 class="prose-title">How this portal uses your information</h1>
 
         <p class="prose-lede">
-            My Intellego is the staff portal of Intellego Investment
-            Consultants (Pvt) Ltd. It holds employment records for
+            @Brand.Current.PortalName is the staff portal of @Brand.Current.LegalName. It holds employment records for
             people who work here, so that leave, training, documents
             and related requests can be handled in one place. The
             company is responsible for this information under the

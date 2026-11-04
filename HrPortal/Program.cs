@@ -1,4 +1,4 @@
-﻿using HrPortal.Data;
+using HrPortal.Data;
 using HrPortal.DbContexts;
 using HrPortal.Entities;
 using HrPortal.Services;
@@ -19,6 +19,8 @@ using System.IO.Compression;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+Brand.Use(Brand.Load(builder.Configuration, builder.Environment.ContentRootPath));
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 

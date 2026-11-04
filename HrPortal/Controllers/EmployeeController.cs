@@ -929,8 +929,8 @@ namespace HrPortal.Controllers
                     user.Email!,
                     $"{employee.FirstName} {employee.LastName}",
                     employee.FirstName,
-                    "Welcome to My Intellego",
-                    "You can now sign in to My Intellego, the Intellego " +
+                    $"Welcome to {Brand.Current.PortalName}",
+                    $"You can now sign in to {Brand.Current.PortalName}, the {Brand.Current.ShortName} " +
                     $"people portal, as {user.Email}. Choose your " +
                     "password using the link below, then sign in and the " +
                     "Welcome page will take you through getting started. The " +

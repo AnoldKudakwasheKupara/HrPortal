@@ -34,7 +34,7 @@ namespace HrPortal.ViewModels
         [Display(Name =
             "I confirm that I will dedicate the requisite hours and " +
             "effort towards the selected studies, and will abide by " +
-            "the Intellego Educational Policy")]
+            "the company's Educational Policy")]
         public bool Pledged { get; set; }
     }
 }

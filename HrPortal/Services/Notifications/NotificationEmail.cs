@@ -24,18 +24,18 @@ namespace HrPortal.Services.Notifications
         /// The name the embedded logo is referred to by from the
         /// message body.
         /// </summary>
-        public const string LogoContentId = "intellego-mark";
+        public const string LogoContentId = "brand-mark";
 
         private const string Font =
             "Montserrat,'Segoe UI',Helvetica,Arial,sans-serif";
 
-        private const string Banner = "#0c4a40";
-        private const string Gold = "#c2b480";
+        private static string Banner => Brand.Current.Colors.Sidebar;
+        private static string Gold => Brand.Current.Colors.AccentSoft;
         private const string Paper = "#eceae5";
         private const string Heading = "#1e293b";
         private const string Ink = "#3f4245";
         private const string Muted = "#6b6f74";
-        private const string Primary = "#10675d";
+        private static string Primary => Brand.Current.Colors.Primary;
 
         private sealed record Look(
             string Label,
@@ -46,7 +46,7 @@ namespace HrPortal.Services.Notifications
         private static Look LookOf(EmailKind kind) => kind switch
         {
             EmailKind.ActionNeeded =>
-                new("Action needed", "#7e6e1e", "#f6f1dc", "Review the request"),
+                new("Action needed", Brand.Current.Colors.Accent, Brand.Current.Colors.EmailAccentTint, "Review the request"),
             EmailKind.Approved =>
                 new("Approved", "#157a55", "#e6f5e9", "See the decision"),
             EmailKind.Declined =>
@@ -54,33 +54,33 @@ namespace HrPortal.Services.Notifications
             EmailKind.Returned =>
                 new("Returned to you", "#9a5b13", "#fff5e6", "Make the changes"),
             EmailKind.TrainingScheduled =>
-                new("Training scheduled", "#016a6a", "#e2efed", "View my training"),
+                new("Training scheduled", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "View my training"),
             EmailKind.TrainerAssigned =>
-                new("You are the trainer", "#016a6a", "#e2efed", "Post the content"),
+                new("You are the trainer", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "Post the content"),
             EmailKind.ContentDue =>
-                new("Content due", "#7e6e1e", "#f6f1dc", "Post the content"),
+                new("Content due", Brand.Current.Colors.Accent, Brand.Current.Colors.EmailAccentTint, "Post the content"),
             EmailKind.ContentOverdue =>
                 new("Content overdue", "#c53030", "#fdeded", "Post the content"),
             EmailKind.SessionReminder =>
-                new("Coming up", "#016a6a", "#e2efed", "View the training"),
+                new("Coming up", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "View the training"),
             EmailKind.PasswordReset =>
-                new("Password reset", Primary, "#e2efed", "Choose a new password"),
+                new("Password reset", Primary, Brand.Current.Colors.EmailSecondaryTint, "Choose a new password"),
             EmailKind.PolicyPublished =>
-                new("New policy", "#016a6a", "#e2efed", "Read the policy"),
+                new("New policy", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "Read the policy"),
             EmailKind.PolicyUpdated =>
-                new("Policy updated", "#016a6a", "#e2efed", "Read the policy"),
+                new("Policy updated", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "Read the policy"),
             EmailKind.AssetAssigned =>
-                new("Asset assigned", "#016a6a", "#e2efed", "View my assets"),
+                new("Asset assigned", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "View my assets"),
             EmailKind.DocumentAdded =>
-                new("Added to your file", "#016a6a", "#e2efed", "View my file"),
+                new("Added to your file", Brand.Current.Colors.EmailSecondary, Brand.Current.Colors.EmailSecondaryTint, "View my file"),
             EmailKind.ExpiringSoon =>
-                new("Expiring soon", "#7e6e1e", "#f6f1dc", "See the details"),
+                new("Expiring soon", Brand.Current.Colors.Accent, Brand.Current.Colors.EmailAccentTint, "See the details"),
             EmailKind.ExpiringThisWeek =>
                 new("Expires this week", "#c53030", "#fdeded", "See the details"),
             EmailKind.Welcome =>
-                new("Welcome", Primary, "#e2efed", "Choose your password"),
+                new("Welcome", Primary, Brand.Current.Colors.EmailSecondaryTint, "Choose your password"),
             _ =>
-                new("Notification", Primary, "#e2efed", "Open My Intellego")
+                new("Notification", Primary, Brand.Current.Colors.EmailSecondaryTint, $"Open {Brand.Current.PortalName}")
         };
 
         public static RenderedEmail Render(
@@ -122,16 +122,16 @@ namespace HrPortal.Services.Notifications
 
             var mark = hasLogo
                 ? $"<img src=\"cid:{LogoContentId}\" width=\"160\" height=\"80\" " +
-                  "alt=\"Intellego Investment Consultants\" " +
+                  $"alt=\"{E(Brand.Current.FullName)}\" " +
                   "style=\"display:block;border:0;outline:none;width:160px;height:80px;\">"
                 : $"<span style=\"font-family:{Font};font-size:20px;font-weight:700;" +
-                  "color:#ffffff;\">Intellego</span>";
+                  $"color:#ffffff;\">{E(Brand.Current.ShortName)}</span>";
 
             var action = string.IsNullOrWhiteSpace(n.Link)
                 ? string.Empty
                 : url == null
                 ? $"<p style=\"margin:28px 0 0;font-family:{Font};font-size:14px;" +
-                  $"line-height:22px;color:{Muted};\">Sign in to My Intellego to see it.</p>"
+                  $"line-height:22px;color:{Muted};\">Sign in to {E(Brand.Current.PortalName)} to see it.</p>"
                 : $"<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" " +
                   "border=\"0\" style=\"margin:28px 0 0;\"><tr>" +
                   $"<td bgcolor=\"{Primary}\" style=\"border-radius:999px;background:{Primary};\">" +
@@ -178,7 +178,7 @@ namespace HrPortal.Services.Notifications
                         "<td valign=\"middle\" align=\"right\" " +
                         $"style=\"font-family:{Font};text-align:right;\">" +
                         "<div style=\"font-size:16px;font-weight:700;color:#ffffff;" +
-                        "line-height:20px;\">My Intellego</div>" +
+                        $"line-height:20px;\">{E(Brand.Current.PortalName)}</div>" +
                         $"<div style=\"font-size:10px;font-weight:600;color:{Gold};" +
                         "letter-spacing:2px;line-height:16px;\">PEOPLE PORTAL</div>" +
                         "</td></tr></table></td></tr>");
@@ -214,8 +214,8 @@ namespace HrPortal.Services.Notifications
             html.Append("<tr><td align=\"center\" style=\"padding:24px 8px 8px;" +
                         $"font-family:{Font};font-size:12px;line-height:19px;" +
                         $"color:{Muted};text-align:center;\">" +
-                        "Intellego Investment Consultants (Pvt) Ltd<br>" +
-                        "This is an automatic message from My Intellego. " +
+                        $"{E(Brand.Current.LegalName)}<br>" +
+                        $"This is an automatic message from {E(Brand.Current.PortalName)}. " +
                         "Replies to it are not read." +
                         "</td></tr>");
 
@@ -244,14 +244,14 @@ namespace HrPortal.Services.Notifications
             if (!string.IsNullOrWhiteSpace(n.Link))
             {
                 text.AppendLine(url == null
-                    ? "Sign in to My Intellego to see it."
+                    ? $"Sign in to {Brand.Current.PortalName} to see it."
                     : $"{look.Button}: {url}");
 
                 text.AppendLine();
             }
 
             text.AppendLine("--");
-            text.AppendLine("My Intellego, Intellego Investment Consultants (Pvt) Ltd");
+            text.AppendLine($"{Brand.Current.PortalName}, {Brand.Current.LegalName}");
             text.AppendLine("This is an automatic message. Replies to it are not read.");
 
             return text.ToString();

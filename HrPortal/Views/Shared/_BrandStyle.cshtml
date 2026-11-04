@@ -1,0 +1,4 @@
+@if (!Brand.Current.IsDefault)
+{
+    <style>@Html.Raw(Brand.Current.Colors.CssOverride())</style>
+}

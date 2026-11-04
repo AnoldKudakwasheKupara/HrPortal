@@ -61,7 +61,7 @@ namespace HrPortal.Services
         }
 
         public static string FileName(DateTime when) =>
-            $"My Intellego backup {when:yyyy-MM-dd HHmm}.zip";
+            $"{Brand.Current.PortalName} backup {when:yyyy-MM-dd HHmm}.zip";
 
         /// <summary>
         /// Builds the backup in a temporary file and returns it open
@@ -247,7 +247,7 @@ namespace HrPortal.Services
 
         private static string Readme(DateTime when, int fileCount) =>
             $"""
-            My Intellego backup, taken {when:d MMMM yyyy 'at' HH:mm}.
+            {Brand.Current.PortalName} backup, taken {when:d MMMM yyyy 'at' HH:mm}.
 
             This holds the personal data of everyone in the portal. Keep it
             somewhere only authorised people can reach, such as a restricted

@@ -36,7 +36,7 @@ namespace HrPortal.Services
 
         public string FromAddress { get; set; } = string.Empty;
 
-        public string FromName { get; set; } = "My Intellego";
+        public string FromName { get; set; } = Brand.Current.PortalName;
 
         public string? PortalBaseUrl { get; set; }
 

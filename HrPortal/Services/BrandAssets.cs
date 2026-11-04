@@ -21,7 +21,8 @@ namespace HrPortal.Services
             {
                 var path = Path.Combine(
                     environment.WebRootPath ?? string.Empty,
-                    "images",
+                    "brands",
+                    Brand.Current.Key,
                     file);
 
                 try
@@ -50,9 +51,9 @@ namespace HrPortal.Services
                 }
             });
 
-            _logo = Read("intellego-logo.png");
-            _markOnDark = Read("intellego-logo-on-dark.png");
-            _emailMark = Read("intellego-logo-email.png");
+            _logo = Read("logo.png");
+            _markOnDark = Read("logo-on-dark.png");
+            _emailMark = Read("logo-email.png");
         }
 
         /// <summary>

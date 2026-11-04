@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --surface:        var(--bg-card);
     --surface-sunken: var(--gray-50);
     --plane:          var(--bg-main);
@@ -276,9 +276,9 @@ body {
 
 .badge.bg-primary,
 .badge.bg-info {
-    background: #e8f3f1 !important;
+    background: var(--primary-soft) !important;
     color: var(--primary-dark) !important;
-    border: 1px solid #c3ded9;
+    border: 1px solid var(--primary-edge);
 }
 
 .badge.bg-secondary,
@@ -657,7 +657,7 @@ a.stat-tile:hover::after {
     display: flex;
     align-items: center;
     background: linear-gradient(150deg,
-                #0c5047 0%, var(--primary) 45%, #0a443d 100%);
+                var(--hero-from) 0%, var(--primary) 45%, var(--hero-to) 100%);
     color: #ffffff;
     padding: clamp(2.5rem, 1.5rem + 3vw, 5rem);
 }
@@ -1667,7 +1667,7 @@ a.stat-tile:hover::after {
     display: grid;
     grid-template-columns: 47fr 53fr;
     background: linear-gradient(135deg,
-                #0c5047 0%, var(--primary) 55%, #0a443d 100%);
+                var(--hero-from) 0%, var(--primary) 55%, var(--hero-to) 100%);
     color: #ffffff;
 }
 
@@ -1731,7 +1731,7 @@ a.stat-tile:hover::after {
     align-items: center;
     justify-content: center;
     min-height: clamp(18rem, 12rem + 18vw, 27rem);
-    background: linear-gradient(135deg, #0a443d 0%, #063029 100%);
+    background: linear-gradient(135deg, var(--hero-to) 0%, var(--hero-deep) 100%);
 }
 
 .hero-plate-art {
@@ -2768,7 +2768,7 @@ a.strip-item:hover {
     left: 0;
     height: 3px;
     width: 0;
-    background: var(--accent-gold, #7e6e1e);
+    background: var(--accent-gold);
     z-index: 2000;
     opacity: 0;
     transition: width 0.4s ease, opacity 0.2s ease;

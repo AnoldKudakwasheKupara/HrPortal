@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - My Intellego</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="~/images/icon-32.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="~/images/icon-512.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="~/images/icon-180.png" />
+    <title>@ViewData["Title"] - @Brand.Current.PortalName</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="@Url.Content(Brand.Current.Asset("icon-32.png"))" />
+    <link rel="icon" type="image/png" sizes="512x512" href="@Url.Content(Brand.Current.Asset("icon-512.png"))" />
+    <link rel="apple-touch-icon" sizes="180x180" href="@Url.Content(Brand.Current.Asset("icon-180.png"))" />
 
     <link rel="stylesheet" href="~/fonts/montserrat/montserrat.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/fontawesome/css/fontawesome.min.css" />
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="~/css/app-core.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
+    <partial name="_BrandStyle" />
 </head>
 <body class="auth-body">
 
@@ -37,8 +38,8 @@
 
             <div class="auth-feature-inner">
 
-                <img src="~/images/intellego-logo-on-dark.png"
-                     alt="Intellego Investment Consultants"
+                <img src="@Url.Content(Brand.Current.Asset("logo-on-dark.png"))"
+                     alt="@Brand.Current.FullName"
                      class="auth-feature-logo" />
 
                 <h1 class="auth-feature-title">
@@ -89,11 +90,11 @@
                 <div class="auth-feature-foot">
 
                     <span class="auth-feature-name">
-                        Intellego Investment Consultants
+                        @Brand.Current.FullName
                     </span>
 
                     <span class="auth-feature-tagline">
-                        Investing in people &nbsp;|&nbsp; Building tomorrow
+                        @Html.Raw(System.Net.WebUtility.HtmlEncode(Brand.Current.Tagline).Replace(" | ", " &nbsp;|&nbsp; "))
                     </span>
 
                 </div>
@@ -107,8 +108,8 @@
             <div class="auth-card">
 
                 <div class="auth-brand">
-                    <img src="~/images/intellego-logo.png"
-                         alt="Intellego Investment Consultants"
+                    <img src="@Url.Content(Brand.Current.Asset("logo.png"))"
+                         alt="@Brand.Current.FullName"
                          class="brand-logo" />
                 </div>
 
@@ -117,8 +118,7 @@
             </div>
 
             <p class="auth-foot">
-                &copy; @DateTime.Today.Year Intellego Investment
-                Consultants (Pvt) Ltd.
+                &copy; @DateTime.Today.Year @Brand.Current.LegalName.
             </p>
 
         </main>

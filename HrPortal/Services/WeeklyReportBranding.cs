@@ -12,8 +12,7 @@ namespace HrPortal.Services
     {
         public const string Section = "WeeklyReport";
 
-        public string OrganisationName { get; set; } =
-            "Intellego Investment Consultants (Pvt) Ltd";
+        public string OrganisationName { get; set; } = Brand.Current.LegalName;
 
         public string DepartmentName { get; set; } = "IT Department";
 

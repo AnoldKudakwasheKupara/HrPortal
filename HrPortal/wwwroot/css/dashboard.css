@@ -142,7 +142,7 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     color: #fff;
-    box-shadow: 0 6px 16px -6px rgba(16, 103, 93, .55);
+    box-shadow: 0 6px 16px -6px rgba(var(--primary-rgb), .55);
 }
 
 .dash-alert { margin-bottom: var(--dash-gap); border-radius: var(--d-radius-sm); }
@@ -324,12 +324,12 @@
 /* ---- Tones -------------------------------------------------------- */
 .bento-card.is-hero {
     --card-badge-ink: #ffffff;
-    --card-bg: linear-gradient(135deg, #0c4a40 0%, var(--primary) 58%, #2a8f82 100%);
+    --card-bg: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--primary) 58%, var(--primary-bright) 100%);
     --card-ink: #ffffff;
     --card-ink-soft: rgba(255, 255, 255, .82);
     --card-accent: #ffffff;
     --card-badge-bg: rgba(255, 255, 255, .18);
-    --card-cta-ink: #0c4a40;
+    --card-cta-ink: var(--sidebar-bg);
     border-color: transparent;
 }
 
@@ -380,10 +380,10 @@
 }
 
 .tone-gold {
-    --card-badge-ink: #635616;
-    --card-bg: linear-gradient(150deg, #fbf9f0 0%, #f4efdb 100%);
+    --card-badge-ink: var(--accent-gold-dark);
+    --card-bg: linear-gradient(150deg, var(--accent-tint) 0%, var(--accent-tint-mid) 100%);
     --card-accent: var(--accent-gold);
-    --card-badge-bg: #ece4c2;
+    --card-badge-bg: var(--accent-tint-strong);
 }
 
 .tone-slate {

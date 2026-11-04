@@ -4,7 +4,7 @@
     ViewData["Title"] = "Welcome";
 
     var greeting = string.IsNullOrWhiteSpace(Model.FirstName)
-        ? "Welcome to the Intellego team"
+        ? $"Welcome to the {Brand.Current.ShortName} team"
         : $"Welcome, {Model.FirstName}";
 }
 
@@ -12,12 +12,12 @@
 
     <div class="welcome-hero">
 
-        <span class="welcome-eyebrow">Intellego HR Portal</span>
+        <span class="welcome-eyebrow">@Brand.Current.ShortName HR Portal</span>
 
         <h1>@greeting</h1>
 
         <p>
-            This is your home for everything people-related at Intellego:
+            This is your home for everything people-related at @Brand.Current.ShortName:
             our policies, forms, benefits and the people who can help. We
             are glad you are here.
         </p>

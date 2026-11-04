@@ -133,3 +133,39 @@ the 1st, catching up any months missed while it was off, deducts leave at
 final approval, allows the balance to go below zero, and carries it across
 years. Each change is listed on the balance's page and on the employee's My
 Leave page.
+
+## Running it for another company in the group
+
+One codebase, one deployment and one database per company. With nothing set,
+the portal is Intellego. To add a company, say `mmc`:
+
+1. Add `HrPortal/Brands/mmc.json`:
+
+   ```json
+   {
+     "PortalName": "MMC Portal",
+     "ShortName": "MMC",
+     "FullName": "MMC Capital",
+     "LegalName": "MMC Capital (Pvt) Ltd",
+     "LetterheadName": "MMC CAPITAL\n(PVT) LTD",
+     "Tagline": "First line | Second line",
+     "Colors": {
+       "Primary": "#102a6b",
+       "Sidebar": "#0a1a44",
+       "Accent": "#b8860b",
+       "AccentSoft": "#e8cf8a"
+     }
+   }
+   ```
+
+   The other shades are worked out from those four. Sidebar, Primary and Accent
+   carry white text, so they must be dark enough for it. To set a shade exactly,
+   add it under `"Overrides"`, using a name from `CssVariables` in
+   `Services/Brand.cs`.
+2. Add its artwork to `HrPortal/wwwroot/brands/mmc/`, under the same names as
+   `brands/intellego`: `logo.png`, `logo-on-dark.png`, `logo-email.png`,
+   `icon-32.png`, `icon-180.png` and `icon-512.png`.
+3. Add its front page wording in `HrPortal/Views/Brands/mmc/_About.cshtml`. The
+   page still works without it, showing no About section.
+4. Deploy a separate Render service and database with `Brand__Key` set to `mmc`.
+   The portal refuses to start if that company has no brand file.

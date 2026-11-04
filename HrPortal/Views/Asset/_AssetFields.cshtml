@@ -23,7 +23,7 @@
         <input asp-for="Company"
                class="form-control"
                list="asset-companies"
-               placeholder="Intellego Investment Consultants" />
+               placeholder="@Brand.Current.FullName" />
 
         <datalist id="asset-companies">
             @foreach (var name in

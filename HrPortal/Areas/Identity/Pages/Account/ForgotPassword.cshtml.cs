@@ -90,9 +90,9 @@ public class ForgotPasswordModel : PageModel
                 user.Email!,
                 user.FullName,
                 employee?.FirstName,
-                "Reset your My Intellego password",
-                "Somebody asked to reset the password for your My " +
-                "Intellego account. If it was you, choose a new password " +
+                $"Reset your {Brand.Current.PortalName} password",
+                $"Somebody asked to reset the password for your {Brand.Current.PortalName} " +
+                "account. If it was you, choose a new password " +
                 "using the link below. The link works for 24 hours and " +
                 "only once. If you did not ask, you can ignore this " +
                 "email and your password stays as it is.",

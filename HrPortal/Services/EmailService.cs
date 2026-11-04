@@ -137,7 +137,7 @@ namespace HrPortal.Services
             if (logo != null)
             {
                 var image = body.LinkedResources.Add(
-                    "intellego-logo.png",
+                    "logo.png",
                     logo,
                     new ContentType("image", "png"));
 

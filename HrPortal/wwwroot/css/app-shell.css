@@ -1,4 +1,4 @@
-﻿            * {
+            * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
@@ -378,7 +378,7 @@
             .nav-badge {
                 margin-left: auto;
                 background: var(--brand-beige);
-                color: #0c4a40;
+                color: var(--sidebar-bg);
                 font-size: 0.62rem;
                 min-width: 1.35rem;
                 text-align: center;
@@ -488,7 +488,7 @@
                 justify-content: center;
                 font-weight: 700;
                 font-size: 0.9rem;
-                box-shadow: 0 4px 8px rgba(16, 103, 93,0.2);
+                box-shadow: 0 4px 8px rgba(var(--primary-rgb),0.2);
                 transition: var(--transition-smooth);
                 flex-shrink: 0;
             }
@@ -582,7 +582,7 @@
             }
 
                 .btn-primary-modern:hover {
-                    background: linear-gradient(135deg, var(--primary-dark), #043f38);
+                    background: linear-gradient(135deg, var(--primary-dark), var(--primary-deep));
                     color: white;
                 }
 
@@ -700,12 +700,12 @@
     border-radius: 14px;
     background: #ffffff;
     color: var(--brand-ink);
-    box-shadow: 0 24px 60px rgba(12, 74, 64, 0.28);
+    box-shadow: 0 24px 60px rgba(var(--sidebar-rgb), 0.28);
     text-align: center;
 }
 
 .idle-dialog::backdrop {
-    background: rgba(12, 74, 64, 0.45);
+    background: rgba(var(--sidebar-rgb), 0.45);
 }
 
 .idle-dialog-icon {
@@ -776,7 +776,7 @@
     text-align: center;
 }
 
-.sanctions-step.is-running .sanctions-step-icon { color: var(--primary, #10675d); }
+.sanctions-step.is-running .sanctions-step-icon { color: var(--primary); }
 .sanctions-step.is-done .sanctions-step-icon { color: #157a55; }
 .sanctions-step.is-warning .sanctions-step-icon { color: #b7791f; }
 .sanctions-step.is-failed .sanctions-step-icon { color: #c53030; }
@@ -791,7 +791,7 @@
 }
 
 .sanctions-summary {
-    border-top: 2px solid var(--primary, #10675d);
+    border-top: 2px solid var(--primary);
     padding-top: 1rem;
 }
 

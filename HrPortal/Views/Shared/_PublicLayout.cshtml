@@ -1,13 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - My Intellego</title>
+    <title>@ViewData["Title"] - @Brand.Current.PortalName</title>
 
-    <link rel="icon" type="image/png" sizes="32x32" href="~/images/icon-32.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="~/images/icon-512.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="~/images/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="@Url.Content(Brand.Current.Asset("icon-32.png"))" />
+    <link rel="icon" type="image/png" sizes="512x512" href="@Url.Content(Brand.Current.Asset("icon-512.png"))" />
+    <link rel="apple-touch-icon" sizes="180x180" href="@Url.Content(Brand.Current.Asset("icon-180.png"))" />
 
     <link rel="stylesheet" href="~/fonts/montserrat/montserrat.css" asp-append-version="true" />
 
@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/app-core.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
+    <partial name="_BrandStyle" />
 </head>
 <body>
 
@@ -28,9 +29,9 @@
 
             <div class="public-topbar-inner">
 
-                <a class="public-brand" href="@Url.Content("~/")" aria-label="Intellego home">
-                    <img src="~/images/intellego-logo.png"
-                         alt="Intellego Investment Consultants"
+                <a class="public-brand" href="@Url.Content("~/")" aria-label="@Brand.Current.ShortName home">
+                    <img src="@Url.Content(Brand.Current.Asset("logo.png"))"
+                         alt="@Brand.Current.FullName"
                          class="brand-logo" />
                 </a>
 
@@ -47,7 +48,7 @@
                 <nav class="public-nav" aria-label="Sections of this page">
                     <a href="@(front)#home"
                        class="@(onFront ? "is-active" : "")">Home</a>
-                    <a href="@(front)#about">About Intellego</a>
+                    <a href="@(front)#about">About @Brand.Current.ShortName</a>
                     <a href="@(front)#services">Our Services</a>
                     <a href="@(front)#values">Our Values</a>
                 </nav>
@@ -72,10 +73,9 @@
             <div class="public-foot-inner">
 
                 <span class="public-foot-note">
-                    &copy; @DateTime.Today.Year Intellego Investment
-                    Consultants (Pvt) Ltd.
+                    &copy; @DateTime.Today.Year @Brand.Current.LegalName.
                     <span class="public-foot-sep">|</span>
-                    For internal use by Intellego staff.
+                    For internal use by @Brand.Current.ShortName staff.
                 </span>
 
                 <span class="public-foot-links">

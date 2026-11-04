@@ -256,7 +256,7 @@ namespace HrPortal.Services
                         text.Span(", confirm that I will dedicate the " +
                                   "requisite hours and effort towards " +
                                   "the selected studies and will abide " +
-                                  "by the Intellego Educational Policy.");
+                                  $"by the {Brand.Current.ShortName} Educational Policy.");
                     }));
 
                 column.Item().PaddingTop(10).PaddingLeft(37).Row(labels =>

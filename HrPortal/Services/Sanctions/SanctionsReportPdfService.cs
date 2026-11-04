@@ -17,7 +17,7 @@ namespace HrPortal.Services.Sanctions
     {
         private const string Title = "Sanctions Screening Report";
 
-        public const string Organisation = "Intellego Investment Consultants";
+        public static string Organisation => Brand.Current.FullName;
 
         private readonly BrandAssets _brand;
 
