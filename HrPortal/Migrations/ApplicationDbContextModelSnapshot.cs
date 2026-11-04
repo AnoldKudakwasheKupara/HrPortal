@@ -598,6 +598,9 @@ namespace HrPortal.Migrations
                     b.Property<DateTime?>("NextOfKinConfirmedAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<DateTime?>("OnboardingCompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
@@ -1424,6 +1427,33 @@ namespace HrPortal.Migrations
                         .IsUnique();
 
                     b.ToTable("PolicyAcknowledgements");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.PolicyReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("PolicyId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PolicyId", "EmployeeId")
+                        .IsUnique();
+
+                    b.ToTable("PolicyReadings");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.PrivacyNoticeAcknowledgement", b =>
@@ -3035,6 +3065,25 @@ namespace HrPortal.Migrations
 
                     b.HasOne("HrPortal.Entities.Policy", "Policy")
                         .WithMany("Acknowledgements")
+                        .HasForeignKey("PolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Policy");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.PolicyReading", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Policy", "Policy")
+                        .WithMany()
                         .HasForeignKey("PolicyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

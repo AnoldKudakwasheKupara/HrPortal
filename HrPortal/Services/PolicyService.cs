@@ -7,6 +7,8 @@ using System.Security.Claims;
 
 namespace HrPortal.Services
 {
+    public sealed record OutstandingPolicy(int Id, string Title, string Version);
+
     public class PolicyService
     {
         public const string ReviewDateField = "ReviewDate";
@@ -30,7 +32,8 @@ namespace HrPortal.Services
 
         public static bool CanManage(ClaimsPrincipal user) =>
             user.IsInRole(Roles.Administrator) ||
-            user.IsInRole(Roles.HrOfficer);
+            user.IsInRole(Roles.HrOfficer) ||
+            user.IsInRole(Roles.ComplianceOfficer);
 
         public static string NextVersion(string version)
         {
@@ -76,13 +79,101 @@ namespace HrPortal.Services
             if (policy == null)
                 return null;
 
+            if (CanManage(user))
+                return policy;
+
             if (!AudienceRules.CanSee(user, policy.Audience))
                 return null;
 
-            if (policy.Status != PolicyStatus.Active && !CanManage(user))
+            if (policy.Status != PolicyStatus.Active)
                 return null;
 
             return policy;
+        }
+
+        /// <summary>
+        /// The policies in force, meant for this person, that ask for
+        /// acknowledgement and that they have not yet acknowledged.
+        /// </summary>
+        public async Task<List<OutstandingPolicy>> OutstandingForAsync(ClaimsPrincipal user)
+        {
+            var employeeId = await _currentUser.GetEmployeeIdAsync();
+
+            if (employeeId == null)
+                return new List<OutstandingPolicy>();
+
+            var audiences = AudienceRules.Visible(user);
+
+            return await _context.Policies
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PolicyStatus.Active &&
+                    p.RequiresAcknowledgement &&
+                    audiences.Contains(p.Audience) &&
+                    !p.Acknowledgements.Any(a => a.EmployeeId == employeeId))
+                .OrderBy(p => p.Title)
+                .Select(p => new OutstandingPolicy(p.Id, p.Title, p.Version))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Notes that the signed-in person opened the document. Only the
+        /// first time counts.
+        /// </summary>
+        public async Task RecordOpenedAsync(int policyId)
+        {
+            var employeeId = await _currentUser.GetEmployeeIdAsync();
+
+            if (employeeId == null)
+                return;
+
+            var already = await _context.PolicyReadings
+                .AnyAsync(r => r.PolicyId == policyId && r.EmployeeId == employeeId.Value);
+
+            if (already)
+                return;
+
+            var reading = new PolicyReading
+            {
+                PolicyId = policyId,
+                EmployeeId = employeeId.Value,
+                OpenedAt = DateTime.UtcNow
+            };
+
+            _context.PolicyReadings.Add(reading);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                _context.Entry(reading).State = EntityState.Detached;
+            }
+        }
+
+        public async Task<bool> HasOpenedAsync(int policyId, int employeeId) =>
+            await _context.PolicyReadings
+                .AnyAsync(r => r.PolicyId == policyId && r.EmployeeId == employeeId);
+
+        /// <summary>The employees a policy is meant for, narrowed to the roles its audience allows.</summary>
+        public IQueryable<Employee> AudienceOf(Policy policy)
+        {
+            var roles = AudienceRules.RolesFor(policy.Audience);
+
+            var employees = _context.Employees
+                .AsNoTracking()
+                .Where(e => e.IsActive);
+
+            return roles == null
+                ? employees
+                : employees.Where(e =>
+                    e.UserId != null &&
+                    _context.UserRoles.Any(ur =>
+                        ur.UserId == e.UserId!.Value &&
+                        _context.Roles.Any(r =>
+                            r.Id == ur.RoleId &&
+                            roles.Contains(r.Name!))));
         }
 
         public async Task<ServiceResult> PublishAsync(int id)
@@ -187,6 +278,12 @@ namespace HrPortal.Services
             if (already)
                 return ServiceResult.Ok("You had already acknowledged this.");
 
+            if (!await HasOpenedAsync(id, employeeId.Value))
+            {
+                return ServiceResult.Refused(
+                    "Please open the document and read it before you confirm.");
+            }
+
             _context.PolicyAcknowledgements.Add(new PolicyAcknowledgement
             {
                 PolicyId = id,
@@ -206,6 +303,7 @@ namespace HrPortal.Services
                 $"Thank you. Your reading of {policy.Title} " +
                 $"version {policy.Version} has been recorded.");
         }
+
         /// <summary>
         /// Tells everybody the policy is meant for that it is now in
         /// force: active staff with a sign-in, narrowed to the roles
@@ -214,23 +312,8 @@ namespace HrPortal.Services
         /// </summary>
         private async Task TellReadersAsync(Policy policy, bool replacing)
         {
-            var roles = AudienceRules.RolesFor(policy.Audience);
-
-            var readers = _context.Employees
-                .AsNoTracking()
-                .Where(e => e.IsActive && e.UserId != null);
-
-            if (roles != null)
-            {
-                readers = readers.Where(e =>
-                    _context.UserRoles.Any(ur =>
-                        ur.UserId == e.UserId!.Value &&
-                        _context.Roles.Any(r =>
-                            r.Id == ur.RoleId &&
-                            roles.Contains(r.Name!))));
-            }
-
-            var employeeIds = await readers
+            var employeeIds = await AudienceOf(policy)
+                .Where(e => e.UserId != null)
                 .Select(e => e.Id)
                 .ToListAsync();
 
@@ -246,8 +329,8 @@ namespace HrPortal.Services
                       "in force.") +
                 $" It takes effect on {policy.EffectiveDate:d MMM yyyy}." +
                 (policy.RequiresAcknowledgement
-                    ? " Please read it and confirm in the portal that " +
-                      "you have."
+                    ? " You must read it and confirm in the portal that " +
+                      "you have read and understood it."
                     : string.Empty);
 
             foreach (var employeeId in employeeIds)

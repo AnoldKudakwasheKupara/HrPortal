@@ -39,6 +39,6 @@ namespace HrPortal.Security
                 .ToList();
         }
 
-        public const string Curators = Roles.AdminOrHr;
+        public const string Curators = Roles.AdminOrHr + "," + Roles.ComplianceOfficer;
     }
 }

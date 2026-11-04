@@ -1,4 +1,4 @@
-﻿using HrPortal.Data;
+using HrPortal.Data;
 
 namespace HrPortal.Entities
 {
@@ -69,6 +69,12 @@ namespace HrPortal.Entities
         public int? UserId { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// When they finished onboarding. Empty for somebody new to the
+        /// portal, who is shown the Welcome page until they finish it.
+        /// </summary>
+        public DateTime? OnboardingCompletedAt { get; set; }
 
         public Department Department { get; set; } = null!;
 

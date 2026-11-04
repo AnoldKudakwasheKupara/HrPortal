@@ -33,15 +33,23 @@ namespace HrPortal.ViewModels
             ReviewDate != null && ReviewDate.Value.Date < DateTime.Today;
     }
 
+    /// <summary>One person's confirmation that they read a policy.</summary>
+    public sealed record PolicyConfirmation(string Name, DateTime? OpenedAt, DateTime ConfirmedAt);
+
     public class PolicyDetailsViewModel
     {
         public Policy Policy { get; set; } = null!;
 
         public bool Acknowledged { get; set; }
 
+        /// <summary>The signed-in person has opened the document.</summary>
+        public bool Opened { get; set; }
+
         public bool CanManage { get; set; }
 
         public List<string> Outstanding { get; set; } = new();
+
+        public List<PolicyConfirmation> Confirmations { get; set; } = new();
 
         public int ActiveStaff { get; set; }
 

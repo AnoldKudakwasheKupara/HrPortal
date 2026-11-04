@@ -23,6 +23,7 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly PolicyService _policies;
         private readonly RecordDocumentPdfService _pdf;
+        private readonly ListDocumentPdfService _lists;
 
         public PolicyController(
             ApplicationDbContext context,
@@ -30,8 +31,10 @@ namespace HrPortal.Controllers
             AuditService audit,
             CurrentUserService currentUser,
             PolicyService policies,
-            RecordDocumentPdfService pdf)
+            RecordDocumentPdfService pdf,
+            ListDocumentPdfService lists)
         {
+            _lists = lists;
             _context = context;
             _fileStorage = fileStorage;
             _audit = audit;
@@ -174,6 +177,9 @@ namespace HrPortal.Controllers
                     employeeId != null &&
                     policy.Acknowledgements
                         .Any(a => a.EmployeeId == employeeId),
+                Opened =
+                    employeeId != null &&
+                    await _policies.HasOpenedAsync(policy.Id, employeeId.Value),
                 CanManage = PolicyService.CanManage(User)
             };
 
@@ -183,20 +189,85 @@ namespace HrPortal.Controllers
                     .Select(a => a.EmployeeId)
                     .ToList();
 
-                model.Outstanding = await _context.Employees
-                    .AsNoTracking()
-                    .Where(e =>
-                        e.IsActive &&
-                        !acknowledgedIds.Contains(e.Id))
+                model.Outstanding = await _policies.AudienceOf(policy)
+                    .Where(e => !acknowledgedIds.Contains(e.Id))
                     .OrderBy(e => e.FirstName)
                     .Select(e => e.FirstName + " " + e.LastName)
                     .ToListAsync();
 
-                model.ActiveStaff = await _context.Employees
-                    .CountAsync(e => e.IsActive);
+                model.ActiveStaff = await _policies.AudienceOf(policy).CountAsync();
+
+                model.Confirmations = await ConfirmationsAsync(policy.Id);
             }
 
             return View(model);
+        }
+
+        private Task<List<PolicyConfirmation>> ConfirmationsAsync(int policyId) =>
+            _context.PolicyAcknowledgements
+                .AsNoTracking()
+                .Where(a => a.PolicyId == policyId)
+                .OrderBy(a => a.Employee.FirstName)
+                .ThenBy(a => a.Employee.LastName)
+                .Select(a => new PolicyConfirmation(
+                    a.Employee.FirstName + " " + a.Employee.LastName,
+                    _context.PolicyReadings
+                        .Where(r => r.PolicyId == policyId && r.EmployeeId == a.EmployeeId)
+                        .Select(r => (DateTime?)r.OpenedAt)
+                        .FirstOrDefault(),
+                    a.AcknowledgedAt))
+                .ToListAsync();
+
+        /// <summary>
+        /// The policy confirmation: who has confirmed they read and
+        /// understood this version and when, and who has not yet.
+        /// </summary>
+        [Authorize(Roles = AudienceRules.Curators)]
+        public async Task<IActionResult> Confirmations(int? id)
+        {
+            var policy = await _policies.ReadableAsync(id, User);
+
+            if (policy == null)
+                return NotFound();
+
+            var confirmed = await ConfirmationsAsync(policy.Id);
+            var confirmedIds = policy.Acknowledgements.Select(a => a.EmployeeId).ToList();
+
+            var outstanding = await _policies.AudienceOf(policy)
+                .Where(e => !confirmedIds.Contains(e.Id))
+                .OrderBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .Select(e => e.FirstName + " " + e.LastName)
+                .ToListAsync();
+
+            var list = new ListDocument(
+                "Policy Confirmation",
+                $"{policy.Title}, version {policy.Version}. Each person confirmed they " +
+                "have read and understood it.");
+
+            list.Column("Employee", 2f)
+                .Column("Status", 1f)
+                .Column("Document opened", 1.5f)
+                .Column("Confirmed", 1.5f);
+
+            foreach (var c in confirmed)
+            {
+                list.Row(
+                    c.Name,
+                    "Confirmed",
+                    c.OpenedAt == null ? "Not recorded" : ListDocument.Stamp(c.OpenedAt.Value),
+                    ListDocument.Stamp(c.ConfirmedAt));
+            }
+
+            foreach (var name in outstanding)
+                list.Row(name, "Not yet", "", "");
+
+            list.Total("Confirmed", confirmed.Count)
+                .Total("Not yet", outstanding.Count);
+
+            list.EmptyMessage = "Nobody is expected to confirm this policy.";
+
+            return File(_lists.Render(list), "application/pdf", list.FileName);
         }
 
         public async Task<IActionResult> Download(int? id)
@@ -213,6 +284,8 @@ namespace HrPortal.Controllers
                 TempData["Error"] = "That file is no longer on the server.";
                 return RedirectToAction(nameof(Index));
             }
+
+            await _policies.RecordOpenedAsync(policy.Id);
 
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
@@ -243,6 +316,8 @@ namespace HrPortal.Controllers
 
             new FileExtensionContentTypeProvider()
                 .TryGetContentType(fullPath, out var contentType);
+
+            await _policies.RecordOpenedAsync(policy.Id);
 
             Response.Headers.ContentDisposition =
                 "inline; filename=\"" +

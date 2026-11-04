@@ -1,7 +1,14 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @using HrPortal.Data
 @inject SignInManager<ApplicationUser> SignInManager
 @inject HrPortal.Services.NotificationBadgeService NotificationBadge
+@inject HrPortal.Services.PolicyService PolicyReminders
+
+@{
+    var policyReminders = SignInManager.IsSignedIn(User)
+        ? await PolicyReminders.OutstandingForAsync(User)
+        : new List<HrPortal.Services.OutstandingPolicy>();
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -186,6 +193,11 @@
             </div>
 
             <main id="main-content" class="content fade-in" tabindex="-1">
+                @if (policyReminders.Any())
+                {
+                    <partial name="_PolicyReminder" model="policyReminders" />
+                }
+
                 @RenderBody()
             </main>
 

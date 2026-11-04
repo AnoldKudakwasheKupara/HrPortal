@@ -1,4 +1,4 @@
-﻿using HrPortal.Entities;
+using HrPortal.Entities;
 using HrPortal.Services;
 using HrPortal.DbContexts;
 using Microsoft.AspNetCore.Identity;
@@ -170,7 +170,8 @@ namespace HrPortal.Data
                     DateJoined = DateTime.Today,
                     DepartmentId = department.Id,
                     UserId = admin.Id,
-                    IsActive = true
+                    IsActive = true,
+                    OnboardingCompletedAt = DateTime.UtcNow
                 });
 
                 await context.SaveChangesAsync();

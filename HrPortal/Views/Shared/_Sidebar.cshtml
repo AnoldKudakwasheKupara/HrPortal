@@ -1,6 +1,7 @@
-﻿@inject HrPortal.Services.NotificationBadgeService Notifications
+@inject HrPortal.Services.NotificationBadgeService Notifications
 @inject HrPortal.Services.SupervisorQueueService TeamQueue
 @inject HrPortal.Services.TrainingAssignmentService Training
+@inject HrPortal.Services.CurrentUserService CurrentUser
 
 @{
     var unread = await Notifications.UnreadCountAsync();
@@ -38,6 +39,8 @@
     var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
+
+    var onboarding = (await CurrentUser.GetEmployeeAsync()) is { OnboardingCompletedAt: null };
 }
 
 <nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation">
@@ -49,10 +52,13 @@
         <i class="fas fa-house"></i> Dashboard
     </a>
 
-    <a class="nav-item @On("Welcome")"
-       asp-controller="Welcome" asp-action="Index">
-        <i class="fas fa-hand-sparkles"></i> Welcome
-    </a>
+    @if (onboarding)
+    {
+        <a class="nav-item @On("Welcome")"
+           asp-controller="Welcome" asp-action="Index">
+            <i class="fas fa-hand-sparkles"></i> Welcome
+        </a>
+    }
 
     <div class="nav-group">My work</div>
 

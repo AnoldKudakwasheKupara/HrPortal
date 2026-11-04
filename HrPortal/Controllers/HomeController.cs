@@ -1,4 +1,4 @@
-﻿using HrPortal.Models;
+using HrPortal.Models;
 using HrPortal.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,13 +11,16 @@ namespace HrPortal.Controllers
     {
         private readonly DashboardService _dashboard;
         private readonly PrivacyNoticeService _privacy;
+        private readonly CurrentUserService _currentUser;
 
         public HomeController(
             DashboardService dashboard,
-            PrivacyNoticeService privacy)
+            PrivacyNoticeService privacy,
+            CurrentUserService currentUser)
         {
             _dashboard = dashboard;
             _privacy = privacy;
+            _currentUser = currentUser;
         }
 
         [AllowAnonymous]
@@ -25,6 +28,9 @@ namespace HrPortal.Controllers
         {
             if (User.Identity?.IsAuthenticated != true)
                 return View("Landing");
+
+            if ((await _currentUser.GetEmployeeAsync()) is { OnboardingCompletedAt: null })
+                return RedirectToAction("Index", "Welcome");
 
             return View(await _dashboard.BuildAsync(User));
         }

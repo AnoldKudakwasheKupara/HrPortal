@@ -1,4 +1,4 @@
-﻿using HrPortal.DbContexts;
+using HrPortal.DbContexts;
 using HrPortal.Data;
 using HrPortal.Entities;
 using HrPortal.ViewModels;
@@ -828,6 +828,7 @@ namespace HrPortal.Controllers
                 await _userManager.AddToRoleAsync(user, Roles.Employee);
 
             employee.UserId = user.Id;
+            employee.OnboardingCompletedAt = null;
 
             await _context.SaveChangesAsync();
 
@@ -931,7 +932,8 @@ namespace HrPortal.Controllers
                     "Welcome to My Intellego",
                     "You can now sign in to My Intellego, the Intellego " +
                     $"people portal, as {user.Email}. Choose your " +
-                    "password using the link below to get started. The " +
+                    "password using the link below, then sign in and the " +
+                    "Welcome page will take you through getting started. The " +
                     "link works for 24 hours; if it runs out, use Forgot " +
                     "password on the sign-in page for a new one.",
                     link,

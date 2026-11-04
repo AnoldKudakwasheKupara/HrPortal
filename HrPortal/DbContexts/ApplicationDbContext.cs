@@ -21,6 +21,7 @@ namespace HrPortal.DbContexts
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestHistory> LeaveRequestHistories { get; set; }
         public DbSet<LeaveBalance> LeaveBalances { get; set; }
+        public DbSet<PolicyReading> PolicyReadings { get; set; }
         public DbSet<LeaveBalanceEntry> LeaveBalanceEntries { get; set; }
         public DbSet<TrainingCourse> TrainingCourses { get; set; }
         public DbSet<TrainingMaterial> TrainingMaterials { get; set; }
@@ -824,6 +825,24 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasIndex(a => new { a.PolicyId, a.EmployeeId })
+                    .IsUnique();
+            });
+
+            builder.Entity<PolicyReading>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.HasOne(r => r.Policy)
+                    .WithMany()
+                    .HasForeignKey(r => r.PolicyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Employee)
+                    .WithMany()
+                    .HasForeignKey(r => r.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(r => new { r.PolicyId, r.EmployeeId })
                     .IsUnique();
             });
 
