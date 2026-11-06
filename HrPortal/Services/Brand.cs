@@ -44,6 +44,13 @@ namespace HrPortal.Services
 
         public BrandColors Colors { get; set; } = BrandColors.Intellego();
 
+        /// <summary>
+        /// Whether this company has quarterly pension fund reporting. Only
+        /// the investment consultants do: another company's brand file has
+        /// to ask for it.
+        /// </summary>
+        public bool FundReporting { get; set; } = true;
+
         public bool IsDefault => Key == DefaultKey;
 
         /// <summary>The address of a piece of artwork, for a page.</summary>
@@ -71,7 +78,7 @@ namespace HrPortal.Services
             if (!File.Exists(path))
                 throw new InvalidOperationException($"Brand:Key is \"{key}\" but {path} does not exist.");
 
-            var brand = new Brand { Colors = new BrandColors() };
+            var brand = new Brand { Colors = new BrandColors(), FundReporting = false };
 
             new ConfigurationBuilder()
                 .AddJsonFile(path)

@@ -1,0 +1,159 @@
+@using HrPortal.Entities
+@using HrPortal.Services.FundReporting
+@model HrPortal.ViewModels.FundPageViewModel
+
+@{
+    ViewData["Title"] = Model.Fund.Name;
+    var classes = FundAssetClasses.Each.ToList();
+    string Percent(decimal? value) => value == null ? "" : (value.Value * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>@Model.Fund.Name</h2>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-header">Quarters</div>
+        <div class="card-body">
+            @if (Model.Quarters.Count == 0)
+            {
+                <p class="text-muted mb-0">No statements loaded yet.</p>
+            }
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var quarter in Model.Quarters)
+                {
+                    <a class="btn btn-outline-primary" asp-action="Quarter" asp-route-id="@Model.Fund.Id" asp-route-year="@quarter.Year" asp-route-number="@quarter.Number">@quarter.Label</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Load statements</div>
+        <div class="card-body">
+            <p class="text-muted">
+                CSV files of positions, transactions and cash_recon, with the columns in the reporting guide.
+                A file replaces what is held for the accounts and months it covers. If any row is bad, nothing is loaded.
+            </p>
+            <form asp-action="Upload" asp-route-id="@Model.Fund.Id" method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label for="files" class="form-label">Files</label>
+                    <input id="files" type="file" name="files" class="form-control" accept=".csv" multiple required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Load</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Accounts</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Manager</th><th>Account</th><th>Sub-fund</th><th>Closed from</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var account in Model.Fund.Accounts.OrderBy(a => a.Manager).ThenBy(a => a.AccountNumber))
+                    {
+                        <tr>
+                            <td>@account.Manager</td>
+                            <td>@account.AccountNumber</td>
+                            <td>@account.SubFund</td>
+                            <td>
+                                <form asp-action="CloseAccount" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="accountId" value="@account.Id" />
+                                    <input type="month" name="month" class="form-control form-control-sm" style="max-width: 11rem"
+                                           aria-label="Closed from month for @account.AccountNumber"
+                                           value="@account.ClosedFromMonth?.ToString("yyyy-MM")" />
+                                    <button type="submit" class="btn btn-sm btn-secondary">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Fund.Accounts.Count == 0)
+                    {
+                        <tr><td colspan="4" class="text-muted">Accounts appear when statements are loaded.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Investment policy (percentages)</div>
+        <form asp-action="SavePolicy" asp-route-id="@Model.Fund.Id" method="post">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr><th>Asset class</th><th>Target</th><th>Corridor low</th><th>Corridor high</th><th>IPEC limit</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < classes.Count; i++)
+                        {
+                            var line = Model.Fund.PolicyLines.FirstOrDefault(l => l.AssetClass == classes[i]);
+                            var name = FundAssetClasses.Name(classes[i]);
+
+                            <tr>
+                                <td>
+                                    @name
+                                    <input type="hidden" name="lines[@i].AssetClass" value="@classes[i]" />
+                                </td>
+                                <td><input name="lines[@i].Target" type="number" step="any" min="0" max="100" class="form-control form-control-sm" aria-label="@name target" value="@Percent(line?.Target)" /></td>
+                                <td><input name="lines[@i].Low" type="number" step="any" min="0" max="100" class="form-control form-control-sm" aria-label="@name corridor low" value="@Percent(line?.CorridorLow)" /></td>
+                                <td><input name="lines[@i].High" type="number" step="any" min="0" max="100" class="form-control form-control-sm" aria-label="@name corridor high" value="@Percent(line?.CorridorHigh)" /></td>
+                                <td><input name="lines[@i].Ipec" type="number" step="any" min="0" max="100" class="form-control form-control-sm" aria-label="@name IPEC limit" value="@Percent(line?.IpecLimit)" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-body">
+                <button type="submit" class="btn btn-primary">Save policy</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Recently loaded</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>When</th><th>File</th><th>Kind</th><th class="text-end">Rows</th><th>By</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var import in Model.Imports)
+                    {
+                        <tr>
+                            <td>@import.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</td>
+                            <td>@import.FileName</td>
+                            <td>@import.Kind</td>
+                            <td class="text-end">@import.RowCount</td>
+                            <td>@import.UploadedByName</td>
+                        </tr>
+                    }
+                    @if (Model.Imports.Count == 0)
+                    {
+                        <tr><td colspan="5" class="text-muted">Nothing yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

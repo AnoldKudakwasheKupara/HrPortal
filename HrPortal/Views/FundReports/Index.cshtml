@@ -1,0 +1,72 @@
+@model List<HrPortal.Entities.PensionFund>
+
+@{
+    ViewData["Title"] = "Pension funds";
+    var labels = (int)ViewBag.LabelsToDecide;
+    var securities = (int)ViewBag.SecuritiesToConfirm;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Pension funds</h2>
+            <p class="text-muted mb-0">Load each fund's statements, clear the checks, and read its quarter.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Review" class="btn btn-secondary">Classifications</a>
+            <a asp-action="MarketData" class="btn btn-secondary">Rates and market returns</a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (labels > 0 || securities > 0)
+    {
+        <div class="alert alert-warning d-flex justify-content-between flex-wrap gap-2 align-items-center">
+            <span>Waiting for a decision: @labels statement label(s) and @securities security(ies). Quarters using them stay blocked.</span>
+            <a asp-action="Review" class="btn btn-sm btn-primary">Decide them</a>
+        </div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form asp-action="CreateFund" method="post" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Add a fund</label>
+                    <input id="name" name="name" class="form-control" maxlength="200" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Fund</th><th class="text-end">Accounts</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var fund in Model)
+                    {
+                        <tr>
+                            <td>@fund.Name</td>
+                            <td class="text-end">@fund.Accounts.Count</td>
+                            <td class="text-end"><a asp-action="Fund" asp-route-id="@fund.Id">Open</a></td>
+                        </tr>
+                    }
+                    @if (Model.Count == 0)
+                    {
+                        <tr><td colspan="3" class="text-muted">No funds yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

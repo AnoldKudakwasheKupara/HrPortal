@@ -1,0 +1,244 @@
+@using HrPortal.Services.FundReporting
+@model HrPortal.ViewModels.FundQuarterViewModel
+
+@{
+    ViewData["Title"] = $"{Model.Fund.Name}: {Model.Quarter.Label}";
+    var report = Model.Report;
+    var blocks = Model.Findings.Where(f => f.Severity == FundFindingSeverity.Block).ToList();
+    var checks = Model.Findings.Where(f => f.Severity == FundFindingSeverity.Check).ToList();
+
+    string Money(decimal value) => value.ToString("N0");
+    string Pct(decimal? value) => value == null ? "n/m" : value.Value.ToString("P2");
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>@Model.Fund.Name: @Model.Quarter.Label</h2>
+            <p class="text-muted mb-0">
+                @if (report != null)
+                {
+                    <span class="badge bg-success">READY</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">NOT READY</span>
+                }
+                Values in USD unless stated.
+            </p>
+        </div>
+        <a asp-action="Fund" asp-route-id="@Model.Fund.Id" class="btn btn-secondary">Back</a>
+    </div>
+
+    @if (blocks.Count > 0)
+    {
+        <div class="card mb-3">
+            <div class="card-header">Must be fixed first (@blocks.Count). No figures are shown until these are clear.</div>
+            <partial name="_FundFindings" model="blocks" />
+            <div class="card-body d-flex gap-2">
+                <a asp-action="Review" class="btn btn-sm btn-primary">Classifications</a>
+                <a asp-action="MarketData" class="btn btn-sm btn-secondary">Rates and market returns</a>
+            </div>
+        </div>
+    }
+
+    @if (checks.Count > 0)
+    {
+        <div class="card mb-3">
+            <div class="card-header">Worth a look (@checks.Count)</div>
+            <partial name="_FundFindings" model="checks" />
+        </div>
+    }
+
+    @if (report != null)
+    {
+        <div class="row g-3 mb-3">
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Fund value</div><div class="h4 mb-0">US$@Money(report.FundValue)</div></div></div></div>
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Quarter return</div><div class="h4 mb-0">@Pct(report.FundReturn)</div></div></div></div>
+            <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Prescribed assets</div><div class="h4 mb-0">@Pct(report.PrescribedShare)</div></div></div></div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Asset allocation</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Asset class</th><th class="text-end">USD</th><th class="text-end">ZWG</th><th class="text-end">Weight</th><th class="text-end">Last quarter</th><th class="text-end">Change</th><th class="text-end">Change %</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.Allocation)
+                        {
+                            <tr><td>@line.Name</td><td class="text-end">@Money(line.Usd)</td><td class="text-end">@Money(line.Zwg)</td><td class="text-end">@Pct(line.Weight)</td><td class="text-end">@Money(line.LastQuarterUsd)</td><td class="text-end">@Money(line.Change)</td><td class="text-end">@Pct(line.ChangePercent)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Asset manager movements</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Manager</th><th class="text-end">Opening</th><th class="text-end">Net contributions</th><th class="text-end">Investment gain</th><th class="text-end">Closing</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.Movements)
+                        {
+                            <tr><td>@line.Manager</td><td class="text-end">@Money(line.Opening)</td><td class="text-end">@Money(line.NetContributions)</td><td class="text-end">@Money(line.Gain)</td><td class="text-end">@Money(line.Closing)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Performance against benchmark</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Period</th><th class="text-end">Fund</th><th class="text-end">Benchmark</th><th class="text-end">Variance</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.Performance)
+                        {
+                            <tr><td>@line.Period</td><td class="text-end">@Pct(line.FundReturn)</td><td class="text-end">@Pct(line.Benchmark)</td><td class="text-end">@Pct(line.Variance)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-body text-muted small">
+                n/m means an earlier quarter has not passed its checks, or its market returns or the policy are missing.
+                Excess over USD inflation this quarter: @Pct(report.ExcessOverInflation).
+                ZWG flows are converted at the month-end rate of the month they happened in.
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Returns by manager and account</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Name</th><th class="text-end">Opening</th><th class="text-end">Closing</th><th class="text-end">Return</th><th class="text-end">Contribution</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.Managers)
+                        {
+                            <tr class="fw-semibold"><td>@line.Name</td><td class="text-end">@Money(line.Opening)</td><td class="text-end">@Money(line.Closing)</td><td class="text-end">@Pct(line.Return)</td><td class="text-end">@Pct(line.Contribution)</td></tr>
+                        }
+                        <tr><td colspan="4">Difference between contributions and the fund return (from flows in the quarter)</td><td class="text-end">@Pct(report.ContributionDifference)</td></tr>
+                        @foreach (var line in report.SubFunds)
+                        {
+                            <tr><td>Sub-fund @line.Name</td><td class="text-end">@Money(line.Opening)</td><td class="text-end">@Money(line.Closing)</td><td class="text-end">@Pct(line.Return)</td><td></td></tr>
+                        }
+                        @foreach (var line in report.Accounts)
+                        {
+                            <tr class="text-muted"><td>@line.Name</td><td class="text-end">@Money(line.Opening)</td><td class="text-end">@Money(line.Closing)</td><td class="text-end">@Pct(line.Return)</td><td></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Compliance: prescribed assets and policy</div>
+            <div class="card-body">
+                Prescribed assets are US$@Money(report.PrescribedValue), @Pct(report.PrescribedShare) of the fund.
+                @if (report.PrescribedShortfall > 0)
+                {
+                    <strong>Short of the minimum by US$@Money(report.PrescribedShortfall).</strong>
+                }
+                else
+                {
+                    <span>The minimum is met.</span>
+                }
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Asset class</th><th class="text-end">Weight</th><th class="text-end">Target</th><th class="text-end">Corridor</th><th class="text-end">IPEC limit</th><th>Position</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.Policy)
+                        {
+                            <tr><td>@line.Name</td><td class="text-end">@Pct(line.Weight)</td><td class="text-end">@Pct(line.Target)</td><td class="text-end">@Pct(line.Low) to @Pct(line.High)</td><td class="text-end">@(line.IpecLimit == null ? "" : Pct(line.IpecLimit))</td><td>@line.Position</td></tr>
+                        }
+                        @if (report.Policy.Count == 0)
+                        {
+                            <tr><td colspan="6" class="text-muted">This fund has no policy entered yet.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Largest exposures</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Security</th><th class="text-end">USD</th><th class="text-end">Weight</th><th></th></tr></thead>
+                    <tbody>
+                        <tr><td colspan="4" class="fw-semibold">Listed equities</td></tr>
+                        @foreach (var line in report.TopEquities)
+                        {
+                            <tr><td>@line.Name</td><td class="text-end">@Money(line.Usd)</td><td class="text-end">@Pct(line.Weight)</td><td>@(line.Flagged ? $"Above the {line.Limit:P0} guide" : "")</td></tr>
+                        }
+                        <tr><td colspan="4" class="fw-semibold">Fixed income</td></tr>
+                        @foreach (var line in report.TopFixedIncome)
+                        {
+                            <tr><td>@line.Name</td><td class="text-end">@Money(line.Usd)</td><td class="text-end">@Pct(line.Weight)</td><td></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (report.PriceWarnings.Count > 0)
+        {
+            <div class="card mb-3">
+                <div class="card-header">Managers pricing the same security differently</div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Security</th><th class="text-end">Lowest</th><th class="text-end">Highest</th><th class="text-end">Difference</th></tr></thead>
+                        <tbody>
+                            @foreach (var line in report.PriceWarnings)
+                            {
+                                <tr><td>@line.Name</td><td class="text-end">@line.Currency @line.Lowest.ToString("N4")</td><td class="text-end">@line.Currency @line.Highest.ToString("N4")</td><td class="text-end">@Pct(line.Dispersion)</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header">Holdings in USD accounts, by manager</div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>Manager</th><th class="text-end">USD</th><th class="text-end">Share of fund</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in report.PureUsd)
+                        {
+                            <tr><td>@line.Name</td><td class="text-end">@Money(line.Usd)</td><td class="text-end">@Pct(line.Weight)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Exchange-rate scenario</div>
+            <div class="card-body">
+                <form method="get" class="row g-2 align-items-end">
+                    <input type="hidden" name="id" value="@Model.Fund.Id" />
+                    <input type="hidden" name="year" value="@Model.Quarter.Year" />
+                    <input type="hidden" name="number" value="@Model.Quarter.Number" />
+                    <div class="col-auto">
+                        <label for="scenarioRate" class="form-label">ZWG per USD (actual @report.RateAtEnd)</label>
+                        <input id="scenarioRate" name="scenarioRate" type="number" step="any" min="0" class="form-control" value="@Model.ScenarioRate" />
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-secondary">Work it out</button>
+                    </div>
+                </form>
+                @if (report.Scenario != null)
+                {
+                    <p class="mt-3 mb-0">
+                        At @report.Scenario.Rate the fund would be worth US$@Money(report.Scenario.ScenarioValue), a loss of US$@Money(report.Scenario.Loss).
+                    </p>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -39,6 +39,8 @@
     var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
+    var isAnalyst = HrPortal.Services.Brand.Current.FundReporting &&
+                    User.IsInRole(HrPortal.Security.Roles.InvestmentAnalyst);
 
     var onboarding = (await CurrentUser.GetEmployeeAsync()) is { OnboardingCompletedAt: null };
 }
@@ -343,6 +345,16 @@
                 <i class="fas fa-sliders"></i> Settings
             </a>
         }
+    }
+
+    @if (isAnalyst)
+    {
+        <div class="nav-group">Fund Reporting</div>
+
+        <a class="nav-item @On("FundReports")"
+           asp-controller="FundReports" asp-action="Index">
+            <i class="fas fa-chart-line"></i> Pension Funds
+        </a>
     }
 
     @if (isCompliance)

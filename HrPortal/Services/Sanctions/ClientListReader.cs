@@ -271,7 +271,7 @@ namespace HrPortal.Services.Sanctions
                 ? date.Date
                 : null;
         }
-        private static List<List<string>> ReadCsv(Stream file)
+        internal static List<List<string>> ReadCsv(Stream file)
         {
             using var reader = new StreamReader(file, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
 

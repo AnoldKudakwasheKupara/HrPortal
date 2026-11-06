@@ -167,6 +167,9 @@ builder.Services.AddScoped<BackupService>();
 builder.Services.AddSingleton<VaultCipher>();
 builder.Services.AddSingleton<VaultLock>();
 builder.Services.AddScoped<HrPortal.Services.Sanctions.SanctionsService>();
+builder.Services.AddScoped<HrPortal.Services.FundReporting.FundReportingService>();
+builder.Services.Configure<HrPortal.Services.FundReporting.FundReportingOptions>(
+    builder.Configuration.GetSection(HrPortal.Services.FundReporting.FundReportingOptions.Section));
 builder.Services.AddSingleton<HrPortal.Services.Sanctions.SanctionsReportPdfService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<DailyReminderWorker>();

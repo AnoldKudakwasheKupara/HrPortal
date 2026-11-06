@@ -74,7 +74,11 @@ namespace HrPortal.Data
             AdminSeed seed,
             ILogger logger)
         {
-            foreach (var role in Roles)
+            var roles = Brand.Current.FundReporting
+                ? Roles.Append("Investment Analyst")
+                : Roles;
+
+            foreach (var role in roles)
             {
                 if (await roleManager.RoleExistsAsync(role))
                     continue;

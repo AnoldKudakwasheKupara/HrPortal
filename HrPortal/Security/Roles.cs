@@ -18,6 +18,14 @@
 
         public const string ComplianceOnly = ComplianceOfficer;
 
+        /// <summary>
+        /// Prepares pension fund reports. Nobody else sees them, not even
+        /// administrators, unless they are given this role too.
+        /// </summary>
+        public const string InvestmentAnalyst = "Investment Analyst";
+
+        public const string InvestmentAnalystOnly = InvestmentAnalyst;
+
         public const string AdminOnly = Administrator;
 
         public const string AdminOrHr =
