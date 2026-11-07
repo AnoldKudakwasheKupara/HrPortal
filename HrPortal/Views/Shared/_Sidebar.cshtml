@@ -2,6 +2,7 @@
 @inject HrPortal.Services.SupervisorQueueService TeamQueue
 @inject HrPortal.Services.TrainingAssignmentService Training
 @inject HrPortal.Services.CurrentUserService CurrentUser
+@inject HrPortal.Security.FundReportingAccess FundReporting
 
 @{
     var unread = await Notifications.UnreadCountAsync();
@@ -39,8 +40,8 @@
     var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
-    var isAnalyst = HrPortal.Services.Brand.Current.FundReporting &&
-                    User.IsInRole(HrPortal.Security.Roles.InvestmentAnalyst);
+    var opensFundReporting = HrPortal.Services.Brand.Current.FundReporting &&
+                             await FundReporting.CanOpenAsync(User);
 
     var onboarding = (await CurrentUser.GetEmployeeAsync()) is { OnboardingCompletedAt: null };
 }
@@ -347,7 +348,7 @@
         }
     }
 
-    @if (isAnalyst)
+    @if (opensFundReporting)
     {
         <div class="nav-group">Fund Reporting</div>
 

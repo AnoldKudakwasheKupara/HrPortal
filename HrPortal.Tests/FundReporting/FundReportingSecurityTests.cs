@@ -14,21 +14,39 @@ namespace HrPortal.Tests.FundReporting
                 .Where(m => !m.IsSpecialName);
 
         [Fact]
-        public void Only_investment_analysts_can_reach_any_part_of_it()
+        public void Every_part_of_it_goes_through_the_access_rule()
         {
             var authorize = typeof(FundReportsController).GetCustomAttribute<AuthorizeAttribute>();
 
             Assert.NotNull(authorize);
-            Assert.Equal("Investment Analyst", authorize!.Roles);
-            Assert.Equal(Roles.InvestmentAnalyst, Roles.InvestmentAnalystOnly);
+            Assert.Equal(FundReportingAccess.Policy, authorize!.Policy);
+            Assert.Null(authorize.Roles);
         }
+
+        [Theory]
+        [InlineData("Consultancy")]
+        [InlineData("CONSULTING")]
+        [InlineData("Investment Consultancy")]
+        [InlineData("Consultants")]
+        [InlineData("IT")]
+        [InlineData("ict department")]
+        [InlineData("Information Technology")]
+        public void Consultancy_and_it_departments_may_open_it(string department) =>
+            Assert.True(FundReportingAccess.DepartmentMayOpen(department));
+
+        [Theory]
+        [InlineData("Finance")]
+        [InlineData("Human Resources")]
+        [InlineData("Audit")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void Other_departments_may_not(string? department) =>
+            Assert.False(FundReportingAccess.DepartmentMayOpen(department));
 
         [Fact]
         public void No_action_lets_anybody_else_in()
         {
-            Assert.DoesNotContain(Actions, a =>
-                a.GetCustomAttribute<AllowAnonymousAttribute>() != null ||
-                a.GetCustomAttributes<AuthorizeAttribute>().Any(x => x.Roles != null && x.Roles != Roles.InvestmentAnalystOnly));
+            Assert.DoesNotContain(Actions, a => a.GetCustomAttribute<AllowAnonymousAttribute>() != null);
         }
 
         [Fact]

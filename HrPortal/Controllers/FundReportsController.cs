@@ -14,11 +14,12 @@ using Microsoft.Extensions.Options;
 namespace HrPortal.Controllers
 {
     /// <summary>
-    /// Quarterly pension fund reporting, for investment analysts only.
-    /// Administrators do not see it unless they are given the role, and
-    /// a company whose brand does not switch it on does not have it at all.
+    /// Quarterly pension fund reporting, for the Consultancy and IT departments
+    /// and anyone given the Investment Analyst role. Administrators elsewhere
+    /// do not see it, and a company whose brand does not switch it on does not
+    /// have it at all.
     /// </summary>
-    [Authorize(Roles = Roles.InvestmentAnalystOnly)]
+    [Authorize(Policy = FundReportingAccess.Policy)]
     public class FundReportsController : Controller
     {
         private const string Entity = "Fund Reporting";

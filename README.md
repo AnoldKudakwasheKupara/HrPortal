@@ -126,9 +126,9 @@ from a similarity of 75 out of 100; to raise fewer, set
 contain text; a scanned image is kept but reported as unreadable, to be
 checked by hand.
 
-Pension fund reporting (Fund Reporting → Pension Funds) is open only to users
-with the Investment Analyst role; administrators do not see it unless they are
-given that role too. Only Intellego has it: another company's brand file has to
+Pension fund reporting (Fund Reporting → Pension Funds) is open to everyone in
+the Consultancy and IT departments, going by the department's name, and to
+anyone else given the Investment Analyst role. Only Intellego has it: another company's brand file has to
 set `"FundReporting": true`. It follows the Reporting System Developer Guide.
 Load each fund's positions, transactions and cash_recon CSV files, decide any
 statement labels and securities it asks about, enter the month-end ZWG rates,
