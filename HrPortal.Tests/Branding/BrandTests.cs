@@ -42,22 +42,22 @@ namespace HrPortal.Tests.Branding
         [Fact]
         public void A_brand_file_sets_the_company_and_works_out_its_shades()
         {
-            File("mmc", """
+            File("example", """
                 {
-                  "PortalName": "MMC Portal",
-                  "ShortName": "MMC",
-                  "FullName": "MMC Capital",
-                  "LegalName": "MMC Capital (Pvt) Ltd",
+                  "PortalName": "Example Portal",
+                  "ShortName": "Example",
+                  "FullName": "Example Holdings",
+                  "LegalName": "Example Holdings (Pvt) Ltd",
                   "Colors": { "Primary": "#102a6b", "Sidebar": "#0a1a44", "Accent": "#b8860b", "AccentSoft": "#e8cf8a" }
                 }
                 """);
 
-            var brand = Load("mmc");
+            var brand = Load("example");
 
             Assert.False(brand.IsDefault);
-            Assert.Equal("mmc", brand.Key);
-            Assert.Equal("MMC Portal", brand.PortalName);
-            Assert.Equal("~/brands/mmc/logo.png", brand.Asset("logo.png"));
+            Assert.Equal("example", brand.Key);
+            Assert.Equal("Example Portal", brand.PortalName);
+            Assert.Equal("~/brands/example/logo.png", brand.Asset("logo.png"));
 
             var css = brand.Colors.CssVariables();
 
@@ -75,9 +75,9 @@ namespace HrPortal.Tests.Branding
         [Fact]
         public void An_exact_shade_in_the_file_wins()
         {
-            File("mmc", """{ "Colors": { "Primary": "#102a6b", "Overrides": { "--primary-dark": "#123456" } } }""");
+            File("example", """{ "Colors": { "Primary": "#102a6b", "Overrides": { "--primary-dark": "#123456" } } }""");
 
-            Assert.Equal("#123456", Load("mmc").Colors.CssVariables()["--primary-dark"]);
+            Assert.Equal("#123456", Load("example").Colors.CssVariables()["--primary-dark"]);
         }
 
         [Fact]
@@ -90,7 +90,7 @@ namespace HrPortal.Tests.Branding
 
         [Theory]
         [InlineData("../secrets")]
-        [InlineData("MMC")]
+        [InlineData("Example")]
         public void A_badly_formed_company_key_is_refused(string key) =>
             Assert.Throws<InvalidOperationException>(() => Load(key));
 

@@ -15,8 +15,12 @@ namespace HrPortal.Tests.Branding
         public static TheoryData<string> Companies()
         {
             var data = new TheoryData<string> { Brand.DefaultKey };
+            var folder = Path.Combine(Project, "Brands");
 
-            foreach (var file in Directory.GetFiles(Path.Combine(Project, "Brands"), "*.json"))
+            if (!Directory.Exists(folder))
+                return data;
+
+            foreach (var file in Directory.GetFiles(folder, "*.json"))
                 data.Add(Path.GetFileNameWithoutExtension(file));
 
             return data;

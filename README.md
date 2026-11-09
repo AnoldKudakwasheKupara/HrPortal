@@ -148,17 +148,17 @@ Leave page.
 ## Running it for another company in the group
 
 One codebase, one deployment and one database per company. With nothing set,
-the portal is Intellego. To add a company, say `mmc`:
+the portal is Intellego. To add a company, say with the key `example`:
 
-1. Add `HrPortal/Brands/mmc.json`:
+1. Add `HrPortal/Brands/example.json`:
 
    ```json
    {
-     "PortalName": "MMC Portal",
-     "ShortName": "MMC",
-     "FullName": "MMC Capital",
-     "LegalName": "MMC Capital (Pvt) Ltd",
-     "LetterheadName": "MMC CAPITAL\n(PVT) LTD",
+     "PortalName": "Example Portal",
+     "ShortName": "Example",
+     "FullName": "Example Holdings",
+     "LegalName": "Example Holdings (Pvt) Ltd",
+     "LetterheadName": "EXAMPLE HOLDINGS\n(PVT) LTD",
      "Tagline": "First line | Second line",
      "Colors": {
        "Primary": "#102a6b",
@@ -173,15 +173,14 @@ the portal is Intellego. To add a company, say `mmc`:
    carry white text, so they must be dark enough for it. To set a shade exactly,
    add it under `"Overrides"`, using a name from `CssVariables` in
    `Services/Brand.cs`.
-2. Add its artwork to `HrPortal/wwwroot/brands/mmc/`, under the same names as
+2. Add its artwork to `HrPortal/wwwroot/brands/example/`, under the same names as
    `brands/intellego`: `logo.png`, `logo-on-dark.png`, `logo-email.png`,
    `icon-32.png`, `icon-180.png` and `icon-512.png`.
-3. Add its front page wording in `HrPortal/Views/Brands/mmc/_About.cshtml`. The
+3. Add its front page wording in `HrPortal/Views/Brands/example/_About.cshtml`. The
    page still works without it, showing no About section.
 4. Deploy a separate Render service and database with `Brand__Key` set to the
-   company's key. The portal refuses to start if it has no brand file. MMC Capital's
-   is described in `render.mmc.yaml`: in Render choose **New → Blueprint**, pick this
-   repository and set the Blueprint path to that file. It needs its own email
-   settings, as above, and its own address.
+   company's key. The portal refuses to start if it has no brand file. Copy
+   `render.yaml` as a starting point; the new service needs its own database, its
+   own email settings, as above, and its own address.
 
 `dotnet test` checks every brand has its artwork and readable colours.
