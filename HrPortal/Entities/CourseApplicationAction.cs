@@ -18,6 +18,9 @@ namespace HrPortal.Entities
         /// Approved on paper before the portal, and recorded here
         /// afterwards by HR or IT on the employee's behalf.
         /// </summary>
-        CapturedAsApproved
+        CapturedAsApproved,
+
+        /// <summary>A captured application corrected by HR or IT.</summary>
+        CaptureCorrected
     }
 }

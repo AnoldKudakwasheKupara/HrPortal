@@ -1,0 +1,114 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.CaptureCourseViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Employee</div>
+
+    <div class="card-body">
+
+        <label asp-for="EmployeeId" class="form-label"></label>
+
+        <select asp-for="EmployeeId" class="form-select" asp-items="ViewBag.Employees">
+            <option value="">Choose the employee</option>
+        </select>
+
+        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Programme intended</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label asp-for="ProgramIntended" class="form-label"></label>
+                <input asp-for="ProgramIntended" class="form-control" placeholder="CFA Level II" />
+                <span asp-validation-for="ProgramIntended" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="TargetExamDate" class="form-label"></label>
+                <input asp-for="TargetExamDate" class="form-control" type="date" />
+                <span asp-validation-for="TargetExamDate" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Justification" class="form-label"></label>
+                <textarea asp-for="Justification" class="form-control" rows="4"
+                          placeholder="Why the programme is relevant to their work"></textarea>
+                <span asp-validation-for="Justification" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input asp-for="HasSatBefore" class="form-check-input" />
+                    <label asp-for="HasSatBefore" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Sitting" class="form-label"></label>
+                <select asp-for="Sitting" class="form-select">
+                    <option value="@CourseSitting.FirstAttempt">Not applicable, this was a first attempt</option>
+                    <option value="@CourseSitting.NextLevel">Proceeding to the next level</option>
+                    <option value="@CourseSitting.Rewriting">Re-writing</option>
+                </select>
+                <span asp-validation-for="Sitting" class="text-danger"></span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Approval</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label asp-for="ApprovedOn" class="form-label"></label>
+                <input asp-for="ApprovedOn" class="form-control" type="date"
+                       max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="ApprovedOn" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="ApprovedBy" class="form-label">Approved by (optional)</label>
+                <input asp-for="ApprovedBy" class="form-control" placeholder="Managing Consultant" />
+                <span asp-validation-for="ApprovedBy" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Notes" class="form-label">Notes (optional)</label>
+                <textarea asp-for="Notes" class="form-control" rows="2"
+                          placeholder="Where the original form is filed, for example"></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input asp-for="Approved" class="form-check-input" required />
+                    <label asp-for="Approved" class="form-check-label fw-semibold"></label>
+                </div>
+                <span asp-validation-for="Approved" class="text-danger"></span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

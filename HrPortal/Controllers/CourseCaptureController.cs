@@ -173,11 +173,103 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task LoadEmployeesAsync()
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (!await _access.CanCaptureAsync(User))
+                return Forbid();
+
+            var application = await LoadCapturedAsync(id);
+
+            if (application == null)
+                return NotFound();
+
+            await LoadEmployeesAsync(application.EmployeeId);
+
+            ViewBag.Application = application;
+
+            return View(CourseCapture.ToForm(application));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, CaptureCourseViewModel model)
+        {
+            if (!await _access.CanCaptureAsync(User))
+                return Forbid();
+
+            var application = await _context.CourseApplications
+                .Include(c => c.History)
+                .FirstOrDefaultAsync(c =>
+                    c.Id == id &&
+                    c.History.Any(h => h.Action == CourseApplicationAction.CapturedAsApproved));
+
+            if (application == null)
+                return NotFound();
+
+            var me = await _currentUser.GetEmployeeIdAsync();
+
+            if (me == null)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Your sign-in is not linked to an employee record, so the change " +
+                    "cannot be put in your name. Ask an administrator to link it.");
+            }
+
+            foreach (var (field, error) in CourseCapture.Check(model, DateTime.Today))
+                ModelState.AddModelError(field, error);
+
+            var employee = model.EmployeeId == null
+                ? null
+                : await _context.Employees
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == model.EmployeeId &&
+                        (e.IsActive || e.Id == application.EmployeeId));
+
+            if (model.EmployeeId != null && employee == null)
+                ModelState.AddModelError(nameof(model.EmployeeId), "Choose an active employee.");
+
+            if (!ModelState.IsValid)
+            {
+                await LoadEmployeesAsync(application.EmployeeId);
+                ViewBag.Application = application;
+                return View(model);
+            }
+
+            var previousEmployee = application.EmployeeId;
+
+            var changed = CourseCapture.Apply(model, application, me!.Value, DateTime.UtcNow);
+
+            if (changed.Count == 0)
+            {
+                TempData["Success"] = "Nothing was changed.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (application.EmployeeId != previousEmployee)
+            {
+                _notifications.Notify(
+                    application.EmployeeId,
+                    "Approved course recorded",
+                    $"Your approved request for {application.ProgramIntended} has been " +
+                    $"recorded in the portal as {application.ApplicationNumber}.",
+                    $"/MyCourses/Details/{application.Id}");
+
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["Success"] =
+                $"{application.ApplicationNumber} updated. Changed: {string.Join(", ", changed)}.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private async Task LoadEmployeesAsync(int? alsoInclude = null)
         {
             var employees = await _context.Employees
                 .AsNoTracking()
-                .Where(e => e.IsActive)
+                .Where(e => e.IsActive || e.Id == alsoInclude)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
                 .Select(e => new

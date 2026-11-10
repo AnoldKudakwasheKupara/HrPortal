@@ -1,0 +1,41 @@
+@model HrPortal.ViewModels.CaptureCourseViewModel
+
+@{
+    var application = (HrPortal.Entities.CourseApplication)ViewBag.Application;
+    ViewData["Title"] = "Edit " + application.ApplicationNumber;
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>Edit @application.ApplicationNumber</h2>
+
+        <p class="text-muted">
+            Correct the captured application. It stays approved, and the
+            change is recorded in its history.
+        </p>
+
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@application.Id" method="post">
+
+        <partial name="_CaptureFields" model="Model" />
+
+        <div class="mb-4">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save changes
+            </button>
+
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@application.Id">Cancel</a>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

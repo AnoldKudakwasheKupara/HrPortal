@@ -20,6 +20,11 @@
 
         <div class="table-actions">
 
+            <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">
+                <i class="fas fa-pen" aria-hidden="true"></i>
+                Edit
+            </a>
+
             <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
                 <i class="fas fa-download" aria-hidden="true"></i>
                 Application form (PDF)
@@ -30,6 +35,11 @@
         </div>
 
     </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
 
     <partial name="_CourseApplicationCard" model="Model" />
 

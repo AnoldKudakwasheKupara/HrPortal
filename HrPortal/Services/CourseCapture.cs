@@ -64,6 +64,120 @@ namespace HrPortal.Services
             return application;
         }
 
+        /// <summary>The captured application as it would appear on the form.</summary>
+        public static CaptureCourseViewModel ToForm(CourseApplication application)
+        {
+            var entry = CaptureEntry(application);
+            var (approvedBy, notes) = ReadComment(entry?.Comment);
+
+            return new CaptureCourseViewModel
+            {
+                EmployeeId = application.EmployeeId,
+                ProgramIntended = application.ProgramIntended,
+                Justification = application.Justification,
+                HasSatBefore = application.HasSatBefore,
+                Sitting = application.Sitting,
+                TargetExamDate = application.TargetExamDate,
+                ApprovedOn = application.CompletedAt?.Date,
+                ApprovedBy = approvedBy,
+                Notes = notes,
+                Approved = true
+            };
+        }
+
+        /// <summary>
+        /// Puts the corrected form onto the application and records what
+        /// changed. Returns the names of the changed parts, empty when
+        /// nothing changed.
+        /// </summary>
+        public static List<string> Apply(
+            CaptureCourseViewModel model,
+            CourseApplication application,
+            int editedByEmployeeId,
+            DateTime now)
+        {
+            var before = ToForm(application);
+            var changed = new List<string>();
+
+            void Note(bool differs, string name)
+            {
+                if (differs)
+                    changed.Add(name);
+            }
+
+            var sitting = model.HasSatBefore ? model.Sitting : CourseSitting.FirstAttempt;
+            var approvedBy = Clean(model.ApprovedBy);
+            var notes = Clean(model.Notes);
+
+            Note(before.EmployeeId != model.EmployeeId, "employee");
+            Note(before.ProgramIntended != model.ProgramIntended.Trim(), "programme");
+            Note(before.Justification != model.Justification.Trim(), "justification");
+            Note(before.HasSatBefore != model.HasSatBefore || before.Sitting != sitting, "previous sittings");
+            Note(before.TargetExamDate?.Date != model.TargetExamDate?.Date, "target exam date");
+            Note(before.ApprovedOn?.Date != model.ApprovedOn?.Date, "approval date");
+            Note(Clean(before.ApprovedBy) != approvedBy, "approved by");
+            Note(Clean(before.Notes) != notes, "notes");
+
+            if (changed.Count == 0)
+                return changed;
+
+            var approvedOn = DateTime.SpecifyKind(model.ApprovedOn!.Value.Date, DateTimeKind.Utc);
+
+            application.EmployeeId = model.EmployeeId!.Value;
+            application.ProgramIntended = model.ProgramIntended.Trim();
+            application.Justification = model.Justification.Trim();
+            application.HasSatBefore = model.HasSatBefore;
+            application.Sitting = sitting;
+            application.TargetExamDate = model.TargetExamDate?.Date;
+            application.SubmittedAt = approvedOn;
+            application.CompletedAt = approvedOn;
+
+            var entry = CaptureEntry(application);
+
+            if (entry != null)
+                entry.Comment = Comment(model, approvedOn);
+
+            application.History.Add(new CourseApplicationHistory
+            {
+                ActionedByEmployeeId = editedByEmployeeId,
+                Action = CourseApplicationAction.CaptureCorrected,
+                PreviousStatus = application.Status,
+                NewStatus = application.Status,
+                Comment = "Changed: " + string.Join(", ", changed) + ".",
+                ActionDate = now
+            });
+
+            return changed;
+        }
+
+        private static CourseApplicationHistory? CaptureEntry(CourseApplication application) =>
+            application.History
+                .FirstOrDefault(h => h.Action == CourseApplicationAction.CapturedAsApproved);
+
+        private const string Middle = ", before the portal. Captured on the employee's behalf.";
+
+        /// <summary>Reads the approver and notes back out of a capture comment.</summary>
+        public static (string? ApprovedBy, string? Notes) ReadComment(string? comment)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+                return (null, null);
+
+            var split = comment.IndexOf(Middle, StringComparison.Ordinal);
+
+            if (split < 0)
+                return (null, Clean(comment));
+
+            var head = comment[..split];
+            var by = head.IndexOf(" by ", StringComparison.Ordinal);
+
+            return (
+                by < 0 ? null : Clean(head[(by + 4)..]),
+                Clean(comment[(split + Middle.Length)..]));
+        }
+
+        private static string? Clean(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
         private static string Comment(CaptureCourseViewModel model, DateTime approvedOn)
         {
             var comment = $"Approved on {approvedOn:d MMM yyyy}";
@@ -71,7 +185,7 @@ namespace HrPortal.Services
             if (!string.IsNullOrWhiteSpace(model.ApprovedBy))
                 comment += $" by {model.ApprovedBy.Trim()}";
 
-            comment += ", before the portal. Captured on the employee's behalf.";
+            comment += Middle;
 
             if (!string.IsNullOrWhiteSpace(model.Notes))
                 comment += " " + model.Notes.Trim();

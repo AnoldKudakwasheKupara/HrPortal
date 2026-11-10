@@ -95,6 +95,66 @@ namespace HrPortal.Tests.Courses
                 CourseCapture.Build(model, "CA-1", 3, Today).Sitting);
         }
 
+        [Fact]
+        public void The_edit_form_is_filled_from_the_captured_application()
+        {
+            var model = Valid();
+            model.Notes = "Paper form in HR file 12";
+
+            var form = CourseCapture.ToForm(CourseCapture.Build(model, "CA-1", 3, Today));
+
+            Assert.Equal(7, form.EmployeeId);
+            Assert.Equal("CFA Level II", form.ProgramIntended);
+            Assert.Equal(new DateTime(2025, 3, 14), form.ApprovedOn);
+            Assert.Equal("Managing Consultant", form.ApprovedBy);
+            Assert.Equal("Paper form in HR file 12", form.Notes);
+            Assert.True(form.Approved);
+        }
+
+        [Fact]
+        public void A_capture_without_approver_or_notes_reads_back_empty()
+        {
+            var model = Valid();
+            model.ApprovedBy = null;
+
+            Assert.Equal((null, null),
+                CourseCapture.ReadComment(CourseCapture.Build(model, "CA-1", 3, Today).History.Single().Comment));
+        }
+
+        [Fact]
+        public void Apply_updates_the_application_and_records_what_changed()
+        {
+            var application = CourseCapture.Build(Valid(), "CA-1", 3, Today);
+            var model = CourseCapture.ToForm(application);
+            model.ProgramIntended = "CFA Level III";
+            model.ApprovedOn = new DateTime(2025, 4, 1);
+            model.Notes = "File 14";
+
+            var changed = CourseCapture.Apply(model, application, 9, Today.AddHours(10));
+
+            Assert.Equal(new[] { "programme", "approval date", "notes" }, changed);
+            Assert.Equal("CFA Level III", application.ProgramIntended);
+            Assert.Equal(new DateTime(2025, 4, 1), application.CompletedAt);
+            Assert.Equal(CourseApplicationStatus.Approved, application.Status);
+
+            var captured = application.History.Single(h => h.Action == CourseApplicationAction.CapturedAsApproved);
+            Assert.Contains("1 Apr 2025", captured.Comment);
+            Assert.EndsWith("File 14", captured.Comment);
+
+            var edit = application.History.Single(h => h.Action == CourseApplicationAction.CaptureCorrected);
+            Assert.Equal(9, edit.ActionedByEmployeeId);
+            Assert.Equal("Changed: programme, approval date, notes.", edit.Comment);
+        }
+
+        [Fact]
+        public void Saving_without_changes_records_nothing()
+        {
+            var application = CourseCapture.Build(Valid(), "CA-1", 3, Today);
+
+            Assert.Empty(CourseCapture.Apply(CourseCapture.ToForm(application), application, 9, Today));
+            Assert.Single(application.History);
+        }
+
         [Theory]
         [InlineData("IT", true)]
         [InlineData("Information Technology", true)]
