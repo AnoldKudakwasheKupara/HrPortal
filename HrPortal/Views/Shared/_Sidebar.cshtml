@@ -3,6 +3,7 @@
 @inject HrPortal.Services.TrainingAssignmentService Training
 @inject HrPortal.Services.CurrentUserService CurrentUser
 @inject HrPortal.Security.FundReportingAccess FundReporting
+@inject HrPortal.Security.CourseCaptureAccess CourseCapture
 
 @{
     var unread = await Notifications.UnreadCountAsync();
@@ -42,6 +43,8 @@
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
     var opensFundReporting = HrPortal.Services.Brand.Current.FundReporting &&
                              await FundReporting.CanOpenAsync(User);
+
+    var capturesCourses = await CourseCapture.CanCaptureAsync(User);
 
     var onboarding = (await CurrentUser.GetEmployeeAsync()) is { OnboardingCompletedAt: null };
 }
@@ -141,6 +144,16 @@
        asp-controller="WeeklyReport" asp-action="Index">
         <i class="fas fa-file-contract"></i> Weekly Reports
     </a>
+
+    @if (capturesCourses)
+    {
+        <div class="nav-group">Courses</div>
+
+        <a class="nav-item @On("CourseCapture")"
+           asp-controller="CourseCapture" asp-action="Index">
+            <i class="fas fa-file-circle-check"></i> Capture Approved Courses
+        </a>
+    }
 
     @if (supervises)
     {

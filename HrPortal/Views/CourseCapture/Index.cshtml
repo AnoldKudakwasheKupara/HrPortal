@@ -1,0 +1,90 @@
+@model List<HrPortal.Entities.CourseApplicationHistory>
+
+@{
+    ViewData["Title"] = "Captured Course Approvals";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head-simple d-flex flex-wrap justify-content-between align-items-start gap-2">
+
+        <div>
+            <h2>Captured Course Approvals</h2>
+
+            <p class="text-muted mb-0">
+                Course requests that were approved before the portal, recorded
+                here on the employee's behalf. Each one shows as approved on the
+                employee's My Courses.
+            </p>
+        </div>
+
+        <a class="btn btn-primary" asp-action="Create">
+            <i class="fas fa-plus" aria-hidden="true"></i>
+            Capture approved course request
+        </a>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Nothing has been captured yet.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+
+            <div class="card-body is-table">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>Employee</th>
+                                <th>Programme</th>
+                                <th>Approved</th>
+                                <th>Captured</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var h in Model)
+                            {
+                                var a = h.CourseApplication;
+
+                                <tr>
+                                    <td class="text-nowrap">@a.ApplicationNumber</td>
+                                    <td>@a.Employee.FirstName @a.Employee.LastName</td>
+                                    <td>@a.ProgramIntended</td>
+                                    <td class="text-nowrap">@a.CompletedAt?.ToString("d MMM yyyy")</td>
+                                    <td>
+                                        <div class="text-nowrap">@h.ActionDate.ToLocalTime().ToString("d MMM yyyy")</div>
+                                        <div class="small text-muted">
+                                            by @h.ActionedByEmployee.FirstName @h.ActionedByEmployee.LastName
+                                        </div>
+                                    </td>
+                                    <td><partial name="_CourseStatusBadge" model="a.Status" /></td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>

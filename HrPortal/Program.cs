@@ -173,6 +173,7 @@ builder.Services.AddSingleton<VaultLock>();
 builder.Services.AddScoped<HrPortal.Services.Sanctions.SanctionsService>();
 builder.Services.AddScoped<HrPortal.Services.FundReporting.FundReportingService>();
 builder.Services.AddScoped<FundReportingAccess>();
+builder.Services.AddScoped<CourseCaptureAccess>();
 builder.Services.AddScoped<IAuthorizationHandler, FundReportingHandler>();
 builder.Services.Configure<HrPortal.Services.FundReporting.FundReportingOptions>(
     builder.Configuration.GetSection(HrPortal.Services.FundReporting.FundReportingOptions.Section));

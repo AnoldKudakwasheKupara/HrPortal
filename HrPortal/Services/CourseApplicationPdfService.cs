@@ -347,7 +347,10 @@ namespace HrPortal.Services
                 column.Item().Element(e => Approver(
                     e, "Managing Consultant", consultant));
 
-                var comments = new[] { supervisor, hr, consultant }
+                var captured = application.History
+                    .FirstOrDefault(h => h.Action == CourseApplicationAction.CapturedAsApproved);
+
+                var comments = new[] { supervisor, hr, consultant, captured }
                     .Where(d => !string.IsNullOrWhiteSpace(d?.Comment))
                     .Select(d => d!.Comment!)
                     .ToList();
