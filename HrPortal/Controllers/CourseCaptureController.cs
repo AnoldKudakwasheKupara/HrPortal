@@ -23,19 +23,22 @@ namespace HrPortal.Controllers
         private readonly CurrentUserService _currentUser;
         private readonly CourseApplicationWorkflowService _workflow;
         private readonly NotificationService _notifications;
+        private readonly CourseApplicationPdfService _pdf;
 
         public CourseCaptureController(
             ApplicationDbContext context,
             CourseCaptureAccess access,
             CurrentUserService currentUser,
             CourseApplicationWorkflowService workflow,
-            NotificationService notifications)
+            NotificationService notifications,
+            CourseApplicationPdfService pdf)
         {
             _context = context;
             _access = access;
             _currentUser = currentUser;
             _workflow = workflow;
             _notifications = notifications;
+            _pdf = pdf;
         }
 
         public async Task<IActionResult> Index()
@@ -54,6 +57,51 @@ namespace HrPortal.Controllers
 
             return View(captured);
         }
+
+        /// <summary>One captured application, read only.</summary>
+        public async Task<IActionResult> Details(int id)
+        {
+            if (!await _access.CanCaptureAsync(User))
+                return Forbid();
+
+            var application = await LoadCapturedAsync(id);
+
+            if (application == null)
+                return NotFound();
+
+            return View(application);
+        }
+
+        public async Task<IActionResult> Form(int id)
+        {
+            if (!await _access.CanCaptureAsync(User))
+                return Forbid();
+
+            var application = await LoadCapturedAsync(id);
+
+            if (application == null)
+                return NotFound();
+
+            return File(
+                _pdf.Render(application, hidePersonal: !User.IsInRole(Roles.HrOfficer)),
+                "application/pdf",
+                $"Course application - {application.ApplicationNumber}.pdf");
+        }
+
+        /// <summary>
+        /// Only applications that were captured here. Ones that went through
+        /// the normal approval steps stay with HR and the approvers.
+        /// </summary>
+        private Task<CourseApplication?> LoadCapturedAsync(int id) =>
+            _context.CourseApplications
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                    .ThenInclude(e => e.Department)
+                .Include(c => c.History)
+                    .ThenInclude(h => h.ActionedByEmployee)
+                .FirstOrDefaultAsync(c =>
+                    c.Id == id &&
+                    c.History.Any(h => h.Action == CourseApplicationAction.CapturedAsApproved));
 
         public async Task<IActionResult> Create()
         {

@@ -1,0 +1,38 @@
+@model HrPortal.Entities.CourseApplication
+
+@{
+    ViewData["Title"] = Model.ApplicationNumber;
+    ViewData["HidePersonal"] = !User.IsInRole(HrPortal.Security.Roles.HrOfficer);
+}
+
+<div class="container">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@Model.ApplicationNumber</h2>
+
+            <p class="text-muted mb-0">
+                @Model.ProgramIntended, captured as approved on
+                @Model.Employee.FirstName @Model.Employee.LastName's behalf
+            </p>
+        </div>
+
+        <div class="table-actions">
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i>
+                Application form (PDF)
+            </a>
+
+            <a class="btn btn-secondary" asp-action="Index">Back</a>
+
+        </div>
+
+    </div>
+
+    <partial name="_CourseApplicationCard" model="Model" />
+
+    <partial name="_CourseHistoryCard" model="Model" />
+
+</div>

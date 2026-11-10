@@ -2,6 +2,8 @@
 @model HrPortal.Entities.CourseApplication
 
 @{
+    var captured = Model.History.Any(h => h.Action == CourseApplicationAction.CapturedAsApproved);
+
     var nationalId = ViewData["HidePersonal"] as bool? == true
         ? HrPortal.Services.PersonalData.MaskId(Model.Employee.NationalId)
         : Model.Employee.NationalId;
@@ -90,7 +92,11 @@
             <div class="col-12">
                 <span class="field-label">Pledge</span>
                 <div class="field-value @(Model.PledgedAt == null ? "is-empty" : "")">
-                    @if (Model.PledgedAt == null)
+                    @if (Model.PledgedAt == null && captured)
+                    {
+                        <text>On the paper form, approved before the portal</text>
+                    }
+                    else if (Model.PledgedAt == null)
                     {
                         <text>Not made yet</text>
                     }

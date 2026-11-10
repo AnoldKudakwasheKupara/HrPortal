@@ -52,6 +52,7 @@
                                 <th>Approved</th>
                                 <th>Captured</th>
                                 <th>Status</th>
+                                <th></th>
                             </tr>
                         </thead>
 
@@ -73,6 +74,12 @@
                                         </div>
                                     </td>
                                     <td><partial name="_CourseStatusBadge" model="a.Status" /></td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary text-nowrap"
+                                           asp-action="Details" asp-route-id="@a.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                    </td>
                                 </tr>
                             }
 
