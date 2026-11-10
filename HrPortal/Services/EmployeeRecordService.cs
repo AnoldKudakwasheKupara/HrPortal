@@ -102,6 +102,11 @@ namespace HrPortal.Services
                 "leave balance(s)");
 
             Add(
+                await _context.TodoItems
+                    .CountAsync(t => t.EmployeeId == employeeId),
+                "to-do item(s)");
+
+            Add(
                 await _context.TrainingAssignments
                     .CountAsync(a => a.EmployeeId == employeeId),
                 "training assignment(s)");

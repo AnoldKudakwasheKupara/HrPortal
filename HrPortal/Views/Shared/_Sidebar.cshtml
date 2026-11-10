@@ -73,6 +73,11 @@
         </a>
     }
 
+    <a class="nav-item @OnAction("Todo", "Index")"
+       asp-controller="Todo" asp-action="Index">
+        <i class="fas fa-list-check"></i> My To-Do List
+    </a>
+
     <a class="nav-item @On("MyTraining")"
        asp-controller="MyTraining" asp-action="Index">
         <i class="fas fa-graduation-cap"></i> My Training
@@ -146,6 +151,11 @@
                 <span class="nav-badge">@awaitingMe</span>
             }
         </div>
+
+        <a class="nav-item @OnAction("Todo", "Team")"
+           asp-controller="Todo" asp-action="Team">
+            <i class="fas fa-list-check"></i> Team To-Do Lists
+        </a>
 
         <a class="nav-item @OnAction("LeaveApproval", "MyTeam")"
            asp-controller="LeaveApproval" asp-action="MyTeam">

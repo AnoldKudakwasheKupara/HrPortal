@@ -197,6 +197,7 @@ builder.Services.AddScoped<LoanWorkflowService>();
 builder.Services.AddScoped<CourseApplicationWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
+builder.Services.AddScoped<TodoService>();
 
 
 builder.Services.AddHttpClient();

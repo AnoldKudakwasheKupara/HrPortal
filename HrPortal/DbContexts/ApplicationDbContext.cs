@@ -79,6 +79,7 @@ namespace HrPortal.DbContexts
         public DbSet<CourseApplicationHistory> CourseApplicationHistories { get; set; }
         public DbSet<ItActivity> ItActivities { get; set; }
         public DbSet<WeeklyReport> WeeklyReports { get; set; }
+        public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<WeeklyReportSection> WeeklyReportSections { get; set; }
         public DbSet<WeeklyReportPriority> WeeklyReportPriorities { get; set; }
         public DbSet<License> Licenses { get; set; }
@@ -1281,6 +1282,28 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(r => new { r.EmployeeId, r.PeriodStart })
                     .IsUnique();
+            });
+
+            builder.Entity<TodoItem>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+
+                entity.Property(t => t.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(t => t.Notes).HasMaxLength(2000);
+
+                entity.Property(t => t.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.HasOne(t => t.Employee)
+                    .WithMany()
+                    .HasForeignKey(t => t.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(t => new { t.EmployeeId, t.Status });
             });
 
             builder.Entity<WeeklyReportSection>(entity =>

@@ -1,0 +1,71 @@
+@model HrPortal.ViewModels.TodoItemViewModel
+@using HrPortal.Entities
+
+@{
+    ViewData["Title"] = "Edit To-Do Item";
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>Edit to-do item</h2>
+
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+        <div class="card shadow-sm mb-4">
+
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" maxlength="200" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+
+                    <div class="col-md-6">
+                        <label asp-for="DueDate" class="form-label">Due (optional)</label>
+                        <input asp-for="DueDate" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select"
+                                asp-items="Html.GetEnumSelectList<TodoStatus>()"></select>
+                    </div>
+
+                </div>
+
+                <div class="mb-0">
+                    <label asp-for="Notes" class="form-label">Notes (optional)</label>
+                    <textarea asp-for="Notes" class="form-control" rows="4" maxlength="2000"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="mb-4">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save
+            </button>
+
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

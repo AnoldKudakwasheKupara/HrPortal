@@ -1,0 +1,161 @@
+@model HrPortal.ViewModels.TodoListViewModel
+@using HrPortal.Entities
+
+@{
+    var today = DateTime.Today;
+
+    string Label(TodoStatus s) => s switch
+    {
+        TodoStatus.NotStarted => "Not started",
+        TodoStatus.InProgress => "In progress",
+        _ => "Done"
+    };
+
+    string Badge(TodoStatus s) => s switch
+    {
+        TodoStatus.NotStarted => "bg-secondary",
+        TodoStatus.InProgress => "bg-primary",
+        _ => "bg-success"
+    };
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">
+        @(Model.CanEdit
+            ? "Nothing on your list yet. Add the first item above."
+            : "Nothing on this list yet.")
+    </div>
+}
+else
+{
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>What needs doing</th>
+                            <th>Due</th>
+                            <th>Status</th>
+                            @if (Model.CanEdit)
+                            {
+                                <th class="text-end">Actions</th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.Items)
+                        {
+                            var done = item.Status == TodoStatus.Done;
+
+                            <tr id="todo-@item.Id" class="@(done ? "text-muted" : "")">
+
+                                <td>
+                                    <div class="@(done ? "text-decoration-line-through" : "fw-semibold")">
+                                        @item.Title
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.Notes))
+                                    {
+                                        <div class="small text-muted" style="white-space: pre-line;">@item.Notes</div>
+                                    }
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @if (item.DueDate != null)
+                                    {
+                                        @item.DueDate.Value.ToString("dd MMM yyyy")
+
+                                        @if (item.IsOverdue(today))
+                                        {
+                                            <span class="badge bg-danger ms-1">Overdue</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+
+                                <td class="text-nowrap">
+                                    <span class="badge @Badge(item.Status)">@Label(item.Status)</span>
+
+                                    @if (done && item.CompletedAt != null)
+                                    {
+                                        <div class="small text-muted">
+                                            @item.CompletedAt.Value.ToLocalTime().ToString("dd MMM yyyy")
+                                        </div>
+                                    }
+                                </td>
+
+                                @if (Model.CanEdit)
+                                {
+                                    <td>
+                                        <div class="table-actions justify-content-end">
+
+                                            @if (item.Status == TodoStatus.NotStarted)
+                                            {
+                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="status" value="@TodoStatus.InProgress" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Start">
+                                                        <i class="fas fa-play" aria-hidden="true"></i> Start
+                                                    </button>
+                                                </form>
+                                            }
+
+                                            @if (!done)
+                                            {
+                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="status" value="@TodoStatus.Done" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark done">
+                                                        <i class="fas fa-check" aria-hidden="true"></i> Done
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="status" value="@TodoStatus.InProgress" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Reopen">
+                                                        <i class="fas fa-rotate-left" aria-hidden="true"></i> Reopen
+                                                    </button>
+                                                </form>
+                                            }
+
+                                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id" title="Edit">
+                                                <i class="fas fa-pen" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Edit</span>
+                                            </a>
+
+                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Remove this item from your list?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                    <span class="visually-hidden">Remove</span>
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </td>
+                                }
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+}

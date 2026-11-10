@@ -1,0 +1,43 @@
+@model HrPortal.ViewModels.TodoListViewModel
+@using HrPortal.Services
+
+@{
+    string name = ViewBag.PersonName;
+    string? jobTitle = ViewBag.JobTitle;
+    ViewData["Title"] = $"{name}'s To-Do List";
+    var counts = TodoService.Count(Model.Items, DateTime.Today);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>@name's To-Do List</h2>
+
+        <p class="text-muted">
+            @if (!string.IsNullOrWhiteSpace(jobTitle))
+            {
+                @jobTitle<text>. </text>
+            }
+            You can see this list, but only @name can change it.
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="badge bg-secondary fs-6">@counts.NotStarted not started</span>
+        <span class="badge bg-primary fs-6">@counts.InProgress in progress</span>
+        <span class="badge bg-success fs-6">@counts.Done done</span>
+        @if (counts.Overdue > 0)
+        {
+            <span class="badge bg-danger fs-6">@counts.Overdue overdue</span>
+        }
+    </div>
+
+    <partial name="_TodoList" model="Model" />
+
+    <a class="btn btn-outline-secondary" asp-action="Team">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to my team
+    </a>
+
+</div>

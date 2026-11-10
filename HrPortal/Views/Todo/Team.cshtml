@@ -1,0 +1,90 @@
+@model List<HrPortal.Services.TeamMemberTodos>
+
+@{
+    ViewData["Title"] = "Team To-Do Lists";
+}
+
+<div class="container-fluid">
+
+    <div class="page-head-simple">
+
+        <h2>Team To-Do Lists</h2>
+
+        <p class="text-muted">
+            What the people who report to you are working on. Open
+            someone to see their list. Only they can change it.
+        </p>
+
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Nobody reports to you at the moment.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+
+            <div class="card-body is-table">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th class="text-center">Not started</th>
+                                <th class="text-center">In progress</th>
+                                <th class="text-center">Done</th>
+                                <th class="text-center">Overdue</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var m in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@m.Name</div>
+                                        @if (!string.IsNullOrWhiteSpace(m.JobTitle))
+                                        {
+                                            <div class="small text-muted">@m.JobTitle</div>
+                                        }
+                                    </td>
+                                    <td class="text-center">@m.Counts.NotStarted</td>
+                                    <td class="text-center">@m.Counts.InProgress</td>
+                                    <td class="text-center">@m.Counts.Done</td>
+                                    <td class="text-center">
+                                        @if (m.Counts.Overdue > 0)
+                                        {
+                                            <span class="badge bg-danger">@m.Counts.Overdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Member" asp-route-id="@m.EmployeeId">
+                                            View list
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
