@@ -1,5 +1,6 @@
 using HrPortal.DbContexts;
 using HrPortal.Entities;
+using HrPortal.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Services
@@ -79,6 +80,39 @@ namespace HrPortal.Services
                 list.Count(t => t.Status == TodoStatus.InProgress),
                 list.Count(t => t.Status == TodoStatus.Done),
                 list.Count(t => t.IsOverdue(today)));
+        }
+
+        public const int PageSize = 10;
+
+        /// <summary>
+        /// The items in one status group, a page at a time. With no group
+        /// asked for, the first one that has anything in it.
+        /// </summary>
+        public static (TodoStatus Status, PagedResult<TodoItem> Page) Group(
+            IReadOnlyList<TodoItem> items,
+            TodoStatus? status,
+            int page)
+        {
+            var chosen = status != null && Enum.IsDefined(status.Value)
+                ? status.Value
+                : Enum.GetValues<TodoStatus>()
+                    .Where(s => items.Any(t => t.Status == s))
+                    .DefaultIfEmpty(TodoStatus.NotStarted)
+                    .First();
+
+            var inGroup = items.Where(t => t.Status == chosen).ToList();
+            var totalPages = (int)Math.Ceiling(inGroup.Count / (double)PageSize);
+
+            page = Math.Clamp(page, 1, Math.Max(totalPages, 1));
+
+            return (chosen, new PagedResult<TodoItem>
+            {
+                Items = inGroup.Skip((page - 1) * PageSize).Take(PageSize).ToList(),
+                Page = page,
+                PageSize = PageSize,
+                TotalCount = inGroup.Count,
+                TotalPages = totalPages
+            });
         }
 
         /// <summary>Moves an item to a new status, noting when it was finished.</summary>

@@ -19,12 +19,44 @@
     };
 }
 
-@if (!Model.Items.Any())
+<ul class="nav nav-pills gap-2 mb-3">
+    @foreach (var s in Enum.GetValues<TodoStatus>())
+    {
+        var count = s switch
+        {
+            TodoStatus.NotStarted => Model.Counts.NotStarted,
+            TodoStatus.InProgress => Model.Counts.InProgress,
+            _ => Model.Counts.Done
+        };
+
+        <li class="nav-item">
+            <a class="nav-link @(s == Model.Status ? "active" : "border")"
+               href="@(Context.Request.Path)?status=@s"
+               aria-current="@(s == Model.Status ? "page" : null)">
+                @Label(s) <span class="badge @Badge(s) ms-1">@count</span>
+            </a>
+        </li>
+    }
+
+    @if (Model.Counts.Overdue > 0)
+    {
+        <li class="nav-item align-self-center">
+            <span class="badge bg-danger fs-6">@Model.Counts.Overdue overdue</span>
+        </li>
+    }
+</ul>
+
+@if (Model.Page.TotalCount == 0)
 {
     <div class="alert alert-info">
-        @(Model.CanEdit
-            ? "Nothing on your list yet. Add the first item above."
-            : "Nothing on this list yet.")
+        @(Model.Counts.NotStarted + Model.Counts.InProgress + Model.Counts.Done == 0
+            ? (Model.CanEdit ? "Nothing on your list yet. Add the first item above." : "Nothing on this list yet.")
+            : Model.Status switch
+            {
+                TodoStatus.NotStarted => "Nothing waiting to be started.",
+                TodoStatus.InProgress => "Nothing in progress.",
+                _ => "Nothing done yet."
+            })
     </div>
 }
 else
@@ -51,14 +83,14 @@ else
 
                     <tbody>
 
-                        @foreach (var item in Model.Items)
+                        @foreach (var item in Model.Page.Items)
                         {
                             var done = item.Status == TodoStatus.Done;
 
-                            <tr id="todo-@item.Id" class="@(done ? "text-muted" : "")">
+                            <tr id="todo-@item.Id">
 
                                 <td>
-                                    <div class="@(done ? "text-decoration-line-through" : "fw-semibold")">
+                                    <div class="fw-semibold">
                                         @item.Title
                                     </div>
 
@@ -103,6 +135,8 @@ else
                                             @if (item.Status == TodoStatus.NotStarted)
                                             {
                                                 <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="tab" value="@Model.Status" />
+                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
                                                     <input type="hidden" name="status" value="@TodoStatus.InProgress" />
                                                     <button type="submit" class="btn btn-sm btn-outline-primary" title="Start">
                                                         <i class="fas fa-play" aria-hidden="true"></i> Start
@@ -113,6 +147,8 @@ else
                                             @if (!done)
                                             {
                                                 <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="tab" value="@Model.Status" />
+                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
                                                     <input type="hidden" name="status" value="@TodoStatus.Done" />
                                                     <button type="submit" class="btn btn-sm btn-outline-success" title="Mark done">
                                                         <i class="fas fa-check" aria-hidden="true"></i> Done
@@ -122,6 +158,8 @@ else
                                             else
                                             {
                                                 <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <input type="hidden" name="tab" value="@Model.Status" />
+                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
                                                     <input type="hidden" name="status" value="@TodoStatus.InProgress" />
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Reopen">
                                                         <i class="fas fa-rotate-left" aria-hidden="true"></i> Reopen
@@ -136,6 +174,8 @@ else
 
                                             <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
                                                   onsubmit="return confirm('Remove this item from your list?');">
+                                                <input type="hidden" name="tab" value="@Model.Status" />
+                                                <input type="hidden" name="page" value="@Model.Page.Page" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
                                                     <i class="fas fa-trash" aria-hidden="true"></i>
                                                     <span class="visually-hidden">Remove</span>
@@ -154,6 +194,9 @@ else
                 </table>
 
             </div>
+
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model.Page, "items"); }
+            <partial name="_Pager" model="pager" />
 
         </div>
 

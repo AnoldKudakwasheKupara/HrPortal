@@ -29,19 +29,18 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(TodoStatus? status, int page = 1)
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
             if (me == null)
                 return View("NoEmployeeRecord");
 
-            return View(new TodoListViewModel
-            {
-                Items = await _todos.ListAsync(me.Value),
-                CanEdit = true,
-                New = new TodoItemViewModel()
-            });
+            var model = await ListAsync(me.Value, status, page);
+            model.CanEdit = true;
+            model.New = new TodoItemViewModel();
+
+            return View(model);
         }
 
         [HttpPost]
@@ -70,7 +69,20 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { status = TodoStatus.NotStarted });
+        }
+
+        private async Task<TodoListViewModel> ListAsync(int employeeId, TodoStatus? status, int page)
+        {
+            var items = await _todos.ListAsync(employeeId);
+            var (shown, paged) = TodoService.Group(items, status, page);
+
+            return new TodoListViewModel
+            {
+                Counts = TodoService.Count(items, DateTime.Today),
+                Status = shown,
+                Page = paged
+            };
         }
 
         private async Task<TodoItem?> MineAsync(int id)
@@ -122,12 +134,12 @@ namespace HrPortal.Controllers
 
             TempData["Success"] = "Saved.";
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { status = item.Status });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetStatus(int id, TodoStatus status)
+        public async Task<IActionResult> SetStatus(int id, TodoStatus status, TodoStatus? tab, int page = 1)
         {
             var item = await MineAsync(id);
 
@@ -141,12 +153,21 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Redirect(Url.Action(nameof(Index)) + $"#todo-{id}");
+            var moved = status switch
+            {
+                TodoStatus.NotStarted => "Not started",
+                TodoStatus.InProgress => "In progress",
+                _ => "Done"
+            };
+
+            TempData["Success"] = $"\"{item.Title}\" moved to {moved}.";
+
+            return RedirectToAction(nameof(Index), new { status = tab, page });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, TodoStatus? tab, int page = 1)
         {
             var item = await MineAsync(id);
 
@@ -159,7 +180,7 @@ namespace HrPortal.Controllers
 
             TempData["Success"] = $"\"{item.Title}\" removed.";
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { status = tab, page });
         }
 
         /// <summary>A supervisor's view of the people who report to them.</summary>
@@ -174,7 +195,7 @@ namespace HrPortal.Controllers
         }
 
         /// <summary>One team member's list, read only, for their supervisor.</summary>
-        public async Task<IActionResult> Member(int id)
+        public async Task<IActionResult> Member(int id, TodoStatus? status, int page = 1)
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
@@ -190,11 +211,7 @@ namespace HrPortal.Controllers
             ViewBag.PersonName = person.Name;
             ViewBag.JobTitle = person.JobTitle;
 
-            return View(new TodoListViewModel
-            {
-                Items = await _todos.ListAsync(id),
-                CanEdit = false
-            });
+            return View(await ListAsync(id, status, page));
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using HrPortal.Entities;
+using HrPortal.Services;
 
 namespace HrPortal.ViewModels
 {
@@ -24,7 +25,12 @@ namespace HrPortal.ViewModels
 
     public class TodoListViewModel
     {
-        public List<TodoItem> Items { get; set; } = new();
+        public TodoCounts Counts { get; set; } = new(0, 0, 0, 0);
+
+        /// <summary>The status group being shown.</summary>
+        public TodoStatus Status { get; set; }
+
+        public PagedResult<TodoItem> Page { get; set; } = new();
 
         /// <summary>False when a supervisor is looking at somebody else's list.</summary>
         public bool CanEdit { get; set; }

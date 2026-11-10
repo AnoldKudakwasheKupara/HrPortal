@@ -135,5 +135,45 @@ namespace HrPortal.Tests.Todo
 
             Assert.Equal(completed, item.CompletedAt);
         }
+
+        [Fact]
+        public void A_group_shows_only_its_status_ten_at_a_time()
+        {
+            var items = Enumerable.Range(1, 23)
+                .Select(i => Item(Report, $"Task {i}", TodoStatus.NotStarted, null))
+                .Append(Item(Report, "Busy", TodoStatus.InProgress, null))
+                .ToList();
+
+            var (status, page) = TodoService.Group(items, TodoStatus.NotStarted, 3);
+
+            Assert.Equal(TodoStatus.NotStarted, status);
+            Assert.Equal(3, page.Page);
+            Assert.Equal(3, page.TotalPages);
+            Assert.Equal(23, page.TotalCount);
+            Assert.Equal(new[] { "Task 21", "Task 22", "Task 23" }, page.Items.Select(t => t.Title));
+
+            Assert.Equal(10, TodoService.Group(items, TodoStatus.NotStarted, 1).Page.Items.Count);
+            Assert.Equal("Busy", Assert.Single(TodoService.Group(items, TodoStatus.InProgress, 1).Page.Items).Title);
+        }
+
+        [Fact]
+        public void A_page_past_the_end_shows_the_last_page()
+        {
+            var items = Enumerable.Range(1, 12)
+                .Select(i => Item(Report, $"Task {i}", TodoStatus.Done, null))
+                .ToList();
+
+            Assert.Equal(2, TodoService.Group(items, TodoStatus.Done, 9).Page.Page);
+            Assert.Equal(1, TodoService.Group(items, TodoStatus.Done, -4).Page.Page);
+        }
+
+        [Fact]
+        public void With_no_group_chosen_the_first_with_items_is_shown()
+        {
+            var items = new List<TodoItem> { Item(Report, "Busy", TodoStatus.InProgress, null) };
+
+            Assert.Equal(TodoStatus.InProgress, TodoService.Group(items, null, 1).Status);
+            Assert.Equal(TodoStatus.NotStarted, TodoService.Group(new List<TodoItem>(), null, 1).Status);
+        }
     }
 }
