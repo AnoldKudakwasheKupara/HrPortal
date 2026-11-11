@@ -26,6 +26,15 @@ namespace HrPortal.ViewModels
         public CourseApplicationStatus Status { get; set; }
     }
 
+    /// <summary>Another course application by the same employee.</summary>
+    public sealed record RelatedCourse(
+        int Id,
+        string ApplicationNumber,
+        string Programme,
+        CourseApplicationStatus Status,
+        DateTime Date,
+        bool Captured);
+
     /// <summary>The captured course approvals, filtered and a page at a time.</summary>
     public class CapturedCourseListViewModel
     {

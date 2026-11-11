@@ -1,0 +1,24 @@
+@model HrPortal.Entities.CourseApplication
+
+<div class="doc-row">
+
+    <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-pdf"></i></span>
+
+    <div class="doc-info">
+        <div class="doc-name">Application form.pdf</div>
+        <div class="doc-meta">PDF &middot; made from the current details</div>
+    </div>
+
+    <div class="doc-buttons">
+        <a class="btn btn-sm btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id"
+           asp-route-view="true" target="_blank" rel="noopener" title="View">
+            <i class="fas fa-eye" aria-hidden="true"></i>
+            <span class="visually-hidden">View the application form</span>
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id" title="Download">
+            <i class="fas fa-download" aria-hidden="true"></i>
+            <span class="visually-hidden">Download the application form</span>
+        </a>
+    </div>
+
+</div>

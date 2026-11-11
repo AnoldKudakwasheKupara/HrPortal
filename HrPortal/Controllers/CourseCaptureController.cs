@@ -139,10 +139,72 @@ namespace HrPortal.Controllers
             if (application == null)
                 return NotFound();
 
+            ViewBag.Related = await _context.CourseApplications
+                .AsNoTracking()
+                .Where(c => c.EmployeeId == application.EmployeeId && c.Id != id)
+                .OrderByDescending(c => c.CreatedAt)
+                .Select(c => new RelatedCourse(
+                    c.Id,
+                    c.ApplicationNumber,
+                    c.ProgramIntended,
+                    c.Status,
+                    c.CompletedAt ?? c.SubmittedAt ?? c.CreatedAt,
+                    c.History.Any(h => h.Action == CourseApplicationAction.CapturedAsApproved)))
+                .ToListAsync();
+
             return View(application);
         }
 
-        public async Task<IActionResult> Form(int id)
+        /// <summary>A note on a captured application, kept in its history.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Comment(int id, string? comment)
+        {
+            if (!await _access.CanCaptureAsync(User))
+                return Forbid();
+
+            var application = await _context.CourseApplications
+                .FirstOrDefaultAsync(c =>
+                    c.Id == id &&
+                    c.History.Any(h => h.Action == CourseApplicationAction.CapturedAsApproved));
+
+            if (application == null)
+                return NotFound();
+
+            var me = await _currentUser.GetEmployeeIdAsync();
+            var text = comment?.Trim();
+
+            if (me == null)
+            {
+                TempData["Error"] = "Your sign-in is not linked to an employee record, so the comment cannot be put in your name.";
+            }
+            else if (string.IsNullOrEmpty(text) || text.Length > 1000)
+            {
+                TempData["Error"] = "Write a comment of up to 1,000 characters.";
+            }
+            else
+            {
+                _context.CourseApplicationHistories.Add(new CourseApplicationHistory
+                {
+                    CourseApplicationId = id,
+                    ActionedByEmployeeId = me.Value,
+                    Action = CourseApplicationAction.Commented,
+                    PreviousStatus = application.Status,
+                    NewStatus = application.Status,
+                    Comment = text,
+                    ActionDate = DateTime.UtcNow
+                });
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Comment added.";
+            }
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        /// <param name="view">Show the form in the browser instead of downloading it.</param>
+        public async Task<IActionResult> Form(int id, bool view = false)
         {
             if (!await _access.CanCaptureAsync(User))
                 return Forbid();
@@ -152,10 +214,17 @@ namespace HrPortal.Controllers
             if (application == null)
                 return NotFound();
 
-            return File(
-                _pdf.Render(application, hidePersonal: !User.IsInRole(Roles.HrOfficer)),
-                "application/pdf",
-                $"Course application - {application.ApplicationNumber}.pdf");
+            var pdf = _pdf.Render(application, hidePersonal: !User.IsInRole(Roles.HrOfficer));
+
+            if (view)
+            {
+                Response.Headers.ContentDisposition =
+                    $"inline; filename=\"Course application - {application.ApplicationNumber}.pdf\"";
+
+                return File(pdf, "application/pdf");
+            }
+
+            return File(pdf, "application/pdf", $"Course application - {application.ApplicationNumber}.pdf");
         }
 
         /// <summary>

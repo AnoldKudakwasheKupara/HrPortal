@@ -21,6 +21,9 @@ namespace HrPortal.Entities
         CapturedAsApproved,
 
         /// <summary>A captured application corrected by HR or IT.</summary>
-        CaptureCorrected
+        CaptureCorrected,
+
+        /// <summary>A note added to an application without changing it.</summary>
+        Commented
     }
 }
