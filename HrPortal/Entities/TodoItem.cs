@@ -11,7 +11,7 @@ namespace HrPortal.Entities
         [Display(Name = "In progress")]
         InProgress,
 
-        [Display(Name = "Done")]
+        [Display(Name = "Completed")]
         Done
     }
 
@@ -43,5 +43,10 @@ namespace HrPortal.Entities
 
         public bool IsOverdue(DateTime today) =>
             Status != TodoStatus.Done && DueDate != null && DueDate.Value.Date < today.Date;
+
+        /// <summary>Still open and due within the next seven days.</summary>
+        public bool IsDueSoon(DateTime today) =>
+            Status != TodoStatus.Done && DueDate != null &&
+            DueDate.Value.Date >= today.Date && DueDate.Value.Date <= today.Date.AddDays(7);
     }
 }

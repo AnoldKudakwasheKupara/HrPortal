@@ -25,10 +25,14 @@ namespace HrPortal.ViewModels
 
     public class TodoListViewModel
     {
-        public TodoCounts Counts { get; set; } = new(0, 0, 0, 0);
+        public TodoCounts Counts { get; set; } = new(0, 0, 0, 0, 0);
 
-        /// <summary>The status group being shown.</summary>
-        public TodoStatus Status { get; set; }
+        /// <summary>The status being shown, or null for everything.</summary>
+        public TodoStatus? Status { get; set; }
+
+        public string? Search { get; set; }
+
+        public string Sort { get; set; } = "due";
 
         public PagedResult<TodoItem> Page { get; set; } = new();
 

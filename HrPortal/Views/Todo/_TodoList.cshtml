@@ -1,78 +1,174 @@
 @model HrPortal.ViewModels.TodoListViewModel
 @using HrPortal.Entities
+@using HrPortal.Services
+@using Microsoft.AspNetCore.WebUtilities
 
 @{
     var today = DateTime.Today;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
 
     string Label(TodoStatus s) => s switch
     {
         TodoStatus.NotStarted => "Not started",
         TodoStatus.InProgress => "In progress",
-        _ => "Done"
+        _ => "Completed"
     };
 
     string Badge(TodoStatus s) => s switch
     {
-        TodoStatus.NotStarted => "bg-secondary",
-        TodoStatus.InProgress => "bg-primary",
-        _ => "bg-success"
+        TodoStatus.NotStarted => "badge-gray",
+        TodoStatus.InProgress => "badge-blue",
+        _ => "badge-green"
     };
+
+    string TabUrl(TodoStatus? s)
+    {
+        var query = new Dictionary<string, string?>();
+
+        if (s != null)
+            query["status"] = s.ToString();
+
+        if (!string.IsNullOrWhiteSpace(Model.Search))
+            query["q"] = Model.Search;
+
+        if (Model.Sort != "due")
+            query["sort"] = Model.Sort;
+
+        return QueryHelpers.AddQueryString(Context.Request.Path, query);
+    }
+
+    var tabs = new (TodoStatus? Status, string Text, string Icon, string Tint, int Count)[]
+    {
+        (null, "All Tasks", "fa-list-ul", "is-teal", Model.Counts.Total),
+        (TodoStatus.InProgress, "In Progress", "fa-rotate", "is-blue", Model.Counts.InProgress),
+        (TodoStatus.NotStarted, "Pending", "fa-clock", "is-amber", Model.Counts.NotStarted),
+        (TodoStatus.Done, "Completed", "fa-circle-check", "is-green", Model.Counts.Done)
+    };
+
+    var filtered = !string.IsNullOrWhiteSpace(Model.Search);
 }
 
-<ul class="nav nav-pills gap-2 mb-3">
-    @foreach (var s in Enum.GetValues<TodoStatus>())
-    {
-        var count = s switch
+<div class="todo-filters">
+
+    <nav class="todo-tabs" aria-label="Filter by status">
+        @foreach (var tab in tabs)
         {
-            TodoStatus.NotStarted => Model.Counts.NotStarted,
-            TodoStatus.InProgress => Model.Counts.InProgress,
-            _ => Model.Counts.Done
-        };
+            var active = tab.Status == Model.Status;
 
-        <li class="nav-item">
-            <a class="nav-link @(s == Model.Status ? "active" : "border")"
-               href="@(Context.Request.Path)?status=@s"
-               aria-current="@(s == Model.Status ? "page" : null)">
-                @Label(s) <span class="badge @Badge(s) ms-1">@count</span>
+            <a class="todo-pill @tab.Tint @(active ? "active" : "")"
+               href="@TabUrl(tab.Status)"
+               aria-current="@(active ? "page" : null)">
+                <i class="fas @tab.Icon" aria-hidden="true"></i>
+                @tab.Text
+                <span class="todo-pill-count">@tab.Count</span>
             </a>
-        </li>
-    }
+        }
+    </nav>
 
-    @if (Model.Counts.Overdue > 0)
-    {
-        <li class="nav-item align-self-center">
-            <span class="badge bg-danger fs-6">@Model.Counts.Overdue overdue</span>
-        </li>
-    }
-</ul>
+    <form method="get" class="todo-tools" role="search">
+
+        @if (Model.Status != null)
+        {
+            <input type="hidden" name="status" value="@Model.Status" />
+        }
+
+        <div class="todo-search">
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" name="q" value="@Model.Search" class="form-control"
+                   placeholder="Search tasks..." aria-label="Search tasks" />
+        </div>
+
+        <label for="todo-sort" class="todo-sort-label">Sort by</label>
+
+        <select id="todo-sort" name="sort" class="form-select todo-sort">
+            @foreach (var option in TodoService.Sorts)
+            {
+                <option value="@option.Key" selected="@(option.Key == Model.Sort)">@option.Value</option>
+            }
+        </select>
+
+        <noscript>
+            <button type="submit" class="btn btn-outline-secondary">Apply</button>
+        </noscript>
+
+    </form>
+
+</div>
 
 @if (Model.Page.TotalCount == 0)
 {
-    <div class="alert alert-info">
-        @(Model.Counts.NotStarted + Model.Counts.InProgress + Model.Counts.Done == 0
-            ? (Model.CanEdit ? "Nothing on your list yet. Add the first item above." : "Nothing on this list yet.")
-            : Model.Status switch
+    <div class="todo-empty">
+        <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+        <p>
+            @if (filtered)
             {
-                TodoStatus.NotStarted => "Nothing waiting to be started.",
-                TodoStatus.InProgress => "Nothing in progress.",
-                _ => "Nothing done yet."
-            })
+                <text>No tasks match "@Model.Search".</text>
+                <a href="@QueryHelpers.AddQueryString(Context.Request.Path, Model.Status == null ? new Dictionary<string, string?>() : new Dictionary<string, string?> { ["status"] = Model.Status.ToString() })">Clear the search</a>
+            }
+            else if (Model.Counts.Total == 0)
+            {
+                @(Model.CanEdit ? "Nothing on your list yet. Add the first task above." : "Nothing on this list yet.")
+            }
+            else
+            {
+                @(Model.Status switch
+                {
+                    TodoStatus.NotStarted => "No pending tasks.",
+                    TodoStatus.InProgress => "Nothing in progress.",
+                    _ => "Nothing completed yet."
+                })
+            }
+        </p>
     </div>
 }
 else
 {
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 todo-table-card">
+
+        @if (Model.CanEdit)
+        {
+            <form id="todo-bulk" asp-action="Bulk" method="post">
+
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div id="todo-bulk-bar" class="todo-bulk-bar" hidden>
+
+                    <span id="todo-bulk-count" class="fw-semibold">0 tasks selected</span>
+
+                    <div class="table-actions">
+                        <button type="submit" name="bulkAction" value="start" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-play" aria-hidden="true"></i> Start
+                        </button>
+                        <button type="submit" name="bulkAction" value="done" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-check" aria-hidden="true"></i> Mark completed
+                        </button>
+                        <button type="submit" name="bulkAction" value="delete" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash" aria-hidden="true"></i> Remove
+                        </button>
+                    </div>
+
+                </div>
+
+            </form>
+        }
 
         <div class="card-body is-table">
 
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 todo-table">
 
                     <thead>
                         <tr>
-                            <th>What needs doing</th>
-                            <th>Due</th>
+                            @if (Model.CanEdit)
+                            {
+                                <th class="todo-check">
+                                    <input id="todo-select-all" type="checkbox" class="form-check-input"
+                                           aria-label="Select all tasks on this page" />
+                                </th>
+                            }
+                            <th>Task / Description</th>
+                            <th>Due Date</th>
                             <th>Status</th>
                             @if (Model.CanEdit)
                             {
@@ -89,14 +185,20 @@ else
 
                             <tr id="todo-@item.Id">
 
+                                @if (Model.CanEdit)
+                                {
+                                    <td class="todo-check">
+                                        <input type="checkbox" name="ids" value="@item.Id" form="todo-bulk"
+                                               class="form-check-input" aria-label="Select @item.Title" />
+                                    </td>
+                                }
+
                                 <td>
-                                    <div class="fw-semibold">
-                                        @item.Title
-                                    </div>
+                                    <div class="todo-title">@item.Title</div>
 
                                     @if (!string.IsNullOrWhiteSpace(item.Notes))
                                     {
-                                        <div class="small text-muted" style="white-space: pre-line;">@item.Notes</div>
+                                        <div class="todo-notes">@item.Notes</div>
                                     }
                                 </td>
 
@@ -107,7 +209,7 @@ else
 
                                         @if (item.IsOverdue(today))
                                         {
-                                            <span class="badge bg-danger ms-1">Overdue</span>
+                                            <span class="status-badge badge-red ms-1">Overdue</span>
                                         }
                                     }
                                     else
@@ -117,11 +219,11 @@ else
                                 </td>
 
                                 <td class="text-nowrap">
-                                    <span class="badge @Badge(item.Status)">@Label(item.Status)</span>
+                                    <span class="status-badge @Badge(item.Status)">@Label(item.Status)</span>
 
                                     @if (done && item.CompletedAt != null)
                                     {
-                                        <div class="small text-muted">
+                                        <div class="small text-muted mt-1">
                                             @item.CompletedAt.Value.ToLocalTime().ToString("dd MMM yyyy")
                                         </div>
                                     }
@@ -129,53 +231,32 @@ else
 
                                 @if (Model.CanEdit)
                                 {
+                                    var next = item.Status switch
+                                    {
+                                        TodoStatus.NotStarted => (Status: TodoStatus.InProgress, Text: "Start", Icon: "fa-play", Css: "btn-outline-secondary"),
+                                        TodoStatus.InProgress => (Status: TodoStatus.Done, Text: "Done", Icon: "fa-check", Css: "btn-outline-primary"),
+                                        _ => (Status: TodoStatus.InProgress, Text: "Reopen", Icon: "fa-rotate-left", Css: "btn-outline-secondary")
+                                    };
+
                                     <td>
                                         <div class="table-actions justify-content-end">
 
-                                            @if (item.Status == TodoStatus.NotStarted)
-                                            {
-                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                    <input type="hidden" name="tab" value="@Model.Status" />
-                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
-                                                    <input type="hidden" name="status" value="@TodoStatus.InProgress" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Start">
-                                                        <i class="fas fa-play" aria-hidden="true"></i> Start
-                                                    </button>
-                                                </form>
-                                            }
+                                            <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                                <input type="hidden" name="status" value="@next.Status" />
+                                                <button type="submit" class="btn btn-sm @next.Css todo-act">
+                                                    <i class="fas @next.Icon" aria-hidden="true"></i> @next.Text
+                                                </button>
+                                            </form>
 
-                                            @if (!done)
-                                            {
-                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                    <input type="hidden" name="tab" value="@Model.Status" />
-                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
-                                                    <input type="hidden" name="status" value="@TodoStatus.Done" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark done">
-                                                        <i class="fas fa-check" aria-hidden="true"></i> Done
-                                                    </button>
-                                                </form>
-                                            }
-                                            else
-                                            {
-                                                <form asp-action="SetStatus" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                    <input type="hidden" name="tab" value="@Model.Status" />
-                                                    <input type="hidden" name="page" value="@Model.Page.Page" />
-                                                    <input type="hidden" name="status" value="@TodoStatus.InProgress" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Reopen">
-                                                        <i class="fas fa-rotate-left" aria-hidden="true"></i> Reopen
-                                                    </button>
-                                                </form>
-                                            }
-
-                                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id" title="Edit">
-                                                <i class="fas fa-pen" aria-hidden="true"></i>
-                                                <span class="visually-hidden">Edit</span>
+                                            <a class="btn btn-sm btn-outline-success todo-act"
+                                               asp-action="Edit" asp-route-id="@item.Id" asp-route-returnUrl="@returnUrl">
+                                                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                             </a>
 
                                             <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
-                                                  onsubmit="return confirm('Remove this item from your list?');">
-                                                <input type="hidden" name="tab" value="@Model.Status" />
-                                                <input type="hidden" name="page" value="@Model.Page.Page" />
+                                                  onsubmit="return confirm('Remove this task from your list?');">
+                                                <input type="hidden" name="returnUrl" value="@returnUrl" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
                                                     <i class="fas fa-trash" aria-hidden="true"></i>
                                                     <span class="visually-hidden">Remove</span>
@@ -195,7 +276,7 @@ else
 
             </div>
 
-            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model.Page, "items"); }
+            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model.Page, "tasks"); }
             <partial name="_Pager" model="pager" />
 
         </div>

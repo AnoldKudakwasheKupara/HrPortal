@@ -8,19 +8,26 @@
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="todo-head">
 
-        <h2>@name's To-Do List</h2>
+        <span class="todo-head-icon" aria-hidden="true">
+            <i class="fas fa-clipboard-list"></i>
+        </span>
 
-        <p class="text-muted">
-            @if (!string.IsNullOrWhiteSpace(jobTitle))
-            {
-                @jobTitle<text>. </text>
-            }
-            You can see this list, but only @name can change it.
-        </p>
+        <div>
+            <h2>@name's To-Do List</h2>
+            <p>
+                @if (!string.IsNullOrWhiteSpace(jobTitle))
+                {
+                    @jobTitle<text>. </text>
+                }
+                You can see this list, but only @name can change it.
+            </p>
+        </div>
 
     </div>
+
+    <partial name="_TodoStats" model="Model.Counts" />
 
     <partial name="_TodoList" model="Model" />
 
@@ -29,3 +36,7 @@
     </a>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/todo.js" asp-append-version="true"></script>
+}

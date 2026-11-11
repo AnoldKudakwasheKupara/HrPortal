@@ -90,7 +90,7 @@ namespace HrPortal.Tests.Todo
 
             var rudo = Assert.Single(team);
             Assert.Equal(Report, rudo.EmployeeId);
-            Assert.Equal(new TodoCounts(2, 1, 1, 1), rudo.Counts);
+            Assert.Equal(new TodoCounts(2, 1, 1, 1, 1), rudo.Counts);
             Assert.Equal(3, rudo.Counts.Open);
         }
 
@@ -137,23 +137,23 @@ namespace HrPortal.Tests.Todo
         }
 
         [Fact]
-        public void A_group_shows_only_its_status_ten_at_a_time()
+        public void A_status_shows_only_its_tasks_ten_at_a_time()
         {
             var items = Enumerable.Range(1, 23)
-                .Select(i => Item(Report, $"Task {i}", TodoStatus.NotStarted, null))
+                .Select(i => Item(Report, $"Task {i:00}", TodoStatus.NotStarted, Today.AddDays(i)))
                 .Append(Item(Report, "Busy", TodoStatus.InProgress, null))
                 .ToList();
 
-            var (status, page) = TodoService.Group(items, TodoStatus.NotStarted, 3);
+            var page = TodoService.Filter(items, TodoStatus.NotStarted, null, null, 3);
 
-            Assert.Equal(TodoStatus.NotStarted, status);
             Assert.Equal(3, page.Page);
             Assert.Equal(3, page.TotalPages);
             Assert.Equal(23, page.TotalCount);
             Assert.Equal(new[] { "Task 21", "Task 22", "Task 23" }, page.Items.Select(t => t.Title));
 
-            Assert.Equal(10, TodoService.Group(items, TodoStatus.NotStarted, 1).Page.Items.Count);
-            Assert.Equal("Busy", Assert.Single(TodoService.Group(items, TodoStatus.InProgress, 1).Page.Items).Title);
+            Assert.Equal(10, TodoService.Filter(items, TodoStatus.NotStarted, null, null, 1).Items.Count);
+            Assert.Equal("Busy", Assert.Single(TodoService.Filter(items, TodoStatus.InProgress, null, null, 1).Items).Title);
+            Assert.Equal(24, TodoService.Filter(items, null, null, null, 1).TotalCount);
         }
 
         [Fact]
@@ -163,17 +163,61 @@ namespace HrPortal.Tests.Todo
                 .Select(i => Item(Report, $"Task {i}", TodoStatus.Done, null))
                 .ToList();
 
-            Assert.Equal(2, TodoService.Group(items, TodoStatus.Done, 9).Page.Page);
-            Assert.Equal(1, TodoService.Group(items, TodoStatus.Done, -4).Page.Page);
+            Assert.Equal(2, TodoService.Filter(items, TodoStatus.Done, null, null, 9).Page);
+            Assert.Equal(1, TodoService.Filter(items, TodoStatus.Done, null, null, -4).Page);
         }
 
         [Fact]
-        public void With_no_group_chosen_the_first_with_items_is_shown()
+        public void Search_looks_in_titles_and_notes_ignoring_case()
         {
-            var items = new List<TodoItem> { Item(Report, "Busy", TodoStatus.InProgress, null) };
+            var noted = Item(Report, "Call", TodoStatus.NotStarted, null);
+            noted.Notes = "About the BUDGET";
 
-            Assert.Equal(TodoStatus.InProgress, TodoService.Group(items, null, 1).Status);
-            Assert.Equal(TodoStatus.NotStarted, TodoService.Group(new List<TodoItem>(), null, 1).Status);
+            var items = new List<TodoItem>
+            {
+                Item(Report, "Draft budget", TodoStatus.Done, null),
+                noted,
+                Item(Report, "Lunch", TodoStatus.NotStarted, null)
+            };
+
+            Assert.Equal(new[] { "Draft budget", "Call" },
+                TodoService.Filter(items, null, " budget ", null, 1).Items.Select(t => t.Title));
+        }
+
+        [Fact]
+        public void Sorting_by_due_date_puts_undated_tasks_last_either_way()
+        {
+            var items = new List<TodoItem>
+            {
+                Item(Report, "Undated", TodoStatus.NotStarted, null),
+                Item(Report, "Later", TodoStatus.NotStarted, Today.AddDays(5)),
+                Item(Report, "Sooner", TodoStatus.NotStarted, Today.AddDays(1))
+            };
+
+            Assert.Equal(new[] { "Sooner", "Later", "Undated" },
+                TodoService.Filter(items, null, null, "due", 1).Items.Select(t => t.Title));
+            Assert.Equal(new[] { "Later", "Sooner", "Undated" },
+                TodoService.Filter(items, null, null, "due-desc", 1).Items.Select(t => t.Title));
+            Assert.Equal(new[] { "Later", "Sooner", "Undated" },
+                TodoService.Filter(items, null, null, "title", 1).Items.Select(t => t.Title));
+        }
+
+        [Fact]
+        public void Due_soon_counts_open_tasks_due_in_the_next_seven_days()
+        {
+            var items = new List<TodoItem>
+            {
+                Item(Report, "Today", TodoStatus.NotStarted, Today),
+                Item(Report, "Week", TodoStatus.InProgress, Today.AddDays(7)),
+                Item(Report, "Too far", TodoStatus.NotStarted, Today.AddDays(8)),
+                Item(Report, "Late", TodoStatus.NotStarted, Today.AddDays(-1)),
+                Item(Report, "Finished", TodoStatus.Done, Today.AddDays(2))
+            };
+
+            var counts = TodoService.Count(items, Today);
+
+            Assert.Equal(2, counts.DueSoon);
+            Assert.Equal(5, counts.Total);
         }
     }
 }

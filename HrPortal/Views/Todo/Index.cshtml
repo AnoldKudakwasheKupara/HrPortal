@@ -6,15 +6,20 @@
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="todo-head">
 
-        <h2>My To-Do List</h2>
+        <span class="todo-head-icon" aria-hidden="true">
+            <i class="fas fa-clipboard-list"></i>
+        </span>
 
-        <p class="text-muted">
-            Keep track of what you are working on. Your supervisor
-            can see this list and where each item stands, but only
-            you can change it.
-        </p>
+        <div>
+            <h2>My To-Do List</h2>
+            <p>
+                A list of your pending and in-progress tasks that require your
+                action, review or completion. Your supervisor can see it, but
+                only you can change it.
+            </p>
+        </div>
 
     </div>
 
@@ -28,35 +33,52 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <partial name="_TodoStats" model="Model.Counts" />
 
-        <div class="card-header">Add an item</div>
+    <div class="card shadow-sm mb-4 todo-add">
 
         <div class="card-body">
 
+            <div class="todo-add-head">
+
+                <span class="todo-add-icon" aria-hidden="true">
+                    <i class="fas fa-plus"></i>
+                </span>
+
+                <div>
+                    <h3>Add a New Task</h3>
+                    <p>Create a task for yourself to track and complete.</p>
+                </div>
+
+            </div>
+
             <form asp-action="Add" method="post">
 
-                <div class="row g-2 align-items-end">
+                <div class="row g-3 align-items-end">
 
-                    <div class="col-md-6">
-                        <label asp-for="New!.Title" class="form-label"></label>
-                        <input asp-for="New!.Title" class="form-control" maxlength="200" required />
+                    <div class="col-lg-6">
+                        <label asp-for="New!.Title" class="form-label">
+                            What needs doing? <span class="text-danger" aria-hidden="true">*</span>
+                        </label>
+                        <input asp-for="New!.Title" class="form-control" maxlength="200" required
+                               placeholder="e.g. Prepare monthly report, Attend training, Follow up with Finance" />
                     </div>
 
-                    <div class="col-md-3">
-                        <label asp-for="New!.DueDate" class="form-label">Due (optional)</label>
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="New!.DueDate" class="form-label">Due date (optional)</label>
                         <input asp-for="New!.DueDate" type="date" class="form-control" />
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-sm-6 col-lg-3">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-plus" aria-hidden="true"></i> Add
+                            <i class="fas fa-plus" aria-hidden="true"></i> Add Task
                         </button>
                     </div>
 
                     <div class="col-12">
                         <label asp-for="New!.Notes" class="form-label">Notes (optional)</label>
-                        <textarea asp-for="New!.Notes" class="form-control" rows="2" maxlength="2000"></textarea>
+                        <textarea asp-for="New!.Notes" class="form-control" rows="2" maxlength="2000"
+                                  placeholder="Add any additional details, links or context..."></textarea>
                     </div>
 
                 </div>
@@ -70,3 +92,7 @@
     <partial name="_TodoList" model="Model" />
 
 </div>
+
+@section Scripts {
+    <script src="~/js/todo.js" asp-append-version="true"></script>
+}

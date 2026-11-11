@@ -1,0 +1,43 @@
+@model HrPortal.Services.TodoCounts
+
+<div class="todo-stats">
+
+    <div class="todo-stat">
+        <span class="todo-stat-icon is-teal" aria-hidden="true"><i class="fas fa-clipboard-list"></i></span>
+        <div>
+            <div class="todo-stat-label">Total Tasks</div>
+            <div class="todo-stat-value">@Model.Total</div>
+        </div>
+    </div>
+
+    <div class="todo-stat">
+        <span class="todo-stat-icon is-blue" aria-hidden="true"><i class="fas fa-clock"></i></span>
+        <div>
+            <div class="todo-stat-label">In Progress</div>
+            <div class="todo-stat-value">@Model.InProgress</div>
+        </div>
+    </div>
+
+    <div class="todo-stat">
+        <span class="todo-stat-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+        <div>
+            <div class="todo-stat-label">Completed</div>
+            <div class="todo-stat-value">@Model.Done</div>
+        </div>
+    </div>
+
+    <div class="todo-stat">
+        <span class="todo-stat-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+        <div>
+            <div class="todo-stat-label">Due Soon (&le; 7 days)</div>
+            <div class="todo-stat-value">
+                @Model.DueSoon
+                @if (Model.Overdue > 0)
+                {
+                    <span class="status-badge badge-red ms-1">@Model.Overdue overdue</span>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
