@@ -1,0 +1,234 @@
+.page-head::before,
+.page-head-simple::before {
+    content: "\f15c";
+}
+
+[data-section="Asset"] .page-head::before,
+[data-section="Asset"] .page-head-simple::before {
+    content: "\f109";
+}
+
+[data-section="AssetMaintenance"] .page-head::before,
+[data-section="AssetMaintenance"] .page-head-simple::before {
+    content: "\f7d9";
+}
+
+[data-section="AuditLog"] .page-head::before,
+[data-section="AuditLog"] .page-head-simple::before {
+    content: "\f46d";
+}
+
+[data-section="Backup"] .page-head::before,
+[data-section="Backup"] .page-head-simple::before {
+    content: "\f187";
+}
+
+[data-section="Certification"] .page-head::before,
+[data-section="Certification"] .page-head-simple::before {
+    content: "\f559";
+}
+
+[data-section="CourseApproval"] .page-head::before,
+[data-section="CourseApproval"] .page-head-simple::before {
+    content: "\f501";
+}
+
+[data-section="CourseCapture"] .page-head::before,
+[data-section="CourseCapture"] .page-head-simple::before {
+    content: "\e5a0";
+}
+
+[data-section="Department"] .page-head::before,
+[data-section="Department"] .page-head-simple::before {
+    content: "\f0e8";
+}
+
+[data-section="Directory"] .page-head::before,
+[data-section="Directory"] .page-head-simple::before {
+    content: "\f2b9";
+}
+
+[data-section="DocumentCategory"] .page-head::before,
+[data-section="DocumentCategory"] .page-head-simple::before {
+    content: "\f802";
+}
+
+[data-section="Employee"] .page-head::before,
+[data-section="Employee"] .page-head-simple::before {
+    content: "\f0c0";
+}
+
+[data-section="EmployeeDocument"] .page-head::before,
+[data-section="EmployeeDocument"] .page-head-simple::before {
+    content: "\f07c";
+}
+
+[data-section="FundReports"] .page-head::before,
+[data-section="FundReports"] .page-head-simple::before {
+    content: "\f201";
+}
+
+[data-section="Help"] .page-head::before,
+[data-section="Help"] .page-head-simple::before {
+    content: "\f059";
+}
+
+[data-section="Home"] .page-head::before,
+[data-section="Home"] .page-head-simple::before {
+    content: "\f015";
+}
+
+[data-section="ItActivity"] .page-head::before,
+[data-section="ItActivity"] .page-head-simple::before {
+    content: "\f590";
+}
+
+[data-section="LeaveApproval"] .page-head::before,
+[data-section="LeaveApproval"] .page-head-simple::before {
+    content: "\f4fc";
+}
+
+[data-section="LeaveBalance"] .page-head::before,
+[data-section="LeaveBalance"] .page-head-simple::before {
+    content: "\f24e";
+}
+
+[data-section="LeaveRequest"] .page-head::before,
+[data-section="LeaveRequest"] .page-head-simple::before {
+    content: "\f073";
+}
+
+[data-section="LeaveType"] .page-head::before,
+[data-section="LeaveType"] .page-head-simple::before {
+    content: "\f02c";
+}
+
+[data-section="License"] .page-head::before,
+[data-section="License"] .page-head-simple::before {
+    content: "\f0a3";
+}
+
+[data-section="LoanApproval"] .page-head::before,
+[data-section="LoanApproval"] .page-head-simple::before {
+    content: "\f4c0";
+}
+
+[data-section="LoanFinance"] .page-head::before,
+[data-section="LoanFinance"] .page-head-simple::before {
+    content: "\f4c0";
+}
+
+[data-section="MyAssets"] .page-head::before,
+[data-section="MyAssets"] .page-head-simple::before {
+    content: "\f109";
+}
+
+[data-section="MyCourses"] .page-head::before,
+[data-section="MyCourses"] .page-head-simple::before {
+    content: "\f501";
+}
+
+[data-section="MyLeave"] .page-head::before,
+[data-section="MyLeave"] .page-head-simple::before {
+    content: "\f073";
+}
+
+[data-section="MyLoans"] .page-head::before,
+[data-section="MyLoans"] .page-head-simple::before {
+    content: "\f4c0";
+}
+
+[data-section="MyNotifications"] .page-head::before,
+[data-section="MyNotifications"] .page-head-simple::before {
+    content: "\f0f3";
+}
+
+[data-section="MyProfile"] .page-head::before,
+[data-section="MyProfile"] .page-head-simple::before {
+    content: "\f2c1";
+}
+
+[data-section="MyTraining"] .page-head::before,
+[data-section="MyTraining"] .page-head-simple::before {
+    content: "\f19d";
+}
+
+[data-section="Policy"] .page-head::before,
+[data-section="Policy"] .page-head-simple::before {
+    content: "\f24e";
+}
+
+[data-section="PublicHoliday"] .page-head::before,
+[data-section="PublicHoliday"] .page-head-simple::before {
+    content: "\f274";
+}
+
+[data-section="Reports"] .page-head::before,
+[data-section="Reports"] .page-head-simple::before {
+    content: "\e0e3";
+}
+
+[data-section="Repository"] .page-head::before,
+[data-section="Repository"] .page-head-simple::before {
+    content: "\f07c";
+}
+
+[data-section="Role"] .page-head::before,
+[data-section="Role"] .page-head-simple::before {
+    content: "\f505";
+}
+
+[data-section="Sanctions"] .page-head::before,
+[data-section="Sanctions"] .page-head-simple::before {
+    content: "\f505";
+}
+
+[data-section="Settings"] .page-head::before,
+[data-section="Settings"] .page-head-simple::before {
+    content: "\f1de";
+}
+
+[data-section="Todo"] .page-head::before,
+[data-section="Todo"] .page-head-simple::before {
+    content: "\f0ae";
+}
+
+[data-section="TrainingCourse"] .page-head::before,
+[data-section="TrainingCourse"] .page-head-simple::before {
+    content: "\f51c";
+}
+
+[data-section="TrainingFeedback"] .page-head::before,
+[data-section="TrainingFeedback"] .page-head-simple::before {
+    content: "\f4ad";
+}
+
+[data-section="TrainingMaterial"] .page-head::before,
+[data-section="TrainingMaterial"] .page-head-simple::before {
+    content: "\f15c";
+}
+
+[data-section="Vault"] .page-head::before,
+[data-section="Vault"] .page-head-simple::before {
+    content: "\f084";
+}
+
+[data-section="Vendor"] .page-head::before,
+[data-section="Vendor"] .page-head-simple::before {
+    content: "\e58d";
+}
+
+[data-section="WeeklyReport"] .page-head::before,
+[data-section="WeeklyReport"] .page-head-simple::before {
+    content: "\f56c";
+}
+
+[data-section="Welcome"] .page-head::before,
+[data-section="Welcome"] .page-head-simple::before {
+    content: "\e05d";
+}
+
+[data-section="Privacy"] .page-head::before,
+[data-section="Privacy"] .page-head-simple::before {
+    content: "\f502";
+}

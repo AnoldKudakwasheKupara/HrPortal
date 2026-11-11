@@ -37,15 +37,53 @@ body {
 
 .page-head,
 .page-head-simple {
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
 }
 
 .page-head {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.page-head > :first-child {
+    flex: 1 1 18rem;
+    min-width: 0;
+}
+
+.page-head-simple {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 1rem;
+    align-items: center;
+}
+
+.page-head-simple > * {
+    grid-column: 2;
+}
+
+.page-head::before,
+.page-head-simple::before {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--primary);
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-edge);
+    border-radius: .75rem;
+}
+
+.page-head-simple::before {
+    grid-column: 1;
+    grid-row: 1 / span 2;
 }
 
 .page-head h1,
@@ -61,7 +99,7 @@ body {
 
 .page-head p,
 .page-head-simple p {
-    color: var(--gray-500);
+    color: var(--text-secondary);
     font-size: .9rem;
     margin: 0;
 }
@@ -89,8 +127,8 @@ body {
     padding: 1.35rem 1.6rem;
     border-bottom: 1px solid var(--border-light);
     background: var(--bg-card);
-    font-weight: 600;
-    font-size: 1rem;
+    font-weight: 700;
+    font-size: 1.05rem;
     color: var(--gray-800);
 }
 
@@ -116,12 +154,12 @@ body {
 }
 
 .table > thead th {
-    background: var(--gray-50);
+    background: var(--primary-softer);
     padding: 1rem;
     text-align: left;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--gray-500);
+    color: var(--gray-600);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid var(--border-light);
