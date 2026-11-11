@@ -3843,3 +3843,52 @@ a.strip-item:hover {
 .table-stack .text-nowrap {
     white-space: normal !important;
 }
+
+.kpi-unit {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.filter-bar.filter-bar-short {
+    grid-template-columns: repeat(2, minmax(180px, 260px)) auto;
+}
+
+@media (max-width: 575.98px) {
+    .filter-bar.filter-bar-short {
+        grid-template-columns: 1fr;
+    }
+}
+
+.team-progress-cell {
+    min-width: 9rem;
+}
+
+.list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .25rem;
+}
+
+.list-toolbar .filter-pills {
+    margin-bottom: .75rem !important;
+}
+
+.list-toolbar-search {
+    margin-bottom: .75rem;
+}
+
+.list-toolbar-search .form-control {
+    min-width: 240px;
+}
+
+@media (max-width: 575.98px) {
+    .list-toolbar-search,
+    .list-toolbar-search .form-control {
+        width: 100%;
+        min-width: 0;
+    }
+}

@@ -161,8 +161,7 @@
 
                 </table>
 
-                @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model, "reports"); }
-                <partial name="_Pager" model="pager" />
+                <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "reports")' />
             </div>
         </div>
 

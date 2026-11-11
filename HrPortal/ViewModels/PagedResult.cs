@@ -27,6 +27,9 @@ namespace HrPortal.ViewModels
     /// <summary>A row of filter pills; the chosen key goes in the query string as <see cref="Param"/>.</summary>
     public sealed record ListTabsModel(IReadOnlyList<ListTab> Tabs, string Current, string Param = "show", string AllKey = "all");
 
+    /// <summary>Filter pills and a search box above a list; either may be left out.</summary>
+    public sealed record ListToolbarModel(ListTabsModel? Tabs, string? Search, string Placeholder = "Search...");
+
     /// <summary>What the numbered pager needs, whatever the list holds.</summary>
     public sealed record PagerSummary(int Page, int PageSize, int TotalCount, int TotalPages, string Noun)
     {
@@ -40,6 +43,18 @@ namespace HrPortal.ViewModels
     public static class PagedList
     {
         public const int DefaultPageSize = 10;
+
+        /// <summary>The page asked for in the query string, or the first.</summary>
+        public static int PageFrom(Microsoft.AspNetCore.Http.HttpRequest request) =>
+            int.TryParse(request.Query["page"], out var page) ? page : 1;
+
+        /// <summary>The trimmed search text in the query string, or null.</summary>
+        public static string? SearchFrom(Microsoft.AspNetCore.Http.HttpRequest request) =>
+            string.IsNullOrWhiteSpace(request.Query["q"]) ? null : request.Query["q"].ToString().Trim();
+
+        /// <summary>True when any of the values contains the search text, ignoring case.</summary>
+        public static bool Matches(string? search, params string?[] values) =>
+            search == null || values.Any(v => v != null && v.Contains(search, StringComparison.OrdinalIgnoreCase));
 
         /// <summary>A page of a list already in memory. Out of range pages show the nearest page.</summary>
         public static PagedResult<T> Of<T>(IReadOnlyList<T> items, int page, int pageSize = DefaultPageSize)

@@ -17,7 +17,7 @@ namespace HrPortal.Controllers
     {
         private const string UploadFolder = "repository";
 
-        private const int PageSize = 50;
+        private const int PageSize = 10;
 
         private readonly ApplicationDbContext _context;
         private readonly FileStorageService _fileStorage;

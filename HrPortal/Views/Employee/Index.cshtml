@@ -1,55 +1,133 @@
-﻿@model IEnumerable<HrPortal.Entities.Employee>
+﻿@using HrPortal.ViewModels
+@model IEnumerable<HrPortal.Entities.Employee>
 
 @{
     ViewData["Title"] = "Employees";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var show = Context.Request.Query["show"].ToString() switch
+    {
+        "active" => "active",
+        "left" => "left",
+        "nologin" => "nologin",
+        _ => "all"
+    };
+
+    bool InGroup(HrPortal.Entities.Employee e) => show switch
+    {
+        "active" => e.IsActive,
+        "left" => !e.IsActive,
+        "nologin" => e.IsActive && e.User == null,
+        _ => true
+    };
+
+    var shown = all
+        .Where(InGroup)
+        .Where(e => PagedList.Matches(search, e.FirstName + " " + e.LastName, e.EmployeeNumber, e.Email, e.JobTitle, e.Department?.Name))
+        .ToList();
+
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", all.Count),
+        new("active", "Active", "fa-user-check", "is-green", all.Count(e => e.IsActive)),
+        new("nologin", "No Sign-in", "fa-user-lock", "is-amber", all.Count(e => e.IsActive && e.User == null)),
+        new("left", "Inactive", "fa-user-xmark", "is-blue", all.Count(e => !e.IsActive))
+    };
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Employees</h2>
-            <p class="text-muted">
-                Manage employees and their accounts.
-            </p>
+            <p>Manage employees and their accounts.</p>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="head-actions">
 
             <a asp-action="List" class="btn btn-outline-secondary">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Download
+                <i class="fas fa-download" aria-hidden="true"></i> Download
             </a>
 
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="fas fa-user-plus" aria-hidden="true"></i>
-                Add Employee
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-user-plus" aria-hidden="true"></i> Add Employee
             </a>
 
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Active Employees</div>
+                <div class="kpi-value">@all.Count(e => e.IsActive)</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
+            <div>
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">@all.Where(e => e.IsActive && e.Department != null).Select(e => e.DepartmentId).Distinct().Count()</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-user-lock"></i></span>
+            <div>
+                <div class="kpi-label">Without Sign-in</div>
+                <div class="kpi-value">@all.Count(e => e.IsActive && e.User == null)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
+            <div>
+                <div class="kpi-label">Joined in @DateTime.Today.Year</div>
+                <div class="kpi-value">@all.Count(e => e.DateJoined.Year == DateTime.Today.Year)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-users" aria-hidden="true"></i> Staff
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search name, number, email...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-users" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No employees match." : "No employees have been added yet.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -58,101 +136,62 @@
                             <th>Email</th>
                             <th>Department</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                No employees have been added yet.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var employee in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                @employee.EmployeeNumber
-                            </td>
-
-                            <td>
-                                <strong>
-                                    @employee.FirstName
-                                    @employee.LastName
-                                </strong>
-                                @if (!string.IsNullOrWhiteSpace(employee.JobTitle))
-                                {
-                                    <div class="text-muted small">
-                                        @employee.JobTitle
-                                    </div>
-                                }
-                            </td>
-
-                            <td>
-                                @employee.Email
-                            </td>
-
-                            <td>
-                                @employee.Department?.Name
-                            </td>
-
-                            <td>
-                                @if (employee.IsActive)
-                                {
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">
-                                        Inactive
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@employee.Id">
-                                        View
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@employee.Id">
-                                        Edit
-                                    </a>
-
-                                    @if (employee.User == null && employee.IsActive)
+                        @foreach (var employee in paged.Items)
+                        {
+                            <tr>
+                                <td class="text-nowrap">@employee.EmployeeNumber</td>
+                                <td>
+                                    <div class="fw-semibold">@employee.FirstName @employee.LastName</div>
+                                    @if (!string.IsNullOrWhiteSpace(employee.JobTitle))
                                     {
-                                        <a class="btn btn-sm btn-outline-success"
-                                           asp-action="AllowLogin"
-                                           asp-route-id="@employee.Id">
-                                            Allow login
-                                        </a>
+                                        <div class="small text-muted">@employee.JobTitle</div>
                                     }
+                                </td>
+                                <td class="text-break">@employee.Email</td>
+                                <td>@employee.Department?.Name</td>
+                                <td>
+                                    @if (employee.IsActive)
+                                    {
+                                        <span class="status-badge badge-green">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-red">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                                    <a class="btn btn-sm btn-outline-danger"
-                                       asp-action="Delete"
-                                       asp-route-id="@employee.Id">
-                                        Delete
-                                    </a>
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@employee.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
 
-                                </div>
-                            </td>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@employee.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
 
-                        </tr>
-                    }
+                                        @if (employee.User == null && employee.IsActive)
+                                        {
+                                            <a class="btn btn-sm btn-outline-primary text-nowrap" asp-action="AllowLogin" asp-route-id="@employee.Id">
+                                                <i class="fas fa-key" aria-hidden="true"></i> Allow login
+                                            </a>
+                                        }
+
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@employee.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @employee.FirstName @employee.LastName</span>
+                                        </a>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -160,8 +199,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "employee", "employees")' />
+        }
 
-    </div>
+    </section>
 
 </div>

@@ -1,21 +1,33 @@
-﻿@model IEnumerable<HrPortal.Entities.Asset>
-@using HrPortal.Entities
+﻿@using HrPortal.Entities
+@using HrPortal.ViewModels
+@model IEnumerable<HrPortal.Entities.Asset>
 
 @{
     ViewData["Title"] = "Asset Register";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all
+        .Where(a => PagedList.Matches(search, a.DeviceModel, a.SerialNumber, a.Processor, a.Company,
+            a.AssignedToEmployee == null ? null : a.AssignedToEmployee.FirstName + " " + a.AssignedToEmployee.LastName))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var condition = ViewBag.ConditionFilter as AssetCondition?;
+    var inUse = ViewBag.InUseFilter as bool?;
+    var filtered = ViewBag.EmployeeFilter != null || condition != null || inUse != null || ViewBag.CompanyFilter != null || search != null;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Asset Register</h2>
-            <p class="text-muted mb-0">
-                Machines held by the business and who is holding them.
-            </p>
+            <p>Machines held by the business and who is holding them.</p>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="head-actions">
 
             <a asp-action="List"
                asp-route-employeeId="@ViewBag.EmployeeFilter"
@@ -23,15 +35,15 @@
                asp-route-inUse="@ViewBag.InUseFilter"
                asp-route-company="@ViewBag.CompanyFilter"
                class="btn btn-outline-secondary">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Download
+                <i class="fas fa-download" aria-hidden="true"></i> Download
             </a>
 
-            <a asp-action="Create" class="btn btn-primary">
-                Add Asset
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-plus" aria-hidden="true"></i> Add Asset
             </a>
 
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -44,200 +56,182 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
+    <div class="kpis">
 
-        <div class="card-body">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-laptop"></i></span>
+            <div>
+                <div class="kpi-label">Assets</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
+        </div>
 
-            <form method="get" class="row g-2 align-items-end">
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-user-check"></i></span>
+            <div>
+                <div class="kpi-label">Assigned</div>
+                <div class="kpi-value">@all.Count(a => a.AssignedToEmployee != null)</div>
+            </div>
+        </div>
 
-                <div class="col-md-3">
-                    <label class="form-label">Employee</label>
-                    <select name="employeeId"
-                            class="form-select"
-                            asp-items="ViewBag.Employees">
-                        <option value="">-- All Employees --</option>
-                    </select>
-                </div>
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-box"></i></span>
+            <div>
+                <div class="kpi-label">Unassigned</div>
+                <div class="kpi-value">@all.Count(a => a.AssignedToEmployee == null)</div>
+            </div>
+        </div>
 
-                <div class="col-md-3">
-                    <label class="form-label">Company</label>
-                    <select name="company" class="form-select">
-                        <option value="">-- All Companies --</option>
-                        @foreach (var name in
-                            (ViewBag.Companies as IEnumerable<string>)
-                                ?? Enumerable.Empty<string>())
-                        {
-                            <option value="@name"
-                                    selected="@(name == (string?)ViewBag.CompanyFilter)">
-                                @name
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Condition</label>
-                    <select name="condition" class="form-select">
-                        <option value="">-- All Conditions --</option>
-                        @foreach (var value in
-                            Enum.GetValues<AssetCondition>())
-                        {
-                            <option value="@value">@value</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select name="inUse" class="form-select">
-                        <option value="">-- All --</option>
-                        <option value="true">In use</option>
-                        <option value="false">Not in use</option>
-                    </select>
-                </div>
-
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
-
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+            <div>
+                <div class="kpi-label">Old or Bad</div>
+                <div class="kpi-value">@all.Count(a => a.Condition is AssetCondition.Old or AssetCondition.Bad)</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <form method="get" class="filter-bar" data-auto-submit>
 
-        <div class="card-body is-table">
+        <div class="filter-bar-search">
+            <label for="asset-q" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="asset-q" type="search" name="q" value="@search" class="form-control" placeholder="Device, serial, user..." />
+            </div>
+        </div>
 
+        <div>
+            <label for="asset-employee" class="form-label">Employee</label>
+            <select id="asset-employee" name="employeeId" class="form-select" asp-items="ViewBag.Employees">
+                <option value="">All employees</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="asset-company" class="form-label">Company</label>
+            <select id="asset-company" name="company" class="form-select">
+                <option value="">All companies</option>
+                @foreach (var name in (ViewBag.Companies as IEnumerable<string>) ?? Enumerable.Empty<string>())
+                {
+                    <option value="@name" selected="@(name == (string?)ViewBag.CompanyFilter)">@name</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="asset-condition" class="form-label">Condition</label>
+            <select id="asset-condition" name="condition" class="form-select">
+                <option value="">All conditions</option>
+                @foreach (var value in Enum.GetValues<AssetCondition>())
+                {
+                    <option value="@value" selected="@(value == condition)">@value</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <select name="inUse" class="form-select" aria-label="In use">
+                <option value="">In use or not</option>
+                <option value="true" selected="@(inUse == true)">In use</option>
+                <option value="false" selected="@(inUse == false)">Not in use</option>
+            </select>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index" title="Reset filters">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i>
+                <span class="visually-hidden">Reset filters</span>
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-laptop" aria-hidden="true"></i> Assets
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-laptop" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>No assets match these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No assets have been added yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>User</th>
                             <th>Company</th>
                             <th>Device / Model</th>
-                            <th>Processor</th>
                             <th>Serial</th>
                             <th>Procured</th>
                             <th>Condition</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="8"
-                                class="text-center text-muted py-4">
-                                No assets match this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var asset in Model)
+                        @foreach (var asset in paged.Items)
                         {
                             <tr>
-
                                 <td>
                                     @if (asset.AssignedToEmployee != null)
                                     {
-                                        <strong>
-                                            @asset.AssignedToEmployee.FirstName
-                                            @asset.AssignedToEmployee.LastName
-                                        </strong>
+                                        <span class="fw-semibold">@asset.AssignedToEmployee.FirstName @asset.AssignedToEmployee.LastName</span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted">
-                                            Unassigned
-                                        </span>
+                                        <span class="text-muted">Unassigned</span>
                                     }
                                 </td>
-
+                                <td>@(string.IsNullOrWhiteSpace(asset.Company) ? "-" : asset.Company)</td>
                                 <td>
-                                    @(string.IsNullOrWhiteSpace(asset.Company)
-                                        ? "--" : asset.Company)
-                                </td>
-
-                                <td>
-                                    @asset.DeviceModel
-                                    @if (!asset.IsInUse)
-                                    {
-                                        <span class="badge bg-secondary">
-                                            Not in use
-                                        </span>
-                                    }
-                                </td>
-
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(asset.Processor))
-                                    {
-                                        @asset.Processor
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">--</span>
-                                    }
-                                </td>
-
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(asset.SerialNumber))
-                                    {
-                                        @asset.SerialNumber
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">--</span>
-                                    }
-                                </td>
-
-                                <td>
-                                    @(asset.ProcuredOn?.ToString("dd MMM yyyy")
-                                        ?? "--")
-                                </td>
-
-                                <td>
-                                    <partial name="_AssetConditionBadge"
-                                             model="asset.Condition" />
-                                </td>
-
-                                <td class="col-actions">
-
-                                    <div class="table-actions">
-
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Details"
-                                           asp-route-id="@asset.Id">
-                                            View
-                                        </a>
-
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit"
-                                           asp-route-id="@asset.Id">
-                                            Edit
-                                        </a>
-
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete"
-                                           asp-route-id="@asset.Id">
-                                            Delete
-                                        </a>
-
+                                    <div class="fw-semibold">@asset.DeviceModel</div>
+                                    <div class="small text-muted">
+                                        @(string.IsNullOrWhiteSpace(asset.Processor) ? "" : asset.Processor)
+                                        @if (!asset.IsInUse)
+                                        {
+                                            <span class="status-badge badge-gray ms-1">Not in use</span>
+                                        }
                                     </div>
-
                                 </td>
-
+                                <td class="text-break">@(string.IsNullOrWhiteSpace(asset.SerialNumber) ? "-" : asset.SerialNumber)</td>
+                                <td class="text-nowrap">@(asset.ProcuredOn?.ToString("d MMM yyyy") ?? "-")</td>
+                                <td><partial name="_AssetConditionBadge" model="asset.Condition" /></td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@asset.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@asset.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@asset.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @asset.DeviceModel</span>
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
@@ -245,8 +239,13 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "asset", "assets")' />
+        }
 
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

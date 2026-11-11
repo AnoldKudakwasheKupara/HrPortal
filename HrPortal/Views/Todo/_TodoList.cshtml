@@ -276,8 +276,7 @@ else
 
             </div>
 
-            @{ var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, Model.Page, "tasks"); }
-            <partial name="_Pager" model="pager" />
+            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model.Page, "tasks")' />
 
         </div>
 

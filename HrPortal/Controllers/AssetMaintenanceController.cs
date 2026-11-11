@@ -13,7 +13,7 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.AdminOnly)]
     public class AssetMaintenanceController : Controller
     {
-        private const int PageSize = 50;
+        private const int PageSize = 10;
 
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;

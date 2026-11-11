@@ -238,51 +238,7 @@
 
         </div>
 
-        @if (totalPages > 1)
-        {
-            <div class="card-footer d-flex justify-content-between align-items-center">
-
-                <span class="text-muted">
-                    Page @(page) of @totalPages
-                    (@totalCount entries)
-                </span>
-
-                <div>
-
-                    @if (page > 1)
-                    {
-                        <a class="btn btn-sm btn-outline-secondary"
-                           asp-action="Index"
-                           asp-route-page="@(page - 1)"
-                           asp-route-employeeId="@employeeId"
-                           asp-route-entityName="@entityName"
-                           asp-route-fromDate="@(fromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(toDate?.ToString("yyyy-MM-dd"))">
-
-                            Previous
-
-                        </a>
-                    }
-
-                    @if (page < totalPages)
-                    {
-                        <a class="btn btn-sm btn-outline-secondary"
-                           asp-action="Index"
-                           asp-route-page="@(page + 1)"
-                           asp-route-employeeId="@employeeId"
-                           asp-route-entityName="@entityName"
-                           asp-route-fromDate="@(fromDate?.ToString("yyyy-MM-dd"))"
-                           asp-route-toDate="@(toDate?.ToString("yyyy-MM-dd"))">
-
-                            Next
-
-                        </a>
-                    }
-
-                </div>
-
-            </div>
-        }
+        <partial name="_NumberedPager" model='new HrPortal.ViewModels.PagerSummary(page, 10, totalCount, totalPages, totalCount == 1 ? "entry" : "entries")' />
 
     </div>
 

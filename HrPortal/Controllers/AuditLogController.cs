@@ -11,7 +11,7 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.AdminOnly)]
     public class AuditLogController : Controller
     {
-        private const int PageSize = 50;
+        private const int PageSize = 10;
 
         private readonly ApplicationDbContext _context;
         private readonly RecordDocumentPdfService _pdf;

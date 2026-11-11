@@ -23,7 +23,7 @@ namespace HrPortal.Controllers
     [Authorize]
     public class WeeklyReportController : Controller
     {
-        private const int PageSize = 50;
+        private const int PageSize = 10;
 
         private readonly ApplicationDbContext _context;
         private readonly WeeklyReportBuilder _builder;

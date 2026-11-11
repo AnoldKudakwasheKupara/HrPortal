@@ -1,0 +1,29 @@
+@model HrPortal.ViewModels.ListToolbarModel
+
+<div class="list-toolbar">
+
+    @if (Model.Tabs != null)
+    {
+        <partial name="_ListTabs" model="Model.Tabs" />
+    }
+    else
+    {
+        <span></span>
+    }
+
+    <form method="get" class="filter-search list-toolbar-search" role="search">
+
+        @foreach (var pair in Context.Request.Query.Where(q =>
+            !string.Equals(q.Key, "q", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase)))
+        {
+            <input type="hidden" name="@pair.Key" value="@pair.Value" />
+        }
+
+        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" name="q" value="@Model.Search" class="form-control"
+               placeholder="@Model.Placeholder" aria-label="@Model.Placeholder" />
+
+    </form>
+
+</div>
