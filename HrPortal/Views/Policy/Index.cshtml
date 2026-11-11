@@ -1,3 +1,4 @@
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.ViewModels.PolicyListViewModel>
 
 @{
@@ -8,28 +9,34 @@
     var search = ViewBag.Search as string;
     var canManage = (bool)ViewBag.CanManage;
     var outstanding = (int)ViewBag.Outstanding;
+
+    var all = Model.ToList();
+    var paged = PagedList.Of(all, PagedList.PageFrom(Context.Request));
+    var filtered = !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(categoryFilter);
+    var monthAgo = DateTime.Today.AddDays(-30);
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Policy Hub</h2>
-            <p class="text-muted mb-0">
-                The policies in force, which version each is, and
-                whether you have confirmed you have read them.
-            </p>
+            <p>The policies in force, which version each is, and whether you have confirmed you have read them.</p>
         </div>
 
         @if (canManage)
         {
-            <div class="page-head-actions">
-                <a asp-action="Create" class="btn btn-primary">New Policy</a>
+            <div class="head-actions">
                 <a asp-action="Manage" class="btn btn-outline-secondary">
-                    Manage
+                    <i class="fas fa-sliders" aria-hidden="true"></i> Manage
+                </a>
+                <a asp-action="Create" class="btn btn-gold">
+                    <i class="fas fa-plus" aria-hidden="true"></i> New Policy
                 </a>
             </div>
         }
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -45,136 +52,174 @@
     @if (outstanding > 0)
     {
         <div class="alert alert-warning">
-            <strong>@outstanding policy(s) still need your
-            acknowledgement.</strong>
+            <strong>@outstanding policy(s) still need your acknowledgement.</strong>
             Open each one, read it, and confirm at the bottom.
         </div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <div class="kpis">
 
-                <div class="col-md-5">
-                    <label class="form-label">Search</label>
-                    <input name="search" class="form-control" value="@search"
-                           placeholder="Title, reference or summary" />
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All categories</option>
-                        @foreach (var c in categories)
-                        {
-                            <option value="@c" selected="@(categoryFilter == c)">
-                                @c
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Search
-                    </button>
-                </div>
-
-                <div class="col-md-1">
-                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
-                        Clear
-                    </a>
-                </div>
-
-            </form>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-scale-balanced"></i></span>
+            <div>
+                <div class="kpi-label">Policies in Force</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon @(outstanding > 0 ? "is-amber" : "is-green")" aria-hidden="true"><i class="fas fa-file-signature"></i></span>
+            <div>
+                <div class="kpi-label">Waiting for You</div>
+                <div class="kpi-value">@outstanding</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Acknowledged</div>
+                <div class="kpi-value">@all.Count(p => p.RequiresAcknowledgement && p.Acknowledged)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-calendar-plus"></i></span>
+            <div>
+                <div class="kpi-label">New in 30 Days</div>
+                <div class="kpi-value">@all.Count(p => p.EffectiveDate.Date >= monthAgo)</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <form method="get" class="filter-bar filter-bar-short" data-auto-submit>
+
+        <div>
+            <label for="policy-search" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="policy-search" type="search" name="search" class="form-control" value="@search"
+                       placeholder="Title, reference or summary" />
+            </div>
+        </div>
+
+        <div>
+            <label for="policy-category" class="form-label">Category</label>
+            <select id="policy-category" name="category" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c" selected="@(categoryFilter == c)">@c</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </noscript>
+            <a asp-action="Index" class="btn btn-outline-primary text-nowrap">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-scale-balanced" aria-hidden="true"></i> Policies
+            <span class="tab-count">@all.Count</span>
+        </h3>
+
+        @if (!all.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>No policies match.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No policies are in force that apply to you.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Policy</th>
                             <th>Category</th>
                             <th>Version</th>
-                            <th>In force since</th>
+                            <th>In Force Since</th>
                             <th>You</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                No policies are in force that apply to you.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var p in Model)
+                        @foreach (var p in paged.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@p.Title</strong>
+                                    <div class="fw-semibold">@p.Title</div>
                                     @if (!string.IsNullOrWhiteSpace(p.Reference))
                                     {
-                                        <div class="text-muted small">
-                                            @p.Reference
-                                        </div>
+                                        <div class="small text-muted">@p.Reference</div>
                                     }
                                 </td>
-
-                                <td>@(string.IsNullOrWhiteSpace(p.Category) ? "--" : p.Category)</td>
-
+                                <td>@(string.IsNullOrWhiteSpace(p.Category) ? "-" : p.Category)</td>
                                 <td>@p.Version</td>
-
-                                <td>@p.EffectiveDate.ToString("d MMM yyyy")</td>
-
+                                <td class="text-nowrap">@p.EffectiveDate.ToString("d MMM yyyy")</td>
                                 <td>
                                     @if (!p.RequiresAcknowledgement)
                                     {
-                                        <span class="text-muted">
-                                            Not required
-                                        </span>
+                                        <span class="text-muted">Not required</span>
                                     }
                                     else if (p.Acknowledged)
                                     {
-                                        <span class="badge bg-success">
-                                            Acknowledged
-                                        </span>
+                                        <span class="status-badge badge-green">Acknowledged</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning text-dark">
-                                            Not yet read
-                                        </span>
+                                        <span class="status-badge badge-amber">Not yet read</span>
                                     }
                                 </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-primary"
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm @(p.RequiresAcknowledgement && !p.Acknowledged ? "btn-gold" : "btn-outline-secondary") text-nowrap"
                                            asp-action="Details" asp-route-id="@p.Id">
-                                            Open
+                                            <i class="fas fa-eye" aria-hidden="true"></i> Open
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "policy", "policies")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

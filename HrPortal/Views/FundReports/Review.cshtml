@@ -5,19 +5,23 @@
 @{
     ViewData["Title"] = "Classifications";
     var treatments = Enum.GetValues<FundReturnTreatment>().Where(t => t != FundReturnTreatment.Review).ToList();
+    var proposed = Model.Securities.Count(s => !s.Confirmed);
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Classifications</h2>
-            <p class="text-muted mb-0">
-                What each statement label means, and each security's class. The system proposes;
-                only an analyst decides. A ruling on a label applies to all that manager's clients.
+            <p>
+                What each statement label means, and each security's class. The system proposes; only an
+                analyst decides. A ruling on a label applies to all that manager's clients.
             </p>
         </div>
-        <a asp-action="Index" class="btn btn-secondary">Back</a>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -30,120 +34,184 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card mb-3">
-        <div class="card-header">Labels waiting (@Model.Labels.Count)</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead><tr><th>Manager</th><th>Label on the statement</th><th class="text-end">Transactions</th><th>Treatment</th></tr></thead>
-                <tbody>
-                    @foreach (var label in Model.Labels)
-                    {
-                        <tr>
-                            <td>@label.Manager</td>
-                            <td>@label.Label</td>
-                            <td class="text-end">@label.Transactions</td>
-                            <td>
-                                <form asp-action="DecideLabel" method="post" class="d-flex gap-2">
-                                    <input type="hidden" name="manager" value="@label.Manager" />
-                                    <input type="hidden" name="label" value="@label.Label" />
-                                    <select name="treatment" class="form-select form-select-sm" style="max-width: 12rem" aria-label="Treatment for @label.Label">
-                                        @foreach (var treatment in treatments)
-                                        {
-                                            <option value="@treatment">@treatment</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-primary">Decide</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                    @if (Model.Labels.Count == 0)
-                    {
-                        <tr><td colspan="4" class="text-muted">Nothing waiting.</td></tr>
-                    }
-                </tbody>
-            </table>
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon @(Model.Labels.Count > 0 ? "is-amber" : "is-green")" aria-hidden="true"><i class="fas fa-tags"></i></span>
+            <div>
+                <div class="kpi-label">Labels Waiting</div>
+                <div class="kpi-value">@Model.Labels.Count</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon @(proposed > 0 ? "is-amber" : "is-green")" aria-hidden="true"><i class="fas fa-shield-halved"></i></span>
+            <div>
+                <div class="kpi-label">Securities to Confirm</div>
+                <div class="kpi-value">@proposed</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-list"></i></span>
+            <div>
+                <div class="kpi-label">Securities</div>
+                <div class="kpi-value">@Model.Securities.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-gavel"></i></span>
+            <div>
+                <div class="kpi-label">Rulings Made</div>
+                <div class="kpi-value">@Model.Rules.Count</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card mb-3">
-        <div class="card-header">Securities</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead><tr><th>Security</th><th>Code</th><th>Status</th><th>Class, prescribed, large-cap</th></tr></thead>
-                <tbody>
-                    @foreach (var security in Model.Securities)
-                    {
-                        <tr>
-                            <td>@security.Name</td>
-                            <td>@security.SecurityCode</td>
-                            <td>
-                                @if (security.Confirmed)
-                                {
-                                    <span class="badge bg-success">Confirmed</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">Proposed</span>
-                                }
-                            </td>
-                            <td>
-                                <form asp-action="ConfirmSecurity" asp-route-id="@security.Id" method="post" class="d-flex flex-wrap gap-2 align-items-center">
-                                    <select name="assetClass" class="form-select form-select-sm" style="max-width: 14rem" aria-label="Asset class for @security.Name">
-                                        @foreach (var assetClass in FundAssetClasses.Each)
-                                        {
-                                            <option value="@assetClass" selected="@(security.AssetClass == assetClass)">@FundAssetClasses.Name(assetClass)</option>
-                                        }
-                                    </select>
-                                    <label class="form-check-label"><input type="checkbox" name="prescribed" value="true" class="form-check-input" checked="@security.Prescribed" /> Prescribed</label>
-                                    <label class="form-check-label"><input type="checkbox" name="largeCap" value="true" class="form-check-input" checked="@security.LargeCap" /> Large-cap</label>
-                                    <button type="submit" class="btn btn-sm btn-primary">Confirm</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                    @if (Model.Securities.Count == 0)
-                    {
-                        <tr><td colspan="4" class="text-muted">Securities appear when statements are loaded.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <section class="panel-card mb-3">
 
-    <div class="card">
-        <div class="card-header">Rulings made</div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead><tr><th>Manager</th><th>Label</th><th>Decided by</th><th>Treatment</th></tr></thead>
-                <tbody>
-                    @foreach (var rule in Model.Rules)
-                    {
-                        <tr>
-                            <td>@rule.Manager</td>
-                            <td>@rule.Label</td>
-                            <td>@rule.DecidedByName, @rule.DecidedAt.ToLocalTime().ToString("d MMM yyyy")</td>
-                            <td>
-                                <form asp-action="DecideLabel" method="post" class="d-flex gap-2">
-                                    <input type="hidden" name="manager" value="@rule.Manager" />
-                                    <input type="hidden" name="label" value="@rule.Label" />
-                                    <select name="treatment" class="form-select form-select-sm" style="max-width: 12rem" aria-label="Treatment for @rule.Label">
-                                        @foreach (var treatment in treatments)
-                                        {
-                                            <option value="@treatment" selected="@(rule.Treatment == treatment)">@treatment</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-secondary">Change</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                    @if (Model.Rules.Count == 0)
-                    {
-                        <tr><td colspan="4" class="text-muted">None yet.</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <h3 class="panel-head">
+            <i class="fas fa-tags" aria-hidden="true"></i> Labels Waiting
+            <span class="tab-count">@Model.Labels.Count</span>
+        </h3>
+
+        @if (Model.Labels.Count == 0)
+        {
+            <p class="text-muted mb-0">Nothing waiting.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Manager</th><th>Label on the Statement</th><th class="num">Transactions</th><th>Treatment</th></tr></thead>
+                    <tbody>
+                        @foreach (var label in Model.Labels)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@label.Manager</td>
+                                <td>@label.Label</td>
+                                <td class="num">@label.Transactions</td>
+                                <td>
+                                    <form asp-action="DecideLabel" method="post" class="d-flex gap-2">
+                                        <input type="hidden" name="manager" value="@label.Manager" />
+                                        <input type="hidden" name="label" value="@label.Label" />
+                                        <select name="treatment" class="form-select form-select-sm" style="max-width: 12rem" aria-label="Treatment for @label.Label">
+                                            @foreach (var treatment in treatments)
+                                            {
+                                                <option value="@treatment">@treatment</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-gold">Decide</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </section>
+
+    <section class="panel-card mb-3">
+
+        <h3 class="panel-head">
+            <i class="fas fa-shield-halved" aria-hidden="true"></i> Securities
+            <span class="tab-count">@Model.Securities.Count</span>
+        </h3>
+
+        @if (Model.Securities.Count == 0)
+        {
+            <p class="text-muted mb-0">Securities appear when statements are loaded.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Security</th><th>Code</th><th>Status</th><th>Class, Prescribed, Large-cap</th></tr></thead>
+                    <tbody>
+                        @foreach (var security in Model.Securities)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@security.Name</td>
+                                <td>@security.SecurityCode</td>
+                                <td>
+                                    @if (security.Confirmed)
+                                    {
+                                        <span class="status-badge badge-green">Confirmed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-amber">Proposed</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form asp-action="ConfirmSecurity" asp-route-id="@security.Id" method="post" class="d-flex flex-wrap gap-2 align-items-center">
+                                        <select name="assetClass" class="form-select form-select-sm" style="max-width: 14rem" aria-label="Asset class for @security.Name">
+                                            @foreach (var assetClass in FundAssetClasses.Each)
+                                            {
+                                                <option value="@assetClass" selected="@(security.AssetClass == assetClass)">@FundAssetClasses.Name(assetClass)</option>
+                                            }
+                                        </select>
+                                        <label class="form-check-label"><input type="checkbox" name="prescribed" value="true" class="form-check-input" checked="@security.Prescribed" /> Prescribed</label>
+                                        <label class="form-check-label"><input type="checkbox" name="largeCap" value="true" class="form-check-input" checked="@security.LargeCap" /> Large-cap</label>
+                                        <button type="submit" class="btn btn-sm btn-gold">Confirm</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </section>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-gavel" aria-hidden="true"></i> Rulings Made
+            <span class="tab-count">@Model.Rules.Count</span>
+        </h3>
+
+        @if (Model.Rules.Count == 0)
+        {
+            <p class="text-muted mb-0">None yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Manager</th><th>Label</th><th>Decided By</th><th>Treatment</th></tr></thead>
+                    <tbody>
+                        @foreach (var rule in Model.Rules)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@rule.Manager</td>
+                                <td>@rule.Label</td>
+                                <td>@rule.DecidedByName, @rule.DecidedAt.ToLocalTime().ToString("d MMM yyyy")</td>
+                                <td>
+                                    <form asp-action="DecideLabel" method="post" class="d-flex gap-2">
+                                        <input type="hidden" name="manager" value="@rule.Manager" />
+                                        <input type="hidden" name="label" value="@rule.Label" />
+                                        <select name="treatment" class="form-select form-select-sm" style="max-width: 12rem" aria-label="Treatment for @rule.Label">
+                                            @foreach (var treatment in treatments)
+                                            {
+                                                <option value="@treatment" selected="@(rule.Treatment == treatment)">@treatment</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Change</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </section>
+
 </div>

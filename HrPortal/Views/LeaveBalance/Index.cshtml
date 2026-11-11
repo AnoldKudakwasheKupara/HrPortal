@@ -1,3 +1,4 @@
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.LeaveBalance>
 
 @{
@@ -7,6 +8,21 @@
     var selectedYear = (int)ViewBag.SelectedYear;
     var ratedTypes = ViewBag.RatedTypes as List<HrPortal.Entities.LeaveType> ?? new();
     var withoutBalance = (int)ViewBag.WithoutBalance;
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var show = Context.Request.Query["show"].ToString() == "negative" ? "negative" : "all";
+    var shown = all
+        .Where(b => show == "all" || b.RemainingDays < 0)
+        .Where(b => PagedList.Matches(search, b.Employee.FirstName + " " + b.Employee.LastName, b.LeaveType.Name))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All Balances", "fa-list-ul", "is-teal", all.Count),
+        new("negative", "Below Zero", "fa-triangle-exclamation", "is-amber", all.Count(b => b.RemainingDays < 0))
+    };
 }
 
 <div class="container-fluid">
@@ -15,40 +31,34 @@
 
         <div>
             <h2>Leave Balances</h2>
-
-            <p class="text-muted">
-                Each employee's running balance. It gains the monthly days on the
-                1st, loses approved leave and carries on from year to year.
+            <p>
+                Each employee's running balance. It gains the monthly days on the 1st, loses approved
+                leave and carries on from year to year.
             </p>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Upload"
-               class="btn btn-primary">
-                Upload Balances
+        <div class="head-actions">
+
+            <a asp-action="Create" class="btn btn-outline-primary">
+                <i class="fas fa-plus" aria-hidden="true"></i> Add Balance
             </a>
 
-            <a asp-action="Create"
-               class="btn btn-outline-primary">
-                <i class="bi bi-plus-circle"></i>
-                Add Balance
+            <a asp-action="Upload" class="btn btn-gold">
+                <i class="fas fa-upload" aria-hidden="true"></i> Upload Balances
             </a>
+
         </div>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
     @if (!ratedTypes.Any())
@@ -67,164 +77,127 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-        <div class="card-body">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Employees with a Balance</div>
+                <div class="kpi-value">@all.Select(b => b.EmployeeId).Distinct().Count()</div>
+            </div>
+        </div>
 
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-2 align-items-end">
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-scale-balanced"></i></span>
+            <div>
+                <div class="kpi-label">Days Remaining</div>
+                <div class="kpi-value">@all.Sum(b => b.RemainingDays).ToString("0.##")</div>
+            </div>
+        </div>
 
-                <div class="col-auto">
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-umbrella-beach"></i></span>
+            <div>
+                <div class="kpi-label">Days Used in @selectedYear</div>
+                <div class="kpi-value">@all.Sum(b => b.UsedDays).ToString("0.##")</div>
+            </div>
+        </div>
 
-                    <label for="year"
-                           class="form-label">
-                        Year
-                    </label>
-
-                    <select id="year"
-                            name="year"
-                            class="form-select">
-
-                    @foreach (var year in years)
-                    {
-                        if (year == selectedYear)
-                        {
-                            <option value="@year" selected>@year</option>
-                        }
-                        else
-                        {
-                            <option value="@year">@year</option>
-                        }
-                    }
-
-                    </select>
-
-                </div>
-
-                <div class="col-auto">
-
-                    <button type="submit"
-                            class="btn btn-outline-secondary">
-                        Show
-                    </button>
-
-                </div>
-
-            </form>
-
+        <div class="kpi">
+            <span class="kpi-icon @(withoutBalance > 0 ? "is-red" : "is-amber")" aria-hidden="true"><i class="fas fa-user-xmark"></i></span>
+            <div>
+                <div class="kpi-label">Without a Balance</div>
+                <div class="kpi-value">@withoutBalance</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <form asp-action="Index" method="get" class="filter-bar filter-bar-short" data-auto-submit>
 
-        <div class="card-body is-table">
+        <div>
+            <label for="year" class="form-label">Year</label>
+            <select id="year" name="year" class="form-select">
+                @foreach (var year in years)
+                {
+                    <option value="@year" selected="@(year == selectedYear)">@year</option>
+                }
+            </select>
+        </div>
 
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Show</button>
+            </noscript>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-scale-balanced" aria-hidden="true"></i> Balances for @selectedYear
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search employee or leave type...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No balances match." : $"No leave balances have been recorded for {selectedYear}.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Employee</th>
                             <th>Leave Type</th>
-                            <th>Opening + earned</th>
-                            <th>Used</th>
-                            <th>Pending</th>
-                            <th>Remaining</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="num">Opening + Earned</th>
+                            <th class="num">Used</th>
+                            <th class="num">Pending</th>
+                            <th class="num">Remaining</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
-                                No leave balances have been recorded for @selectedYear.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var balance in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    @balance.Employee.FirstName
-                                    @balance.Employee.LastName
-                                </strong>
-                            </td>
-
-                            <td>
-                                @balance.LeaveType.Name
-                            </td>
-
-                            <td>
-                                @balance.AllocatedDays.ToString("0.##")
-                            </td>
-
-                            <td>
-                                @balance.UsedDays.ToString("0.##")
-                            </td>
-
-                            <td>
-                                @balance.PendingDays.ToString("0.##")
-                            </td>
-
-                            <td>
-                                @if (balance.RemainingDays < 0)
-                                {
-                                    <span class="badge bg-danger">
+                        @foreach (var balance in paged.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@balance.Employee.FirstName @balance.Employee.LastName</td>
+                                <td>@balance.LeaveType.Name</td>
+                                <td class="num">@balance.AllocatedDays.ToString("0.##")</td>
+                                <td class="num">@balance.UsedDays.ToString("0.##")</td>
+                                <td class="num">@balance.PendingDays.ToString("0.##")</td>
+                                <td class="num">
+                                    <span class="status-badge @(balance.RemainingDays < 0 ? "badge-red" : "badge-green")">
                                         @balance.RemainingDays.ToString("0.##")
                                     </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">
-                                        @balance.RemainingDays.ToString("0.##")
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@balance.Id">
-
-                                        View
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@balance.Id">
-
-                                        Edit
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-danger"
-                                       asp-action="Delete"
-                                       asp-route-id="@balance.Id">
-
-                                        Delete
-
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@balance.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@balance.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@balance.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete the balance for @balance.Employee.FirstName @balance.Employee.LastName</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -232,8 +205,13 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "balance", "balances")' />
+        }
 
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

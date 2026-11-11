@@ -1,4 +1,5 @@
 @using HrPortal.Entities
+@using HrPortal.ViewModels
 @model HrPortal.ViewModels.PagedResult<HrPortal.Entities.ItActivity>
 
 @{
@@ -6,16 +7,18 @@
 
     var from = (DateTime)ViewBag.From;
     var to = (DateTime)ViewBag.To;
+    var outstanding = (int)ViewBag.Outstanding;
+    var hardware = (int)ViewBag.HardwareInPeriod;
+    var categoryFilter = ViewBag.CategoryFilter as ItActivityCategory?;
+    var statusFilter = ViewBag.StatusFilter as ItActivityStatus?;
 
-    var byCategory =
-        ViewBag.ByCategory as Dictionary<ItActivityCategory, int>
-        ?? new Dictionary<ItActivityCategory, int>();
+    var byCategory = ViewBag.ByCategory as Dictionary<ItActivityCategory, int> ?? new Dictionary<ItActivityCategory, int>();
 
     string Badge(ItActivityStatus s) => s switch
     {
-        ItActivityStatus.Resolved => "bg-success",
-        ItActivityStatus.InProgress => "bg-warning text-dark",
-        _ => "bg-secondary"
+        ItActivityStatus.Resolved => "badge-green",
+        ItActivityStatus.InProgress => "badge-amber",
+        _ => "badge-gray"
     };
 
     string Label(ItActivityStatus s) => s switch
@@ -28,15 +31,16 @@
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>IT Activity Log</h2>
-            <p class="text-muted mb-0">
-                Requests, incidents and tasks as they happen. This is
-                what the weekly status report is built from.
-            </p>
+            <p>Requests, incidents and tasks as they happen. This is what the weekly status report is built from.</p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">Log Activity</a>
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Log Activity
+        </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -49,174 +53,168 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="report-stats">
+    <div class="kpis">
 
-        <div class="report-stat">
-            <span class="report-stat-label">Logged this period</span>
-            <span class="report-stat-value">@ViewBag.InPeriod</span>
-            <span class="report-stat-note">
-                @from.ToString("d MMM") &ndash; @to.ToString("d MMM yyyy")
-            </span>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-headset"></i></span>
+            <div>
+                <div class="kpi-label">Logged This Period</div>
+                <div class="kpi-value">@ViewBag.InPeriod</div>
+                <div class="kpi-note">@from.ToString("d MMM") &ndash; @to.ToString("d MMM yyyy")</div>
+            </div>
         </div>
 
-        <a class="report-stat @(((int)ViewBag.Outstanding) > 0 ? "is-warning" : "")"
+        <a class="kpi text-decoration-none"
            asp-action="Index"
            asp-route-from="@from.ToString("yyyy-MM-dd")"
            asp-route-to="@to.ToString("yyyy-MM-dd")"
            asp-route-status="@ItActivityStatus.Open">
-            <span class="report-stat-label">Still outstanding</span>
-            <span class="report-stat-value">@ViewBag.Outstanding</span>
-            <span class="report-stat-note">Across all periods</span>
+            <span class="kpi-icon @(outstanding > 0 ? "is-amber" : "is-green")" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Still Outstanding</div>
+                <div class="kpi-value">@outstanding</div>
+                <div class="kpi-note">Across all periods</div>
+            </div>
         </a>
 
-        <div class="report-stat @(((int)ViewBag.HardwareInPeriod) > 0 ? "is-critical" : "is-good")">
-            <span class="report-stat-label">Hardware faults</span>
-            <span class="report-stat-value">@ViewBag.HardwareInPeriod</span>
-            <span class="report-stat-note">
-                @(((int)ViewBag.HardwareInPeriod) == 0
-                    ? "None reported this period"
-                    : "Reported this period")
-            </span>
-        </div>
-
-        <div class="report-stat">
-            <span class="report-stat-label">Flagged notable</span>
-            <span class="report-stat-value">@ViewBag.NotableInPeriod</span>
-            <span class="report-stat-note">Named in the report</span>
-        </div>
-
-    </div>
-
-    @if (byCategory.Any())
-    {
-        <div class="card shadow-sm mb-3">
-            <div class="card-header">This period by category</div>
-            <div class="card-body">
-                <div class="breakdown">
-                    @foreach (var pair in byCategory)
-                    {
-                        <a class="report-chip"
-                           asp-action="Index"
-                           asp-route-from="@from.ToString("yyyy-MM-dd")"
-                           asp-route-to="@to.ToString("yyyy-MM-dd")"
-                           asp-route-category="@pair.Key">
-                            @pair.Key <strong>@pair.Value</strong>
-                        </a>
-                    }
-                </div>
+        <div class="kpi">
+            <span class="kpi-icon @(hardware > 0 ? "is-red" : "is-green")" aria-hidden="true"><i class="fas fa-microchip"></i></span>
+            <div>
+                <div class="kpi-label">Hardware Faults</div>
+                <div class="kpi-value">@hardware</div>
+                <div class="kpi-note">@(hardware == 0 ? "None reported this period" : "Reported this period")</div>
             </div>
         </div>
-    }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
-
-                <div class="col-md-3">
-                    <label class="form-label">From</label>
-                    <input type="date" name="from" class="form-control"
-                           value="@from.ToString("yyyy-MM-dd")" />
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">To</label>
-                    <input type="date" name="to" class="form-control"
-                           value="@to.ToString("yyyy-MM-dd")" />
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var c in Enum.GetValues<ItActivityCategory>())
-                        {
-                            <option value="@c"
-                                    selected="@(ViewBag.CategoryFilter as ItActivityCategory? == c)">
-                                @c
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var s in Enum.GetValues<ItActivityStatus>())
-                        {
-                            <option value="@s"
-                                    selected="@(ViewBag.StatusFilter as ItActivityStatus? == s)">
-                                @Label(s)
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-star"></i></span>
+            <div>
+                <div class="kpi-label">Flagged Notable</div>
+                <div class="kpi-value">@ViewBag.NotableInPeriod</div>
+                <div class="kpi-note">Named in the report</div>
+            </div>
         </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <form method="get" class="filter-bar" data-auto-submit>
+
+        <div>
+            <label for="it-from" class="form-label">From</label>
+            <input id="it-from" type="date" name="from" class="form-control" value="@from.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div>
+            <label for="it-to" class="form-label">To</label>
+            <input id="it-to" type="date" name="to" class="form-control" value="@to.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div>
+            <label for="it-category" class="form-label">Category</label>
+            <select id="it-category" name="category" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var c in Enum.GetValues<ItActivityCategory>())
+                {
+                    <option value="@c" selected="@(categoryFilter == c)">@c</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="it-status" class="form-label">Status</label>
+            <select id="it-status" name="status" class="form-select">
+                <option value="">All statuses</option>
+                @foreach (var s in Enum.GetValues<ItActivityStatus>())
+                {
+                    <option value="@s" selected="@(statusFilter == s)">@Label(s)</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Filter</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-headset" aria-hidden="true"></i> Activity
+            <span class="tab-count">@Model.TotalCount</span>
+        </h3>
+
+        @if (byCategory.Any())
+        {
+            <div class="breakdown mb-3">
+                @foreach (var pair in byCategory)
+                {
+                    <a class="report-chip"
+                       asp-action="Index"
+                       asp-route-from="@from.ToString("yyyy-MM-dd")"
+                       asp-route-to="@to.ToString("yyyy-MM-dd")"
+                       asp-route-category="@pair.Key">
+                        @pair.Key <strong>@pair.Value</strong>
+                    </a>
+                }
+            </div>
+        }
+
+        @if (!Model.Items.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-headset" aria-hidden="true"></i>
+                <p>Nothing logged for this period yet.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Category</th>
-                            <th>What came up</th>
-                            <th>Raised by</th>
+                            <th>What Came Up</th>
+                            <th>Raised By</th>
                             <th>Machine</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Items.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                Nothing logged for this period yet.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var a in Model.Items)
+                        @foreach (var a in Model.Items)
                         {
                             <tr>
-                                <td>@a.LoggedOn.ToString("ddd d MMM")</td>
-
-                                <td>@a.Category</td>
-
+                                <td class="text-nowrap">
+                                    <div>@a.LoggedOn.ToString("ddd d MMM")</div>
+                                    <div class="small text-muted">@a.Category</div>
+                                </td>
                                 <td>
-                                    <strong>@a.Summary</strong>
-                                    @if (a.IsNotable)
-                                    {
-                                        <span class="badge bg-info">Notable</span>
-                                    }
+                                    <div class="fw-semibold">
+                                        @a.Summary
+                                        @if (a.IsNotable)
+                                        {
+                                            <span class="status-badge badge-blue ms-1">Notable</span>
+                                        }
+                                    </div>
                                     @if (!string.IsNullOrWhiteSpace(a.ActionTaken))
                                     {
-                                        <div class="text-muted small">
-                                            @a.ActionTaken
-                                        </div>
+                                        <div class="small text-muted">@a.ActionTaken</div>
                                     }
                                 </td>
-
                                 <td>
                                     @if (a.RaisedByEmployee != null)
                                     {
-                                        @(a.RaisedByEmployee.FirstName + " " +
-                                          a.RaisedByEmployee.LastName)
+                                        @(a.RaisedByEmployee.FirstName + " " + a.RaisedByEmployee.LastName)
                                     }
                                     else if (!string.IsNullOrWhiteSpace(a.RaisedByOther))
                                     {
@@ -224,66 +222,56 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted">&mdash;</span>
+                                        <span class="text-muted">-</span>
                                     }
                                 </td>
-
                                 <td>
                                     @if (a.Asset != null)
                                     {
-                                        <a asp-controller="Asset" asp-action="Details"
-                                           asp-route-id="@a.AssetId">
-                                            @a.Asset.DeviceModel
-                                        </a>
+                                        <a asp-controller="Asset" asp-action="Details" asp-route-id="@a.AssetId">@a.Asset.DeviceModel</a>
                                     }
                                     else
                                     {
-                                        <span class="text-muted">&mdash;</span>
+                                        <span class="text-muted">-</span>
                                     }
                                 </td>
-
+                                <td><span class="status-badge @Badge(a.Status)">@Label(a.Status)</span></td>
                                 <td>
-                                    <span class="badge @Badge(a.Status)">
-                                        @Label(a.Status)
-                                    </span>
-                                </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
+                                    <div class="table-actions justify-content-end">
                                         @if (a.Status != ItActivityStatus.Resolved)
                                         {
-                                            <form asp-action="Resolve"
-                                                  asp-route-id="@a.Id"
-                                                  method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-success">
-                                                    Resolve
+                                            <form asp-action="Resolve" asp-route-id="@a.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-success text-nowrap">
+                                                    <i class="fas fa-check" aria-hidden="true"></i> Resolve
                                                 </button>
                                             </form>
                                         }
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@a.Id">
-                                            Edit
+                                        <a class="btn btn-sm btn-outline-success" asp-action="Edit" asp-route-id="@a.Id" title="Edit">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Edit @a.Summary</span>
                                         </a>
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete" asp-route-id="@a.Id">
-                                            Delete
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @a.Summary</span>
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
 
-            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "activities")' />
+            <partial name="_NumberedPager" model='PagerSummary.From(Model, "activity", "activities")' />
+        }
 
-        </div>
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

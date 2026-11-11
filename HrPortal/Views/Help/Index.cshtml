@@ -7,229 +7,177 @@
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
-        <h2>Help &amp; Support</h2>
-        <p class="text-muted">
-            Any queries, contact Human Resources. Anything to do with
-            the portal, your computer or your account, contact IT.
-        </p>
+    <div class="page-head">
+
+        <div>
+            <h2>Help &amp; Support</h2>
+            <p>Any queries, contact Human Resources. Anything to do with the portal, your computer or your account, contact IT.</p>
+        </div>
+
     </div>
 
     <div class="row g-3">
 
-        <div class="col-lg-5">
+        <div class="col-lg-6">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card h-100">
 
-                <div class="card-header">
-                    Any queries &mdash; contact HR
-                </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-user-tie" aria-hidden="true"></i> Any Queries: Contact HR
+                    <span class="tab-count">@Model.Hr.Count()</span>
+                </h3>
 
-                <div class="card-body">
-
-                    @if (Model.Hr.Any())
-                    {
-                        <div class="row-list">
-
-                            @foreach (var person in Model.Hr)
-                            {
-                                <div class="row-item">
-
-                                    <span class="row-icon">
-                                        <i class="fas fa-user"
-                                           aria-hidden="true"></i>
-                                    </span>
-
-                                    <span class="row-main">
-                                        <span class="row-title">@person.Name</span>
-
-                                        <span class="row-meta">
-                                            @if (!string.IsNullOrWhiteSpace(person.JobTitle))
-                                            {
-                                                @person.JobTitle<text> &middot; </text>
-                                            }
-
-                                            @if (!string.IsNullOrWhiteSpace(person.Email))
-                                            {
-                                                <a href="mailto:@person.Email">@person.Email</a>
-                                            }
-
-                                            @if (!string.IsNullOrWhiteSpace(person.Phone))
-                                            {
-                                                <text> &middot; </text>@person.Phone
-                                            }
-                                        </span>
-                                    </span>
-
+                @if (Model.Hr.Any())
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var person in Model.Hr)
+                        {
+                            <div class="doc-row">
+                                <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-user"></i></span>
+                                <div class="doc-info">
+                                    <div class="doc-name">@person.Name</div>
+                                    <div class="doc-meta">
+                                        @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                        {
+                                            @person.JobTitle
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(person.Phone))
+                                        {
+                                            <text> &middot; </text>@person.Phone
+                                        }
+                                    </div>
                                 </div>
-                            }
-
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="empty-state mb-0">
-                            <span class="empty-icon">&#128100;</span>
-                            Nobody holds the HR Officer role yet. An
-                            administrator can grant it on the roles
-                            page, and their details will show here.
+                                @if (!string.IsNullOrWhiteSpace(person.Email))
+                                {
+                                    <div class="doc-buttons">
+                                        <a class="btn btn-sm btn-outline-secondary" href="mailto:@person.Email" title="Email @person.Email">
+                                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Email @person.Name</span>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
+                        <p>
+                            Nobody holds the HR Officer role yet. An administrator can grant it on the roles page,
+                            and their details will show here.
                         </p>
-                    }
+                    </div>
+                }
 
-                </div>
-
-            </div>
+            </section>
 
         </div>
 
-        <div class="col-lg-7">
+        <div class="col-lg-6">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card h-100">
 
-                <div class="card-header">
-                    Portal, device or account &mdash; contact IT
-                </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-headset" aria-hidden="true"></i> Portal, Device or Account: Contact IT
+                    <span class="tab-count">@Model.It.Count()</span>
+                </h3>
 
-                <div class="card-body">
-
-                    @if (Model.It.Any())
-                    {
-                        <div class="row-list">
-
-                            @foreach (var person in Model.It)
-                            {
-                                <div class="row-item">
-
-                                    <span class="row-icon">
-                                        <i class="fas fa-headset"
-                                           aria-hidden="true"></i>
-                                    </span>
-
-                                    <span class="row-main">
-                                        <span class="row-title">@person.Name</span>
-
-                                        <span class="row-meta">
-                                            @if (!string.IsNullOrWhiteSpace(person.JobTitle))
-                                            {
-                                                @person.JobTitle<text> &middot; </text>
-                                            }
-
-                                            @if (!string.IsNullOrWhiteSpace(person.Email))
-                                            {
-                                                <a href="mailto:@person.Email">@person.Email</a>
-                                            }
-
-                                            @if (!string.IsNullOrWhiteSpace(person.Phone))
-                                            {
-                                                <text> &middot; </text>@person.Phone
-                                            }
-                                        </span>
-                                    </span>
-
+                @if (Model.It.Any())
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var person in Model.It)
+                        {
+                            <div class="doc-row">
+                                <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-headset"></i></span>
+                                <div class="doc-info">
+                                    <div class="doc-name">@person.Name</div>
+                                    <div class="doc-meta">
+                                        @if (!string.IsNullOrWhiteSpace(person.JobTitle))
+                                        {
+                                            @person.JobTitle
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(person.Phone))
+                                        {
+                                            <text> &middot; </text>@person.Phone
+                                        }
+                                    </div>
                                 </div>
-                            }
+                                @if (!string.IsNullOrWhiteSpace(person.Email))
+                                {
+                                    <div class="doc-buttons">
+                                        <a class="btn btn-sm btn-outline-secondary" href="mailto:@person.Email" title="Email @person.Email">
+                                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Email @person.Name</span>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-headset" aria-hidden="true"></i>
+                        <p>Nobody is on record in the IT department yet. Once somebody is, their details will show here.</p>
+                    </div>
+                }
 
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="empty-state mb-0">
-                            <span class="empty-icon">&#128187;</span>
-                            Nobody is on record in the IT department
-                            yet. Once somebody is, their details will
-                            show here.
-                        </p>
-                    }
-
-                </div>
-
-            </div>
+            </section>
 
         </div>
 
         <div class="col-12">
 
-            <div class="card shadow-sm">
+            <section class="panel-card mb-4">
 
-                <div class="card-header">Look here first</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-lightbulb" aria-hidden="true"></i> Look Here First
+                </h3>
 
-                <div class="card-body">
+                <div class="settings-grid">
 
-                    <div class="settings-grid">
+                    <a class="settings-item" asp-controller="Policy" asp-action="Index">
+                        <span class="settings-icon"><i class="fas fa-scale-balanced" aria-hidden="true"></i></span>
+                        <span class="settings-text">
+                            <span class="settings-title">Policy Hub</span>
+                            <span class="settings-note">Company policies, the code of conduct and procedures</span>
+                        </span>
+                        <i class="fas fa-chevron-right settings-chevron" aria-hidden="true"></i>
+                    </a>
 
-                        <a class="settings-item"
-                           asp-controller="Policy"
-                           asp-action="Index">
-                            <span class="settings-icon">
-                                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
-                            </span>
-                            <span class="settings-text">
-                                <span class="settings-title">Policy Hub</span>
-                                <span class="settings-note">
-                                    Company policies, the code of
-                                    conduct and procedures
-                                </span>
-                            </span>
-                            <i class="fas fa-chevron-right settings-chevron"
-                               aria-hidden="true"></i>
-                        </a>
+                    <a class="settings-item" asp-controller="Repository" asp-action="Index">
+                        <span class="settings-icon"><i class="fas fa-folder-open" aria-hidden="true"></i></span>
+                        <span class="settings-text">
+                            <span class="settings-title">Documents</span>
+                            <span class="settings-note">Forms, guidance and the files you are asked for most</span>
+                        </span>
+                        <i class="fas fa-chevron-right settings-chevron" aria-hidden="true"></i>
+                    </a>
 
-                        <a class="settings-item"
-                           asp-controller="Repository"
-                           asp-action="Index">
-                            <span class="settings-icon">
-                                <i class="fas fa-folder-open" aria-hidden="true"></i>
-                            </span>
-                            <span class="settings-text">
-                                <span class="settings-title">Documents</span>
-                                <span class="settings-note">
-                                    Forms, guidance and the files you
-                                    are asked for most
-                                </span>
-                            </span>
-                            <i class="fas fa-chevron-right settings-chevron"
-                               aria-hidden="true"></i>
-                        </a>
+                    <a class="settings-item" asp-controller="MyProfile" asp-action="Index">
+                        <span class="settings-icon"><i class="fas fa-id-badge" aria-hidden="true"></i></span>
+                        <span class="settings-text">
+                            <span class="settings-title">My Profile</span>
+                            <span class="settings-note">Correct your own details and next of kin</span>
+                        </span>
+                        <i class="fas fa-chevron-right settings-chevron" aria-hidden="true"></i>
+                    </a>
 
-                        <a class="settings-item"
-                           asp-controller="MyProfile"
-                           asp-action="Index">
-                            <span class="settings-icon">
-                                <i class="fas fa-id-badge" aria-hidden="true"></i>
-                            </span>
-                            <span class="settings-text">
-                                <span class="settings-title">My Profile</span>
-                                <span class="settings-note">
-                                    Correct your own details and next
-                                    of kin
-                                </span>
-                            </span>
-                            <i class="fas fa-chevron-right settings-chevron"
-                               aria-hidden="true"></i>
-                        </a>
-
-                        <a class="settings-item"
-                           asp-controller="Home"
-                           asp-action="Privacy">
-                            <span class="settings-icon">
-                                <i class="fas fa-lock" aria-hidden="true"></i>
-                            </span>
-                            <span class="settings-text">
-                                <span class="settings-title">Privacy notice</span>
-                                <span class="settings-note">
-                                    What the portal holds about you and
-                                    who can see it
-                                </span>
-                            </span>
-                            <i class="fas fa-chevron-right settings-chevron"
-                               aria-hidden="true"></i>
-                        </a>
-
-                    </div>
+                    <a class="settings-item" asp-controller="Home" asp-action="Privacy">
+                        <span class="settings-icon"><i class="fas fa-lock" aria-hidden="true"></i></span>
+                        <span class="settings-text">
+                            <span class="settings-title">Privacy notice</span>
+                            <span class="settings-note">What the portal holds about you and who can see it</span>
+                        </span>
+                        <i class="fas fa-chevron-right settings-chevron" aria-hidden="true"></i>
+                    </a>
 
                 </div>
 
-            </div>
+            </section>
 
         </div>
 

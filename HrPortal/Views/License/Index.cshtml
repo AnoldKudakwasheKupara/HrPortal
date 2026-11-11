@@ -1,4 +1,5 @@
 @using HrPortal.Entities
+@using HrPortal.ViewModels
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model IEnumerable<HrPortal.Entities.License>
 
@@ -6,23 +7,36 @@
     ViewData["Title"] = "Licence Renewals";
 
     var show = ViewBag.Show as string;
+    var expired = (int)ViewBag.Expired;
+    var expiring = (int)ViewBag.Expiring;
+    var typeFilter = ViewBag.TypeFilter as LicenseType?;
+    var vendorFilter = ViewBag.VendorFilter as int?;
 
-    List<SelectListItem> Items(object? bag) =>
-        bag as List<SelectListItem> ?? new List<SelectListItem>();
+    List<SelectListItem> Items(object? bag) => bag as List<SelectListItem> ?? new List<SelectListItem>();
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all
+        .Where(l => PagedList.Matches(search, l.Name, l.Reference, l.Vendor?.Name,
+            l.AssignedToEmployee == null ? null : l.AssignedToEmployee.FirstName + " " + l.AssignedToEmployee.LastName))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+    var filtered = !string.IsNullOrEmpty(show) || typeFilter != null || vendorFilter != null || search != null;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Licence Renewals</h2>
-            <p class="text-muted mb-0">
-                Licences, subscriptions and certificates that expire,
-                and when each is next due.
-            </p>
+            <p>Licences, subscriptions and certificates that expire, and when each is next due.</p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">Add Licence</a>
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Licence
+        </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -35,199 +49,206 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="report-stats">
+    <div class="kpis">
 
-        <a class="report-stat @(((int)ViewBag.Expired) > 0 ? "is-critical" : "")"
-           asp-action="Index" asp-route-show="expired">
-            <span class="report-stat-label">Expired</span>
-            <span class="report-stat-value">@ViewBag.Expired</span>
-            <span class="report-stat-note">Past the renewal date</span>
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-show="expired">
+            <span class="kpi-icon @(expired > 0 ? "is-red" : "is-gray")" aria-hidden="true"><i class="fas fa-circle-xmark"></i></span>
+            <div>
+                <div class="kpi-label">Expired</div>
+                <div class="kpi-value">@expired</div>
+                <div class="kpi-note">Past the renewal date</div>
+            </div>
         </a>
 
-        <a class="report-stat @(((int)ViewBag.Expiring) > 0 ? "is-warning" : "")"
-           asp-action="Index" asp-route-show="expiring">
-            <span class="report-stat-label">Expiring soon</span>
-            <span class="report-stat-value">@ViewBag.Expiring</span>
-            <span class="report-stat-note">
-                Within @HrPortal.Controllers.LicenseController.ExpiringWindowDays days
-            </span>
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-show="expiring">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Expiring Soon</div>
+                <div class="kpi-value">@expiring</div>
+                <div class="kpi-note">Within @HrPortal.Controllers.LicenseController.ExpiringWindowDays days</div>
+            </div>
         </a>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Active</span>
-            <span class="report-stat-value">@ViewBag.Active</span>
-            <span class="report-stat-note">On the register</span>
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-certificate"></i></span>
+            <div>
+                <div class="kpi-label">Active</div>
+                <div class="kpi-value">@ViewBag.Active</div>
+                <div class="kpi-note">On the register</div>
+            </div>
         </div>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Annual cost</span>
-            <span class="report-stat-value">
-                @(((decimal)ViewBag.AnnualCost).ToString("0.00"))
-            </span>
-            <span class="report-stat-note">Across active licences</span>
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-money-bill-wave"></i></span>
+            <div>
+                <div class="kpi-label">Annual Cost</div>
+                <div class="kpi-value">@(((decimal)ViewBag.AnnualCost).ToString("0.00"))</div>
+                <div class="kpi-note">Across active licences</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <form method="get" class="filter-bar" data-auto-submit>
 
-                <div class="col-md-3">
-                    <label class="form-label">Show</label>
-                    <select name="show" class="form-select">
-                        <option value="" selected="@string.IsNullOrEmpty(show)">
-                            Active
-                        </option>
-                        <option value="expiring" selected="@(show == "expiring")">
-                            Expiring soon
-                        </option>
-                        <option value="expired" selected="@(show == "expired")">
-                            Expired
-                        </option>
-                        <option value="cancelled" selected="@(show == "cancelled")">
-                            Cancelled
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Type</label>
-                    <select name="type" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var t in Enum.GetValues<LicenseType>())
-                        {
-                            <option value="@t"
-                                    selected="@(ViewBag.TypeFilter as LicenseType? == t)">
-                                @t
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Vendor</label>
-                    <select name="vendorId" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var v in Items(ViewBag.Vendors))
-                        {
-                            <option value="@v.Value"
-                                    selected="@((ViewBag.VendorFilter as int?)?.ToString() == v.Value)">
-                                @v.Text
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
+        <div class="filter-bar-search">
+            <label for="licence-q" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="licence-q" type="search" name="q" value="@search" class="form-control" placeholder="Licence, reference, vendor..." />
+            </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+        <div>
+            <label for="licence-show" class="form-label">Show</label>
+            <select id="licence-show" name="show" class="form-select">
+                <option value="" selected="@string.IsNullOrEmpty(show)">Active</option>
+                <option value="expiring" selected="@(show == "expiring")">Expiring soon</option>
+                <option value="expired" selected="@(show == "expired")">Expired</option>
+                <option value="cancelled" selected="@(show == "cancelled")">Cancelled</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="licence-type" class="form-label">Type</label>
+            <select id="licence-type" name="type" class="form-select">
+                <option value="">All types</option>
+                @foreach (var t in Enum.GetValues<LicenseType>())
+                {
+                    <option value="@t" selected="@(typeFilter == t)">@t</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="licence-vendor" class="form-label">Vendor</label>
+            <select id="licence-vendor" name="vendorId" class="form-select">
+                <option value="">All vendors</option>
+                @foreach (var v in Items(ViewBag.Vendors))
+                {
+                    <option value="@v.Value" selected="@(vendorFilter?.ToString() == v.Value)">@v.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-certificate" aria-hidden="true"></i> Licences
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-certificate" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>Nothing matches these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No licences have been added yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Licence</th>
-                            <th>Type</th>
                             <th>Vendor</th>
-                            <th>Held by</th>
-                            <th class="num">Seats</th>
+                            <th>Held By</th>
                             <th>Expires</th>
                             <th class="num">Cost</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="9" class="text-center text-muted py-4">
-                                Nothing matches this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var l in Model)
+                        @foreach (var l in paged.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@l.Name</strong>
-                                    @if (l.AutoRenews)
-                                    {
-                                        <span class="badge bg-light text-dark">
-                                            Auto
-                                        </span>
-                                    }
+                                    <div class="fw-semibold">
+                                        @l.Name
+                                        @if (l.AutoRenews)
+                                        {
+                                            <span class="status-badge badge-gray ms-1">Auto</span>
+                                        }
+                                    </div>
+                                    <div class="small text-muted">
+                                        @l.Type@(l.Seats == null ? "" : $", {l.Seats} seats")
+                                    </div>
                                 </td>
-
-                                <td>@l.Type</td>
-
-                                <td>@(l.Vendor?.Name ?? "--")</td>
-
+                                <td>@(l.Vendor?.Name ?? "-")</td>
                                 <td>
                                     @if (l.AssignedToEmployee != null)
                                     {
-                                        @(l.AssignedToEmployee.FirstName + " " +
-                                          l.AssignedToEmployee.LastName)
+                                        @(l.AssignedToEmployee.FirstName + " " + l.AssignedToEmployee.LastName)
                                     }
                                     else
                                     {
                                         <span class="text-muted">Company wide</span>
                                     }
                                 </td>
-
-                                <td class="num">@(l.Seats?.ToString() ?? "--")</td>
-
-                                <td>@l.ExpiryDate.ToString("d MMM yyyy")</td>
-
-                                <td class="num">@(l.Cost?.ToString("0.00") ?? "--")</td>
-
+                                <td class="text-nowrap">@l.ExpiryDate.ToString("d MMM yyyy")</td>
+                                <td class="num">@(l.Cost?.ToString("0.00") ?? "-")</td>
+                                <td><partial name="_LicenseStatusBadge" model="l" /></td>
                                 <td>
-                                    <partial name="_LicenseStatusBadge" model="l" />
-                                </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Renew" asp-route-id="@l.Id">
-                                            Renew
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-gold text-nowrap" asp-action="Renew" asp-route-id="@l.Id">
+                                            <i class="fas fa-rotate" aria-hidden="true"></i> Renew
                                         </a>
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Details" asp-route-id="@l.Id">
-                                            View
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@l.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@l.Id">
-                                            Edit
+                                        <a class="btn btn-sm btn-outline-success" asp-action="Edit" asp-route-id="@l.Id" title="Edit">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Edit @l.Name</span>
                                         </a>
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete" asp-route-id="@l.Id">
-                                            Delete
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@l.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @l.Name</span>
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "licence", "licences")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

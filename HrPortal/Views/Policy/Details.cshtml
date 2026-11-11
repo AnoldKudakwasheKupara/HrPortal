@@ -7,63 +7,49 @@
 
     ViewData["Title"] = p.Title;
 
-    var overdue = p.ReviewDate != null &&
-                  p.ReviewDate.Value.Date < DateTime.Today;
+    var overdue = p.ReviewDate != null && p.ReviewDate.Value.Date < DateTime.Today;
+    var needsConfirming = p.RequiresAcknowledgement && p.Status == PolicyStatus.Active && !Model.Acknowledged;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>@p.Title</h2>
-
-            <div class="detail-badges">
-                @switch (p.Status)
-                {
-                    case PolicyStatus.Active:
-                        <span class="badge bg-success">In force</span>
-                        break;
-                    case PolicyStatus.Draft:
-                        <span class="badge bg-secondary">Draft</span>
-                        break;
-                    case PolicyStatus.Superseded:
-                        <span class="badge bg-info">Replaced</span>
-                        break;
-                    default:
-                        <span class="badge bg-danger">Withdrawn</span>
-                        break;
-                }
-
-                <span class="badge bg-light text-dark">Version @p.Version</span>
-
-                @if (!string.IsNullOrWhiteSpace(p.Reference))
-                {
-                    <span class="badge bg-light text-dark">@p.Reference</span>
-                }
-
+            <p>
+                Version @p.Version@(string.IsNullOrWhiteSpace(p.Reference) ? "" : $", {p.Reference}")
                 @if (overdue)
                 {
-                    <span class="badge bg-warning text-dark">
-                        Overdue for review
-                    </span>
+                    <span class="status-badge badge-amber ms-1">Overdue for review</span>
                 }
-            </div>
+            </p>
         </div>
 
-        <div class="page-head-actions">
-            @if (FileStorageService.CanPreview(p.OriginalFileName))
-            {
-                <a asp-action="Read" asp-route-id="@p.Id"
-                   class="btn btn-primary" target="_blank" data-opens-policy>Read</a>
-            }
+        <div class="head-actions">
 
-            <a asp-action="Download" asp-route-id="@p.Id"
-               class="btn btn-outline-primary" data-opens-policy>Download</a>
+            @switch (p.Status)
+            {
+                case PolicyStatus.Active:
+                    <span class="status-badge badge-green">In force</span>
+                    break;
+                case PolicyStatus.Draft:
+                    <span class="status-badge badge-gray">Draft</span>
+                    break;
+                case PolicyStatus.Superseded:
+                    <span class="status-badge badge-blue">Replaced</span>
+                    break;
+                default:
+                    <span class="status-badge badge-red">Withdrawn</span>
+                    break;
+            }
 
             <partial name="_DownloadPdf" model="@Model.Policy.Id" />
 
-            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -78,225 +64,266 @@
 
     <div class="row g-3">
 
-        <div class="col-lg-7">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">What it says</div>
-                <div class="card-body">
-                    @if (!string.IsNullOrWhiteSpace(p.Summary))
+        <div class="col-lg-8">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-scale-balanced" aria-hidden="true"></i> What It Says
+                </h3>
+
+                <p class="pre-line mb-3">@(string.IsNullOrWhiteSpace(p.Summary) ? "No summary was written. Open the document itself." : p.Summary)</p>
+
+                <div class="doc-row">
+
+                    <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+
+                    <div class="doc-info">
+                        <div class="doc-name text-break">@p.OriginalFileName</div>
+                        <div class="doc-meta">Version @p.Version</div>
+                    </div>
+
+                    <div class="doc-buttons">
+
+                        @if (FileStorageService.CanPreview(p.OriginalFileName))
+                        {
+                            <a asp-action="Read" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary" target="_blank"
+                               rel="noopener" title="Read" data-opens-policy>
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                                <span class="visually-hidden">Read the policy</span>
+                            </a>
+                        }
+
+                        <a asp-action="Download" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary" title="Download" data-opens-policy>
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                            <span class="visually-hidden">Download the policy</span>
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Where It Stands
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                        <div><span>Takes effect</span><strong>@p.EffectiveDate.ToString("d MMM yyyy")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-rotate" aria-hidden="true"></i>
+                        <div>
+                            <span>Review by</span>
+                            @if (p.ReviewDate == null)
+                            {
+                                <em>No review date set</em>
+                            }
+                            else
+                            {
+                                <strong class="@(overdue ? "text-danger" : "")">@p.ReviewDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user-shield" aria-hidden="true"></i>
+                        <div>
+                            <span>Owner</span>
+                            @if (string.IsNullOrWhiteSpace(p.Owner))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@p.Owner</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <div><span>Applies to</span><strong>@Html.DisplayFor(m => m.Policy.Audience)</strong></div>
+                    </div>
+
+                    @if (p.Supersedes != null)
                     {
-                        <div class="field-value">@p.Summary</div>
+                        <div class="fact">
+                            <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+                            <div>
+                                <span>Replaces</span>
+                                <strong>Version @p.Supersedes.Version, from @p.Supersedes.EffectiveDate.ToString("d MMM yyyy")</strong>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+            @if (Model.CanManage)
+            {
+                <section class="panel-card mb-3">
+
+                    <div class="panel-head-split">
+
+                        <h3 class="panel-head">
+                            <i class="fas fa-users" aria-hidden="true"></i> Who Has Read It
+                            <span class="tab-count">@Model.AcknowledgedCount of @Model.ActiveStaff</span>
+                        </h3>
+
+                        @if (p.RequiresAcknowledgement)
+                        {
+                            <a asp-action="Confirmations" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-download" aria-hidden="true"></i> Download the record
+                            </a>
+                        }
+
+                    </div>
+
+                    @if (!p.RequiresAcknowledgement)
+                    {
+                        <p class="text-muted mb-0">This policy does not ask for acknowledgement.</p>
                     }
                     else
                     {
-                        <div class="field-value is-empty">
-                            No summary was written. Open the document
-                            itself.
+                        <div class="balance-bar mb-2" role="img" aria-label="@Model.Coverage percent have read it">
+                            <span class="is-used" style="width: @Model.Coverage%"></span>
+                        </div>
+                        <p class="small text-muted">@Model.Coverage% of active staff have confirmed.</p>
+
+                        @if (Model.Outstanding.Count == 0)
+                        {
+                            <p class="mb-0">Everyone currently employed has acknowledged it.</p>
+                        }
+                        else
+                        {
+                            <p class="mb-2"><strong>@Model.Outstanding.Count still to acknowledge:</strong></p>
+                            <div class="breakdown">
+                                @foreach (var name in Model.Outstanding)
+                                {
+                                    <span class="report-chip">@name</span>
+                                }
+                            </div>
+                        }
+                    }
+
+                    @if (Model.Confirmations.Any())
+                    {
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr><th>Confirmed By</th><th>Document Opened</th><th>Confirmed</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.Confirmations)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@c.Name</td>
+                                            <td class="text-nowrap">@(c.OpenedAt?.ToLocalTime().ToString("d MMM yyyy, HH:mm") ?? "Not recorded")</td>
+                                            <td class="text-nowrap">@c.ConfirmedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     }
 
-                    <div class="text-muted small mt-3">
-                        @p.OriginalFileName
-                    </div>
-                </div>
-            </div>
+                </section>
+            }
+
         </div>
 
-        <div class="col-lg-5">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">Where it stands</div>
-                <div class="card-body">
-                    <div class="detail-rows">
+        <div class="col-lg-4">
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-calendar-day"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Takes effect</span>
-                                <div class="field-value">
-                                    @p.EffectiveDate.ToString("d MMM yyyy")
-                                </div>
-                            </div>
-                        </div>
+            <section class="panel-card mb-3">
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-rotate"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Review by</span>
-                                <div class="field-value">
-                                    @(p.ReviewDate?.ToString("d MMM yyyy")
-                                        ?? "No review date set")
-                                </div>
-                            </div>
-                        </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Read and Confirm
+                </h3>
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-user-shield"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Owner</span>
-                                <div class="field-value">
-                                    @(string.IsNullOrWhiteSpace(p.Owner)
-                                        ? "Not recorded"
-                                        : p.Owner)
-                                </div>
-                            </div>
-                        </div>
+                <div class="d-grid gap-2">
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-users"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Applies to</span>
-                                <div class="field-value">
-                                    @Html.DisplayFor(m => m.Policy.Audience)
-                                </div>
-                            </div>
-                        </div>
+                    @if (FileStorageService.CanPreview(p.OriginalFileName))
+                    {
+                        <a asp-action="Read" asp-route-id="@p.Id" class="btn @(needsConfirming ? "btn-outline-primary" : "btn-gold")"
+                           target="_blank" rel="noopener" data-opens-policy>
+                            <i class="fas fa-book-open" aria-hidden="true"></i> Read
+                        </a>
+                    }
 
-                        @if (p.Supersedes != null)
-                        {
-                            <div class="detail-row">
-                                <span class="detail-icon">
-                                    <i class="fas fa-clock-rotate-left"></i>
-                                </span>
-                                <div class="detail-text">
-                                    <span class="field-label">Replaces</span>
-                                    <div class="field-value">
-                                        Version @p.Supersedes.Version,
-                                        in force from
-                                        @p.Supersedes.EffectiveDate.ToString("d MMM yyyy")
-                                    </div>
-                                </div>
-                            </div>
-                        }
+                    <a asp-action="Download" asp-route-id="@p.Id" class="btn btn-outline-secondary" data-opens-policy>
+                        <i class="fas fa-download" aria-hidden="true"></i> Download
+                    </a>
 
-                    </div>
                 </div>
-            </div>
+
+                @if (p.RequiresAcknowledgement && p.Status == PolicyStatus.Active)
+                {
+                    <hr />
+
+                    @if (Model.Acknowledged)
+                    {
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-circle-check text-success mt-1" aria-hidden="true"></i>
+                            <div>
+                                <strong>You have confirmed that you read and understood this policy.</strong>
+                                <div class="text-muted small">If it is reissued as a new version you will be asked again.</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-action="Acknowledge" asp-route-id="@p.Id" method="post">
+                            <input type="hidden" name="id" value="@p.Id" />
+
+                            <p class="mb-1"><strong>You must read this policy and confirm.</strong></p>
+
+                            <p class="text-muted small">
+                                This records your name and the time against version @p.Version as your policy confirmation.
+                                @(Model.Opened ? "" : "Open the document with Read or Download first; the button works once you have.")
+                            </p>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-gold" data-confirm-policy disabled="@(!Model.Opened)">
+                                    <i class="fas fa-file-signature" aria-hidden="true"></i> I have read and understood this policy
+                                </button>
+                            </div>
+                        </form>
+                    }
+                }
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Policy Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Version</dt>
+                    <dd>@p.Version</dd>
+                    <dt>Reference</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(p.Reference) ? "-" : p.Reference)</dd>
+                    <dt>Takes effect</dt>
+                    <dd>@p.EffectiveDate.ToString("d MMM yyyy")</dd>
+                    <dt>Confirmation</dt>
+                    <dd>@(p.RequiresAcknowledgement ? "Required" : "Not required")</dd>
+                </dl>
+
+            </section>
+
         </div>
 
     </div>
-
-    @if (p.RequiresAcknowledgement && p.Status == PolicyStatus.Active)
-    {
-        <div class="card shadow-sm mt-3">
-            <div class="card-body">
-                @if (Model.Acknowledged)
-                {
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-circle-check text-success"></i>
-                        <div>
-                            <strong>You have confirmed that you read and understood this policy.</strong>
-                            <div class="text-muted small">
-                                If it is reissued as a new version you
-                                will be asked again.
-                            </div>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <form asp-action="Acknowledge" asp-route-id="@p.Id"
-                          method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@p.Id" />
-
-                        <p class="mb-2">
-                            <strong>You must read this policy and confirm.</strong>
-                        </p>
-
-                        <p class="text-muted small">
-                            This records your name and the time against
-                            version @p.Version as your policy confirmation.
-                            @(Model.Opened
-                                ? ""
-                                : "Open the document with Read or Download above first; the button works once you have.")
-                        </p>
-
-                        <button type="submit" class="btn btn-success" data-confirm-policy disabled="@(!Model.Opened)">
-                            I have read and understood this policy
-                        </button>
-                    </form>
-                }
-            </div>
-        </div>
-    }
-
-    @if (Model.CanManage)
-    {
-        <div class="card shadow-sm mt-3 mb-4">
-
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Who has read it</span>
-                <span class="d-flex align-items-center gap-2">
-                    <span class="text-muted small">
-                        @Model.AcknowledgedCount of @Model.ActiveStaff
-                        (@Model.Coverage%)
-                    </span>
-                    @if (p.RequiresAcknowledgement)
-                    {
-                        <a asp-action="Confirmations" asp-route-id="@p.Id"
-                           class="btn btn-sm btn-outline-secondary">Download the record</a>
-                    }
-                </span>
-            </div>
-
-            <div class="card-body">
-                @if (!p.RequiresAcknowledgement)
-                {
-                    <div class="field-value is-empty mb-0">
-                        This policy does not ask for acknowledgement.
-                    </div>
-                }
-                else if (Model.Outstanding.Count == 0)
-                {
-                    <div class="field-value mb-0">
-                        Everyone currently employed has acknowledged it.
-                    </div>
-                }
-                else
-                {
-                    <p class="mb-2">
-                        <strong>@Model.Outstanding.Count still to
-                        acknowledge:</strong>
-                    </p>
-                    <div class="breakdown">
-                        @foreach (var name in Model.Outstanding)
-                        {
-                            <span class="report-chip">@name</span>
-                        }
-                    </div>
-                }
-
-                @if (Model.Confirmations.Any())
-                {
-                    <div class="table-responsive mt-3">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr><th>Confirmed by</th><th>Document opened</th><th>Confirmed</th></tr>
-                            </thead>
-                            <tbody>
-                            @foreach (var c in Model.Confirmations)
-                            {
-                                <tr>
-                                    <td>@c.Name</td>
-                                    <td>@(c.OpenedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm") ?? "Not recorded")</td>
-                                    <td>@c.ConfirmedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-
-        </div>
-    }
 
 </div>
 

@@ -1,4 +1,5 @@
 @using HrPortal.Entities
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.ViewModels.PolicyListViewModel>
 
 @{
@@ -6,23 +7,31 @@
 
     var statusFilter = ViewBag.StatusFilter as PolicyStatus?;
     var activeStaff = (int)ViewBag.ActiveStaff;
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all.Where(p => PagedList.Matches(search, p.Title, p.Reference, p.Category)).ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Manage Policies</h2>
-            <p class="text-muted mb-0">
-                Every policy at every stage, including the drafts and
-                the ones that have been replaced.
-            </p>
+            <p>Every policy at every stage, including the drafts and the ones that have been replaced.</p>
         </div>
 
-        <div class="page-head-actions">
-            <a asp-action="Create" class="btn btn-primary">New Policy</a>
-            <a asp-action="Index" class="btn btn-secondary">Policy Hub</a>
+        <div class="head-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fas fa-book" aria-hidden="true"></i> Policy Hub
+            </a>
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-plus" aria-hidden="true"></i> New Policy
+            </a>
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -35,108 +44,147 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var s in Enum.GetValues<PolicyStatus>())
-                        {
-                            <option value="@s" selected="@(statusFilter == s)">
-                                @s
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-            </form>
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">In Force</div>
+                <div class="kpi-value">@all.Count(p => p.Status == PolicyStatus.Active)</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-file-pen"></i></span>
+            <div>
+                <div class="kpi-label">Drafts</div>
+                <div class="kpi-value">@all.Count(p => p.Status == PolicyStatus.Draft)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-xmark"></i></span>
+            <div>
+                <div class="kpi-label">Overdue for Review</div>
+                <div class="kpi-value">@all.Count(p => p.IsOverdueForReview)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Active Staff</div>
+                <div class="kpi-value">@activeStaff</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <form method="get" class="filter-bar filter-bar-short" data-auto-submit>
+
+        <div>
+            <label for="policy-q" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="policy-q" type="search" name="q" value="@search" class="form-control" placeholder="Title, reference, category..." />
+            </div>
+        </div>
+
+        <div>
+            <label for="policy-status" class="form-label">Status</label>
+            <select id="policy-status" name="status" class="form-select">
+                <option value="">All statuses</option>
+                @foreach (var s in Enum.GetValues<PolicyStatus>())
+                {
+                    <option value="@s" selected="@(statusFilter == s)">@s</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Filter</button>
+            </noscript>
+            <a asp-action="Manage" class="btn btn-outline-primary text-nowrap">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-scale-balanced" aria-hidden="true"></i> Policies
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i>
+                <p>No policies match this filter.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Policy</th>
                             <th>Version</th>
                             <th>Status</th>
-                            <th>Review by</th>
-                            <th>Read by</th>
-                            <th class="col-actions">Actions</th>
+                            <th>Review By</th>
+                            <th>Read By</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                No policies match this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var p in Model)
+                        @foreach (var p in paged.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@p.Title</strong>
-                                    <div class="text-muted small">
-                                        @(string.IsNullOrWhiteSpace(p.Category)
-                                            ? "Uncategorised"
-                                            : p.Category)
-                                    </div>
+                                    <div class="fw-semibold">@p.Title</div>
+                                    <div class="small text-muted">@(string.IsNullOrWhiteSpace(p.Category) ? "Uncategorised" : p.Category)</div>
                                 </td>
-
                                 <td>@p.Version</td>
-
                                 <td>
                                     @switch (p.Status)
                                     {
                                         case PolicyStatus.Active:
-                                            <span class="badge bg-success">In force</span>
+                                            <span class="status-badge badge-green">In force</span>
                                             break;
                                         case PolicyStatus.Draft:
-                                            <span class="badge bg-secondary">Draft</span>
+                                            <span class="status-badge badge-gray">Draft</span>
                                             break;
                                         case PolicyStatus.Superseded:
-                                            <span class="badge bg-info">Replaced</span>
+                                            <span class="status-badge badge-blue">Replaced</span>
                                             break;
                                         default:
-                                            <span class="badge bg-danger">Withdrawn</span>
+                                            <span class="status-badge badge-red">Withdrawn</span>
                                             break;
                                     }
                                 </td>
-
-                                <td>
+                                <td class="text-nowrap">
                                     @if (p.ReviewDate == null)
                                     {
-                                        <span class="text-muted">--</span>
+                                        <span class="text-muted">-</span>
                                     }
                                     else if (p.IsOverdueForReview)
                                     {
-                                        <span class="badge bg-warning text-dark">
-                                            @p.ReviewDate.Value.ToString("d MMM yyyy")
-                                        </span>
+                                        <span class="status-badge badge-amber">@p.ReviewDate.Value.ToString("d MMM yyyy")</span>
                                     }
                                     else
                                     {
                                         @p.ReviewDate.Value.ToString("d MMM yyyy")
                                     }
                                 </td>
-
-                                <td>
+                                <td class="text-nowrap">
                                     @if (!p.RequiresAcknowledgement)
                                     {
                                         <span class="text-muted">Not required</span>
@@ -146,55 +194,56 @@
                                         @p.AcknowledgedCount<text> of </text>@activeStaff
                                     }
                                 </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Details" asp-route-id="@p.Id">
-                                            Open
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@p.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> Open
                                         </a>
 
                                         @if (p.Status == PolicyStatus.Draft)
                                         {
-                                            <form asp-action="Publish" asp-route-id="@p.Id"
-                                                  method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
+                                            <form asp-action="Publish" asp-route-id="@p.Id" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-success">
-                                                    Publish
+                                                <button type="submit" class="btn btn-sm btn-outline-success text-nowrap">
+                                                    <i class="fas fa-paper-plane" aria-hidden="true"></i> Publish
                                                 </button>
                                             </form>
                                         }
 
                                         @if (p.Status == PolicyStatus.Active)
                                         {
-                                            <a class="btn btn-sm btn-outline-primary"
-                                               asp-action="Create" asp-route-supersedes="@p.Id">
-                                                Reissue
+                                            <a class="btn btn-sm btn-outline-primary text-nowrap" asp-action="Create" asp-route-supersedes="@p.Id">
+                                                <i class="fas fa-rotate" aria-hidden="true"></i> Reissue
                                             </a>
 
-                                            <form asp-action="Withdraw" asp-route-id="@p.Id"
-                                                  method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
+                                            <form asp-action="Withdraw" asp-route-id="@p.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Withdraw @p.Title?');">
                                                 <input type="hidden" name="id" value="@p.Id" />
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger">
-                                                    Withdraw
+                                                <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">
+                                                    <i class="fas fa-ban" aria-hidden="true"></i> Withdraw
                                                 </button>
                                             </form>
                                         }
+
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "policy", "policies")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

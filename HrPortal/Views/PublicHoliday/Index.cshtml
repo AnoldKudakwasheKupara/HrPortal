@@ -1,3 +1,4 @@
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.PublicHoliday>
 
 @{
@@ -6,22 +7,27 @@
     var year = (int)ViewBag.Year;
     var years = ViewBag.Years as List<int> ?? new List<int>();
     var onWeekdays = (int)ViewBag.OnWeekdays;
+    var all = Model.ToList();
+    var paged = PagedList.Of(all, PagedList.PageFrom(Context.Request));
+    var next = all.Where(h => h.Date.Date >= DateTime.Today).OrderBy(h => h.Date).FirstOrDefault();
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Public Holidays</h2>
-            <p class="text-muted mb-0">
-                Days leave is not counted against. A holiday falling on a
-                weekday is taken out of any leave request covering it.
+            <p>
+                Days leave is not counted against. A holiday falling on a weekday is taken out of any
+                leave request covering it.
             </p>
         </div>
 
-        <a asp-action="Create" asp-route-year="@year" class="btn btn-primary">
-            Add Holiday
+        <a asp-action="Create" asp-route-year="@year" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Holiday
         </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -34,57 +40,108 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="report-stats">
+    <div class="kpis">
 
-        <div class="report-stat">
-            <span class="report-stat-label">Holidays in @year</span>
-            <span class="report-stat-value">@Model.Count()</span>
-            <span class="report-stat-note">On the calendar</span>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+            <div>
+                <div class="kpi-label">Holidays in @year</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
         </div>
 
-        <div class="report-stat @(onWeekdays > 0 ? "is-good" : "")">
-            <span class="report-stat-label">On a weekday</span>
-            <span class="report-stat-value">@onWeekdays</span>
-            <span class="report-stat-note">These shorten leave requests</span>
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-business-time"></i></span>
+            <div>
+                <div class="kpi-label">On a Weekday</div>
+                <div class="kpi-value">@onWeekdays</div>
+                <div class="kpi-note">These shorten leave requests</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-mug-hot"></i></span>
+            <div>
+                <div class="kpi-label">On a Weekend</div>
+                <div class="kpi-value">@(all.Count - onWeekdays)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-day"></i></span>
+            <div>
+                <div class="kpi-label">Next Holiday</div>
+                @if (next == null)
+                {
+                    <div class="kpi-value kpi-value-text text-muted">None ahead</div>
+                }
+                else
+                {
+                    <div class="kpi-value kpi-value-text">@next.Date.ToString("d MMM")</div>
+                    <div class="kpi-note text-truncate" title="@next.Name">@next.Name</div>
+                }
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body d-flex flex-wrap gap-2 align-items-end">
+    <form method="get" class="filter-bar filter-bar-short" data-auto-submit>
 
-            <form method="get" class="d-flex gap-2 align-items-end">
-                <div>
-                    <label class="form-label">Year</label>
-                    <select name="year" class="form-select">
-                        @if (!years.Contains(year))
-                        {
-                            <option value="@year" selected>@year</option>
-                        }
-                        @foreach (var y in years)
-                        {
-                            <option value="@y" selected="@(y == year)">@y</option>
-                        }
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-secondary">Show</button>
-            </form>
+        <div>
+            <label for="holiday-year" class="form-label">Year</label>
+            <select id="holiday-year" name="year" class="form-select">
+                @if (!years.Contains(year))
+                {
+                    <option value="@year" selected>@year</option>
+                }
+                @foreach (var y in years)
+                {
+                    <option value="@y" selected="@(y == year)">@y</option>
+                }
+            </select>
+        </div>
 
-            <form asp-action="CopyToNextYear" method="post" class="ms-auto">
-                @Html.AntiForgeryToken()
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Show</button>
+            </noscript>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <div class="panel-head-split">
+
+            <h3 class="panel-head">
+                <i class="fas fa-calendar-check" aria-hidden="true"></i> Holidays in @year
+                <span class="tab-count">@all.Count</span>
+            </h3>
+
+            <form asp-action="CopyToNextYear" method="post">
                 <input type="hidden" name="year" value="@year" />
-                <button type="submit" class="btn btn-outline-primary">
-                    Copy @year into @(year + 1)
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-copy" aria-hidden="true"></i> Copy @year into @(year + 1)
                 </button>
             </form>
 
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+        @if (!all.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-calendar-xmark" aria-hidden="true"></i>
+                <p>
+                    No holidays recorded for @year. Until they are, leave spanning a holiday will count it
+                    as a working day.
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -92,80 +149,58 @@
                             <th>Day</th>
                             <th>Holiday</th>
                             <th>Notes</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                No holidays recorded for @year. Until they
-                                are, leave spanning a holiday will count it
-                                as a working day.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var h in Model)
+                        @foreach (var h in paged.Items)
                         {
-                            var weekend =
-                                h.Date.DayOfWeek == DayOfWeek.Saturday ||
-                                h.Date.DayOfWeek == DayOfWeek.Sunday;
+                            var weekend = h.Date.DayOfWeek == DayOfWeek.Saturday || h.Date.DayOfWeek == DayOfWeek.Sunday;
 
                             <tr>
-                                <td>
-                                    <strong>@h.Date.ToString("d MMM yyyy")</strong>
-                                </td>
-
-                                <td>
+                                <td class="text-nowrap fw-semibold">@h.Date.ToString("d MMM yyyy")</td>
+                                <td class="text-nowrap">
                                     @h.Date.ToString("dddd")
                                     @if (weekend)
                                     {
-                                        <span class="badge bg-light text-dark">
-                                            Weekend
-                                        </span>
+                                        <span class="status-badge badge-gray ms-1">Weekend</span>
                                     }
                                 </td>
-
-                                <td>@h.Name</td>
-
-                                <td class="text-muted">
-                                    @(string.IsNullOrWhiteSpace(h.Notes)
-                                        ? "--"
-                                        : h.Notes)
-                                </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@h.Id">
-                                            Edit
+                                <td class="fw-semibold">@h.Name</td>
+                                <td class="text-muted">@(string.IsNullOrWhiteSpace(h.Notes) ? "-" : h.Notes)</td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@h.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                         </a>
-                                        <form asp-action="Delete"
-                                              asp-route-id="@h.Id"
-                                              method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
+                                        <form asp-action="Delete" asp-route-id="@h.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Remove @h.Name?');">
                                             <input type="hidden" name="id" value="@h.Id" />
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-                                                Remove
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Remove @h.Name</span>
                                             </button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "holiday", "holidays")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

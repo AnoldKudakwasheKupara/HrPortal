@@ -1,7 +1,31 @@
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.LeaveType>
 
 @{
     ViewData["Title"] = "Leave Types";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var show = Context.Request.Query["show"].ToString() switch
+    {
+        "active" => "active",
+        "inactive" => "inactive",
+        _ => "all"
+    };
+
+    var shown = all
+        .Where(t => show == "all" || (show == "active") == t.IsActive)
+        .Where(t => PagedList.Matches(search, t.Name, t.Description))
+        .ToList();
+
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", all.Count),
+        new("active", "Active", "fa-circle-check", "is-green", all.Count(t => t.IsActive)),
+        new("inactive", "Inactive", "fa-circle-pause", "is-amber", all.Count(t => !t.IsActive))
+    };
 }
 
 <div class="container-fluid">
@@ -10,177 +34,152 @@
 
         <div>
             <h2>Leave Types</h2>
-
-            <p class="text-muted">
-                Manage the categories of leave employees can request.
-            </p>
+            <p>Manage the categories of leave employees can request.</p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Add Leave Type
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Leave Type
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-tags"></i></span>
+            <div>
+                <div class="kpi-label">Leave Types</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Active</div>
+                <div class="kpi-value">@all.Count(t => t.IsActive)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-scale-balanced"></i></span>
+            <div>
+                <div class="kpi-label">With a Balance</div>
+                <div class="kpi-value">@all.Count(t => t.MonthlyAccrualDays > 0)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+            <div>
+                <div class="kpi-label">Requests Made</div>
+                <div class="kpi-value">@all.Sum(t => t.LeaveRequests.Count)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-tags" aria-hidden="true"></i> Leave Types
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search leave types...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-tags" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No leave types match." : "No leave types have been added yet.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Leave Type</th>
-                            <th>Description</th>
-                            <th>Earned per month</th>
+                            <th>Earned per Month</th>
                             <th>Requests</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                No leave types have been added yet.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var leaveType in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    @leaveType.Name
-                                </strong>
-                            </td>
-
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(
-                                    leaveType.Description))
-                                {
-                                    @leaveType.Description
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        No description
-                                    </span>
-                                }
-                            </td>
-
-                            <td>
-                                @(leaveType.MonthlyAccrualDays > 0
-                                    ? $"{leaveType.MonthlyAccrualDays:0.##} days"
-                                    : "No balance")
-                            </td>
-
-                            <td>
-                                <span class="badge bg-primary">
-                                    @leaveType.LeaveRequests.Count
-                                </span>
-                            </td>
-
-                            <td>
-                                @if (leaveType.IsActive)
-                                {
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        Inactive
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@leaveType.Id">
-
-                                        View
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@leaveType.Id">
-
-                                        Edit
-
-                                    </a>
-
-                                    <form asp-action="ToggleStatus"
-                                          asp-route-id="@leaveType.Id"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
-
-                                            @(leaveType.IsActive
-                                                ? "Deactivate"
-                                                : "Activate")
-
-                                        </button>
-
-                                    </form>
-
-                                    @if (!leaveType.LeaveRequests.Any())
+                        @foreach (var leaveType in paged.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@leaveType.Name</div>
+                                    <div class="small text-muted">
+                                        @(string.IsNullOrWhiteSpace(leaveType.Description) ? "No description" : leaveType.Description)
+                                    </div>
+                                </td>
+                                <td class="text-nowrap">
+                                    @(leaveType.MonthlyAccrualDays > 0 ? $"{leaveType.MonthlyAccrualDays:0.##} days" : "No balance")
+                                </td>
+                                <td><span class="status-badge badge-blue">@leaveType.LeaveRequests.Count</span></td>
+                                <td>
+                                    @if (leaveType.IsActive)
                                     {
-                                        <form asp-action="Delete"
-                                              asp-route-id="@leaveType.Id"
-                                              method="post"
-                                              data-confirm="Delete the leave type @leaveType.Name? This cannot be undone."
-                                              onsubmit="return confirm(this.dataset.confirm);">
-
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-
-                                                Delete
-
-                                            </button>
-
-                                        </form>
+                                        <span class="status-badge badge-green">Active</span>
                                     }
+                                    else
+                                    {
+                                        <span class="status-badge badge-gray">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                                </div>
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@leaveType.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
 
-                            </td>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@leaveType.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
 
-                        </tr>
-                    }
+                                        <form asp-action="ToggleStatus" asp-route-id="@leaveType.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+                                                <i class="fas @(leaveType.IsActive ? "fa-circle-pause" : "fa-circle-play")" aria-hidden="true"></i>
+                                                @(leaveType.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+
+                                        @if (!leaveType.LeaveRequests.Any())
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@leaveType.Id" method="post" class="d-inline"
+                                                  data-confirm="Delete the leave type @leaveType.Name? This cannot be undone."
+                                                  onsubmit="return confirm(this.dataset.confirm);">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash" aria-hidden="true"></i>
+                                                    <span class="visually-hidden">Delete @leaveType.Name</span>
+                                                </button>
+                                            </form>
+                                        }
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -188,8 +187,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "leave type", "leave types")' />
+        }
 
-    </div>
+    </section>
 
 </div>
