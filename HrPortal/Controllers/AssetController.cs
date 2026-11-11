@@ -270,10 +270,33 @@ namespace HrPortal.Controllers
             return View(new AssetCreateViewModel());
         }
 
+        /// <summary>
+        /// A serial number belongs to one machine, so another asset already
+        /// holding it (ignoring case and spaces) is refused.
+        /// </summary>
+        private async Task CheckSerialAsync(string? serial, int ignoreId)
+        {
+            if (string.IsNullOrWhiteSpace(serial))
+                return;
+
+            var wanted = serial.Trim().ToLower();
+
+            var holder = await _context.Assets
+                .AsNoTracking()
+                .Where(a => a.Id != ignoreId && a.SerialNumber != null && a.SerialNumber.Trim().ToLower() == wanted)
+                .Select(a => a.DeviceModel)
+                .FirstOrDefaultAsync();
+
+            if (holder != null)
+                ModelState.AddModelError("SerialNumber", $"Another asset ({holder}) already has this serial number.");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AssetCreateViewModel model)
         {
+            await CheckSerialAsync(model.SerialNumber, 0);
+
             if (!ModelState.IsValid)
             {
                 await LoadLookups();
@@ -348,6 +371,8 @@ namespace HrPortal.Controllers
         {
             if (id != model.Id)
                 return NotFound();
+
+            await CheckSerialAsync(model.SerialNumber, id);
 
             if (!ModelState.IsValid)
             {
