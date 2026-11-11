@@ -12,11 +12,13 @@
         bag as List<SelectListItem> ?? new List<SelectListItem>();
 }
 
-<div class="card shadow-sm mb-3">
+<section class="panel-card mb-3 report-filters">
 
-    <div class="card-body">
+    <h3 class="panel-head">
+        <i class="fas fa-filter" aria-hidden="true"></i> Filters
+    </h3>
 
-        <form method="get" class="row g-2 align-items-end">
+        <form method="get" class="row g-2 align-items-end" data-auto-submit>
 
             @if (Has("from"))
             {
@@ -202,14 +204,17 @@
                 </div>
             }
 
-            <div class="col-6 col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">
-                    Apply
+            <div class="col-6 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-secondary flex-grow-1">
+                    <i class="fas fa-check" aria-hidden="true"></i> Apply
                 </button>
+                <a class="btn btn-outline-primary" href="@Context.Request.Path" title="Reset filters">
+                    <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i>
+                    <span class="visually-hidden">Reset filters</span>
+                </a>
             </div>
 
         </form>
 
-    </div>
-
-</div>
+    
+</section>

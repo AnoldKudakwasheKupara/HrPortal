@@ -31,7 +31,7 @@
 
         <button type="button" class="btn btn-outline-secondary"
                 onclick="window.print()">
-            Print
+            <i class="fas fa-print" aria-hidden="true"></i> Print
         </button>
 
         <a class="btn btn-outline-secondary"
@@ -40,10 +40,12 @@
                .Where(q => q.Key != "export")
                .ToDictionary(q => q.Key, q => q.Value.ToString()))"
            asp-route-export="csv">
-            Export CSV
+            <i class="fas fa-file-csv" aria-hidden="true"></i> Export CSV
         </a>
 
-        <a asp-action="Index" class="btn btn-secondary">All reports</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-chart-column" aria-hidden="true"></i> All reports
+        </a>
 
     </div>
 

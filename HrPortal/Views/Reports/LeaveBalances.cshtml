@@ -14,8 +14,13 @@
     <partial name="_ReportFilters"
              model="@((Model.Filter, new[] { "year", "department", "employee", "leaveType" }))" />
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-table-list" aria-hidden="true"></i> Results
+            <span class="tab-count">@Model.Rows.Count</span>
+        </h3>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -65,7 +70,6 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
+    </section>
 
 </div>

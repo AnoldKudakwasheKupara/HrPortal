@@ -1,17 +1,33 @@
 @model List<HrPortal.ViewModels.ReportStat>
 
+@{
+    var looks = new[]
+    {
+        ("is-teal", "fa-layer-group"),
+        ("is-blue", "fa-chart-simple"),
+        ("is-green", "fa-circle-check"),
+        ("is-amber", "fa-clock")
+    };
+}
+
 @if (Model.Any())
 {
-    <div class="report-stats">
-        @foreach (var stat in Model)
+    <div class="kpis">
+        @for (var i = 0; i < Model.Count; i++)
         {
-            <div class="report-stat">
-                <span class="report-stat-label">@stat.Label</span>
-                <span class="report-stat-value">@stat.Value</span>
-                @if (!string.IsNullOrWhiteSpace(stat.Note))
-                {
-                    <span class="report-stat-note">@stat.Note</span>
-                }
+            var stat = Model[i];
+            var (tint, icon) = looks[i % looks.Length];
+
+            <div class="kpi">
+                <span class="kpi-icon @tint" aria-hidden="true"><i class="fas @icon"></i></span>
+                <div>
+                    <div class="kpi-label">@stat.Label</div>
+                    <div class="kpi-value @(stat.Value.Length > 9 ? "kpi-value-text" : "")">@stat.Value</div>
+                    @if (!string.IsNullOrWhiteSpace(stat.Note))
+                    {
+                        <div class="kpi-note">@stat.Note</div>
+                    }
+                </div>
             </div>
         }
     </div>
