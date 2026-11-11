@@ -263,6 +263,10 @@ namespace HrPortal.Services
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>More than nothing, and no more than the applicant asked for.</summary>
+        public static bool CanAuthorise(LoanApplication application, decimal amount) =>
+            amount > 0 && amount <= application.AmountRequested;
+
         public async Task ApproveAsync(
             LoanApplication application,
             int actedByEmployeeId,
@@ -271,6 +275,10 @@ namespace HrPortal.Services
             string? comment)
         {
             EnsureCanAct(LoanApplicationAction.Approved, application);
+
+            if (!CanAuthorise(application, amountAuthorised))
+                throw new InvalidOperationException(
+                    "The amount authorised must be more than nothing and no more than the amount asked for.");
 
             var previous = application.Status;
 

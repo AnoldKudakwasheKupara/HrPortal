@@ -369,6 +369,14 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
+            if (model.AmountAuthorised > application.AmountRequested)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The amount authorised cannot be more than the " +
+                    $"{LoanCurrencies.Format(application.Currency, application.AmountRequested)} asked for.");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Decision = model;

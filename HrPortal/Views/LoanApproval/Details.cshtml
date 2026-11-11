@@ -229,9 +229,10 @@
                             <div class="input-group">
                                 <span class="input-group-text">@LoanCurrencies.Code(Model.Currency)</span>
                                 <input asp-for="@decision.AmountAuthorised" name="AmountAuthorised" class="form-control"
-                                       type="number" step="0.01" min="0" />
+                                       type="number" step="0.01" min="0.01"
+                                       max="@Model.AmountRequested.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
                             </div>
-                            <div class="form-text">Need not match the amount asked for.</div>
+                            <div class="form-text">Up to the @LoanCurrencies.Format(Model.Currency, Model.AmountRequested) asked for. It can be less.</div>
                         </div>
 
                         <div class="mb-3">
