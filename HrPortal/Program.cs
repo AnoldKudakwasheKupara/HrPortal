@@ -362,6 +362,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
+app.Use(HrPortal.Security.SecurityHeaders.AddAsync);
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
