@@ -7,16 +7,22 @@
     var verdict = ViewBag.Verdict as ReportVerdict?;
 }
 
-<div class="container">
+<div class="container-fluid">
 
-    <div class="page-head-simple">
-        <h2>Verify a report</h2>
-        <p class="text-muted">
-            Upload a sanctions screening report you have been given. The portal works out
-            its SHA-256 fingerprint and checks it against the fingerprint it kept for every
-            report it made. Any change to the file, however small, means it will not match.
-            Nothing printed inside the report is relied on.
-        </p>
+    <div class="page-head">
+
+        <div>
+            <h2>Verify a Report</h2>
+            <p>
+                Upload a sanctions screening report you have been given. The portal works out
+                its SHA-256 fingerprint and checks it against the fingerprint it kept for every
+                report it made. Any change to the file, however small, means it will not match.
+                Nothing printed inside the report is relied on.
+            </p>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
     </div>
 
     @if (ViewBag.Error != null)
@@ -24,58 +30,84 @@
         <div class="alert alert-danger">@ViewBag.Error</div>
     }
 
-    @if (hash != null)
-    {
-        if (verdict == ReportVerdict.Genuine)
-        {
-            <div class="alert alert-success">
-                <strong>Authentic and unchanged.</strong>
-                This is the report for
-                <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
-                finalised by @match.FinalisedByName on
-                @match.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
-            </div>
-        }
-        else if (verdict == ReportVerdict.Altered)
-        {
-            <div class="alert alert-danger">
-                <strong>Altered.</strong>
-                This file says it is the report for
-                <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
-                but it is not the report the portal made and kept for that review. Do not rely on it;
-                download the original from the review instead.
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-warning">
-                <strong>Report not found.</strong>
-                This file does not match any report the portal made, and does not say which
-                review it belongs to. It is not a report from this portal, or it has been altered
-                beyond recognition.
-            </div>
-        }
+    <div class="row g-3">
 
-        <p class="small text-muted">SHA-256 of the file checked: <code>@hash</code></p>
-        @if (verdict == ReportVerdict.Altered)
-        {
-            <p class="small text-muted">SHA-256 the portal kept for @match!.ReviewNumber: <code>@match.ReportSha256</code></p>
-        }
-    }
+        <div class="col-lg-6">
 
-    <div class="card shadow-sm" style="max-width: 640px;">
-        <div class="card-body">
-            <form asp-action="Verify" method="post" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="file" class="form-label">The report (PDF)</label>
-                    <input id="file" name="file" type="file" accept=".pdf" class="form-control" required />
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Check it</button>
-                    <a asp-action="Index" class="btn btn-secondary">Back</a>
-                </div>
-            </form>
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-fingerprint" aria-hidden="true"></i> Check a Report
+                </h3>
+
+                <form asp-action="Verify" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">The report (PDF)</label>
+                        <input id="file" name="file" type="file" accept=".pdf" class="form-control" required />
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i> Check it
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+                    </div>
+                </form>
+
+            </section>
+
         </div>
+
+        @if (hash != null)
+        {
+            <div class="col-lg-6">
+
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i> Result
+                    </h3>
+
+                    @if (verdict == ReportVerdict.Genuine)
+                    {
+                        <div class="alert alert-success">
+                            <strong>Authentic and unchanged.</strong>
+                            This is the report for
+                            <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
+                            finalised by @match.FinalisedByName on
+                            @match.FinalisedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm").
+                        </div>
+                    }
+                    else if (verdict == ReportVerdict.Altered)
+                    {
+                        <div class="alert alert-danger">
+                            <strong>Altered.</strong>
+                            This file says it is the report for
+                            <a asp-action="Result" asp-route-id="@match!.Id">@match.ReviewNumber</a>,
+                            but it is not the report the portal made and kept for that review. Do not rely on it;
+                            download the original from the review instead.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <strong>Report not found.</strong>
+                            This file does not match any report the portal made, and does not say which
+                            review it belongs to. It is not a report from this portal, or it has been altered
+                            beyond recognition.
+                        </div>
+                    }
+
+                    <p class="small text-muted text-break">SHA-256 of the file checked: <code>@hash</code></p>
+                    @if (verdict == ReportVerdict.Altered)
+                    {
+                        <p class="small text-muted text-break mb-0">SHA-256 the portal kept for @match!.ReviewNumber: <code>@match.ReportSha256</code></p>
+                    }
+
+                </section>
+
+            </div>
+        }
+
     </div>
 
 </div>

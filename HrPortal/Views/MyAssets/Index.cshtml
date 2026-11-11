@@ -1,34 +1,76 @@
+@using HrPortal.Entities
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.Asset>
 
 @{
     ViewData["Title"] = "My Assets";
+
+    var all = Model.ToList();
+    var paged = PagedList.Of(all, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>My Assets</h2>
-
-        <p class="text-muted">
-            Equipment issued to you. If something here is wrong, or a
-            machine needs attention, speak to IT.
-        </p>
+        <div>
+            <h2>My Assets</h2>
+            <p>Equipment issued to you. If something here is wrong, or a machine needs attention, speak to IT.</p>
+        </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-laptop"></i></span>
+            <div>
+                <div class="kpi-label">Items Issued</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">In Use</div>
+                <div class="kpi-value">@all.Count(a => a.IsInUse)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+            <div>
+                <div class="kpi-label">Old or Bad</div>
+                <div class="kpi-value">@all.Count(a => a.Condition is AssetCondition.Old or AssetCondition.Bad)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-laptop" aria-hidden="true"></i> My Equipment
+            <span class="tab-count">@all.Count</span>
+        </h3>
+
+        @if (!all.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-laptop" aria-hidden="true"></i>
+                <p>No equipment is assigned to you.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Device / Model</th>
-                            <th>Processor</th>
                             <th>Serial</th>
                             <th>Issued</th>
                             <th>Condition</th>
@@ -38,59 +80,25 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                No equipment is assigned to you.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var asset in Model)
+                        @foreach (var asset in paged.Items)
                         {
                             <tr>
-
                                 <td>
-                                    <strong>@asset.DeviceModel</strong>
-                                    @if (!asset.IsInUse)
-                                    {
-                                        <span class="badge bg-secondary">
-                                            Not in use
-                                        </span>
-                                    }
+                                    <div class="fw-semibold">@asset.DeviceModel</div>
+                                    <div class="small text-muted">
+                                        @(string.IsNullOrWhiteSpace(asset.Processor) ? "" : asset.Processor)
+                                        @if (!asset.IsInUse)
+                                        {
+                                            <span class="status-badge badge-gray ms-1">Not in use</span>
+                                        }
+                                    </div>
                                 </td>
-
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(asset.Processor)
-                                        ? "--" : asset.Processor)
-                                </td>
-
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(asset.SerialNumber)
-                                        ? "--" : asset.SerialNumber)
-                                </td>
-
-                                <td>
-                                    @(asset.AssignedOn?.ToLocalTime()
-                                        .ToString("dd MMM yyyy") ?? "--")
-                                </td>
-
-                                <td>
-                                    <partial name="_AssetConditionBadge"
-                                             model="asset.Condition" />
-                                </td>
-
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(asset.Notes)
-                                        ? "--" : asset.Notes)
-                                </td>
-
+                                <td class="text-break">@(string.IsNullOrWhiteSpace(asset.SerialNumber) ? "--" : asset.SerialNumber)</td>
+                                <td class="text-nowrap">@(asset.AssignedOn?.ToLocalTime().ToString("d MMM yyyy") ?? "--")</td>
+                                <td><partial name="_AssetConditionBadge" model="asset.Condition" /></td>
+                                <td class="small">@(string.IsNullOrWhiteSpace(asset.Notes) ? "--" : asset.Notes)</td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
@@ -98,8 +106,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "item", "items")' />
+        }
 
-    </div>
+    </section>
 
 </div>

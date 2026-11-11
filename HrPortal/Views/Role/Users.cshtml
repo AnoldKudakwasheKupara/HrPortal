@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Manage Role Users";
+    var assigned = Model.Users.Count(u => u.IsInRole);
 }
 
 <div class="container-fluid">
@@ -10,148 +11,111 @@
 
         <div>
             <h2>Manage Role Users</h2>
-
-            <p class="text-muted mb-0">
-                Role:
-                <strong>@Model.RoleName</strong>
-            </p>
+            <p>Role: <strong>@Model.RoleName</strong></p>
         </div>
 
-        <a asp-action="Index"
-           class="btn btn-outline-secondary">
-            Back to Roles
-        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Roles</a>
 
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["SuccessMessage"]
-        </div>
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["ErrorMessage"]
-        </div>
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
     }
 
-    <div asp-validation-summary="ModelOnly"
-         class="alert alert-danger">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Users</div>
+                <div class="kpi-value">@Model.Users.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-user-check"></i></span>
+            <div>
+                <div class="kpi-label">In This Role</div>
+                <div class="kpi-value">@assigned</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-user"></i></span>
+            <div>
+                <div class="kpi-label">Not in This Role</div>
+                <div class="kpi-value">@(Model.Users.Count - assigned)</div>
+            </div>
+        </div>
+
     </div>
 
-    <form asp-action="Users"
-          asp-route-id="@Model.RoleId"
-          method="post">
+    <form asp-action="Users" asp-route-id="@Model.RoleId" method="post">
 
-        @Html.AntiForgeryToken()
+        <section class="panel-card mb-4">
 
-        <div class="card shadow-sm">
-
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="panel-head-split">
 
                 <div>
-                    <h5 class="mb-0">
-                        Users
-                    </h5>
-
-                    <small class="text-muted">
-                        Select the users who should belong to this role.
-                    </small>
+                    <h3 class="panel-head mb-1">
+                        <i class="fas fa-users-gear" aria-hidden="true"></i> Users
+                        <span class="tab-count">@Model.Users.Count</span>
+                    </h3>
+                    <p class="small text-muted mb-0">Select the users who should belong to this role.</p>
                 </div>
 
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Changes
+                <button type="submit" class="btn btn-gold">
+                    <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save Changes
                 </button>
 
             </div>
 
-            <div class="card-body is-table">
-
+            @if (!Model.Users.Any())
+            {
+                <div class="list-empty mb-0">
+                    <i class="fas fa-users-slash" aria-hidden="true"></i>
+                    <p>No users are available.</p>
+                </div>
+            }
+            else
+            {
                 <div class="table-responsive">
 
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover align-middle mb-0">
 
                         <thead>
-
                             <tr>
-
-                                <th class="role-tick-col">
-                                    Assigned
-                                </th>
-
-                                <th>
-                                    Employee/User
-                                </th>
-
-                                <th>
-                                    Email
-                                </th>
-
+                                <th class="role-tick-col">Assigned</th>
+                                <th>Employee/User</th>
+                                <th>Email</th>
                             </tr>
-
                         </thead>
 
                         <tbody>
 
-                            @if (!Model.Users.Any())
+                            @for (int i = 0; i < Model.Users.Count; i++)
                             {
                                 <tr>
-
-                                    <td colspan="3"
-                                        class="text-center text-muted py-4">
-
-                                        No users are available.
-
+                                    <td>
+                                        <input type="hidden" asp-for="Users[i].UserId" />
+                                        <input type="hidden" asp-for="Users[i].FullName" />
+                                        <input type="hidden" asp-for="Users[i].Email" />
+                                        <div class="form-check">
+                                            <input asp-for="Users[i].IsInRole" class="form-check-input role-tick"
+                                                   aria-label="@Model.Users[i].FullName is in @Model.RoleName" />
+                                        </div>
                                     </td>
-
+                                    <td class="fw-semibold">@Model.Users[i].FullName</td>
+                                    <td class="text-break">@Model.Users[i].Email</td>
                                 </tr>
-                            }
-                            else
-                            {
-                                for (int i = 0;
-                                     i < Model.Users.Count;
-                                     i++)
-                                {
-                                    <tr>
-
-                                        <td>
-
-                                            <input type="hidden"
-                                                   asp-for="Users[i].UserId" />
-
-                                            <input type="hidden"
-                                                   asp-for="Users[i].FullName" />
-
-                                            <input type="hidden"
-                                                   asp-for="Users[i].Email" />
-
-                                            <div class="form-check">
-
-                                                <input asp-for="Users[i].IsInRole"
-                                                       class="form-check-input role-tick" />
-
-                                            </div>
-
-                                        </td>
-
-                                        <td>
-
-                                            <strong>
-                                                @Model.Users[i].FullName
-                                            </strong>
-
-                                        </td>
-
-                                        <td>
-                                            @Model.Users[i].Email
-                                        </td>
-
-                                    </tr>
-                                }
                             }
 
                         </tbody>
@@ -159,24 +123,16 @@
                     </table>
 
                 </div>
+            }
 
-            </div>
-
-            <div class="card-footer text-end">
-
-                <a asp-action="Index"
-                   class="btn btn-secondary">
-                    Cancel
-                </a>
-
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Changes
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-gold">
+                    <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save Changes
                 </button>
-
             </div>
 
-        </div>
+        </section>
 
     </form>
 

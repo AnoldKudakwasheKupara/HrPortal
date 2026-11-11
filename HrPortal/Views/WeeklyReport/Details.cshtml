@@ -7,12 +7,10 @@
 
     var sections = Model.Sections
         .OrderBy(s => s.Order)
-        .Where(s => !string.IsNullOrWhiteSpace(s.Body)
-                 || !string.IsNullOrWhiteSpace(s.Workstream))
+        .Where(s => !string.IsNullOrWhiteSpace(s.Body) || !string.IsNullOrWhiteSpace(s.Workstream))
         .ToList();
 
     var priorities = Model.Priorities.OrderBy(p => p.Order).ToList();
-
     var nextNumber = sections.Count + 1;
 
     var owns = ViewBag.Owns == true;
@@ -27,69 +25,43 @@
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>
                 @(personal && !owns ? who + ": " : "")
-                Week of
-                @Model.PeriodStart.ToString("dd MMM")
-                &ndash;
-                @Model.PeriodEnd.ToString("dd MMM yyyy")
+                Week of @Model.PeriodStart.ToString("d MMM") &ndash; @Model.PeriodEnd.ToString("d MMM yyyy")
             </h2>
-
-            <div class="detail-badges">
-                @if (submitted)
-                {
-                    <span class="badge bg-success">
-                        @(personal ? "Submitted" : "Issued")
-                        @(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "")
-                    </span>
-                }
-                else
-                {
-                    <span class="badge bg-warning text-dark">Draft &middot; only you can see it</span>
-                }
-
-                <span class="badge bg-light text-dark">
-                    @who@(Model.Employee?.Department == null ? "" : $", {Model.Employee.Department.Name}")
-                </span>
-            </div>
+            <p>@who@(Model.Employee?.Department == null ? "" : $", {Model.Employee.Department.Name}")</p>
         </div>
 
-        <div class="page-head-actions">
-            <a asp-action="Pdf" asp-route-id="@Model.Id"
-               class="btn btn-outline-primary">Download PDF</a>
+        <div class="head-actions">
 
-            @if (owns && !submitted)
+            @if (submitted)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id"
-                   class="btn btn-outline-primary">Edit</a>
-
-                <form asp-action="Submit" asp-route-id="@Model.Id" method="post">
-                    <button type="submit" class="btn btn-primary">
-                        @(personal ? "Submit" : "Issue")
-                    </button>
-                </form>
-            }
-            else if (owns)
-            {
-                <form asp-action="Reopen" asp-route-id="@Model.Id" method="post">
-                    <button type="submit" class="btn btn-outline-secondary">
-                        Take back to change
-                    </button>
-                </form>
-            }
-
-            @if (owns)
-            {
-                <a asp-action="Index" class="btn btn-secondary">Back</a>
+                <span class="status-badge badge-green">
+                    @(personal ? "Submitted" : "Issued") @(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "")
+                </span>
             }
             else
             {
-                <a asp-action="Overview"
-                   asp-route-week="@Model.PeriodStart.ToString("yyyy-MM-dd")"
-                   class="btn btn-secondary">Back to overview</a>
+                <span class="status-badge badge-amber">Draft &middot; only you can see it</span>
             }
+
+            <a asp-action="Pdf" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                <i class="fas fa-download" aria-hidden="true"></i> Download PDF
+            </a>
+
+            @if (owns)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+            }
+            else
+            {
+                <a asp-action="Overview" asp-route-week="@Model.PeriodStart.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Back to overview</a>
+            }
+
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -102,100 +74,167 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
+    <div class="row g-3">
 
-        <div class="card-header">@(personal ? "Summary of the week" : "Executive Overview")</div>
+        <div class="col-lg-8">
 
-        <div class="card-body">
-            @if (!string.IsNullOrWhiteSpace(Model.ExecutiveOverview))
-            {
-                <div class="field-value mb-0" style="white-space: pre-line;">@Model.ExecutiveOverview</div>
-            }
-            else
-            {
-                <div class="field-value is-empty mb-0">No summary written.</div>
-            }
-        </div>
+            <section class="panel-card mb-3">
 
-    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-align-left" aria-hidden="true"></i> @(personal ? "Summary of the Week" : "Executive Overview")
+                </h3>
 
-    @for (var n = 0; n < sections.Count; n++)
-    {
-        var s = sections[n];
-
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>@((n + 1).ToString("00")). @s.Heading</span>
-
-                @if (WeeklyReportPdfService.StatusLabel(s.WorkstreamStatus) is string label)
+                @if (!string.IsNullOrWhiteSpace(Model.ExecutiveOverview))
                 {
-                    <span class="badge bg-light text-dark">@label</span>
+                    <p class="pre-line mb-0">@Model.ExecutiveOverview</p>
                 }
-            </div>
-
-            <div class="card-body">
-
-                @if (!string.IsNullOrWhiteSpace(s.Workstream))
+                else
                 {
-                    <p class="fw-semibold mb-2">@s.Workstream</p>
+                    <p class="text-muted mb-0">No summary written.</p>
                 }
 
-                @{
-                    var lines = WeeklyReportPdfService.Lines(s.Body);
-                }
+            </section>
 
-                @if (lines.Any())
+            @for (var n = 0; n < sections.Count; n++)
+            {
+                var s = sections[n];
+                var lines = WeeklyReportPdfService.Lines(s.Body);
+
+                <section class="panel-card mb-3">
+
+                    <div class="panel-head-split">
+                        <h3 class="panel-head">
+                            <span class="tab-count">@((n + 1).ToString("00"))</span> @s.Heading
+                        </h3>
+
+                        @if (WeeklyReportPdfService.StatusLabel(s.WorkstreamStatus) is string label)
+                        {
+                            <span class="status-badge badge-gray">@label</span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(s.Workstream))
+                    {
+                        <p class="fw-semibold mb-2">@s.Workstream</p>
+                    }
+
+                    @if (lines.Any())
+                    {
+                        <ul class="mb-0">
+                            @foreach (var line in lines)
+                            {
+                                <li class="mb-2">@line</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Nothing written under this heading.</p>
+                    }
+
+                </section>
+            }
+
+            <section class="panel-card mb-4">
+
+                <h3 class="panel-head">
+                    <span class="tab-count">@nextNumber.ToString("00")</span> Priorities for Next Week
+                </h3>
+
+                @if (priorities.Any())
                 {
                     <ul class="mb-0">
-                        @foreach (var line in lines)
+                        @foreach (var p in priorities)
                         {
-                            <li class="mb-2">@line</li>
+                            <li class="mb-2">
+                                @p.Text
+                                @if (p.CarriedForward)
+                                {
+                                    <span class="status-badge badge-gray ms-1">Carried forward</span>
+                                }
+                            </li>
                         }
                     </ul>
                 }
                 else
                 {
-                    <div class="field-value is-empty mb-0">
-                        Nothing written under this heading.
-                    </div>
+                    <p class="text-muted mb-0">No priorities recorded for next week.</p>
                 }
 
-            </div>
+            </section>
 
         </div>
-    }
 
-    <div class="card shadow-sm mb-4">
+        <div class="col-lg-4">
 
-        <div class="card-header">
-            @nextNumber.ToString("00"). Priorities for next week
-        </div>
-
-        <div class="card-body">
-            @if (priorities.Any())
+            @if (owns)
             {
-                <ul class="mb-0">
-                    @foreach (var p in priorities)
-                    {
-                        <li class="mb-2">
-                            @p.Text
-                            @if (p.CarriedForward)
-                            {
-                                <span class="badge bg-light text-dark">
-                                    Carried forward
-                                </span>
-                            }
-                        </li>
-                    }
-                </ul>
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-bolt" aria-hidden="true"></i> What Happens Next
+                    </h3>
+
+                    <p class="small text-muted">
+                        @if (!submitted)
+                        {
+                            <text>This is a draft that only you can see. @(personal ? "Submit it and your supervisor and the Managing Director can read it." : "Issue it when it is ready.")</text>
+                        }
+                        else
+                        {
+                            <text>This has been @(personal ? "submitted" : "issued"). Take it back if you need to change it.</text>
+                        }
+                    </p>
+
+                    <div class="d-grid gap-2">
+
+                        @if (!submitted)
+                        {
+                            <form asp-action="Submit" asp-route-id="@Model.Id" method="post" class="d-grid">
+                                <button type="submit" class="btn btn-gold">
+                                    <i class="fas fa-paper-plane" aria-hidden="true"></i> @(personal ? "Submit" : "Issue")
+                                </button>
+                            </form>
+
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-success">
+                                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                            </a>
+                        }
+                        else
+                        {
+                            <form asp-action="Reopen" asp-route-id="@Model.Id" method="post" class="d-grid">
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    <i class="fas fa-rotate-left" aria-hidden="true"></i> Take back to change
+                                </button>
+                            </form>
+                        }
+
+                    </div>
+
+                </section>
             }
-            else
-            {
-                <div class="field-value is-empty mb-0">
-                    No priorities recorded for next week.
-                </div>
-            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Report Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>By</dt>
+                    <dd>@who</dd>
+                    <dt>Week</dt>
+                    <dd>@Model.PeriodStart.ToString("d MMM") &ndash; @Model.PeriodEnd.ToString("d MMM yyyy")</dd>
+                    <dt>Status</dt>
+                    <dd>@(submitted ? (personal ? "Submitted" : "Issued") : "Draft")</dd>
+                    <dt>@(personal ? "Submitted" : "Issued")</dt>
+                    <dd>@(Model.FinalisedOn?.ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Pieces of work</dt>
+                    <dd>@sections.Count</dd>
+                </dl>
+
+            </section>
+
         </div>
 
     </div>

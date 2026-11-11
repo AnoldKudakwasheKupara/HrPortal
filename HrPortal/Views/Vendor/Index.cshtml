@@ -1,20 +1,28 @@
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.Vendor>
 
 @{
     ViewData["Title"] = "Vendors";
+
+    var all = Model.ToList();
+    var paged = PagedList.Of(all, PagedList.PageFrom(Context.Request));
+    var activeFilter = ViewBag.ActiveFilter as bool?;
+    var filtered = !string.IsNullOrWhiteSpace(ViewBag.Search as string) || ViewBag.CategoryFilter != null || activeFilter != null;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Vendors</h2>
-            <p class="text-muted mb-0">
-                Who we buy from, what they supply and how to reach them.
-            </p>
+            <p>Who we buy from, what they supply and how to reach them.</p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">Add Vendor</a>
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Vendor
+        </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -27,163 +35,193 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <div class="kpis">
 
-                <div class="col-md-5">
-                    <label class="form-label">Search</label>
-                    <input name="search" class="form-control"
-                           value="@ViewBag.Search"
-                           placeholder="Name, product, contact or email" />
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">-- All Categories --</option>
-                        @foreach (var c in (ViewBag.Categories as List<string>)
-                            ?? new List<string>())
-                        {
-                            <option value="@c"
-                                    selected="@(c == (string?)ViewBag.CategoryFilter)">
-                                @c
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select name="active" class="form-select">
-                        <option value="">-- All --</option>
-                        <option value="true"
-                                selected="@(ViewBag.ActiveFilter as bool? == true)">
-                            In use
-                        </option>
-                        <option value="false"
-                                selected="@(ViewBag.ActiveFilter as bool? == false)">
-                            No longer used
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-truck-field"></i></span>
+            <div>
+                <div class="kpi-label">@(filtered ? "Matching Vendors" : "Vendors")</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">In Use</div>
+                <div class="kpi-value">@all.Count(v => v.IsActive)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-tags"></i></span>
+            <div>
+                <div class="kpi-label">Categories</div>
+                <div class="kpi-value">@all.Where(v => !string.IsNullOrWhiteSpace(v.Category)).Select(v => v.Category!.Trim().ToLowerInvariant()).Distinct().Count()</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-address-card"></i></span>
+            <div>
+                <div class="kpi-label">No Contact Person</div>
+                <div class="kpi-value">@all.Count(v => string.IsNullOrWhiteSpace(v.ContactPerson))</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <form method="get" class="filter-bar" data-auto-submit>
+
+        <div class="filter-bar-search">
+            <label for="vendor-search" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="vendor-search" type="search" name="search" class="form-control" value="@ViewBag.Search"
+                       placeholder="Name, product, contact or email" />
+            </div>
+        </div>
+
+        <div>
+            <label for="vendor-category" class="form-label">Category</label>
+            <select id="vendor-category" name="category" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var c in (ViewBag.Categories as List<string>) ?? new List<string>())
+                {
+                    <option value="@c" selected="@(c == (string?)ViewBag.CategoryFilter)">@c</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="vendor-active" class="form-label">Status</label>
+            <select id="vendor-active" name="active" class="form-select">
+                <option value="">All</option>
+                <option value="true" selected="@(activeFilter == true)">In use</option>
+                <option value="false" selected="@(activeFilter == false)">No longer used</option>
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-truck-field" aria-hidden="true"></i> Vendors
+            <span class="tab-count">@all.Count</span>
+        </h3>
+
+        @if (!all.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-truck-field" aria-hidden="true"></i>
+                <p>
+                    No vendors match this filter.
+                    @if (filtered)
+                    {
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Vendor</th>
-                            <th>Product / Service</th>
                             <th>Category</th>
                             <th>Contact</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                No vendors match this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var v in Model)
+                        @foreach (var v in paged.Items)
                         {
                             <tr>
-                                <td><strong>@v.Name</strong></td>
-
-                                <td>@v.ProductOrService</td>
-
+                                <td>
+                                    <div class="fw-semibold">@v.Name</div>
+                                    <div class="small text-muted">@v.ProductOrService</div>
+                                </td>
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(v.Category))
                                     {
-                                        <span class="badge bg-light text-dark">
-                                            @v.Category
-                                        </span>
+                                        <span class="status-badge badge-gray">@v.Category</span>
                                     }
                                     else
                                     {
                                         <span class="text-muted">--</span>
                                     }
                                 </td>
-
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(v.ContactPerson))
                                     {
                                         <div>@v.ContactPerson</div>
                                     }
-
                                     @if (!string.IsNullOrWhiteSpace(v.PhoneNumber))
                                     {
-                                        <div class="text-muted small">
-                                            @v.PhoneNumber
-                                        </div>
+                                        <div class="small text-muted">@v.PhoneNumber</div>
                                     }
-
-                                    @if (string.IsNullOrWhiteSpace(v.ContactPerson) &&
-                                         string.IsNullOrWhiteSpace(v.PhoneNumber))
+                                    @if (string.IsNullOrWhiteSpace(v.ContactPerson) && string.IsNullOrWhiteSpace(v.PhoneNumber))
                                     {
                                         <span class="text-muted">--</span>
                                     }
                                 </td>
-
                                 <td>
                                     @if (v.IsActive)
                                     {
-                                        <span class="badge bg-success">In use</span>
+                                        <span class="status-badge badge-green">In use</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">
-                                            Not used
-                                        </span>
+                                        <span class="status-badge badge-gray">Not used</span>
                                     }
                                 </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Details" asp-route-id="@v.Id">
-                                            View
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@v.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@v.Id">
-                                            Edit
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@v.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                         </a>
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete" asp-route-id="@v.Id">
-                                            Delete
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@v.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @v.Name</span>
                                         </a>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "vendor", "vendors")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

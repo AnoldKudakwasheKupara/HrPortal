@@ -13,15 +13,18 @@
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
-            <h2>Client list</h2>
-            <p class="text-muted mb-0">
+            <h2>Client List</h2>
+            <p>
                 The clients and counterparties to screen. The latest list imported is checked in
                 every review until another is imported, so an unchanged list never needs uploading
                 again. Every file uploaded is kept.
             </p>
         </div>
-        <a asp-action="Index" class="btn btn-secondary">Back</a>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -40,73 +43,111 @@
             <span>
                 <strong>@list.OriginalFileName</strong> is waiting: say which column holds which detail to import it.
             </span>
-            <a asp-action="Columns" asp-route-id="@list.Id" class="btn btn-sm btn-primary">Choose the columns</a>
+            <a asp-action="Columns" asp-route-id="@list.Id" class="btn btn-sm btn-gold">Choose the columns</a>
         </div>
     }
 
-    <div class="card shadow-sm mb-3" style="max-width: 820px;">
-        <div class="card-header">Upload a client list</div>
-        <div class="card-body">
-            <p class="text-muted small mb-2">
-                An Excel workbook (.xlsx) or CSV file with a heading row. Headings such as
-                <strong>Full Name</strong> or <strong>First Name</strong>, <strong>Middle Name</strong> and
-                <strong>Last Name</strong>, <strong>Company Name</strong>, <strong>Date of Birth</strong>,
-                <strong>Nationality</strong>, <strong>ID Number</strong>, <strong>Passport Number</strong>,
-                <strong>Registration Number</strong> and <strong>Client Reference</strong> are recognised;
-                if yours are different, you will be asked which column is which. Dates of birth and ID
-                numbers make matching far more reliable.
-            </p>
-            <form asp-action="Clients" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
-                <input name="file" type="file" accept=".xlsx,.csv" class="form-control" style="max-width: 420px;" required aria-label="Client list file" />
-                <button type="submit" class="btn btn-primary">Upload</button>
-            </form>
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-file-import"></i></span>
+            <div>
+                <div class="kpi-label">Lists Uploaded</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Being Screened</div>
+                <div class="kpi-value">@(shown?.RowsImported ?? 0)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-table-columns"></i></span>
+            <div>
+                <div class="kpi-label">Waiting for Columns</div>
+                <div class="kpi-value">@waiting.Count</div>
+            </div>
+        </div>
+
     </div>
+
+    <section class="panel-card mb-3" style="max-width: 820px;">
+
+        <h3 class="panel-head">
+            <i class="fas fa-upload" aria-hidden="true"></i> Upload a Client List
+        </h3>
+
+        <p class="text-muted small mb-2">
+            An Excel workbook (.xlsx) or CSV file with a heading row. Headings such as
+            <strong>Full Name</strong> or <strong>First Name</strong>, <strong>Middle Name</strong> and
+            <strong>Last Name</strong>, <strong>Company Name</strong>, <strong>Date of Birth</strong>,
+            <strong>Nationality</strong>, <strong>ID Number</strong>, <strong>Passport Number</strong>,
+            <strong>Registration Number</strong> and <strong>Client Reference</strong> are recognised;
+            if yours are different, you will be asked which column is which. Dates of birth and ID
+            numbers make matching far more reliable.
+        </p>
+
+        <form asp-action="Clients" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
+            <input name="file" type="file" accept=".xlsx,.csv" class="form-control" style="max-width: 420px;" required aria-label="Client list file" />
+            <button type="submit" class="btn btn-gold">
+                <i class="fas fa-upload" aria-hidden="true"></i> Upload
+            </button>
+        </form>
+
+    </section>
 
     @if (shown != null)
     {
-        <div class="card shadow-sm mb-3">
-            <div class="card-header d-flex justify-content-between flex-wrap gap-2">
-                <span>Being screened: <a asp-action="ClientFile" asp-route-id="@shown.Id">@shown.OriginalFileName</a></span>
+        <section class="panel-card mb-3">
+
+            <div class="panel-head-split">
+                <h3 class="panel-head">
+                    <i class="fas fa-user-shield" aria-hidden="true"></i>
+                    <span>Being screened: <a asp-action="ClientFile" asp-route-id="@shown.Id">@shown.OriginalFileName</a></span>
+                </h3>
                 <span class="text-muted small">
                     uploaded @shown.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @shown.UploadedByName
                 </span>
             </div>
-            <div class="card-body">
-                <div class="sanctions-tally mb-3">
-                    <div><strong>@shown.RowsReceived</strong><span>Rows received</span></div>
-                    <div><strong>@shown.RowsImported</strong><span>Imported</span></div>
-                    <div class="@(shown.RowsInvalid > 0 ? "is-attention" : "")"><strong>@shown.RowsInvalid</strong><span>Invalid</span></div>
-                    <div><strong>@shown.RowsDuplicated</strong><span>Duplicates</span></div>
-                </div>
 
-                @if (shown.Problems != null)
-                {
-                    <details class="mb-3">
-                        <summary class="small">Rows left out or only partly read (@SanctionsService.Lines(shown.Problems).Count)</summary>
-                        <ul class="small mb-0 mt-1">
-                            @foreach (var problem in SanctionsService.Lines(shown.Problems))
-                            {
-                                <li>@problem</li>
-                            }
-                        </ul>
-                    </details>
-                }
+            <div class="sanctions-tally mb-3">
+                <div><strong>@shown.RowsReceived</strong><span>Rows received</span></div>
+                <div><strong>@shown.RowsImported</strong><span>Imported</span></div>
+                <div class="@(shown.RowsInvalid > 0 ? "is-attention" : "")"><strong>@shown.RowsInvalid</strong><span>Invalid</span></div>
+                <div><strong>@shown.RowsDuplicated</strong><span>Duplicates</span></div>
+            </div>
 
-                <div class="table-responsive" style="max-height: 480px;">
-                    <table class="table table-sm align-middle">
-                        <thead>
-                            <tr>
-                                <th>Row</th><th>Name</th><th>Type</th><th>Date of birth</th><th>Nationality</th>
-                                <th>ID</th><th>Passport</th><th>Registration</th><th>Reference</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            @if (shown.Problems != null)
+            {
+                <details class="mb-3">
+                    <summary class="small">Rows left out or only partly read (@SanctionsService.Lines(shown.Problems).Count)</summary>
+                    <ul class="small mb-0 mt-1">
+                        @foreach (var problem in SanctionsService.Lines(shown.Problems))
+                        {
+                            <li>@problem</li>
+                        }
+                    </ul>
+                </details>
+            }
+
+            <div class="table-responsive" style="max-height: 480px;">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Row</th><th>Name</th><th>Type</th><th>Date of birth</th><th>Nationality</th>
+                            <th>ID</th><th>Passport</th><th>Registration</th><th>Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach (var client in shown.Clients.OrderBy(c => c.RowNumber).ThenBy(c => c.Name))
                         {
                             <tr>
                                 <td class="text-muted">@(client.RowNumber == 0 ? "" : client.RowNumber.ToString())</td>
-                                <td>@client.Name</td>
+                                <td class="fw-semibold">@client.Name</td>
                                 <td>@(client.IsCompany switch { true => "Company", false => "Person", _ => "" })</td>
                                 <td>@client.DateOfBirth?.ToString("d MMM yyyy")</td>
                                 <td>@client.Nationality</td>
@@ -116,38 +157,51 @@
                                 <td>@client.ClientReference</td>
                             </tr>
                         }
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
-        </div>
+
+        </section>
     }
 
     @if (Model.Any(l => shown == null || l.Id != shown.Id))
     {
-        <div class="card shadow-sm">
-            <div class="card-header">Every list uploaded</div>
-            <div class="card-body is-table">
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead><tr><th>File</th><th>Status</th><th class="num">Imported</th><th>Uploaded</th><th>Size</th><th>SHA-256</th></tr></thead>
-                        <tbody>
+        <section class="panel-card mb-4">
+
+            <h3 class="panel-head">
+                <i class="fas fa-box-archive" aria-hidden="true"></i> Every List Uploaded
+                <span class="tab-count">@Model.Count(l => shown == null || l.Id != shown.Id)</span>
+            </h3>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>File</th><th>Status</th><th class="num">Imported</th><th>Uploaded</th><th>Size</th><th>SHA-256</th></tr></thead>
+                    <tbody>
                         @foreach (var list in Model.Where(l => shown == null || l.Id != shown.Id))
                         {
                             <tr>
                                 <td><a asp-action="ClientFile" asp-route-id="@list.Id">@list.OriginalFileName</a></td>
-                                <td>@(list.Status == SanctionsClientListStatus.AwaitingColumns ? "Waiting for columns" : "Replaced")</td>
+                                <td>
+                                    @if (list.Status == SanctionsClientListStatus.AwaitingColumns)
+                                    {
+                                        <span class="status-badge badge-amber">Waiting for columns</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-gray">Replaced</span>
+                                    }
+                                </td>
                                 <td class="num">@list.RowsImported</td>
                                 <td>@list.UploadedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @list.UploadedByName</td>
                                 <td>@(list.FileSize > 0 ? SanctionsText.Size(list.FileSize) : "")</td>
                                 <td class="small"><code>@list.Sha256</code></td>
                             </tr>
                         }
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
-        </div>
+
+        </section>
     }
 
 </div>

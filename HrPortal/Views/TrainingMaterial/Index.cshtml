@@ -1,7 +1,21 @@
-﻿@model IEnumerable<HrPortal.Entities.TrainingMaterial>
+﻿@using HrPortal.ViewModels
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<HrPortal.Entities.TrainingMaterial>
 
 @{
+    var isTrainer = ViewBag.IsTrainer == true;
     ViewData["Title"] = "Training Materials";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all
+        .Where(m => PagedList.Matches(search, m.OriginalFileName, m.Description, m.TrainingCourse.Title))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var selectedCourse = (ViewBag.SelectedCourseId as int?)?.ToString();
+    var courseOptions = (ViewBag.Courses as IEnumerable<SelectListItem>) ?? Enumerable.Empty<SelectListItem>();
+    var leading = ViewBag.MyCourses as List<HrPortal.Entities.TrainingCourse>;
 }
 
 <div class="container-fluid">
@@ -9,94 +23,112 @@
     <div class="page-head">
 
         <div>
-            <h2>
-                @(ViewBag.IsTrainer == true
-                    ? "Training I Lead"
-                    : "Training Materials")
-            </h2>
-
-            <p class="text-muted">
-                @(ViewBag.IsTrainer == true
+            <h2>@(isTrainer ? "Training I Lead" : "Training Materials")</h2>
+            <p>
+                @(isTrainer
                     ? "The courses you are delivering, and the content you have posted for them."
                     : "Documents and handouts attached to training courses.")
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Upload Material
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-upload" aria-hidden="true"></i> Upload Material
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    @if (ViewBag.MyCourses is List<HrPortal.Entities.TrainingCourse> leading
-         && leading.Any())
-    {
-        <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-            <div class="card-header">
-                Courses you are delivering
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+            <div>
+                <div class="kpi-label">Materials</div>
+                <div class="kpi-value">@all.Count</div>
             </div>
+        </div>
 
-            <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-chalkboard-user"></i></span>
+            <div>
+                <div class="kpi-label">Courses Covered</div>
+                <div class="kpi-value">@all.Select(m => m.TrainingCourseId).Distinct().Count()</div>
+            </div>
+        </div>
 
-                <div class="table-responsive">
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-calendar-plus"></i></span>
+            <div>
+                <div class="kpi-label">Added in the Last 30 Days</div>
+                <div class="kpi-value">@all.Count(m => m.UploadedAt >= DateTime.Now.AddDays(-30))</div>
+            </div>
+        </div>
 
-                    <table class="table align-middle mb-0">
+        @if (leading != null)
+        {
+            <div class="kpi">
+                <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+                <div>
+                    <div class="kpi-label">Content Overdue</div>
+                    <div class="kpi-value">@leading.Count(c => c.MaterialsOverdue)</div>
+                </div>
+            </div>
+        }
 
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Training date</th>
-                                <th>Content due</th>
-                                <th>Content posted</th>
-                                <th class="col-actions">Actions</th>
-                            </tr>
-                        </thead>
+    </div>
 
-                        <tbody>
+    @if (leading != null && leading.Any())
+    {
+        <section class="panel-card mb-4">
+
+            <h3 class="panel-head">
+                <i class="fas fa-chalkboard-user" aria-hidden="true"></i> Courses You Are Delivering
+                <span class="tab-count">@leading.Count</span>
+            </h3>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Training Date</th>
+                            <th>Content Due</th>
+                            <th>Content Posted</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
                         @foreach (var course in leading)
                         {
                             <tr>
-                                <td>@course.Title</td>
-
-                                <td>
-                                    @(course.TrainingDate?.ToString("dd MMM yyyy")
-                                        ?? "Not scheduled")
-                                </td>
-
-                                <td>
+                                <td class="fw-semibold">@course.Title</td>
+                                <td class="text-nowrap">@(course.TrainingDate?.ToString("d MMM yyyy") ?? "Not scheduled")</td>
+                                <td class="text-nowrap">
                                     @if (course.MaterialsDueDate == null)
                                     {
                                         <span class="text-muted">No date set</span>
                                     }
                                     else if (course.MaterialsOverdue)
                                     {
-                                        <span class="badge bg-danger">
-                                            Was due @course.MaterialsDueDate.Value.ToString("dd MMM yyyy")
-                                        </span>
+                                        <span class="status-badge badge-red">Was due @course.MaterialsDueDate.Value.ToString("d MMM yyyy")</span>
                                     }
                                     else
                                     {
-                                        @course.MaterialsDueDate.Value.ToString("dd MMM yyyy")
+                                        @course.MaterialsDueDate.Value.ToString("d MMM yyyy")
                                     }
                                 </td>
-
                                 <td>
                                     @if (course.Materials.Count == 0)
                                     {
@@ -104,198 +136,136 @@
                                     }
                                     else
                                     {
-                                        <span class="badge bg-success">
-                                            @course.Materials.Count file(s)
-                                        </span>
+                                        <span class="status-badge badge-green">@course.Materials.Count file(s)</span>
                                     }
                                 </td>
-
                                 <td>
-                                    <a class="btn btn-sm btn-primary"
-                                       asp-action="Create"
-                                       asp-route-courseId="@course.Id">
-                                        Post content
-                                    </a>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-gold text-nowrap" asp-action="Create" asp-route-courseId="@course.Id">
+                                            <i class="fas fa-upload" aria-hidden="true"></i> Post content
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }
-                        </tbody>
+                    </tbody>
 
-                    </table>
-
-                </div>
+                </table>
 
             </div>
 
-        </div>
+        </section>
     }
 
-    <div class="card shadow-sm mb-4">
+    <form asp-action="Index" method="get" class="filter-bar filter-bar-short" data-auto-submit>
 
-        <div class="card-body">
-
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-2 align-items-end">
-
-                <div class="col-md-4">
-
-                    <label for="courseId"
-                           class="form-label">
-                        Training Course
-                    </label>
-
-                    <select id="courseId"
-                            name="courseId"
-                            asp-items="ViewBag.Courses"
-                            class="form-select">
-
-                        <option value="">
-                            -- All Courses --
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-auto">
-
-                    <button type="submit"
-                            class="btn btn-outline-secondary">
-                        Filter
-                    </button>
-
-                </div>
-
-            </form>
-
+        <div>
+            <label for="material-q" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="material-q" type="search" name="q" value="@search" class="form-control" placeholder="File, description, course..." />
+            </div>
         </div>
 
-    </div>
+        <div>
+            <label for="courseId" class="form-label">Training Course</label>
+            <select id="courseId" name="courseId" class="form-select">
+                <option value="">All courses</option>
+                @foreach (var option in courseOptions)
+                {
+                    <option value="@option.Value" selected="@(option.Value == selectedCourse)">@option.Text</option>
+                }
+            </select>
+        </div>
 
-    <div class="card shadow-sm">
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
 
-        <div class="card-body is-table">
+    </form>
 
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-file-lines" aria-hidden="true"></i> Materials
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-file-circle-question" aria-hidden="true"></i>
+                <p>No training materials match this filter.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>File</th>
                             <th>Course</th>
-                            <th>Description</th>
-                            <th>Uploaded By</th>
                             <th>Uploaded</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                No training materials match this filter.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var material in paged.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-break">@material.OriginalFileName</div>
+                                    <div class="small text-muted">@(string.IsNullOrWhiteSpace(material.Description) ? "No description" : material.Description)</div>
+                                </td>
+                                <td>@material.TrainingCourse.Title</td>
+                                <td>
+                                    <div class="text-nowrap">@material.UploadedAt.ToString("d MMM yyyy")</div>
+                                    <div class="small text-muted">by @material.UploadedByEmployee.FirstName @material.UploadedByEmployee.LastName</div>
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                    @foreach (var material in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    @material.OriginalFileName
-                                </strong>
-                            </td>
-
-                            <td>
-                                @material.TrainingCourse.Title
-                            </td>
-
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(
-                                    material.Description))
-                                {
-                                    @material.Description
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        No description
-                                    </span>
-                                }
-                            </td>
-
-                            <td>
-                                @material.UploadedByEmployee.FirstName
-                                @material.UploadedByEmployee.LastName
-                            </td>
-
-                            <td>
-                                @material.UploadedAt.ToString("dd MMM yyyy")
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@material.Id">
-
-                                        View
-
-                                    </a>
-
-                                    @if (HrPortal.Services.FileStorageService
-                                        .CanPreview(material.OriginalFileName))
-                                    {
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Preview"
-                                           asp-route-id="@material.Id"
-                                           target="_blank">
-
-                                            Preview
-
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@material.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                    }
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Download"
-                                       asp-route-id="@material.Id">
+                                        @if (HrPortal.Services.FileStorageService.CanPreview(material.OriginalFileName))
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" asp-action="Preview" asp-route-id="@material.Id"
+                                               target="_blank" rel="noopener" title="Preview">
+                                                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Preview @material.OriginalFileName</span>
+                                            </a>
+                                        }
 
-                                        Download
+                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Download" asp-route-id="@material.Id" title="Download">
+                                            <i class="fas fa-download" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Download @material.OriginalFileName</span>
+                                        </a>
 
-                                    </a>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@material.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@material.Id">
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@material.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @material.OriginalFileName</span>
+                                        </a>
 
-                                        Edit
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-danger"
-                                       asp-action="Delete"
-                                       asp-route-id="@material.Id">
-
-                                        Delete
-
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -303,8 +273,13 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "material", "materials")' />
+        }
 
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

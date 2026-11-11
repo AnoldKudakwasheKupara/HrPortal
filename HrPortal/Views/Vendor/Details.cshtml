@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Vendor Details";
+
+    string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 }
 
 <div class="container-fluid">
@@ -10,220 +12,197 @@
 
         <div>
             <h2>@Model.Name</h2>
-
-            <div class="detail-badges">
-                @if (Model.IsActive)
-                {
-                    <span class="badge bg-success">In use</span>
-                }
-                else
-                {
-                    <span class="badge bg-secondary">No longer used</span>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Category))
-                {
-                    <span class="badge bg-light text-dark">@Model.Category</span>
-                }
-            </div>
+            <p>@Model.ProductOrService</p>
         </div>
 
-        <div class="page-head-actions">
-            <a asp-action="Edit" asp-route-id="@Model.Id"
-               class="btn btn-primary">Edit</a>
+        <div class="head-actions">
+
+            @if (Model.IsActive)
+            {
+                <span class="status-badge badge-green">In use</span>
+            }
+            else
+            {
+                <span class="status-badge badge-gray">No longer used</span>
+            }
 
             <partial name="_DownloadPdf" model="@Model.Id" />
 
-            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
         </div>
 
     </div>
 
     <div class="row g-3">
 
-        <div class="col-lg-7">
+        <div class="col-lg-8">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card mb-3">
 
-                <div class="card-header">What they supply</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-box-open" aria-hidden="true"></i> What They Supply
+                </h3>
 
-                <div class="card-body">
-                    <div class="detail-rows">
+                <div class="facts">
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-box-open"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Product or service</span>
-                                <div class="field-value">@Model.ProductOrService</div>
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-tags"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Category</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Category))
-                                {
-                                    <div class="field-value">@Model.Category</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not set</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-calendar-plus"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">On the register since</span>
-                                <div class="field-value">
-                                    @Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
-                                </div>
-                            </div>
-                        </div>
-
+                    <div class="fact">
+                        <i class="fas fa-box-open" aria-hidden="true"></i>
+                        <div><span>Product or service</span><strong>@Model.ProductOrService</strong></div>
                     </div>
+
+                    <div class="fact">
+                        <i class="fas fa-tags" aria-hidden="true"></i>
+                        <div>
+                            <span>Category</span>
+                            @if (Blank(Model.Category) == null)
+                            {
+                                <em>Not set</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.Category</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                        <div><span>On the register since</span><strong>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</strong></div>
+                    </div>
+
                 </div>
 
-            </div>
+                <div class="panel-block">
+                    <h4><i class="fas fa-note-sticky" aria-hidden="true"></i> Notes</h4>
+                    <p class="pre-line">@(Blank(Model.Notes) ?? "Nothing recorded against this vendor.")</p>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-address-card" aria-hidden="true"></i> Contact Details
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div>
+                            <span>Contact person</span>
+                            @if (Blank(Model.ContactPerson) == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.ContactPerson</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <div>
+                            <span>Email</span>
+                            @if (Blank(Model.Email) == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong class="text-break"><a href="mailto:@Model.Email">@Model.Email</a></strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <div>
+                            <span>Phone</span>
+                            @if (Blank(Model.PhoneNumber) == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.PhoneNumber</strong>
+                                @if (Blank(Model.AlternatePhone) != null)
+                                {
+                                    <strong class="fw-normal text-muted">@Model.AlternatePhone</strong>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-globe" aria-hidden="true"></i>
+                        <div>
+                            <span>Website</span>
+                            @if (Blank(Model.Website) == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong class="text-break">@Model.Website</strong>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="panel-block">
+                    <h4><i class="fas fa-location-dot" aria-hidden="true"></i> Address</h4>
+                    <p class="pre-line">@(Blank(Model.Address) ?? "Not recorded")</p>
+                </div>
+
+            </section>
 
         </div>
 
-        <div class="col-lg-5">
+        <div class="col-lg-4">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card mb-3">
 
-                <div class="card-header">Contact details</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
 
-                <div class="card-body">
-                    <div class="detail-rows">
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-user"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Contact person</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.ContactPerson))
-                                {
-                                    <div class="field-value">@Model.ContactPerson</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not recorded</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-envelope"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Email</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Email))
-                                {
-                                    <div class="field-value">
-                                        <a href="mailto:@Model.Email">@Model.Email</a>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not recorded</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-phone"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Phone</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.PhoneNumber))
-                                {
-                                    <div class="field-value">
-                                        @Model.PhoneNumber
-                                        @if (!string.IsNullOrWhiteSpace(Model.AlternatePhone))
-                                        {
-                                            <span class="text-muted">
-                                                &middot; @Model.AlternatePhone
-                                            </span>
-                                        }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not recorded</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-globe"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Website</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Website))
-                                {
-                                    <div class="field-value">@Model.Website</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not recorded</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-location-dot"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Address</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Address))
-                                {
-                                    <div class="field-value">@Model.Address</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">Not recorded</div>
-                                }
-                            </div>
-                        </div>
-
-                    </div>
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit vendor
+                    </a>
+                    @if (Blank(Model.Email) != null)
+                    {
+                        <a href="mailto:@Model.Email" class="btn btn-outline-secondary">
+                            <i class="fas fa-envelope" aria-hidden="true"></i> Email them
+                        </a>
+                    }
+                    <partial name="_DownloadPdf" model="@Model.Id" />
                 </div>
 
-            </div>
+            </section>
 
-        </div>
+            <section class="panel-card mb-3">
 
-    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Vendor Information
+                </h3>
 
-    <div class="card shadow-sm mt-3">
+                <dl class="info-list">
+                    <dt>Status</dt>
+                    <dd>@(Model.IsActive ? "In use" : "No longer used")</dd>
+                    <dt>Category</dt>
+                    <dd>@(Blank(Model.Category) ?? "Not set")</dd>
+                    <dt>Added</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                </dl>
 
-        <div class="card-header">Notes</div>
+            </section>
 
-        <div class="card-body">
-            @if (!string.IsNullOrWhiteSpace(Model.Notes))
-            {
-                <div class="field-value mb-0">@Model.Notes</div>
-            }
-            else
-            {
-                <div class="field-value is-empty mb-0">
-                    Nothing recorded against this vendor.
-                </div>
-            }
         </div>
 
     </div>

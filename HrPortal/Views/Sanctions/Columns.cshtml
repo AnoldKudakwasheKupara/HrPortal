@@ -13,15 +13,18 @@
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
-            <h2>Choose the columns</h2>
-            <p class="text-muted mb-0">
+            <h2>Choose the Columns</h2>
+            <p>
                 The headings in <strong>@list.OriginalFileName</strong> were not all recognised. Say which
                 column holds which detail. A name is needed: a full name, a company name, or first and
                 last names. Leave anything the file does not have as "Not in the file".
             </p>
         </div>
-        <a asp-action="Clients" class="btn btn-secondary">Back</a>
+
+        <a asp-action="Clients" class="btn btn-outline-secondary">Back</a>
+
     </div>
 
     @if (TempData["Error"] != null)
@@ -29,60 +32,69 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-header">The file's first rows</div>
-        <div class="card-body is-table">
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead>
+    <section class="panel-card mb-3">
+
+        <h3 class="panel-head">
+            <i class="fas fa-table" aria-hidden="true"></i> The File's First Rows
+        </h3>
+
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        @for (var i = 0; i < Model.Headings.Count; i++)
+                        {
+                            <th>@(string.IsNullOrWhiteSpace(Model.Headings[i]) ? $"Column {i + 1}" : Model.Headings[i])</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in samples)
+                    {
                         <tr>
                             @for (var i = 0; i < Model.Headings.Count; i++)
                             {
-                                <th>@(string.IsNullOrWhiteSpace(Model.Headings[i]) ? $"Column {i + 1}" : Model.Headings[i])</th>
+                                <td>@Model.Cell(row, i)</td>
                             }
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in samples)
-                        {
-                            <tr>
-                                @for (var i = 0; i < Model.Headings.Count; i++)
-                                {
-                                    <td>@Model.Cell(row, i)</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                </tbody>
+            </table>
         </div>
-    </div>
 
-    <div class="card shadow-sm" style="max-width: 760px;">
-        <div class="card-body">
-            <form asp-action="Columns" asp-route-id="@list.Id" method="post">
-                @foreach (var field in Enum.GetValues<ClientField>())
-                {
-                    var chosen = suggested.TryGetValue(field, out var column) ? column : -1;
+    </section>
 
-                    <div class="row mb-2 align-items-center">
-                        <label class="col-sm-5 col-form-label" for="col-@field">@ClientListReader.Describe(field)</label>
-                        <div class="col-sm-7">
-                            <select id="col-@field" name="columns[@field]" class="form-select form-select-sm">
-                                <option value="-1">Not in the file</option>
-                                @for (var i = 0; i < Model.Headings.Count; i++)
-                                {
-                                    <option value="@i" selected="@(i == chosen)">
-                                        @(string.IsNullOrWhiteSpace(Model.Headings[i]) ? $"Column {i + 1}" : Model.Headings[i])
-                                    </option>
-                                }
-                            </select>
-                        </div>
+    <section class="panel-card mb-4" style="max-width: 760px;">
+
+        <h3 class="panel-head">
+            <i class="fas fa-table-columns" aria-hidden="true"></i> Which Column Is Which
+        </h3>
+
+        <form asp-action="Columns" asp-route-id="@list.Id" method="post">
+            @foreach (var field in Enum.GetValues<ClientField>())
+            {
+                var chosen = suggested.TryGetValue(field, out var column) ? column : -1;
+
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-5 col-form-label" for="col-@field">@ClientListReader.Describe(field)</label>
+                    <div class="col-sm-7">
+                        <select id="col-@field" name="columns[@field]" class="form-select form-select-sm">
+                            <option value="-1">Not in the file</option>
+                            @for (var i = 0; i < Model.Headings.Count; i++)
+                            {
+                                <option value="@i" selected="@(i == chosen)">
+                                    @(string.IsNullOrWhiteSpace(Model.Headings[i]) ? $"Column {i + 1}" : Model.Headings[i])
+                                </option>
+                            }
+                        </select>
                     </div>
-                }
-                <button type="submit" class="btn btn-primary mt-2">Import @Model.Rows.Count rows</button>
-            </form>
-        </div>
-    </div>
+                </div>
+            }
+            <button type="submit" class="btn btn-gold mt-2">
+                <i class="fas fa-file-import" aria-hidden="true"></i> Import @Model.Rows.Count rows
+            </button>
+        </form>
+
+    </section>
 
 </div>

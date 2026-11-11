@@ -2,278 +2,242 @@
 
 @{
     ViewData["Title"] = "Training Course Details";
+
+    var assignments = Model.Assignments.OrderBy(a => a.Employee.FirstName).ToList();
+    var completed = assignments.Count(a => a.IsCompleted);
+    var pct = assignments.Count == 0 ? 0 : Math.Round(completed * 100.0 / assignments.Count);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.Title</h2>
-
-            <p class="text-muted">
-                Training Course Details
-            </p>
+            <p>Training course @(Model.TrainingDate.HasValue ? "on " + Model.TrainingDate.Value.ToString("d MMM yyyy") : "not yet scheduled")</p>
         </div>
 
-        <div>
+        <div class="head-actions">
 
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-primary">
-
-                Edit
-
-            </a>
+            @if (Model.IsActive)
+            {
+                <span class="status-badge badge-green">Active</span>
+            }
+            else
+            {
+                <span class="status-badge badge-gray">Inactive</span>
+            }
 
             <partial name="_DownloadPdf" model="@Model.Id" />
 
-            <a asp-action="Index"
-               class="btn btn-secondary">
-
-                Back
-
-            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
 
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row g-3">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
+                <h3 class="panel-head">
+                    <i class="fas fa-chalkboard-user" aria-hidden="true"></i> Course Details
+                </h3>
 
-                    <span class="field-label">Trainer</span>
+                <div class="facts">
 
-                    <div class="field-value">
-                        @(Model.TrainerName ?? "Not set")
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Content Due</span>
-
-                    <div class="field-value">
-                        @if (Model.MaterialsDueDate == null)
-                        {
-                            <span class="text-muted">No date set</span>
-                        }
-                        else if (Model.MaterialsOverdue)
-                        {
-                            <span class="badge bg-danger">
-                                Nothing posted, was due
-                                @Model.MaterialsDueDate.Value.ToString("dd MMM yyyy")
-                            </span>
-                        }
-                        else
-                        {
-                            @Model.MaterialsDueDate.Value.ToString("dd MMM yyyy")
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Training Date</span>
-
-                    <div class="field-value">
-                        @if (Model.TrainingDate.HasValue)
-                        {
-                            @Model.TrainingDate.Value.ToString("dd MMM yyyy")
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                Not scheduled
-                            </span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Status</span>
-
-                    <div class="field-value">
-
-                        @if (Model.IsActive)
-                        {
-                            <span class="badge bg-success">
-                                Active
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                Inactive
-                            </span>
-                        }
-
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Created By</span>
-
-                    <div class="field-value">
-                        @Model.CreatedByEmployee.FirstName
-                        @Model.CreatedByEmployee.LastName
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Created</span>
-
-                    <div class="field-value">
-                        @Model.CreatedAt.ToString("dd MMM yyyy")
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Description</span>
-
-                    <div class="field-value">
-                        @(Model.Description ?? "No description provided.")
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-header">Assigned Employees</div>
-
-        <div class="card-body @(Model.Assignments.Any() ? "is-table" : "")">
-
-            @if (Model.Assignments.Any())
-            {
-                <div class="table-responsive">
-
-                    <table class="table">
-
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Assigned</th>
-                                <th>Completed</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var assignment in Model.Assignments
-                            .OrderBy(a => a.Employee.FirstName))
-                        {
-                            <tr>
-
-                                <td>
-                                    @assignment.Employee.FirstName
-                                    @assignment.Employee.LastName
-                                </td>
-
-                                <td>
-                                    @assignment.AssignedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                                <td>
-                                    @if (assignment.IsCompleted)
-                                    {
-                                        <span class="badge bg-success">
-                                            Completed
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning text-dark">
-                                            Outstanding
-                                        </span>
-                                    }
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128101;</span>
-                    No employees have been assigned to this course.
-                </p>
-            }
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm">
-
-        <div class="card-header">Course Materials</div>
-
-        <div class="card-body @(Model.Materials.Any() ? "is-table" : "")">
-
-            @if (Model.Materials.Any())
-            {
-                <ul class="row-list">
-
-                @foreach (var material in Model.Materials
-                    .OrderByDescending(m => m.UploadedAt))
-                {
-                    <li>
-
-                        <span class="row-icon">
-                            <i class="fas fa-file-lines" aria-hidden="true"></i>
-                        </span>
-
-                        <div class="row-main">
-
-                            <span class="row-title">
-                                @material.OriginalFileName
-                            </span>
-
-                            <span class="row-meta">
-                                Uploaded
-                                @material.UploadedAt.ToString("dd MMM yyyy")
-                            </span>
-
+                    <div class="fact">
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
+                        <div>
+                            <span>Trainer</span>
+                            @if (Model.TrainerName == null)
+                            {
+                                <em>Not set</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.TrainerName</strong>
+                            }
                         </div>
+                    </div>
 
-                    </li>
+                    <div class="fact">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                        <div>
+                            <span>Training date</span>
+                            @if (Model.TrainingDate.HasValue)
+                            {
+                                <strong>@Model.TrainingDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                            else
+                            {
+                                <em>Not scheduled</em>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-file-arrow-up" aria-hidden="true"></i>
+                        <div>
+                            <span>Content due</span>
+                            @if (Model.MaterialsDueDate == null)
+                            {
+                                <em>No date set</em>
+                            }
+                            else if (Model.MaterialsOverdue)
+                            {
+                                <strong class="text-danger">Nothing posted, was due @Model.MaterialsDueDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                            else
+                            {
+                                <strong>@Model.MaterialsDueDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user-pen" aria-hidden="true"></i>
+                        <div><span>Created by</span><strong>@Model.CreatedByEmployee.FirstName @Model.CreatedByEmployee.LastName</strong></div>
+                    </div>
+
+                </div>
+
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(Model.Description ?? "No description provided.")</p>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-users" aria-hidden="true"></i> Assigned Employees
+                    <span class="tab-count">@assignments.Count</span>
+                </h3>
+
+                @if (!assignments.Any())
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <p>No employees have been assigned to this course.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Assigned</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var assignment in assignments)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@assignment.Employee.FirstName @assignment.Employee.LastName</td>
+                                        <td class="text-nowrap">@assignment.AssignedAt.ToString("d MMM yyyy")</td>
+                                        <td>
+                                            @if (assignment.IsCompleted)
+                                            {
+                                                <span class="status-badge badge-green">Completed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge badge-amber">Outstanding</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
                 }
 
-                </ul>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128193;</span>
-                    No materials have been uploaded for this course.
-                </p>
-            }
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-file-lines" aria-hidden="true"></i> Course Materials
+                    <span class="tab-count">@Model.Materials.Count</span>
+                </h3>
+
+                @if (!Model.Materials.Any())
+                {
+                    <p class="text-muted mb-0">No materials have been uploaded for this course.</p>
+                }
+                else
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var material in Model.Materials.OrderByDescending(m => m.UploadedAt))
+                        {
+                            <div class="doc-row">
+                                <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+                                <div class="doc-info">
+                                    <div class="doc-name text-break">@material.OriginalFileName</div>
+                                    <div class="doc-meta">Uploaded @material.UploadedAt.ToString("d MMM yyyy")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
+
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit course
+                    </a>
+                    <partial name="_DownloadPdf" model="@Model.Id" />
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-chart-pie" aria-hidden="true"></i> Progress
+                </h3>
+
+                <div class="balance-bar mb-2" role="img" aria-label="@completed of @assignments.Count completed">
+                    <span class="is-used" style="width: @pct%"></span>
+                </div>
+
+                <dl class="info-list">
+                    <dt>Assigned</dt>
+                    <dd>@assignments.Count</dd>
+                    <dt>Completed</dt>
+                    <dd>@completed</dd>
+                    <dt>Outstanding</dt>
+                    <dd>@(assignments.Count - completed)</dd>
+                    <dt>Created</dt>
+                    <dd>@Model.CreatedAt.ToString("d MMM yyyy")</dd>
+                </dl>
+
+            </section>
 
         </div>
 

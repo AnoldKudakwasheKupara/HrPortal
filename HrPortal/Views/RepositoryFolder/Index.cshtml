@@ -1,24 +1,32 @@
+@using HrPortal.Entities
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.ViewModels.RepositoryFolderViewModel>
 
 @{
     ViewData["Title"] = "Repository Folders";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all.Where(f => PagedList.Matches(search, f.Name, f.Description)).ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Repository Folders</h2>
-            <p class="text-muted mb-0">
-                A folder decides who can see everything inside it.
-            </p>
+            <p>A folder decides who can see everything inside it.</p>
         </div>
 
-        <div class="page-head-actions">
-            <a asp-action="Create" class="btn btn-primary">Add Folder</a>
-            <a asp-controller="Repository" asp-action="Index"
-               class="btn btn-secondary">Back to Repository</a>
+        <div class="head-actions">
+            <a asp-controller="Repository" asp-action="Index" class="btn btn-outline-secondary">Back to Repository</a>
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-plus" aria-hidden="true"></i> Add Folder
+            </a>
         </div>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -31,91 +39,127 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-folder-tree"></i></span>
+            <div>
+                <div class="kpi-label">Folders</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+            <div>
+                <div class="kpi-label">Documents</div>
+                <div class="kpi-value">@all.Sum(f => f.DocumentCount)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Open to Everyone</div>
+                <div class="kpi-value">@all.Count(f => f.Audience == DocumentAudience.Everyone)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-lock"></i></span>
+            <div>
+                <div class="kpi-label">Restricted</div>
+                <div class="kpi-value">@all.Count(f => f.Audience != DocumentAudience.Everyone)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-folder-tree" aria-hidden="true"></i> Folders
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(null, search, "Search folders...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-folder-open" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No folders match." : "No folders yet.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Folder</th>
                             <th>Who can see it</th>
                             <th class="num">Documents</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="4" class="text-center text-muted py-4">
-                                No folders yet.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var folder in Model)
+                        @foreach (var folder in paged.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@folder.Name</strong>
+                                    <div class="fw-semibold">@folder.Name</div>
                                     @if (!string.IsNullOrWhiteSpace(folder.Description))
                                     {
-                                        <div class="text-muted small">
-                                            @folder.Description
-                                        </div>
+                                        <div class="small text-muted">@folder.Description</div>
                                     }
                                 </td>
-
                                 <td>
                                     @switch (folder.Audience)
                                     {
-                                        case HrPortal.Entities.DocumentAudience.Everyone:
-                                            <span class="badge bg-success">Everyone</span>
+                                        case DocumentAudience.Everyone:
+                                            <span class="status-badge badge-green">Everyone</span>
                                             break;
-                                        case HrPortal.Entities.DocumentAudience.Managers:
-                                            <span class="badge bg-info">Managers only</span>
+                                        case DocumentAudience.Managers:
+                                            <span class="status-badge badge-blue">Managers only</span>
                                             break;
                                         default:
-                                            <span class="badge bg-warning text-dark">
-                                                HR and administrators
-                                            </span>
+                                            <span class="status-badge badge-amber">HR and administrators</span>
                                             break;
                                     }
                                 </td>
-
                                 <td class="num">@folder.DocumentCount</td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@folder.Id">
-                                            Edit
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@folder.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                         </a>
-                                        <form asp-action="Delete"
-                                              asp-route-id="@folder.Id"
-                                              method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
+                                        <form asp-action="Delete" asp-route-id="@folder.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete this folder?');">
                                             <input type="hidden" name="id" value="@folder.Id" />
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-                                                Delete
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Delete @folder.Name</span>
                                             </button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "folder", "folders")' />
+        }
+
+    </section>
 
 </div>

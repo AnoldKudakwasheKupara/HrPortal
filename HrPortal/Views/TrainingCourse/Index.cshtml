@@ -1,7 +1,32 @@
-﻿@model IEnumerable<HrPortal.Entities.TrainingCourse>
+﻿@using HrPortal.ViewModels
+@model IEnumerable<HrPortal.Entities.TrainingCourse>
 
 @{
     ViewData["Title"] = "Training Courses";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var show = Context.Request.Query["show"].ToString() switch
+    {
+        "active" => "active",
+        "inactive" => "inactive",
+        _ => "all"
+    };
+
+    var shown = all
+        .Where(c => show == "all" || (show == "active") == c.IsActive)
+        .Where(c => PagedList.Matches(search, c.Title, c.TrainerName))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", all.Count),
+        new("active", "Active", "fa-circle-check", "is-green", all.Count(c => c.IsActive)),
+        new("inactive", "Inactive", "fa-circle-pause", "is-amber", all.Count(c => !c.IsActive))
+    };
+
+    var assignments = all.SelectMany(c => c.Assignments).ToList();
 }
 
 <div class="container-fluid">
@@ -10,172 +35,150 @@
 
         <div>
             <h2>Training Courses</h2>
-
-            <p class="text-muted">
-                Manage the training courses offered to employees.
-            </p>
+            <p>Manage the training courses offered to employees.</p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Add Course
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Course
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-chalkboard-user"></i></span>
+            <div>
+                <div class="kpi-label">Active Courses</div>
+                <div class="kpi-value">@all.Count(c => c.IsActive)</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
+            <div>
+                <div class="kpi-label">Assignments</div>
+                <div class="kpi-value">@assignments.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Completed</div>
+                <div class="kpi-value">@assignments.Count(a => a.IsCompleted)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+            <div>
+                <div class="kpi-label">Coming Up</div>
+                <div class="kpi-value">@all.Count(c => c.IsActive && c.TrainingDate?.Date >= DateTime.Today)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-chalkboard-user" aria-hidden="true"></i> Courses
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search course or trainer...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-chalkboard-user" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No courses match." : "No training courses have been added yet.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Course</th>
-                            <th>Trainer</th>
                             <th>Training Date</th>
                             <th>Assigned</th>
                             <th>Materials</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
-                                No training courses have been added yet.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var course in paged.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@course.Title</div>
+                                    <div class="small text-muted">@(string.IsNullOrWhiteSpace(course.TrainerName) ? "Trainer not set" : course.TrainerName)</div>
+                                </td>
+                                <td class="text-nowrap">
+                                    @if (course.TrainingDate.HasValue)
+                                    {
+                                        @course.TrainingDate.Value.ToString("d MMM yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not scheduled</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="status-badge badge-blue">@course.Assignments.Count</span>
+                                    <span class="small text-muted ms-1">@course.Assignments.Count(a => a.IsCompleted) done</span>
+                                </td>
+                                <td><span class="status-badge badge-gray">@course.Materials.Count</span></td>
+                                <td>
+                                    @if (course.IsActive)
+                                    {
+                                        <span class="status-badge badge-green">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-gray">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                    @foreach (var course in Model)
-                    {
-                        <tr>
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@course.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
 
-                            <td>
-                                <strong>
-                                    @course.Title
-                                </strong>
-                            </td>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@course.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
 
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(course.TrainerName))
-                                {
-                                    @course.TrainerName
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        Not set
-                                    </span>
-                                }
-                            </td>
+                                        <form asp-action="ToggleStatus" asp-route-id="@course.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+                                                <i class="fas @(course.IsActive ? "fa-circle-pause" : "fa-circle-play")" aria-hidden="true"></i>
+                                                @(course.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
 
-                            <td>
-                                @if (course.TrainingDate.HasValue)
-                                {
-                                    @course.TrainingDate.Value.ToString("dd MMM yyyy")
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        Not scheduled
-                                    </span>
-                                }
-                            </td>
-
-                            <td>
-                                <span class="badge bg-primary">
-                                    @course.Assignments.Count
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="badge bg-secondary">
-                                    @course.Materials.Count
-                                </span>
-                            </td>
-
-                            <td>
-                                @if (course.IsActive)
-                                {
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        Inactive
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@course.Id">
-
-                                        View
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@course.Id">
-
-                                        Edit
-
-                                    </a>
-
-                                    <form asp-action="ToggleStatus"
-                                          asp-route-id="@course.Id"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
-
-                                            @(course.IsActive
-                                                ? "Deactivate"
-                                                : "Activate")
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -183,8 +186,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "course", "courses")' />
+        }
 
-    </div>
+    </section>
 
 </div>

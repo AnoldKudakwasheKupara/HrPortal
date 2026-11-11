@@ -113,6 +113,11 @@ namespace HrPortal.Controllers
                     .ToListAsync()
                 : new List<WeeklyReport>();
 
+            ViewBag.Drafts = me == null
+                ? 0
+                : await _context.WeeklyReports.CountAsync(r =>
+                    r.EmployeeId == me && r.Status != WeeklyReportStatus.Final);
+
             var mine = await _context.WeeklyReports
                 .AsNoTracking()
                 .Include(r => r.Sections)

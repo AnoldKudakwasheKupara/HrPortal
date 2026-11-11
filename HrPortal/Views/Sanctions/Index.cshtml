@@ -1,4 +1,5 @@
 @using HrPortal.Entities
+@using HrPortal.ViewModels
 @model List<HrPortal.Entities.SanctionsReview>
 
 @{
@@ -6,102 +7,163 @@
 
     var last = ViewBag.LastDocument as SanctionsDocument;
     var clientList = ViewBag.ClientList as SanctionsClientList;
+
+    int Open(SanctionsReview r) => r.Concerns.Count(HrPortal.Services.Sanctions.SanctionsService.IsOutstanding);
+
+    var paged = PagedList.Of(Model, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Sanctions Screening</h2>
-            <p class="text-muted mb-0">
+            <p>
                 Upload the document from the FIU. The portal compares it with the previous
                 one, tells you which names were added or removed, and checks that nobody
                 the company deals with is on it.
             </p>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="head-actions">
             <a asp-action="Clients" class="btn btn-outline-secondary">
-                Client list (@(clientList?.RowsImported ?? 0))
+                <i class="fas fa-users" aria-hidden="true"></i> Client list (@(clientList?.RowsImported ?? 0))
             </a>
-            <a asp-action="Verify" class="btn btn-outline-secondary">Verify a report</a>
+            <a asp-action="Verify" class="btn btn-outline-secondary">
+                <i class="fas fa-fingerprint" aria-hidden="true"></i> Verify a report
+            </a>
         </div>
+
     </div>
 
-    <div class="card shadow-sm mb-3" id="sanctions-start">
-        <div class="card-header">Check a new document</div>
-        <div class="card-body">
+    <div class="kpis">
 
-            <form id="sanctions-form" autocomplete="off">
-
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="mode" id="mode-last" value="last" checked />
-                    <label class="form-check-label" for="mode-last">
-                        <strong>Compare with the last uploaded document</strong>
-                        <span class="d-block text-muted small">
-                            A full list is compared with the last full list of the same list; a notice,
-                            name by name with each name's latest earlier version.
-                            @(last == null
-                                ? "Nothing has been uploaded yet, so the first full list becomes the starting point."
-                                : $"Last uploaded: {last.Label}.")
-                        </span>
-                    </label>
-                </div>
-
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="radio" name="mode" id="mode-two" value="two" />
-                    <label class="form-check-label" for="mode-two">
-                        <strong>Compare two documents</strong>
-                        <span class="d-block text-muted small">Upload both: the previous one and the new one.</span>
-                    </label>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6" data-previous-file hidden>
-                        <label class="form-label" for="previous-file">Previous document (PDF)</label>
-                        <input class="form-control" type="file" id="previous-file" accept=".pdf,application/pdf" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="new-file">New document (PDF)</label>
-                        <input class="form-control" type="file" id="new-file" accept=".pdf,application/pdf" required />
-                    </div>
-                </div>
-
-                <div class="alert alert-danger d-none" data-form-error></div>
-
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-play" aria-hidden="true"></i> Start
-                </button>
-
-                @Html.AntiForgeryToken()
-            </form>
-
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-3" id="sanctions-progress" hidden
-         data-upload-url="@Url.Action("UploadDocument")"
-         data-compare-url="@Url.Action("Compare")"
-         data-screen-url="@Url.Action("Screen")"
-         data-result-url="@Url.Action("Result", new { id = 0 })">
-        <div class="card-header">Working through it</div>
-        <div class="card-body">
-            <ol class="sanctions-steps list-unstyled mb-0" data-steps></ol>
-
-            <div class="sanctions-summary mt-3" data-summary hidden>
-                <h3 class="h5">What was found</h3>
-                <ul class="mb-3" data-findings></ul>
-                <a class="btn btn-primary" data-result-link href="#">See the full results</a>
-                <button type="button" class="btn btn-outline-secondary ms-2" onclick="location.reload()">Check another document</button>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-code-compare"></i></span>
+            <div>
+                <div class="kpi-label">Comparisons</div>
+                <div class="kpi-value">@Model.Count</div>
             </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+            <div>
+                <div class="kpi-label">Need a Decision</div>
+                <div class="kpi-value">@Model.Count(r => r.FinalisedAt == null && Open(r) > 0)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Finalised</div>
+                <div class="kpi-value">@Model.Count(r => r.FinalisedAt != null)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Clients Screened</div>
+                <div class="kpi-value">@(clientList?.RowsImported ?? 0)</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header">Earlier comparisons</div>
-        <div class="card-body is-table">
+    <section class="panel-card mb-3" id="sanctions-start">
+
+        <h3 class="panel-head">
+            <i class="fas fa-file-shield" aria-hidden="true"></i> Check a New Document
+        </h3>
+
+        <form id="sanctions-form" autocomplete="off">
+
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="mode" id="mode-last" value="last" checked />
+                <label class="form-check-label" for="mode-last">
+                    <strong>Compare with the last uploaded document</strong>
+                    <span class="d-block text-muted small">
+                        A full list is compared with the last full list of the same list; a notice,
+                        name by name with each name's latest earlier version.
+                        @(last == null
+                            ? "Nothing has been uploaded yet, so the first full list becomes the starting point."
+                            : $"Last uploaded: {last.Label}.")
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="mode" id="mode-two" value="two" />
+                <label class="form-check-label" for="mode-two">
+                    <strong>Compare two documents</strong>
+                    <span class="d-block text-muted small">Upload both: the previous one and the new one.</span>
+                </label>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6" data-previous-file hidden>
+                    <label class="form-label" for="previous-file">Previous document (PDF)</label>
+                    <input class="form-control" type="file" id="previous-file" accept=".pdf,application/pdf" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="new-file">New document (PDF)</label>
+                    <input class="form-control" type="file" id="new-file" accept=".pdf,application/pdf" required />
+                </div>
+            </div>
+
+            <div class="alert alert-danger d-none" data-form-error></div>
+
+            <button type="submit" class="btn btn-gold">
+                <i class="fas fa-play" aria-hidden="true"></i> Start
+            </button>
+
+            @Html.AntiForgeryToken()
+        </form>
+
+    </section>
+
+    <section class="panel-card mb-3" id="sanctions-progress" hidden
+             data-upload-url="@Url.Action("UploadDocument")"
+             data-compare-url="@Url.Action("Compare")"
+             data-screen-url="@Url.Action("Screen")"
+             data-result-url="@Url.Action("Result", new { id = 0 })">
+
+        <h3 class="panel-head">
+            <i class="fas fa-gears" aria-hidden="true"></i> Working Through It
+        </h3>
+
+        <ol class="sanctions-steps list-unstyled mb-0" data-steps></ol>
+
+        <div class="sanctions-summary mt-3" data-summary hidden>
+            <h3 class="h5">What was found</h3>
+            <ul class="mb-3" data-findings></ul>
+            <a class="btn btn-gold" data-result-link href="#">See the full results</a>
+            <button type="button" class="btn btn-outline-secondary ms-2" onclick="location.reload()">Check another document</button>
+        </div>
+
+    </section>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Earlier Comparisons
+            <span class="tab-count">@Model.Count</span>
+        </h3>
+
+        @if (Model.Count == 0)
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-file-shield" aria-hidden="true"></i>
+                <p>No comparisons yet.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Review</th>
@@ -111,52 +173,55 @@
                             <th class="num">Removed</th>
                             <th class="num">Changed</th>
                             <th>Status</th>
-                            <th class="col-actions"></th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                    @if (Model.Count == 0)
-                    {
-                        <tr><td colspan="8" class="text-center text-muted py-4">No comparisons yet.</td></tr>
-                    }
-                    @foreach (var review in Model)
-                    {
-                        var open = review.Concerns.Count(HrPortal.Services.Sanctions.SanctionsService.IsOutstanding);
+                        @foreach (var review in paged.Items)
+                        {
+                            var open = Open(review);
 
-                        <tr>
-                            <td>
-                                <strong>@review.ReviewNumber</strong>
-                                <div class="text-muted small">@review.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</div>
-                            </td>
-                            <td>@review.NewDocument.Label</td>
-                            <td>@(review.PreviousDocument?.Label ?? "Nothing (first document)")</td>
-                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Added)</td>
-                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</td>
-                            <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</td>
-                            <td>
-                                @if (review.FinalisedAt != null)
-                                {
-                                    <span class="badge bg-success">Finalised</span>
-                                }
-                                else if (open > 0)
-                                {
-                                    <span class="badge bg-warning text-dark">@open need@(open == 1 ? "s" : "") a decision</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Ready to finalise</span>
-                                }
-                            </td>
-                            <td class="col-actions">
-                                <a class="btn btn-sm btn-outline-primary" asp-action="Result" asp-route-id="@review.Id">Open</a>
-                            </td>
-                        </tr>
-                    }
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@review.ReviewNumber</div>
+                                    <div class="small text-muted">@review.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</div>
+                                </td>
+                                <td>@review.NewDocument.Label</td>
+                                <td>@(review.PreviousDocument?.Label ?? "Nothing (first document)")</td>
+                                <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Added)</td>
+                                <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Removed)</td>
+                                <td class="num">@review.Changes.Count(c => c.Type == SanctionsChangeType.Changed)</td>
+                                <td>
+                                    @if (review.FinalisedAt != null)
+                                    {
+                                        <span class="status-badge badge-green">Finalised</span>
+                                    }
+                                    else if (open > 0)
+                                    {
+                                        <span class="status-badge badge-amber">@open need@(open == 1 ? "s" : "") a decision</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-gray">Ready to finalise</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Result" asp-route-id="@review.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> Open
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "comparison", "comparisons")' />
+        }
+
+    </section>
 
 </div>
 

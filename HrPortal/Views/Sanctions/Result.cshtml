@@ -31,16 +31,24 @@
     <div class="page-head">
         <div>
             <h2>@R.ReviewNumber</h2>
-            <p class="text-muted mb-0">
+            <p>
                 @R.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm") by @R.CreatedByName
             </p>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Report" asp-route-id="@R.Id" class="btn btn-outline-primary">
-                @(finalised ? "Download the report" : "Preview the report")
+        <div class="head-actions">
+            @if (finalised)
+            {
+                <span class="status-badge badge-green">Finalised</span>
+            }
+            else if (outstanding.Any())
+            {
+                <span class="status-badge badge-amber">@outstanding.Count need a decision</span>
+            }
+            <a asp-action="Report" asp-route-id="@R.Id" class="btn btn-outline-secondary">
+                <i class="fas fa-download" aria-hidden="true"></i> @(finalised ? "Download the report" : "Preview the report")
             </a>
-            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
         </div>
     </div>
 
@@ -70,9 +78,9 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-header">What was found</div>
-        <div class="card-body">
+    <section class="panel-card mb-3">
+        <h3 class="panel-head"><i class="fas fa-magnifying-glass-chart" aria-hidden="true"></i> What Was Found</h3>
+        <div>
             <div class="sanctions-tally mb-3">
                 @if (compared)
                 {
@@ -93,15 +101,15 @@
                 }
             </ul>
         </div>
-    </div>
+    </section>
 
     <div class="row g-3 mb-3">
         @foreach (var (heading, document) in new[] { ("New document", (SanctionsDocument?)R.NewDocument), ("Compared with", R.PreviousDocument) })
         {
             <div class="col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header">@heading</div>
-                    <div class="card-body">
+                <section class="panel-card h-100">
+                    <h3 class="panel-head"><i class="fas fa-file-pdf" aria-hidden="true"></i> @heading</h3>
+                    <div>
                         @if (document == null)
                         {
                             <p class="text-muted mb-0">
@@ -133,16 +141,16 @@
                             <p class="small text-muted mb-0">SHA-256 <code>@document.Sha256</code></p>
                         }
                     </div>
-                </div>
+                </section>
             </div>
         }
     </div>
 
     @if (compared)
     {
-        <div class="card shadow-sm mb-3">
-            <div class="card-header">What changed</div>
-            <div class="card-body">
+        <section class="panel-card mb-3">
+            <h3 class="panel-head"><i class="fas fa-code-compare" aria-hidden="true"></i> What Changed</h3>
+            <div>
 
                 <div class="sanctions-tally mb-3">
                     <div><strong>@R.Changes.Count(c => c.Type == SanctionsChangeType.Added)</strong><span>Added</span></div>
@@ -215,13 +223,13 @@
                 }
 
             </div>
-        </div>
+        </section>
     }
 
 
-    <div class="card shadow-sm mb-3" id="needs-decision">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Needs your decision</span>
+    <section class="panel-card mb-3" id="needs-decision">
+        <div class="panel-head-split">
+            <h3 class="panel-head"><i class="fas fa-gavel" aria-hidden="true"></i> Needs Your Decision</h3>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge @(outstanding.Any() ? "bg-warning text-dark" : "bg-success")">@outstanding.Count</span>
                 @if (!finalised)
@@ -232,7 +240,7 @@
                 }
             </div>
         </div>
-        <div class="card-body">
+        <div>
             @if (outstanding.Count == 0)
             {
                 <p class="mb-0">
@@ -246,7 +254,7 @@
                 <partial name="_SanctionsMatter" model="View(c)" />
             }
         </div>
-    </div>
+    </section>
 
     @if (dealtWith.Any())
     {
@@ -282,9 +290,9 @@
         </div>
     }
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">Finalise</div>
-        <div class="card-body">
+    <section class="panel-card mb-4">
+        <h3 class="panel-head"><i class="fas fa-stamp" aria-hidden="true"></i> Finalise</h3>
+        <div>
             @if (finalised)
             {
                 <p class="mb-1">
@@ -329,10 +337,10 @@
                         <label for="note" class="form-label">Note for the report (optional)</label>
                         <textarea id="note" name="note" class="form-control" rows="2" maxlength="4000"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Finalise and make the report</button>
+                    <button type="submit" class="btn btn-gold"><i class="fas fa-stamp" aria-hidden="true"></i> Finalise and make the report</button>
                 </form>
             }
         </div>
-    </div>
+    </section>
 
 </div>

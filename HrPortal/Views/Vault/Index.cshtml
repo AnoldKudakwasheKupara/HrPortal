@@ -1,7 +1,11 @@
+@using HrPortal.ViewModels
 @model List<HrPortal.Entities.VaultEntry>
 
 @{
     ViewData["Title"] = "Password vault";
+
+    var search = ViewBag.Search as string;
+    var paged = PagedList.Of(Model, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
@@ -9,24 +13,20 @@
     <div class="page-head">
 
         <div>
-            <h2>Password vault</h2>
-            <p class="text-muted mb-0">
-                Passwords for local systems, held encrypted.
-            </p>
+            <h2>Password Vault</h2>
+            <p>Passwords for local systems, held encrypted.</p>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="head-actions">
 
             <form asp-action="Lock" method="post">
                 <button type="submit" class="btn btn-outline-secondary">
-                    <i class="fas fa-lock" aria-hidden="true"></i>
-                    Lock
+                    <i class="fas fa-lock" aria-hidden="true"></i> Lock
                 </button>
             </form>
 
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="fas fa-plus" aria-hidden="true"></i>
-                Add a password
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-plus" aria-hidden="true"></i> Add a password
             </a>
 
         </div>
@@ -43,125 +43,135 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <div class="kpis">
 
-                <div class="col-md-10">
-                    <label class="form-label" for="search">Search</label>
-                    <input id="search" name="search" class="form-control"
-                           value="@ViewBag.Search"
-                           placeholder="Service or username" />
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Search
-                    </button>
-                </div>
-
-            </form>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-key"></i></span>
+            <div>
+                <div class="kpi-label">@(string.IsNullOrWhiteSpace(search) ? "Passwords Saved" : "Matching")</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-user"></i></span>
+            <div>
+                <div class="kpi-label">With a Username</div>
+                <div class="kpi-value">@Model.Count(e => !string.IsNullOrWhiteSpace(e.Username))</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-lock-open"></i></span>
+            <div>
+                <div class="kpi-label">Vault</div>
+                <div class="kpi-value kpi-value-text">Unlocked</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
+    <section class="panel-card mb-4">
 
-        <div class="card-body is-table">
+        <div class="panel-head-split">
 
+            <h3 class="panel-head">
+                <i class="fas fa-key" aria-hidden="true"></i> Passwords
+                <span class="tab-count">@Model.Count</span>
+            </h3>
+
+            <form method="get" class="filter-search list-toolbar-search mb-0" role="search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="search" name="search" type="search" class="form-control" value="@search"
+                       placeholder="Service or username" aria-label="Search the vault" />
+            </form>
+
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-key" aria-hidden="true"></i>
+                <p>
+                    @if (string.IsNullOrWhiteSpace(search))
+                    {
+                        <text>No passwords saved yet.</text>
+                    }
+                    else
+                    {
+                        <text>Nothing matches.</text>
+                        <a asp-action="Index">Clear the search</a>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table align-middle">
+                <table class="table align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Service</th>
                             <th>Username</th>
                             <th>Password</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (Model.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="4" class="text-center text-muted py-4">
-                                No passwords saved yet.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var entry in paged.Items)
+                        {
+                            <tr data-vault-entry="@entry.Id">
 
-                    @foreach (var entry in Model)
-                    {
-                        <tr data-vault-entry="@entry.Id">
+                                <td class="fw-semibold">@entry.Name</td>
 
-                            <td>
-                                <strong>@entry.Name</strong>
-                            </td>
-
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(entry.Username))
-                                {
-                                    <span>@entry.Username</span>
-                                    <button type="button"
-                                            class="btn btn-sm btn-link p-0 ms-1"
-                                            data-vault-copy-text="@entry.Username"
-                                            title="Copy the username"
-                                            aria-label="Copy the username for @entry.Name">
-                                        <i class="fas fa-copy" aria-hidden="true"></i>
-                                    </button>
-                                }
-                            </td>
-
-                            <td>
-                                <code data-vault-password>••••••••••</code>
-
-                                <div class="d-inline-flex gap-1 ms-2">
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-vault-reveal>
-                                        Show
-                                    </button>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-secondary"
-                                            data-vault-copy
-                                            aria-label="Copy the password for @entry.Name">
-                                        Copy
-                                    </button>
-
-                                </div>
-                            </td>
-
-                            <td class="col-actions">
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@entry.Id">
-                                        Edit
-                                    </a>
-
-                                    <form asp-action="Delete"
-                                          asp-route-id="@entry.Id"
-                                          method="post"
-                                          data-confirm="Delete the password for @entry.Name? This cannot be undone."
-                                          onsubmit="return confirm(this.dataset.confirm);">
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-danger">
-                                            Delete
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(entry.Username))
+                                    {
+                                        <span class="text-break">@entry.Username</span>
+                                        <button type="button" class="btn btn-sm btn-link p-0 ms-1"
+                                                data-vault-copy-text="@entry.Username"
+                                                title="Copy the username"
+                                                aria-label="Copy the username for @entry.Name">
+                                            <i class="fas fa-copy" aria-hidden="true"></i>
                                         </button>
+                                    }
+                                </td>
 
-                                    </form>
+                                <td class="text-nowrap">
+                                    <code data-vault-password>••••••••••</code>
 
-                                </div>
-                            </td>
+                                    <div class="d-inline-flex gap-1 ms-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-vault-reveal>Show</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-vault-copy
+                                                aria-label="Copy the password for @entry.Name">Copy</button>
+                                    </div>
+                                </td>
 
-                        </tr>
-                    }
+                                <td>
+                                    <div class="table-actions justify-content-end">
+
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@entry.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@entry.Id" method="post" class="d-inline"
+                                              data-confirm="Delete the password for @entry.Name? This cannot be undone."
+                                              onsubmit="return confirm(this.dataset.confirm);">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Delete the password for @entry.Name</span>
+                                            </button>
+                                        </form>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -169,9 +179,10 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "password", "passwords")' />
+        }
 
-    </div>
+    </section>
 
     <form id="vault-reveal-form" asp-action="Reveal" method="post" hidden></form>
 

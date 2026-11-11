@@ -1,77 +1,130 @@
+@using HrPortal.ViewModels
 @model List<HrPortal.Services.PrivacyNoticeReader>
 
 @{
     ViewData["Title"] = "Privacy notice readers";
 
     var read = Model.Count(r => r.AcknowledgedAt.HasValue);
+    var search = PagedList.SearchFrom(Context.Request);
+    var show = Context.Request.Query["show"].ToString() switch
+    {
+        "read" => "read",
+        "unread" => "unread",
+        _ => "all"
+    };
+
+    var shown = Model
+        .Where(r => show switch { "read" => r.AcknowledgedAt.HasValue, "unread" => !r.AcknowledgedAt.HasValue, _ => true })
+        .Where(r => PagedList.Matches(search, r.Name, r.Department))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+    var pct = Model.Count == 0 ? 0 : Math.Round(read * 100.0 / Model.Count);
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", Model.Count),
+        new("read", "Read", "fa-circle-check", "is-green", read),
+        new("unread", "Not Yet", "fa-hourglass-half", "is-amber", Model.Count - read)
+    };
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
-            <h2>Privacy notice readers</h2>
-
-            <p class="text-muted">
+            <h2>Privacy Notice Readers</h2>
+            <p>
                 Who has confirmed reading the notice dated
                 @HrPortal.Services.PrivacyNoticeService.VersionDate.ToString("d MMMM yyyy"):
                 @read of @Model.Count staff who can sign in.
             </p>
         </div>
 
-        <a asp-controller="Home"
-           asp-action="Privacy"
-           class="btn btn-outline-secondary">
-            Read the notice
+        <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-secondary">
+            <i class="fas fa-file-shield" aria-hidden="true"></i> Read the notice
         </a>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Staff Who Can Sign In</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Have Read It</div>
+                <div class="kpi-value">@read</div>
+                <div class="kpi-note">@pct% of staff</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Not Yet</div>
+                <div class="kpi-value">@(Model.Count - read)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-user-lock" aria-hidden="true"></i> Readers
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search name or department...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-users" aria-hidden="true"></i>
+                <p>@(Model.Count == 0 ? "Nobody can sign in yet." : "Nobody here.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Department</th>
-                            <th>Read on</th>
+                            <th>Read On</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (Model.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="3" class="text-center text-muted py-4">
-                                Nobody can sign in yet.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var reader in Model)
-                    {
-                        <tr>
-                            <td><strong>@reader.Name</strong></td>
-                            <td>@reader.Department</td>
-                            <td>
-                                @if (reader.AcknowledgedAt is DateTime at)
-                                {
-                                    @at.ToLocalTime().ToString("d MMM yyyy HH:mm")
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning">Not yet</span>
-                                }
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var reader in paged.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@reader.Name</td>
+                                <td>@reader.Department</td>
+                                <td class="text-nowrap">
+                                    @if (reader.AcknowledgedAt is DateTime at)
+                                    {
+                                        <span class="status-badge badge-green">@at.ToLocalTime().ToString("d MMM yyyy HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-amber">Not yet</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -79,8 +132,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "person", "people")' />
+        }
 
-    </div>
+    </section>
 
 </div>
