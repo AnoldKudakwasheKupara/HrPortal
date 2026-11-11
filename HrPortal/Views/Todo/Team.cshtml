@@ -2,89 +2,149 @@
 
 @{
     ViewData["Title"] = "Team To-Do Lists";
+
+    var notStarted = Model.Sum(m => m.Counts.NotStarted);
+    var inProgress = Model.Sum(m => m.Counts.InProgress);
+    var done = Model.Sum(m => m.Counts.Done);
+    var overdue = Model.Sum(m => m.Counts.Overdue);
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>Team To-Do Lists</h2>
-
-        <p class="text-muted">
-            What the people who report to you are working on. Open
-            someone to see their list. Only they can change it.
-        </p>
+        <div>
+            <h2>Team To-Do Lists</h2>
+            <p>What the people who report to you are working on. Open someone to see their list. Only they can change it.</p>
+        </div>
 
     </div>
 
-    @if (!Model.Any())
-    {
-        <div class="alert alert-info">Nobody reports to you at the moment.</div>
-    }
-    else
-    {
-        <div class="card shadow-sm">
+    <div class="kpis">
 
-            <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">People</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
+        </div>
 
-                <div class="table-responsive">
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-clock"></i></span>
+            <div>
+                <div class="kpi-label">Pending</div>
+                <div class="kpi-value">@notStarted</div>
+            </div>
+        </div>
 
-                    <table class="table table-hover align-middle mb-0">
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-rotate"></i></span>
+            <div>
+                <div class="kpi-label">In Progress</div>
+                <div class="kpi-value">@inProgress</div>
+                @if (overdue > 0)
+                {
+                    <div class="kpi-note is-alert">@overdue overdue</div>
+                }
+            </div>
+        </div>
 
-                        <thead>
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Completed</div>
+                <div class="kpi-value">@done</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-people-group" aria-hidden="true"></i> My Team
+            <span class="tab-count">@Model.Count</span>
+        </h3>
+
+        @if (!Model.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-users-slash" aria-hidden="true"></i>
+                <p>Nobody reports to you at the moment.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Progress</th>
+                            <th class="text-center">Pending</th>
+                            <th class="text-center">In Progress</th>
+                            <th class="text-center">Completed</th>
+                            <th class="text-center">Overdue</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var m in Model)
+                        {
+                            var total = m.Counts.NotStarted + m.Counts.InProgress + m.Counts.Done;
+                            var donePct = total == 0 ? 0 : Math.Round(m.Counts.Done * 100.0 / total);
+                            var activePct = total == 0 ? 0 : Math.Round(m.Counts.InProgress * 100.0 / total);
+
                             <tr>
-                                <th>Name</th>
-                                <th class="text-center">Not started</th>
-                                <th class="text-center">In progress</th>
-                                <th class="text-center">Done</th>
-                                <th class="text-center">Overdue</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            @foreach (var m in Model)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold">@m.Name</div>
-                                        @if (!string.IsNullOrWhiteSpace(m.JobTitle))
-                                        {
-                                            <div class="small text-muted">@m.JobTitle</div>
-                                        }
-                                    </td>
-                                    <td class="text-center">@m.Counts.NotStarted</td>
-                                    <td class="text-center">@m.Counts.InProgress</td>
-                                    <td class="text-center">@m.Counts.Done</td>
-                                    <td class="text-center">
-                                        @if (m.Counts.Overdue > 0)
-                                        {
-                                            <span class="badge bg-danger">@m.Counts.Overdue</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">0</span>
-                                        }
-                                    </td>
-                                    <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Member" asp-route-id="@m.EmployeeId">
-                                            View list
+                                <td>
+                                    <div class="fw-semibold">@m.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(m.JobTitle))
+                                    {
+                                        <div class="small text-muted">@m.JobTitle</div>
+                                    }
+                                </td>
+                                <td class="team-progress-cell">
+                                    <div class="balance-bar" role="img" aria-label="@m.Counts.Done of @total completed">
+                                        <span class="is-used" style="width: @donePct%"></span>
+                                        <span class="is-pending" style="width: @activePct%"></span>
+                                    </div>
+                                    <div class="small text-muted mt-1">@(total == 0 ? "No tasks" : $"{donePct}% completed")</div>
+                                </td>
+                                <td class="text-center">@m.Counts.NotStarted</td>
+                                <td class="text-center">@m.Counts.InProgress</td>
+                                <td class="text-center">@m.Counts.Done</td>
+                                <td class="text-center">
+                                    @if (m.Counts.Overdue > 0)
+                                    {
+                                        <span class="status-badge badge-red">@m.Counts.Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Member" asp-route-id="@m.EmployeeId">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View list
                                         </a>
-                                    </td>
-                                </tr>
-                            }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
-
-                </div>
+                </table>
 
             </div>
+        }
 
-        </div>
-    }
+    </section>
 
 </div>

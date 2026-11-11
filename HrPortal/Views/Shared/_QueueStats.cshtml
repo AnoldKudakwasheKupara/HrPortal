@@ -1,0 +1,48 @@
+@model HrPortal.ViewModels.QueueStats
+
+@{
+    var days = Model.OldestDays(DateTime.UtcNow);
+}
+
+<div class="kpis">
+
+    <div class="kpi">
+        <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+        <div>
+            <div class="kpi-label">Waiting</div>
+            <div class="kpi-value">@Model.Waiting</div>
+        </div>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+        <div>
+            <div class="kpi-label">@Model.TotalLabel</div>
+            <div class="kpi-value @(Model.TotalValue.Length > 8 ? "kpi-value-text" : "")">@Model.TotalValue</div>
+        </div>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-icon @(days > 7 ? "is-red" : "is-amber")" aria-hidden="true"><i class="fas fa-clock"></i></span>
+        <div>
+            <div class="kpi-label">Oldest Waiting</div>
+            @if (days == null)
+            {
+                <div class="kpi-value kpi-value-text text-muted">Nothing</div>
+            }
+            else
+            {
+                <div class="kpi-value">@days <span class="kpi-unit">@(days == 1 ? "day" : "days")</span></div>
+            }
+        </div>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-icon is-green" aria-hidden="true"><i class="fas @Model.ExtraIcon"></i></span>
+        <div>
+            <div class="kpi-label">@Model.ExtraLabel</div>
+            <div class="kpi-value">@Model.ExtraValue</div>
+        </div>
+    </div>
+
+</div>

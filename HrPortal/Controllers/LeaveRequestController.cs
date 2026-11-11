@@ -11,7 +11,7 @@ namespace HrPortal.Controllers
     [Authorize(Roles = Roles.HrOrMd)]
     public class LeaveRequestController : Controller
     {
-        private const int PageSize = 50;
+        private const int PageSize = 10;
 
         private readonly ApplicationDbContext _context;
         private readonly RecordScope _scope;
@@ -39,6 +39,24 @@ namespace HrPortal.Controllers
                     .Include(r => r.Employee)
                     .Include(r => r.LeaveType),
                 User);
+
+            var year = DateTime.Today.Year;
+            var closed = new[]
+            {
+                LeaveRequestStatus.Approved, LeaveRequestStatus.Rejected, LeaveRequestStatus.HRRejected,
+                LeaveRequestStatus.SupervisorRejected, LeaveRequestStatus.Cancelled
+            };
+
+            ViewBag.Stats = new[]
+            {
+                await query.CountAsync(),
+                await query.CountAsync(r => !closed.Contains(r.Status)),
+                await query.CountAsync(r => r.Status == LeaveRequestStatus.Approved && r.StartDate.Year == year)
+            };
+
+            ViewBag.DaysTaken = await query
+                .Where(r => r.Status == LeaveRequestStatus.Approved && r.StartDate.Year == year)
+                .SumAsync(r => r.NumberOfDays);
 
             if (status.HasValue)
                 query = query.Where(r => r.Status == status.Value);

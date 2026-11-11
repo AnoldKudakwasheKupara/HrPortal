@@ -1,4 +1,5 @@
 ﻿@using HrPortal.Entities
+@using HrPortal.ViewModels
 @model IEnumerable<HrPortal.Entities.LeaveRequest>
 
 @{
@@ -9,93 +10,129 @@
     var totalCount = (int)ViewBag.TotalCount;
     var status = ViewBag.SelectedStatus as LeaveRequestStatus?;
     var employeeId = ViewBag.SelectedEmployeeId as int?;
+    var stats = (int[])ViewBag.Stats;
+    var daysTaken = (decimal)ViewBag.DaysTaken;
+    var year = DateTime.Today.Year;
+    var filtered = status != null || employeeId != null;
+
+    string Span(DateTime start, DateTime end) =>
+        start.Date == end.Date ? start.ToString("d MMM yyyy")
+        : start.Year == end.Year && start.Month == end.Month ? $"{start.Day}–{end:d MMM yyyy}"
+        : start.Year == end.Year ? $"{start:d MMM} – {end:d MMM yyyy}"
+        : $"{start:d MMM yyyy} – {end:d MMM yyyy}";
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>All Leave Requests</h2>
-
-        <p class="text-muted">
-            Every request across the organisation, for oversight
-            and reporting. Requests are raised by employees and
-            decided by the approvers, so nothing is changed here.
-        </p>
+        <div>
+            <h2>All Leave Requests</h2>
+            <p>
+                Every request across the organisation, for oversight and reporting. Requests are raised
+                by employees and decided by the approvers, so nothing is changed here.
+            </p>
+        </div>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-        <div class="card-body">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+            <div>
+                <div class="kpi-label">All Requests</div>
+                <div class="kpi-value">@stats[0]</div>
+            </div>
+        </div>
 
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-2 align-items-end">
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">In Progress</div>
+                <div class="kpi-value">@stats[1]</div>
+            </div>
+        </div>
 
-                <div class="col-md-3">
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Approved in @year</div>
+                <div class="kpi-value">@stats[2]</div>
+            </div>
+        </div>
 
-                    <label for="status" class="form-label">
-                        Status
-                    </label>
-
-                    <select id="status"
-                            name="status"
-                            asp-items="Html.GetEnumSelectList<LeaveRequestStatus>()"
-                            class="form-select">
-
-                        <option value="">-- All Statuses --</option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <label for="employeeId" class="form-label">
-                        Employee
-                    </label>
-
-                    <select id="employeeId"
-                            name="employeeId"
-                            asp-items="ViewBag.Employees"
-                            class="form-select">
-
-                        <option value="">-- All Employees --</option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-auto">
-
-                    <button type="submit"
-                            class="btn btn-outline-secondary">
-                        Filter
-                    </button>
-
-                </div>
-
-            </form>
-
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-umbrella-beach"></i></span>
+            <div>
+                <div class="kpi-label">Days Taken in @year</div>
+                <div class="kpi-value">@daysTaken.ToString("0.##")</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <form asp-action="Index" method="get" class="filter-bar filter-bar-short" data-auto-submit>
 
-        <div class="card-body is-table">
+        <div>
+            <label for="status" class="form-label">Status</label>
+            <select id="status" name="status" asp-items="Html.GetEnumSelectList<LeaveRequestStatus>()" class="form-select">
+                <option value="">All statuses</option>
+            </select>
+        </div>
 
+        <div>
+            <label for="employeeId" class="form-label">Employee</label>
+            <select id="employeeId" name="employeeId" asp-items="ViewBag.Employees" class="form-select">
+                <option value="">All employees</option>
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a class="btn btn-outline-primary" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-calendar-days" aria-hidden="true"></i> Requests
+            <span class="tab-count">@totalCount</span>
+        </h3>
+
+        @if (!Model.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>No leave requests match these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No leave requests yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -105,70 +142,30 @@
                             <th>Dates</th>
                             <th>Days</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
-                                No leave requests match this filter.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var request in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>@request.RequestNumber</strong>
-                            </td>
-
-                            <td>
-                                @request.Employee.FirstName
-                                @request.Employee.LastName
-                            </td>
-
-                            <td>
-                                @request.LeaveType.Name
-                            </td>
-
-                            <td>
-                                @request.StartDate.ToString("dd MMM yyyy")
-                                &ndash;
-                                @request.EndDate.ToString("dd MMM yyyy")
-                            </td>
-
-                            <td>
-                                @request.NumberOfDays.ToString("0.##")
-                            </td>
-
-                            <td>
-                                <partial name="_LeaveStatusBadge"
-                                         model="request.Status" />
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@request.Id">
-                                        View
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td class="text-nowrap fw-semibold">@request.RequestNumber</td>
+                                <td class="fw-semibold">@request.Employee.FirstName @request.Employee.LastName</td>
+                                <td>@request.LeaveType.Name</td>
+                                <td class="text-nowrap">@Span(request.StartDate, request.EndDate)</td>
+                                <td>@request.NumberOfDays.ToString("0.##")</td>
+                                <td><partial name="_LeaveStatusBadge" model="request.Status" /></td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@request.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -176,45 +173,13 @@
 
             </div>
 
-        </div>
-
-        @if (totalPages > 1)
-        {
-            <div class="card-footer d-flex justify-content-between align-items-center">
-
-                <span class="text-muted">
-                    Page @(page) of @totalPages (@totalCount requests)
-                </span>
-
-                <div>
-
-                    @if (page > 1)
-                    {
-                        <a class="btn btn-sm btn-outline-secondary"
-                           asp-action="Index"
-                           asp-route-page="@(page - 1)"
-                           asp-route-status="@status"
-                           asp-route-employeeId="@employeeId">
-                            Previous
-                        </a>
-                    }
-
-                    @if (page < totalPages)
-                    {
-                        <a class="btn btn-sm btn-outline-secondary"
-                           asp-action="Index"
-                           asp-route-page="@(page + 1)"
-                           asp-route-status="@status"
-                           asp-route-employeeId="@employeeId">
-                            Next
-                        </a>
-                    }
-
-                </div>
-
-            </div>
+            <partial name="_NumberedPager" model='new PagerSummary(page, 10, totalCount, totalPages, totalCount == 1 ? "request" : "requests")' />
         }
 
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

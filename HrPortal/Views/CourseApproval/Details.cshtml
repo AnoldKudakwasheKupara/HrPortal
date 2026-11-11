@@ -5,106 +5,34 @@
 
 @{
     ViewData["Title"] = "Course Application";
+    ViewData["HidePersonal"] = !User.IsInRole(Roles.HrOfficer);
 
     var isHr = User.IsInRole(Roles.HrOfficer);
     var isMd = User.IsInRole(Roles.Md);
-
-    var hrTurn = isHr &&
-        CourseApplicationWorkflowService.IsAwaitingHr(Model.Status);
-
-    var mdTurn = isMd &&
-        CourseApplicationWorkflowService
-            .IsAwaitingManagingConsultant(Model.Status);
-
-    var supervisorTurn =
-        CourseApplicationWorkflowService
-            .IsAwaitingSupervisor(Model.Status) &&
-        (bool)(ViewBag.CanActAsSupervisor ?? false);
+    var hrTurn = isHr && CourseApplicationWorkflowService.IsAwaitingHr(Model.Status);
+    var mdTurn = isMd && CourseApplicationWorkflowService.IsAwaitingManagingConsultant(Model.Status);
+    var supervisorTurn = CourseApplicationWorkflowService.IsAwaitingSupervisor(Model.Status) &&
+                         (bool)(ViewBag.CanActAsSupervisor ?? false);
 }
 
-@if (supervisorTurn)
-{
-    <div class="container">
-
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header">Supervisor Approval</div>
-
-            <div class="card-body">
-
-                <form method="post">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="id" value="@Model.Id" />
-
-                    <div class="mb-3">
-
-                        <label for="supComment" class="form-label">
-                            Comment
-                        </label>
-
-                        <textarea id="supComment"
-                                  name="comment"
-                                  class="form-control"
-                                  rows="3"
-                                  placeholder="Required when declining or returning"></textarea>
-
-                    </div>
-
-                    <button type="submit"
-                            class="btn btn-success"
-                            asp-action="SupervisorApprove">
-                        Approve and send to HR
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-warning"
-                            asp-action="SupervisorReturn">
-                        Return to applicant
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-danger"
-                            asp-action="SupervisorReject">
-                        Decline
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-    </div>
-}
-
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.ApplicationNumber</h2>
-
-            <p class="text-muted mb-0">
-                @Model.Employee.FirstName @Model.Employee.LastName
-                &middot;
-                @Model.ProgramIntended
-            </p>
+            <p>@Model.Employee.FirstName @Model.Employee.LastName, @Model.ProgramIntended</p>
         </div>
 
-        <div class="table-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="Form"
-               asp-route-id="@Model.Id">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Application form (PDF)
+            <partial name="_CourseStatusBadge" model="Model.Status" />
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-secondary" asp-action="Index">
-                Back
-            </a>
+            <a class="btn btn-outline-secondary" asp-action="@(supervisorTurn ? "MyTeam" : "Index")">Back</a>
 
         </div>
 
@@ -120,212 +48,174 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    @{ ViewData["HidePersonal"] = !User.IsInRole(HrPortal.Security.Roles.HrOfficer); }
+    <div class="row g-3">
 
-    <partial name="_CourseApplicationCard" model="Model" />
+        <div class="col-lg-8">
 
-    @if (hrTurn)
-    {
-        <div class="card shadow-sm mb-3">
+            <partial name="_CourseApplicationCard" model="Model" />
 
-            <div class="card-header">Your review</div>
-
-            <div class="card-body">
-
-                <div class="row g-3">
-
-                    <div class="col-md-4">
-
-                        <form asp-action="HrApprove"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="approveComment" class="form-label">
-                                Pass to the Managing Consultant
-                            </label>
-
-                            <input type="text"
-                                   id="approveComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="Optional" />
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check" aria-hidden="true"></i>
-                                Approve
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <form asp-action="HrReturn"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="returnComment" class="form-label">
-                                Return for changes
-                            </label>
-
-                            <input type="text"
-                                   id="returnComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="What needs changing" />
-
-                            <button type="submit"
-                                    class="btn btn-outline-secondary">
-                                Return
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <form asp-action="HrReject"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="rejectComment" class="form-label">
-                                Decline
-                            </label>
-
-                            <input type="text"
-                                   id="rejectComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="Reason" />
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger">
-                                Decline
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-            </div>
+            <partial name="_CourseHistoryCard" model="Model" />
 
         </div>
-    }
 
-    @if (mdTurn)
-    {
-        <div class="card shadow-sm mb-3">
+        <div class="col-lg-4">
 
-            <div class="card-header">Your decision</div>
+            @if (supervisorTurn)
+            {
+                <section class="panel-card mb-3">
 
-            <div class="card-body">
+                    <h3 class="panel-head">
+                        <i class="fas fa-gavel" aria-hidden="true"></i> Supervisor Approval
+                    </h3>
 
-                <div class="row g-3">
+                    <form method="post">
 
-                    <div class="col-md-6">
+                        <input type="hidden" name="id" value="@Model.Id" />
 
-                        <form asp-action="Approve"
-                              asp-route-id="@Model.Id"
-                              method="post">
+                        <label for="supComment" class="form-label">Comment</label>
+                        <textarea id="supComment" name="comment" class="form-control mb-3" rows="3"
+                                  placeholder="Required when declining or returning"></textarea>
 
-                            @Html.AntiForgeryToken()
-
-                            <label for="mdApproveComment" class="form-label">
-                                Approve the application
-                            </label>
-
-                            <input type="text"
-                                   id="mdApproveComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="Optional" />
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-stamp" aria-hidden="true"></i>
-                                Approve
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-gold" asp-action="SupervisorApprove">
+                                <i class="fas fa-check" aria-hidden="true"></i> Approve and send to HR
                             </button>
-
-                        </form>
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <form asp-action="Reject"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="mdRejectComment" class="form-label">
-                                Decline
-                            </label>
-
-                            <input type="text"
-                                   id="mdRejectComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="Reason" />
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger">
-                                Decline
+                            <button type="submit" class="btn btn-outline-warning" asp-action="SupervisorReturn">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Return to applicant
                             </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-    }
-
-    @if (isHr && Model.Status == CourseApplicationStatus.Approved)
-    {
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header">Approved</div>
-
-            <div class="card-body">
-
-                <div class="detail-rows">
-
-                    <div class="detail-row">
-
-                        <span class="detail-icon">
-                            <i class="fas fa-print" aria-hidden="true"></i>
-                        </span>
-
-                        <div class="detail-text">
-                            <span class="field-label">For Finance</span>
-                            <div class="field-value">
-                                This is approved. Print the form and
-                                take it to Finance.
-                            </div>
+                            <button type="submit" class="btn btn-outline-danger" asp-action="SupervisorReject">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Decline
+                            </button>
                         </div>
 
-                    </div>
+                    </form>
 
-                </div>
+                </section>
+            }
 
-            </div>
+            @if (hrTurn)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-gavel" aria-hidden="true"></i> Your Review
+                    </h3>
+
+                    <form asp-action="HrApprove" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="approveComment" class="form-label">Pass to the Managing Consultant</label>
+                        <input type="text" id="approveComment" name="comment" class="form-control mb-2" placeholder="Optional" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-check" aria-hidden="true"></i> Approve
+                            </button>
+                        </div>
+                    </form>
+
+                    <form asp-action="HrReturn" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="returnComment" class="form-label">Return for changes</label>
+                        <input type="text" id="returnComment" name="comment" class="form-control mb-2" placeholder="What needs changing" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-warning">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Return
+                            </button>
+                        </div>
+                    </form>
+
+                    <form asp-action="HrReject" asp-route-id="@Model.Id" method="post">
+                        <label for="rejectComment" class="form-label">Decline</label>
+                        <input type="text" id="rejectComment" name="comment" class="form-control mb-2" placeholder="Reason" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Decline
+                            </button>
+                        </div>
+                    </form>
+
+                </section>
+            }
+
+            @if (mdTurn)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-stamp" aria-hidden="true"></i> Your Decision
+                    </h3>
+
+                    <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="mdApproveComment" class="form-label">Approve the application</label>
+                        <input type="text" id="mdApproveComment" name="comment" class="form-control mb-2" placeholder="Optional" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-stamp" aria-hidden="true"></i> Approve
+                            </button>
+                        </div>
+                    </form>
+
+                    <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                        <label for="mdRejectComment" class="form-label">Decline</label>
+                        <input type="text" id="mdRejectComment" name="comment" class="form-control mb-2" placeholder="Reason" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Decline
+                            </button>
+                        </div>
+                    </form>
+
+                </section>
+            }
+
+            @if (!supervisorTurn && !hrTurn && !mdTurn)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-gavel" aria-hidden="true"></i> Decision
+                    </h3>
+
+                    @if (isHr && Model.Status == CourseApplicationStatus.Approved)
+                    {
+                        <p class="small text-muted">This is approved. Print the form and take it to Finance.</p>
+                        <div class="d-grid">
+                            <a class="btn btn-gold" asp-action="Form" asp-route-id="@Model.Id">
+                                <i class="fas fa-print" aria-hidden="true"></i> Print the form
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="small text-muted mb-0">
+                            This application is not waiting on you. It is currently
+                            <partial name="_CourseStatusBadge" model="Model.Status" />
+                        </p>
+                    }
+
+                </section>
+            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Application Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Application No.</dt>
+                    <dd>@Model.ApplicationNumber</dd>
+                    <dt>Department</dt>
+                    <dd>@(Model.Employee.Department?.Name ?? "--")</dd>
+                    <dt>Started</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                    <dt>Sent</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Decided</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+
+            </section>
 
         </div>
-    }
 
-    <partial name="_CourseHistoryCard" model="Model" />
+    </div>
 
 </div>

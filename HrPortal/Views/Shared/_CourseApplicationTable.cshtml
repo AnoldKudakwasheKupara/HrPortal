@@ -1,9 +1,29 @@
+@using HrPortal.Entities
+@using HrPortal.ViewModels
 @model List<HrPortal.Entities.CourseApplication>
 
-<div class="card shadow-sm mb-4">
+@{
+    var paged = PagedList.Of(Model, PagedList.PageFrom(Context.Request));
+    var title = ViewData["ListTitle"] as string ?? "Waiting for You";
+    var decided = ViewData["ListDecided"] as bool? == true;
+}
 
-    <div class="card-body is-table">
+<section class="panel-card mb-4">
 
+    <h3 class="panel-head">
+        <i class="fas @(decided ? "fa-circle-check" : "fa-inbox")" aria-hidden="true"></i> @title
+        <span class="tab-count">@Model.Count</span>
+    </h3>
+
+    @if (!Model.Any())
+    {
+        <div class="list-empty mb-0">
+            <i class="fas fa-mug-hot" aria-hidden="true"></i>
+            <p>Nothing here right now.</p>
+        </div>
+    }
+    else
+    {
         <div class="table-responsive">
 
             <table class="table table-hover align-middle mb-0">
@@ -13,79 +33,53 @@
                         <th>Application</th>
                         <th>Applicant</th>
                         <th>Programme</th>
-                        <th>Target exam</th>
+                        <th>Target Exam</th>
                         <th>Status</th>
-                        <th class="col-actions">Actions</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
 
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="6"
-                            class="text-center text-muted py-4">
-                            Nothing here right now.
-                        </td>
-                    </tr>
-                }
+                    @foreach (var application in paged.Items)
+                    {
+                        <tr>
+                            <td class="text-nowrap">
+                                <div class="fw-semibold">@application.ApplicationNumber</div>
+                                <div class="small text-muted">@((application.SubmittedAt ?? application.CreatedAt).ToLocalTime().ToString("d MMM yyyy"))</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@application.Employee.FirstName @application.Employee.LastName</div>
+                                <div class="small text-muted">@(application.Employee.Department?.Name ?? "")</div>
+                            </td>
+                            <td>@application.ProgramIntended</td>
+                            <td class="text-nowrap">@(application.TargetExamDate?.ToString("d MMM yyyy") ?? "-")</td>
+                            <td><partial name="_CourseStatusBadge" model="application.Status" /></td>
+                            <td>
+                                <div class="table-actions justify-content-end">
+                                    @if (decided)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@application.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-gold text-nowrap" asp-action="Details" asp-route-id="@application.Id">
+                                            <i class="fas fa-gavel" aria-hidden="true"></i> Review
+                                        </a>
+                                    }
 
-                @foreach (var application in Model)
-                {
-                    <tr>
-
-                        <td>
-                            <strong>@application.ApplicationNumber</strong>
-                        </td>
-
-                        <td>
-                            @application.Employee.FirstName
-                            @application.Employee.LastName
-                            <div class="row-meta">
-                                @(application.Employee.Department?.Name ?? "--")
-                            </div>
-                        </td>
-
-                        <td>@application.ProgramIntended</td>
-
-                        <td>
-                            @(application.TargetExamDate == null
-                                ? "--"
-                                : application.TargetExamDate.Value.ToString("d MMM yyyy"))
-                        </td>
-
-                        <td>
-                            <partial name="_CourseStatusBadge"
-                                     model="application.Status" />
-                        </td>
-
-                        <td class="col-actions">
-
-                            <div class="table-actions">
-
-                                <a class="btn btn-sm btn-primary"
-                                   asp-action="Details"
-                                   asp-route-id="@application.Id">
-                                    Open
-                                </a>
-
-                                @if (application.Status == HrPortal.Entities.CourseApplicationStatus.Approved)
-                                {
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Form"
-                                       asp-route-id="@application.Id">
-                                        <i class="fas fa-download" aria-hidden="true"></i>
-                                        Form
-                                    </a>
-                                }
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-                }
+                                    @if (application.Status == CourseApplicationStatus.Approved)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Form" asp-route-id="@application.Id">
+                                            <i class="fas fa-download" aria-hidden="true"></i> Form
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
 
                 </tbody>
 
@@ -93,6 +87,7 @@
 
         </div>
 
-    </div>
+        <partial name="_NumberedPager" model='PagerSummary.From(paged, "application", "applications")' />
+    }
 
-</div>
+</section>

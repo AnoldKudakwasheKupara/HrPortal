@@ -5,45 +5,31 @@
 @{
     ViewData["Title"] = "Loan Application";
 
-    var decision = ViewBag.Decision
-        as HrPortal.ViewModels.LoanDecisionViewModel
+    var decision = ViewBag.Decision as HrPortal.ViewModels.LoanDecisionViewModel
         ?? new HrPortal.ViewModels.LoanDecisionViewModel();
 
-    var awaiting =
-        LoanWorkflowService.IsAwaitingMd(Model.Status) &&
-        User.IsInRole(HrPortal.Security.Roles.Md);
-
-    var asSupervisor =
-        LoanWorkflowService.IsAwaitingSupervisor(Model.Status) &&
-        (bool)(ViewBag.CanActAsSupervisor ?? false);
+    var awaiting = LoanWorkflowService.IsAwaitingMd(Model.Status) && User.IsInRole(HrPortal.Security.Roles.Md);
+    var asSupervisor = LoanWorkflowService.IsAwaitingSupervisor(Model.Status) && (bool)(ViewBag.CanActAsSupervisor ?? false);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.ApplicationNumber</h2>
-
-            <p class="text-muted mb-0">
-                @Model.Employee.FirstName @Model.Employee.LastName
-                &middot;
-                @(Model.Employee.Department?.Name ?? "--")
-            </p>
+            <p>@Model.Employee.FirstName @Model.Employee.LastName, @(Model.Employee.Department?.Name ?? "--")</p>
         </div>
 
-        <div class="table-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="Form"
-               asp-route-id="@Model.Id">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Application form (PDF)
+            <partial name="_LoanStatusBadge" model="Model.Status" />
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-secondary" asp-action="Index">
-                Back
-            </a>
+            <a class="btn btn-outline-secondary" asp-action="@(asSupervisor ? "MyTeam" : "Index")">Back</a>
 
         </div>
 
@@ -59,431 +45,279 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
+    <div class="row g-3">
 
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="col-lg-8">
 
-            <span>The application</span>
+            <section class="panel-card mb-3">
 
-            <partial name="_LoanStatusBadge" model="Model.Status" />
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-hand-holding-dollar" aria-hidden="true"></i> Application Details
+                    </h3>
+                    <partial name="_LoanStatusBadge" model="Model.Status" />
+                </div>
 
-        </div>
+                <div class="facts">
 
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Amount required</span>
-                    <div class="field-value">
-                        @LoanCurrencies.Format(Model.Currency, Model.AmountRequested)
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Applicant</span><strong>@Model.Employee.FirstName @Model.Employee.LastName</strong></div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Amount authorised</span>
-                    <div class="field-value @(Model.AmountAuthorised == null ? "is-empty" : "")">
-                        @(Model.AmountAuthorised == null
-                            ? "Not yet decided"
-                            : LoanCurrencies.Format(Model.Currency, Model.AmountAuthorised.Value))
+                    <div class="fact">
+                        <i class="fas fa-money-bill" aria-hidden="true"></i>
+                        <div><span>Amount required</span><strong>@LoanCurrencies.Format(Model.Currency, Model.AmountRequested)</strong></div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Repayment period</span>
-                    <div class="field-value">
-                        @Model.RepaymentMonths months
+                    <div class="fact">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <div>
+                            <span>Amount authorised</span>
+                            @if (Model.AmountAuthorised == null)
+                            {
+                                <em>Not yet decided</em>
+                            }
+                            else
+                            {
+                                <strong>@LoanCurrencies.Format(Model.Currency, Model.AmountAuthorised.Value)</strong>
+                            }
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Instalment per month</span>
-                    <div class="field-value">
-                        @(Model.MonthlyInstalment == null
-                            ? "--"
-                            : LoanCurrencies.Format(Model.Currency, Model.MonthlyInstalment.Value))
+                    <div class="fact">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                        <div><span>Repayment period</span><strong>@Model.RepaymentMonths months</strong></div>
                     </div>
-                </div>
 
-                <div class="col-12">
-                    <span class="field-label">In words</span>
-                    <div class="field-value">
-                        @LoanCurrencies.InWords(Model.Currency, Model.AmountRequested)
+                    <div class="fact">
+                        <i class="fas fa-coins" aria-hidden="true"></i>
+                        <div>
+                            <span>Instalment per month</span>
+                            @if (Model.MonthlyInstalment == null)
+                            {
+                                <em>Not yet known</em>
+                            }
+                            else
+                            {
+                                <strong>@LoanCurrencies.Format(Model.Currency, Model.MonthlyInstalment.Value)</strong>
+                            }
+                        </div>
                     </div>
+
+                    <div class="fact">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        <div>
+                            <span>Deductions start</span>
+                            @if (Model.RepaymentStartDate == null)
+                            {
+                                <em>Set when sanctioned</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.RepaymentStartDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="col-12">
-                    <span class="field-label">Purpose</span>
-                    <div class="field-value">@Model.Purpose</div>
+                <div class="panel-block">
+                    <h4><i class="fas fa-bullseye" aria-hidden="true"></i> Purpose</h4>
+                    <p class="pre-line">@Model.Purpose</p>
                 </div>
 
-            </div>
+            </section>
 
-        </div>
+            <section class="panel-card mb-3">
 
-    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-paperclip" aria-hidden="true"></i> Receipts and Quotations
+                    <span class="tab-count">@Model.Attachments.Count</span>
+                </h3>
 
-    <div class="card shadow-sm mb-3">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-
-            <span>Receipts and quotations</span>
-
-            <span class="text-muted small">
-                @Model.Attachments.Count
-                @(Model.Attachments.Count == 1 ? "file" : "files")
-            </span>
-
-        </div>
-
-        @if (Model.Attachments.Any())
-        {
-            <div class="card-body is-table">
-
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle mb-0">
-
-                        <thead>
-                            <tr>
-                                <th>File</th>
-                                <th>Added</th>
-                                <th class="col-actions">Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var attachment in Model.Attachments
-                            .OrderByDescending(a => a.UploadedAt))
+                @if (!Model.Attachments.Any())
+                {
+                    <p class="text-muted mb-0">Nothing attached.</p>
+                }
+                else
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var attachment in Model.Attachments.OrderByDescending(a => a.UploadedAt))
                         {
-                            <tr>
-
-                                <td>@attachment.OriginalFileName</td>
-
-                                <td>
-                                    @(attachment.UploadedAt.ToLocalTime().ToString("d MMM yyyy"))
-                                </td>
-
-                                <td class="col-actions">
-
-                                    <div class="table-actions">
-
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Attachment"
-                                           asp-route-id="@Model.Id"
-                                           asp-route-attachmentId="@attachment.Id">
-                                            Download
-                                        </a>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
+                            <div class="doc-row">
+                                <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+                                <div class="doc-info">
+                                    <div class="doc-name text-break">@attachment.OriginalFileName</div>
+                                    <div class="doc-meta">Added @attachment.UploadedAt.ToLocalTime().ToString("d MMM yyyy")</div>
+                                </div>
+                                <div class="doc-buttons">
+                                    <a class="btn btn-sm btn-outline-secondary" title="Download"
+                                       asp-action="Attachment" asp-route-id="@Model.Id" asp-route-attachmentId="@attachment.Id">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Download @attachment.OriginalFileName</span>
+                                    </a>
+                                </div>
+                            </div>
                         }
+                    </div>
+                }
 
-                        </tbody>
+            </section>
 
-                    </table>
+            <section class="panel-card mb-3">
 
-                </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> History
+                </h3>
 
-            </div>
-        }
-        else
-        {
-            <div class="card-body">
+                <partial name="_Timeline" model="Timeline.Of(Model.History)" />
 
-                <p class="empty-state">
-                    <span class="empty-icon">&#128206;</span>
-                    Nothing was attached to this application.
-                </p>
+            </section>
 
-            </div>
-        }
+        </div>
 
-    </div>
+        <div class="col-lg-4">
 
-    @if (asSupervisor)
-    {
-        <div class="card shadow-sm mb-3">
+            @if (asSupervisor)
+            {
+                <section class="panel-card mb-3">
 
-            <div class="card-header">Supervisor Approval</div>
+                    <h3 class="panel-head">
+                        <i class="fas fa-gavel" aria-hidden="true"></i> Supervisor Approval
+                    </h3>
 
-            <div class="card-body">
+                    <form method="post">
 
-                <form method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
 
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="id" value="@Model.Id" />
-
-                    <div class="mb-3">
-
-                        <label for="supComment" class="form-label">
-                            Comment
-                        </label>
-
-                        <textarea id="supComment"
-                                  name="comment"
-                                  class="form-control"
-                                  rows="3"
+                        <label for="supComment" class="form-label">Comment</label>
+                        <textarea id="supComment" name="comment" class="form-control mb-3" rows="3"
                                   placeholder="Required when declining or returning"></textarea>
 
-                    </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-gold" asp-action="SupervisorApprove">
+                                <i class="fas fa-check" aria-hidden="true"></i> Approve and send to the MD
+                            </button>
+                            <button type="submit" class="btn btn-outline-warning" asp-action="SupervisorReturn">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Return to applicant
+                            </button>
+                            <button type="submit" class="btn btn-outline-danger" asp-action="SupervisorReject">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Decline
+                            </button>
+                        </div>
 
-                    <button type="submit"
-                            class="btn btn-success"
-                            asp-action="SupervisorApprove">
-                        Approve and send to the MD
-                    </button>
+                    </form>
 
-                    <button type="submit"
-                            class="btn btn-warning"
-                            asp-action="SupervisorReturn">
-                        Return to applicant
-                    </button>
+                </section>
+            }
 
-                    <button type="submit"
-                            class="btn btn-danger"
-                            asp-action="SupervisorReject">
-                        Decline
-                    </button>
+            @if (awaiting)
+            {
+                <section class="panel-card mb-3">
 
-                </form>
+                    <h3 class="panel-head">
+                        <i class="fas fa-stamp" aria-hidden="true"></i> Sanction This Loan
+                    </h3>
 
-            </div>
+                    <form asp-action="Approve" asp-route-id="@Model.Id" method="post">
 
-        </div>
-    }
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
-    @if (awaiting)
-    {
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header">Sanction this loan</div>
-
-            <div class="card-body">
-
-                <form asp-action="Approve"
-                      asp-route-id="@Model.Id"
-                      method="post">
-
-                    @Html.AntiForgeryToken()
-
-                    <div asp-validation-summary="ModelOnly"
-                         class="text-danger mb-3"
-                         role="alert"></div>
-
-                    <div class="row g-3">
-
-                        <div class="col-md-4">
-
-                            <label asp-for="@decision.AmountAuthorised"
-                                   class="form-label"></label>
-
+                        <div class="mb-3">
+                            <label asp-for="@decision.AmountAuthorised" class="form-label"></label>
                             <div class="input-group">
-
-                                <span class="input-group-text">
-                                    @LoanCurrencies.Code(Model.Currency)
-                                </span>
-
-                            <input asp-for="@decision.AmountAuthorised"
-                                   name="AmountAuthorised"
-                                   class="form-control"
-                                   type="number"
-                                   step="0.01"
-                                   min="0" />
-
+                                <span class="input-group-text">@LoanCurrencies.Code(Model.Currency)</span>
+                                <input asp-for="@decision.AmountAuthorised" name="AmountAuthorised" class="form-control"
+                                       type="number" step="0.01" min="0" />
                             </div>
-
-                            <div class="form-text">
-                                Need not match the amount asked for.
-                            </div>
-
+                            <div class="form-text">Need not match the amount asked for.</div>
                         </div>
 
-                        <div class="col-md-4">
-
-                            <label asp-for="@decision.RepaymentStartDate"
-                                   class="form-label"></label>
-
-                            <input asp-for="@decision.RepaymentStartDate"
-                                   name="RepaymentStartDate"
-                                   class="form-control"
-                                   type="date" />
-
+                        <div class="mb-3">
+                            <label asp-for="@decision.RepaymentStartDate" class="form-label"></label>
+                            <input asp-for="@decision.RepaymentStartDate" name="RepaymentStartDate" class="form-control" type="date" />
                         </div>
 
-                        <div class="col-md-4">
-
-                            <label asp-for="@decision.Comment"
-                                   class="form-label"></label>
-
-                            <input asp-for="@decision.Comment"
-                                   name="Comment"
-                                   class="form-control"
-                                   placeholder="Optional" />
-
+                        <div class="mb-3">
+                            <label asp-for="@decision.Comment" class="form-label"></label>
+                            <input asp-for="@decision.Comment" name="Comment" class="form-control" placeholder="Optional" />
                         </div>
 
-                    </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-stamp" aria-hidden="true"></i> Sanction
+                            </button>
+                        </div>
 
-                    <div class="mt-3">
+                    </form>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-stamp" aria-hidden="true"></i>
-                            Sanction
-                        </button>
+                </section>
 
-                    </div>
+                <section class="panel-card mb-3">
 
-                </form>
+                    <h3 class="panel-head">
+                        <i class="fas fa-reply" aria-hidden="true"></i> Or Send It Back
+                    </h3>
 
-            </div>
+                    <form asp-action="Return" asp-route-id="@Model.Id" method="post" class="mb-3">
+                        <label for="returnComment" class="form-label">Return for changes</label>
+                        <input type="text" id="returnComment" name="comment" class="form-control mb-2" placeholder="What needs changing" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-warning">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Return to applicant
+                            </button>
+                        </div>
+                    </form>
+
+                    <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                        <label for="rejectComment" class="form-label">Decline</label>
+                        <input type="text" id="rejectComment" name="comment" class="form-control mb-2" placeholder="Reason" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Decline
+                            </button>
+                        </div>
+                    </form>
+
+                </section>
+            }
+
+            @if (!asSupervisor && !awaiting)
+            {
+                <section class="panel-card mb-3">
+                    <h3 class="panel-head">
+                        <i class="fas fa-gavel" aria-hidden="true"></i> Decision
+                    </h3>
+                    <p class="small text-muted mb-0">
+                        This application is not waiting on you. It is currently
+                        <partial name="_LoanStatusBadge" model="Model.Status" />
+                    </p>
+                </section>
+            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Application Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Application No.</dt>
+                    <dd>@Model.ApplicationNumber</dd>
+                    <dt>Department</dt>
+                    <dd>@(Model.Employee.Department?.Name ?? "--")</dd>
+                    <dt>Started</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                    <dt>Sent</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Decided</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+
+            </section>
 
         </div>
-
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header">Or send it back</div>
-
-            <div class="card-body">
-
-                <div class="row g-3">
-
-                    <div class="col-md-6">
-
-                        <form asp-action="Return"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="returnComment" class="form-label">
-                                Return for changes
-                            </label>
-
-                            <input type="text"
-                                   id="returnComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="What needs changing" />
-
-                            <button type="submit"
-                                    class="btn btn-outline-secondary">
-                                Return to applicant
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <form asp-action="Reject"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <label for="rejectComment" class="form-label">
-                                Decline
-                            </label>
-
-                            <input type="text"
-                                   id="rejectComment"
-                                   name="comment"
-                                   class="form-control mb-2"
-                                   placeholder="Reason" />
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger">
-                                Decline
-                            </button>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-    }
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-header">History</div>
-
-        @if (Model.History.Any())
-        {
-            <div class="card-body is-table">
-
-                <div class="table-responsive">
-
-                    <table class="table table-sm align-middle mb-0">
-
-                        <thead>
-                            <tr>
-                                <th>When</th>
-                                <th>What happened</th>
-                                <th>By</th>
-                                <th>Comment</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var entry in Model.History
-                            .OrderByDescending(h => h.ActionDate))
-                        {
-                            <tr>
-
-                                <td>
-                                    @(entry.ActionDate.ToLocalTime().ToString("d MMM yyyy HH:mm"))
-                                </td>
-
-                                <td>@entry.Action</td>
-
-                                <td>
-                                    @(entry.ActionedByEmployee == null
-                                        ? "--"
-                                        : entry.ActionedByEmployee.FirstName
-                                          + " "
-                                          + entry.ActionedByEmployee.LastName)
-                                </td>
-
-                                <td class="text-muted">
-                                    @(string.IsNullOrWhiteSpace(entry.Comment)
-                                        ? "--"
-                                        : entry.Comment)
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-        }
-        else
-        {
-            <div class="card-body">
-
-                <p class="empty-state">
-                    <span class="empty-icon">&#128220;</span>
-                    Nothing has happened to this application yet.
-                </p>
-
-            </div>
-        }
 
     </div>
 

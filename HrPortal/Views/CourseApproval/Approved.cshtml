@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Approved Course Applications";
+    ViewData["ListTitle"] = "Approved";
+    ViewData["ListDecided"] = true;
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
 }
 
 <div class="container-fluid">
@@ -9,25 +13,18 @@
     <div class="page-head">
 
         <div>
-            <h2>Approved, to print</h2>
-
-            <p class="text-muted mb-0">
-                Applications the Managing Consultant has approved.
-                Print the form and take it to Finance.
-            </p>
+            <h2>Approved, to Print</h2>
+            <p>Applications the Managing Consultant has approved. Print the form and take it to Finance.</p>
         </div>
 
-        <div class="page-head-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="List"
-               asp-route-stage="@ViewBag.Queue">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Download
+            <a class="btn btn-outline-secondary" asp-action="List" asp-route-stage="@ViewBag.Queue">
+                <i class="fas fa-download" aria-hidden="true"></i> Download
             </a>
 
             <a class="btn btn-outline-secondary" asp-action="Index">
-                Waiting on me
+                <i class="fas fa-inbox" aria-hidden="true"></i> Waiting on me
             </a>
 
         </div>
@@ -38,6 +35,42 @@
     {
         <div class="alert alert-success">@TempData["Success"]</div>
     }
+
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Approved</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+            <div>
+                <div class="kpi-label">Approved This Month</div>
+                <div class="kpi-value">@Model.Count(c => c.CompletedAt >= monthStart)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">Employees</div>
+                <div class="kpi-value">@Model.Select(c => c.EmployeeId).Distinct().Count()</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+            <div>
+                <div class="kpi-label">Exams Still Ahead</div>
+                <div class="kpi-value">@Model.Count(c => c.TargetExamDate >= today)</div>
+            </div>
+        </div>
+
+    </div>
 
     <partial name="_CourseApplicationTable" model="Model" />
 

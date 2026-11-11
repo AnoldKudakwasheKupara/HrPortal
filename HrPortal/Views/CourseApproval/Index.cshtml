@@ -1,9 +1,18 @@
+@using HrPortal.ViewModels
 @model List<HrPortal.Entities.CourseApplication>
 
 @{
     var stage = ViewBag.Stage as string ?? "review";
+    ViewData["Title"] ??= "Course Applications";
+    var today = DateTime.Today;
 
-    ViewData["Title"] = "Course Applications";
+    var stats = new QueueStats(
+        Model.Count,
+        "Programmes",
+        Model.Select(c => c.ProgramIntended.Trim().ToLowerInvariant()).Distinct().Count().ToString(),
+        Model.Any() ? Model.Min(c => c.SubmittedAt ?? c.CreatedAt) : null,
+        "Exams Within 60 Days",
+        Model.Count(c => c.TargetExamDate?.Date >= today && c.TargetExamDate?.Date <= today.AddDays(60)).ToString());
 }
 
 <div class="container-fluid">
@@ -11,27 +20,20 @@
     <div class="page-head">
 
         <div>
-            <h2>Course applications</h2>
-
-            <p class="text-muted mb-0">
-                Waiting on you at @stage.
-            </p>
+            <h2>@ViewData["Title"]</h2>
+            <p>Waiting on you at @stage.</p>
         </div>
 
-        <div class="page-head-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="List"
-               asp-route-stage="@ViewBag.Queue">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Download
+            <a class="btn btn-outline-secondary" asp-action="List" asp-route-stage="@ViewBag.Queue">
+                <i class="fas fa-download" aria-hidden="true"></i> Download
             </a>
 
             @if (User.IsInRole(HrPortal.Security.Roles.HrOfficer))
             {
-                <a class="btn btn-outline-secondary"
-                   asp-action="Approved">
-                    Approved, to print
+                <a class="btn btn-outline-secondary" asp-action="Approved">
+                    <i class="fas fa-print" aria-hidden="true"></i> Approved, to print
                 </a>
             }
 
@@ -48,6 +50,8 @@
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
+
+    <partial name="_QueueStats" model="stats" />
 
     <partial name="_CourseApplicationTable" model="Model" />
 

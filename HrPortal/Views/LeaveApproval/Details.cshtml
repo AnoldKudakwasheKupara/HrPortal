@@ -1,372 +1,234 @@
+@using HrPortal.Services
 @model HrPortal.ViewModels.LeaveApprovalViewModel
 
 @{
     ViewData["Title"] = "Review Leave Request";
 
     var request = Model.Request;
+    var balance = Model.Balance;
+    var canAct = Model.CanActAsHr || Model.CanActAsMd || Model.CanActAsSupervisor;
+    var back = Model.CanActAsMd ? "FinalApproval" : Model.CanActAsSupervisor ? "MyTeam" : "Index";
+    var dates = request.StartDate.Date == request.EndDate.Date
+        ? request.StartDate.ToString("d MMM yyyy")
+        : $"{request.StartDate:d MMM yyyy} – {request.EndDate:d MMM yyyy}";
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@request.RequestNumber</h2>
-
-            <p class="text-muted">
-                Review Leave Request
-            </p>
+            <p>@request.Employee.FirstName @request.Employee.LastName, @request.LeaveType.Name, @dates</p>
         </div>
 
-        <partial name="_DownloadPdf" model="@Model.Request.Id" />
-
-        <a asp-action="@(Model.CanActAsMd ? "FinalApproval" : "Index")"
-           class="btn btn-secondary">
-
-            Back to Queue
-
-        </a>
+        <div class="head-actions">
+            <partial name="_LeaveStatusBadge" model="request.Status" />
+            <partial name="_DownloadPdf" model="@request.Id" />
+            <a asp-action="@back" class="btn btn-outline-secondary">Back to queue</a>
+        </div>
 
     </div>
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row g-3">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i> Request Details
+                    </h3>
+                    <partial name="_LeaveStatusBadge" model="request.Status" />
+                </div>
 
-                    <span class="field-label">Employee</span>
+                <div class="facts">
 
-                    <div class="field-value">
-                        @request.Employee.FirstName
-                        @request.Employee.LastName
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Employee</span><strong>@request.Employee.FirstName @request.Employee.LastName</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department</span><strong>@(request.Employee.Department?.Name ?? "--")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-tags" aria-hidden="true"></i>
+                        <div><span>Leave type</span><strong>@request.LeaveType.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-week" aria-hidden="true"></i>
+                        <div><span>Dates</span><strong>@dates</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-business-time" aria-hidden="true"></i>
+                        <div><span>Working days</span><strong>@request.NumberOfDays.ToString("0.##")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                        <div><span>Submitted</span><strong>@request.SubmittedAt.ToLocalTime().ToString("d MMM yyyy")</strong></div>
                     </div>
 
                 </div>
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Department</span>
-
-                    <div class="field-value">
-                        @request.Employee.Department.Name
-                    </div>
-
+                <div class="panel-block">
+                    <h4><i class="fas fa-comment" aria-hidden="true"></i> Reason</h4>
+                    <p class="pre-line">@(request.Reason ?? "No reason given.")</p>
                 </div>
 
-                <div class="col-md-4">
+            </section>
 
-                    <span class="field-label">Leave Type</span>
+            <section class="panel-card mb-3">
 
-                    <div class="field-value">
-                        @request.LeaveType.Name
-                    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> History
+                </h3>
 
-                </div>
+                <partial name="_Timeline" model="Timeline.Of(request.History)" />
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Dates</span>
-
-                    <div class="field-value">
-                        @request.StartDate.ToString("dd MMM yyyy")
-                        &ndash;
-                        @request.EndDate.ToString("dd MMM yyyy")
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Working Days</span>
-
-                    <div class="field-value">
-                        @request.NumberOfDays.ToString("0.##")
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Status</span>
-
-                    <div class="field-value">
-                        <partial name="_LeaveStatusBadge"
-                                 model="request.Status" />
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Reason</span>
-
-                    <div class="field-value">
-                        @(request.Reason ?? "No reason given.")
-                    </div>
-
-                </div>
-
-            </div>
+            </section>
 
         </div>
 
-    </div>
+        <div class="col-lg-4">
 
-    @if (Model.Balance != null)
-    {
-        <div class="card shadow-sm mb-4">
+            <section class="panel-card mb-3">
 
-            <div class="card-header">@Model.Balance.LeaveType.Name balance for @Model.Balance.Year</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-gavel" aria-hidden="true"></i>
+                    @(Model.CanActAsSupervisor ? "Supervisor Approval" : Model.CanActAsMd ? "Final Decision" : canAct ? "HR Decision" : "Decision")
+                </h3>
 
-            <div class="card-body">
-
-                @if (Model.Balance.RemainingDays < 0)
+                @if (canAct)
                 {
-                    <div class="alert alert-warning">
-                        This leave takes the balance below zero, to
-                        <strong>@Model.Balance.RemainingDays.ToString("0.##") days</strong>.
-                    </div>
-                }
+                    <form method="post">
 
-                <div class="row text-center">
+                        <input type="hidden" name="id" value="@request.Id" />
 
-                    <div class="col">
-                        <span class="field-label">Opening + earned</span>
-                        <div class="field-value">@Model.Balance.AllocatedDays.ToString("0.##")</div>
-                    </div>
-
-                    <div class="col">
-                        <span class="field-label">Used</span>
-                        <div class="field-value">@Model.Balance.UsedDays.ToString("0.##")</div>
-                    </div>
-
-                    <div class="col">
-                        <span class="field-label">Pending</span>
-                        <div class="field-value">@Model.Balance.PendingDays.ToString("0.##")</div>
-                    </div>
-
-                    <div class="col">
-                        <span class="field-label">Remaining</span>
-                        <div class="field-value">
-                            @if (Model.Balance.RemainingDays < 0)
-                            {
-                                <span class="badge bg-danger">
-                                    @Model.Balance.RemainingDays.ToString("0.##")
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">
-                                    @Model.Balance.RemainingDays.ToString("0.##")
-                                </span>
-                            }
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-    }
-
-    @if (Model.CanActAsHr || Model.CanActAsMd || Model.CanActAsSupervisor)
-    {
-        <div class="card shadow-sm mb-4">
-
-            <div class="card-header">
-                @(Model.CanActAsSupervisor
-                    ? "Supervisor Approval"
-                    : Model.CanActAsMd
-                        ? "Final Decision"
-                        : "HR Decision")
-            </div>
-
-            <div class="card-body">
-
-                <form method="post">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="id" value="@request.Id" />
-
-                    <div class="mb-3">
-
-                        <label for="comment"
-                               class="form-label">
-                            Comment
-                        </label>
-
-                        <textarea id="comment"
-                                  name="comment"
-                                  class="form-control"
-                                  rows="3"
+                        <label for="comment" class="form-label">Comment</label>
+                        <textarea id="comment" name="comment" class="form-control mb-3" rows="3"
                                   placeholder="Required when rejecting or returning"></textarea>
 
+                        <div class="d-grid gap-2">
+
+                            @if (Model.CanActAsSupervisor)
+                            {
+                                <button type="submit" class="btn btn-gold" asp-action="SupervisorApprove">
+                                    <i class="fas fa-check" aria-hidden="true"></i> Approve and send to HR
+                                </button>
+                                <button type="submit" class="btn btn-outline-warning" asp-action="SupervisorReturn">
+                                    <i class="fas fa-rotate-left" aria-hidden="true"></i> Return to employee
+                                </button>
+                                <button type="submit" class="btn btn-outline-danger" asp-action="SupervisorReject">
+                                    <i class="fas fa-xmark" aria-hidden="true"></i> Reject
+                                </button>
+                            }
+
+                            @if (Model.CanActAsHr)
+                            {
+                                <button type="submit" class="btn btn-gold" asp-action="HrApprove">
+                                    <i class="fas fa-check" aria-hidden="true"></i> Approve and send to MD
+                                </button>
+                                <button type="submit" class="btn btn-outline-warning" asp-action="HrReturn">
+                                    <i class="fas fa-rotate-left" aria-hidden="true"></i> Return to employee
+                                </button>
+                                <button type="submit" class="btn btn-outline-danger" asp-action="HrReject">
+                                    <i class="fas fa-xmark" aria-hidden="true"></i> Reject
+                                </button>
+                            }
+
+                            @if (Model.CanActAsMd)
+                            {
+                                <button type="submit" class="btn btn-gold" asp-action="MdApprove">
+                                    <i class="fas fa-check" aria-hidden="true"></i> Approve
+                                </button>
+                                <button type="submit" class="btn btn-outline-danger" asp-action="MdReject">
+                                    <i class="fas fa-xmark" aria-hidden="true"></i> Reject
+                                </button>
+                            }
+
+                        </div>
+
+                    </form>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">
+                        This request is not waiting on you. It is currently
+                        <partial name="_LeaveStatusBadge" model="request.Status" />
+                    </p>
+                }
+
+            </section>
+
+            @if (balance != null)
+            {
+                var scale = Math.Max(balance.AllocatedDays, balance.UsedDays + balance.PendingDays);
+                string Pct(decimal d) => (scale <= 0 ? 0 : Math.Round(Math.Clamp(d, 0, scale) / scale * 100, 1))
+                    .ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-scale-balanced" aria-hidden="true"></i> @balance.LeaveType.Name, @balance.Year
+                    </h3>
+
+                    @if (balance.RemainingDays < 0)
+                    {
+                        <div class="alert alert-warning small">
+                            This leave takes the balance below zero, to <strong>@balance.RemainingDays.ToString("0.##") days</strong>.
+                        </div>
+                    }
+
+                    <div class="balance-bar mb-3" role="img"
+                         aria-label="@balance.UsedDays.ToString("0.##") used and @balance.PendingDays.ToString("0.##") pending of @balance.AllocatedDays.ToString("0.##")">
+                        <span class="is-used" style="width: @Pct(balance.UsedDays)%"></span>
+                        <span class="is-pending" style="width: @Pct(balance.PendingDays)%"></span>
                     </div>
 
-                    @if (Model.CanActAsSupervisor)
-                    {
-                        <button type="submit"
-                                class="btn btn-success"
-                                asp-action="SupervisorApprove">
-                            Approve and send to HR
-                        </button>
+                    <dl class="info-list">
+                        <dt>Opening + earned</dt>
+                        <dd>@balance.AllocatedDays.ToString("0.##")</dd>
+                        <dt><span class="legend-dot is-used"></span> Used</dt>
+                        <dd>@balance.UsedDays.ToString("0.##")</dd>
+                        <dt><span class="legend-dot is-pending"></span> Pending</dt>
+                        <dd>@balance.PendingDays.ToString("0.##")</dd>
+                        <dt>Remaining</dt>
+                        <dd class="@(balance.RemainingDays < 0 ? "text-danger" : "")">@balance.RemainingDays.ToString("0.##")</dd>
+                    </dl>
 
-                        <button type="submit"
-                                class="btn btn-warning"
-                                asp-action="SupervisorReturn">
-                            Return to employee
-                        </button>
-
-                        <button type="submit"
-                                class="btn btn-danger"
-                                asp-action="SupervisorReject">
-                            Reject
-                        </button>
-                    }
-
-                    @if (Model.CanActAsHr)
-                    {
-                        <button type="submit"
-                                class="btn btn-success"
-                                asp-action="HrApprove">
-                            Approve and send to MD
-                        </button>
-
-                        <button type="submit"
-                                class="btn btn-warning"
-                                asp-action="HrReturn">
-                            Return to employee
-                        </button>
-
-                        <button type="submit"
-                                class="btn btn-danger"
-                                asp-action="HrReject">
-                            Reject
-                        </button>
-                    }
-
-                    @if (Model.CanActAsMd)
-                    {
-                        <button type="submit"
-                                class="btn btn-success"
-                                asp-action="MdApprove">
-                            Approve
-                        </button>
-
-                        <button type="submit"
-                                class="btn btn-danger"
-                                asp-action="MdReject">
-                            Reject
-                        </button>
-                    }
-
-                </form>
-
-            </div>
-
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-secondary">
-
-            This request is not waiting on you. It is currently
-            <partial name="_LeaveStatusBadge" model="request.Status" />
-
-        </div>
-    }
-
-    <div class="card shadow-sm">
-
-        <div class="card-header">History</div>
-
-        <div class="card-body @(request.History.Any() ? "is-table" : "")">
-
-            @if (request.History.Any())
-            {
-                <div class="table-responsive">
-
-                    <table class="table">
-
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>By</th>
-                                <th>Date</th>
-                                <th>Status Change</th>
-                                <th>Comment</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var entry in request.History
-                            .OrderBy(h => h.ActionDate))
-                        {
-                            <tr>
-
-                                <td>
-                                    <strong>@entry.Action</strong>
-                                </td>
-
-                                <td>
-                                    @entry.ActionedByEmployee.FirstName
-                                    @entry.ActionedByEmployee.LastName
-                                </td>
-
-                                <td>
-                                    @entry.ActionDate.ToString("dd MMM yyyy HH:mm")
-                                </td>
-
-                                <td>
-                                    <span class="text-muted">
-                                        @entry.PreviousStatus
-                                    </span>
-                                    &rarr;
-                                    @entry.NewStatus
-                                </td>
-
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(entry.Comment))
-                                    {
-                                        @entry.Comment
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">
-                                            No comment
-                                        </span>
-                                    }
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
+                </section>
             }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128220;</span>
-                    No history has been recorded for this request.
-                </p>
-            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Request Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Request No.</dt>
+                    <dd>@request.RequestNumber</dd>
+                    <dt>Status</dt>
+                    <dd><partial name="_LeaveStatusBadge" model="request.Status" /></dd>
+                    <dt>Submitted</dt>
+                    <dd>@request.SubmittedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")</dd>
+                    <dt>Completed</dt>
+                    <dd>@(request.CompletedAt?.ToLocalTime().ToString("d MMM yyyy, HH:mm") ?? "Still in progress")</dd>
+                </dl>
+
+            </section>
 
         </div>
 

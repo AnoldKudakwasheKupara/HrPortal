@@ -1,8 +1,22 @@
 @using HrPortal.Services
+@using HrPortal.ViewModels
 @model List<HrPortal.Entities.LoanApplication>
 
 @{
     ViewData["Title"] = "Sanctioned Loans";
+
+    var paged = PagedList.Of(Model, PagedList.PageFrom(Context.Request));
+    var today = DateTime.Today;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+
+    string ByCurrency(Func<HrPortal.Entities.LoanApplication, decimal?> amount) =>
+        Model.Where(l => amount(l) != null)
+            .GroupBy(l => l.Currency)
+            .Select(g => LoanCurrencies.Format(g.Key, g.Sum(l => amount(l)!.Value)))
+            .DefaultIfEmpty("0")
+            .Aggregate((a, b) => a + " + " + b);
+
+    var repaying = Model.Where(l => MyLoansIndexViewModel.IsRepaying(l, today)).ToList();
 }
 
 <div class="container-fluid">
@@ -10,20 +24,64 @@
     <div class="page-head">
 
         <div>
-            <h2>Sanctioned loans</h2>
-
-            <p class="text-muted mb-0">
-                Loans the Managing Director has sanctioned. Print the
-                form and take it to Finance.
-            </p>
+            <h2>Sanctioned Loans</h2>
+            <p>Loans the Managing Director has sanctioned. Print the form and take it to Finance.</p>
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Sanctioned</div>
+                <div class="kpi-value">@Model.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-money-bill-wave"></i></span>
+            <div>
+                <div class="kpi-label">Total Authorised</div>
+                <div class="kpi-value kpi-value-text">@ByCurrency(l => l.AmountAuthorised)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-rotate"></i></span>
+            <div>
+                <div class="kpi-label">Being Repaid</div>
+                <div class="kpi-value">@repaying.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+            <div>
+                <div class="kpi-label">Sanctioned This Month</div>
+                <div class="kpi-value">@Model.Count(l => l.CompletedAt >= monthStart)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-hand-holding-dollar" aria-hidden="true"></i> For Finance
+            <span class="tab-count">@Model.Count</span>
+        </h3>
+
+        @if (!Model.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-mug-hot" aria-hidden="true"></i>
+                <p>No loans are waiting to go to Finance.</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
                 <table class="table table-hover align-middle mb-0">
@@ -34,78 +92,41 @@
                             <th>Applicant</th>
                             <th class="num">Authorised</th>
                             <th>Repayment</th>
-                            <th>Deductions start</th>
-                            <th class="col-actions">Actions</th>
+                            <th>Deductions Start</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                No loans are waiting to go to Finance.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var application in Model)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>@application.ApplicationNumber</strong>
-                            </td>
-
-                            <td>
-                                @application.Employee.FirstName
-                                @application.Employee.LastName
-                                <div class="row-meta">
-                                    @(application.Employee.Department?.Name ?? "--")
-                                </div>
-                            </td>
-
-                            <td class="num">
-                                @(application.AmountAuthorised == null
-                                    ? "--"
-                                    : LoanCurrencies.Format(application.Currency, application.AmountAuthorised.Value))
-                            </td>
-
-                            <td>
-                                @application.RepaymentMonths months
-                                @if (application.MonthlyInstalment != null)
-                                {
-                                    <div class="row-meta">
-                                        @LoanCurrencies.Format(application.Currency, application.MonthlyInstalment.Value) a month
+                        @foreach (var application in paged.Items)
+                        {
+                            <tr>
+                                <td class="text-nowrap fw-semibold">@application.ApplicationNumber</td>
+                                <td>
+                                    <div class="fw-semibold">@application.Employee.FirstName @application.Employee.LastName</div>
+                                    <div class="small text-muted">@(application.Employee.Department?.Name ?? "")</div>
+                                </td>
+                                <td class="num text-nowrap">
+                                    @(application.AmountAuthorised == null ? "-" : LoanCurrencies.Format(application.Currency, application.AmountAuthorised.Value))
+                                </td>
+                                <td>
+                                    <div class="text-nowrap">@application.RepaymentMonths months</div>
+                                    @if (application.MonthlyInstalment != null)
+                                    {
+                                        <div class="small text-muted text-nowrap">@LoanCurrencies.Format(application.Currency, application.MonthlyInstalment.Value) a month</div>
+                                    }
+                                </td>
+                                <td class="text-nowrap">@(application.RepaymentStartDate?.ToString("d MMM yyyy") ?? "-")</td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Form" asp-route-id="@application.Id">
+                                            <i class="fas fa-download" aria-hidden="true"></i> Form (PDF)
+                                        </a>
                                     </div>
-                                }
-                            </td>
-
-                            <td>
-                                @(application.RepaymentStartDate == null
-                                    ? "--"
-                                    : application.RepaymentStartDate.Value.ToString("d MMM yyyy"))
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-primary"
-                                       asp-action="Form"
-                                       asp-route-id="@application.Id">
-                                        <i class="fas fa-download" aria-hidden="true"></i>
-                                        Form (PDF)
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -113,8 +134,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "loan", "loans")' />
+        }
 
-    </div>
+    </section>
 
 </div>
