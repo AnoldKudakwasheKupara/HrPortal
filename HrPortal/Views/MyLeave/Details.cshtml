@@ -1,299 +1,207 @@
-﻿@model HrPortal.Entities.LeaveRequest
+﻿@using HrPortal.Entities
+@using HrPortal.Services
+@model HrPortal.Entities.LeaveRequest
 
 @{
     ViewData["Title"] = "My Leave Request";
+
+    var balance = ViewBag.Balance as LeaveBalance;
+    var withEmployee = LeaveWorkflowService.IsWithEmployee(Model.Status);
+    var final = LeaveWorkflowService.IsFinal(Model.Status);
+    var dates = Model.StartDate.Date == Model.EndDate.Date
+        ? Model.StartDate.ToString("d MMM yyyy")
+        : $"{Model.StartDate:d MMM yyyy} – {Model.EndDate:d MMM yyyy}";
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.RequestNumber</h2>
-
-            <p class="text-muted">
-                @Model.LeaveType.Name
-            </p>
+            <p>@Model.LeaveType.Name, @dates</p>
         </div>
 
-        <div class="table-actions">
+        <div class="head-actions">
 
-            <a asp-action="Form"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-secondary">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Application form (PDF)
+            <partial name="_LeaveStatusBadge" model="Model.Status" />
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a asp-action="Index"
-               class="btn btn-secondary">
-                Back
-            </a>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
 
         </div>
 
     </div>
 
-    @{
-        var balance = ViewBag.Balance as HrPortal.Entities.LeaveBalance;
-    }
-
-    <div class="card shadow-sm mb-3">
-
-        <div class="card-header">Applicant</div>
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">First name</span>
-                    <div class="field-value">@Model.Employee.FirstName</div>
-                </div>
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Surname</span>
-                    <div class="field-value">@Model.Employee.LastName</div>
-                </div>
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Employee number</span>
-                    <div class="field-value">
-                        @Model.Employee.EmployeeNumber
-                    </div>
-                </div>
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Department</span>
-                    <div class="field-value">
-                        @(Model.Employee.Department?.Name ?? "--")
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    @if (balance != null)
+    @if (TempData["Success"] != null)
     {
-        <div class="card shadow-sm mb-3">
-
-            <div class="card-header d-flex justify-content-between align-items-center">
-
-                <span>@Model.LeaveType.Name days</span>
-
-                <span class="text-muted small">@balance.Year</span>
-
-            </div>
-
-            <div class="card-body">
-
-                <div class="row g-3">
-
-                    <div class="col-sm-4">
-                        <span class="field-label">Total leave days taken</span>
-                        <div class="field-value">
-                            @balance.UsedDays.ToString("0.##")
-                        </div>
-                    </div>
-
-                    <div class="col-sm-4">
-                        <span class="field-label">Total leave days accrued</span>
-                        <div class="field-value">
-                            @balance.AllocatedDays.ToString("0.##")
-                        </div>
-                    </div>
-
-                    <div class="col-sm-4">
-                        <span class="field-label">Leave days balance</span>
-                        <div class="field-value">
-                            @balance.RemainingDays.ToString("0.##")
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row g-3">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Leave Type</span>
-
-                    <div class="field-value">@Model.LeaveType.Name</div>
-
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i> Request Details
+                    </h3>
+                    <partial name="_LeaveStatusBadge" model="Model.Status" />
                 </div>
 
-                <div class="col-md-4">
+                <div class="facts">
 
-                    <span class="field-label">Dates</span>
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Applicant</span><strong>@Model.Employee.FirstName @Model.Employee.LastName</strong></div>
+                    </div>
 
-                    <div class="field-value">
-                        @Model.StartDate.ToString("dd MMM yyyy")
-                        &ndash;
-                        @Model.EndDate.ToString("dd MMM yyyy")
+                    <div class="fact">
+                        <i class="fas fa-hashtag" aria-hidden="true"></i>
+                        <div><span>Employee number</span><strong>@Model.Employee.EmployeeNumber</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department</span><strong>@(Model.Employee.Department?.Name ?? "--")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-tags" aria-hidden="true"></i>
+                        <div><span>Leave type</span><strong>@Model.LeaveType.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-week" aria-hidden="true"></i>
+                        <div><span>Dates</span><strong>@dates</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-business-time" aria-hidden="true"></i>
+                        <div><span>Working days</span><strong>@Model.NumberOfDays.ToString("0.##")</strong></div>
                     </div>
 
                 </div>
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Working Days</span>
-
-                    <div class="field-value">@Model.NumberOfDays.ToString("0.##")</div>
-
+                <div class="panel-block">
+                    <h4><i class="fas fa-comment" aria-hidden="true"></i> Reason</h4>
+                    <p class="pre-line">@(Model.Reason ?? "No reason given.")</p>
                 </div>
 
-                <div class="col-md-4">
+            </section>
 
-                    <span class="field-label">Status</span>
+            <section class="panel-card mb-3">
 
-                    <div class="field-value">
-                        <partial name="_LeaveStatusBadge"
-                                 model="Model.Status" />
-                    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Progress
+                </h3>
 
-                </div>
+                <partial name="_Timeline" model="Timeline.Of(Model.History)" />
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Submitted</span>
-
-                    <div class="field-value">
-                        @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Completed</span>
-
-                    <div class="field-value">
-                        @if (Model.CompletedAt.HasValue)
-                        {
-                            @Model.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                Still in progress
-                            </span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Reason</span>
-
-                    <div class="field-value">@(Model.Reason ?? "No reason given.")</div>
-
-                </div>
-
-            </div>
+            </section>
 
         </div>
 
-    </div>
+        <div class="col-lg-4">
 
-    <div class="card shadow-sm">
+            <section class="panel-card mb-3">
 
-        <div class="card-header">Progress</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> What Happens Next
+                </h3>
 
-        <div class="card-body @(Model.History.Any() ? "is-table" : "")">
+                <p class="small text-muted">
+                    @if (withEmployee)
+                    {
+                        <text>This is back with you. Edit it and send it again, or cancel it.</text>
+                    }
+                    else if (final)
+                    {
+                        <text>A decision has been made. Nothing more is needed from you.</text>
+                    }
+                    else
+                    {
+                        <text>This is being looked at. You will get a notification when it moves on.</text>
+                    }
+                </p>
 
-            @if (Model.History.Any())
-            {
-                <div class="table-responsive">
+                <div class="d-grid gap-2">
 
-                    <table class="table">
+                    @if (withEmployee)
+                    {
+                        <a class="btn btn-gold" asp-action="Edit" asp-route-id="@Model.Id">
+                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit and resend
+                        </a>
+                    }
 
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>By</th>
-                                <th>Date</th>
-                                <th>Status Change</th>
-                                <th>Comment</th>
-                            </tr>
-                        </thead>
+                    @if (!final)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-grid"
+                              onsubmit="return confirm('Cancel @Model.RequestNumber?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Cancel request
+                            </button>
+                        </form>
+                    }
 
-                        <tbody>
-
-                        @foreach (var entry in Model.History
-                            .OrderBy(h => h.ActionDate))
-                        {
-                            <tr>
-
-                                <td>
-                                    <strong>@entry.Action</strong>
-                                </td>
-
-                                <td>
-                                    @entry.ActionedByEmployee.FirstName
-                                    @entry.ActionedByEmployee.LastName
-                                </td>
-
-                                <td>
-                                    @entry.ActionDate.ToString("dd MMM yyyy HH:mm")
-                                </td>
-
-                                <td>
-                                    <span class="text-muted">
-                                        @entry.PreviousStatus
-                                    </span>
-                                    &rarr;
-                                    @entry.NewStatus
-                                </td>
-
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(entry.Comment))
-                                    {
-                                        @entry.Comment
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">
-                                            No comment
-                                        </span>
-                                    }
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
+                    <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download the form
+                    </a>
 
                 </div>
-            }
-            else
+
+            </section>
+
+            @if (balance != null)
             {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128220;</span>
-                    Nothing has happened to this request yet.
-                </p>
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-scale-balanced" aria-hidden="true"></i> @Model.LeaveType.Name, @balance.Year
+                    </h3>
+
+                    <dl class="info-list">
+                        <dt>Days accrued</dt>
+                        <dd>@balance.AllocatedDays.ToString("0.##")</dd>
+                        <dt>Days taken</dt>
+                        <dd>@balance.UsedDays.ToString("0.##")</dd>
+                        <dt>Days pending</dt>
+                        <dd>@balance.PendingDays.ToString("0.##")</dd>
+                        <dt>Balance</dt>
+                        <dd class="@(balance.RemainingDays < 0 ? "text-danger" : "")">@balance.RemainingDays.ToString("0.##")</dd>
+                    </dl>
+
+                </section>
             }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Request Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Request No.</dt>
+                    <dd>@Model.RequestNumber</dd>
+                    <dt>Status</dt>
+                    <dd><partial name="_LeaveStatusBadge" model="Model.Status" /></dd>
+                    <dt>Submitted</dt>
+                    <dd>@Model.SubmittedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")</dd>
+                    <dt>Completed</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy, HH:mm") ?? "Still in progress")</dd>
+                </dl>
+
+            </section>
 
         </div>
 

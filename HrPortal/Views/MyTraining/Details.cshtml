@@ -1,222 +1,242 @@
-﻿@model HrPortal.Entities.TrainingAssignment
+﻿@using HrPortal.ViewModels
+@model HrPortal.Entities.TrainingAssignment
 
 @{
     ViewData["Title"] = "Training Course";
+    var course = Model.TrainingCourse;
+    var overdue = MyTrainingIndexViewModel.IsOverdue(Model, DateTime.Today);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
-            <h2>@Model.TrainingCourse.Title</h2>
-
-            <p class="text-muted">
-                Assigned
-                @Model.AssignedAt.ToString("dd MMM yyyy")
-            </p>
+            <h2>@course.Title</h2>
+            <p>Assigned @Model.AssignedAt.ToString("d MMM yyyy")</p>
         </div>
 
-        <partial name="_DownloadPdf" model="@Model.Id" />
-
-        <a asp-action="Index"
-           class="btn btn-secondary">
-            Back
-        </a>
-
-    </div>
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
-    }
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Trainer</span>
-
-                    <div class="field-value">@(Model.TrainingCourse.TrainerName ?? "Not set")</div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Training Date</span>
-
-                    <div class="field-value">
-                        @if (Model.TrainingCourse.TrainingDate.HasValue)
-                        {
-                            @Model.TrainingCourse.TrainingDate.Value.ToString("dd MMM yyyy")
-                        }
-                        else
-                        {
-                            <span class="text-muted">Not scheduled</span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Due</span>
-
-                    <div class="field-value">
-                        @if (Model.DueDate.HasValue)
-                        {
-                            @Model.DueDate.Value.ToString("dd MMM yyyy")
-                        }
-                        else
-                        {
-                            <span class="text-muted">No due date</span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Description</span>
-
-                    <div class="field-value">
-                        @(Model.TrainingCourse.Description
-                          ?? "No description provided.")
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-header">Course Materials</div>
-
-        <div class="card-body">
-
-            @if (Model.TrainingCourse.Materials.Any())
-            {
-                <ul class="row-list">
-
-                @foreach (var material in Model.TrainingCourse.Materials
-                    .OrderByDescending(m => m.UploadedAt))
-                {
-                    <li>
-
-                        <span class="row-icon">
-                            <i class="fas fa-file-lines" aria-hidden="true"></i>
-                        </span>
-
-                        <div class="row-main">
-
-                            <span class="row-title">
-                                @material.OriginalFileName
-                            </span>
-
-                            <span class="row-meta">
-                                @if (!string.IsNullOrWhiteSpace(material.Description))
-                                {
-                                    @material.Description
-                                }
-                                else
-                                {
-                                    <text>Uploaded @material.UploadedAt.ToString("dd MMM yyyy")</text>
-                                }
-                            </span>
-
-                        </div>
-
-                        @if (HrPortal.Services.FileStorageService
-                            .CanPreview(material.OriginalFileName))
-                        {
-                            <a class="btn btn-sm btn-outline-secondary"
-                               asp-action="MaterialPreview"
-                               asp-route-id="@material.Id"
-                               target="_blank">
-                                Preview
-                            </a>
-                        }
-
-                        <a class="btn btn-sm btn-outline-primary"
-                           asp-action="Material"
-                           asp-route-id="@material.Id">
-                            Download
-                        </a>
-
-                    </li>
-                }
-
-                </ul>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128193;</span>
-                    No materials have been uploaded for this course.
-                </p>
-            }
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm">
-
-        <div class="card-body">
+        <div class="head-actions">
 
             @if (Model.IsCompleted)
             {
-                <p>
-                    <span class="badge bg-success">Completed</span>
-                    on @Model.CompletedAt?.ToString("dd MMM yyyy")
-                </p>
-
-                @if (Model.Feedback == null)
-                {
-                    <a asp-action="Feedback"
-                       asp-route-id="@Model.Id"
-                       class="btn btn-primary">
-                        Give feedback
-                    </a>
-                }
-                else
-                {
-                    <p class="mb-0 text-muted">
-                        You rated this course
-                        @Model.Feedback.Rating out of 5.
-                    </p>
-                }
+                <span class="status-badge badge-green">Completed</span>
+            }
+            else if (overdue)
+            {
+                <span class="status-badge badge-red">Overdue</span>
             }
             else
             {
-                <p>
-                    When you have worked through the materials, mark
-                    this training as complete.
-                </p>
-
-                <form asp-action="Complete"
-                      asp-route-id="@Model.Id"
-                      method="post">
-
-                    @Html.AntiForgeryToken()
-
-                    <button type="submit"
-                            class="btn btn-success">
-                        Mark as completed
-                    </button>
-
-                </form>
+                <span class="status-badge badge-amber">Outstanding</span>
             }
+
+            <partial name="_DownloadPdf" model="@Model.Id" />
+
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row g-3">
+
+        <div class="col-lg-8">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-chalkboard-user" aria-hidden="true"></i> Course Details
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
+                        <div>
+                            <span>Trainer</span>
+                            @if (course.TrainerName == null)
+                            {
+                                <em>Not set</em>
+                            }
+                            else
+                            {
+                                <strong>@course.TrainerName</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                        <div>
+                            <span>Training date</span>
+                            @if (course.TrainingDate == null)
+                            {
+                                <em>Not scheduled</em>
+                            }
+                            else
+                            {
+                                <strong>@course.TrainingDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-flag-checkered" aria-hidden="true"></i>
+                        <div>
+                            <span>Due</span>
+                            @if (Model.DueDate == null)
+                            {
+                                <em>No due date</em>
+                            }
+                            else
+                            {
+                                <strong class="@(overdue ? "text-danger" : "")">@Model.DueDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                        <div><span>Assigned</span><strong>@Model.AssignedAt.ToString("d MMM yyyy")</strong></div>
+                    </div>
+
+                </div>
+
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(course.Description ?? "No description provided.")</p>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-file-lines" aria-hidden="true"></i> Course Materials
+                    <span class="tab-count">@course.Materials.Count</span>
+                </h3>
+
+                @if (!course.Materials.Any())
+                {
+                    <p class="text-muted mb-0">No materials have been uploaded for this course.</p>
+                }
+                else
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var material in course.Materials.OrderByDescending(m => m.UploadedAt))
+                        {
+                            <div class="doc-row">
+
+                                <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+
+                                <div class="doc-info">
+                                    <div class="doc-name text-break">@material.OriginalFileName</div>
+                                    <div class="doc-meta">
+                                        @(string.IsNullOrWhiteSpace(material.Description)
+                                            ? "Uploaded " + material.UploadedAt.ToString("d MMM yyyy")
+                                            : material.Description)
+                                    </div>
+                                </div>
+
+                                <div class="doc-buttons">
+
+                                    @if (HrPortal.Services.FileStorageService.CanPreview(material.OriginalFileName))
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary" title="Preview" target="_blank" rel="noopener"
+                                           asp-action="MaterialPreview" asp-route-id="@material.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Preview @material.OriginalFileName</span>
+                                        </a>
+                                    }
+
+                                    <a class="btn btn-sm btn-outline-secondary" title="Download"
+                                       asp-action="Material" asp-route-id="@material.Id">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Download @material.OriginalFileName</span>
+                                    </a>
+
+                                </div>
+
+                            </div>
+                        }
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> What Happens Next
+                </h3>
+
+                @if (Model.IsCompleted)
+                {
+                    <p class="small text-muted">
+                        You completed this on @Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy").
+                        @if (Model.Feedback != null)
+                        {
+                            <text>You rated it @Model.Feedback.Rating out of 5.</text>
+                        }
+                    </p>
+
+                    @if (Model.Feedback == null)
+                    {
+                        <div class="d-grid">
+                            <a class="btn btn-gold" asp-action="Feedback" asp-route-id="@Model.Id">
+                                <i class="fas fa-comment-dots" aria-hidden="true"></i> Give feedback
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="small text-muted">When you have worked through the materials, mark this training as complete.</p>
+
+                    <form asp-action="Complete" asp-route-id="@Model.Id" method="post" class="d-grid">
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fas fa-circle-check" aria-hidden="true"></i> Mark as completed
+                        </button>
+                    </form>
+                }
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Training Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Status</dt>
+                    <dd>@(Model.IsCompleted ? "Completed" : overdue ? "Overdue" : "Outstanding")</dd>
+                    <dt>Assigned</dt>
+                    <dd>@Model.AssignedAt.ToString("d MMM yyyy")</dd>
+                    <dt>Due</dt>
+                    <dd>@(Model.DueDate?.ToString("d MMM yyyy") ?? "No due date")</dd>
+                    <dt>Completed</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Feedback</dt>
+                    <dd>@(Model.Feedback == null ? "Not given" : $"{Model.Feedback.Rating} out of 5")</dd>
+                </dl>
+
+            </section>
 
         </div>
 

@@ -3,435 +3,387 @@
 @{
     ViewData["Title"] = "My Profile";
 
-    var fullName =
-        $"{Model.Employee.FirstName} {Model.Employee.LastName}".Trim();
-
-    var initial = string.IsNullOrWhiteSpace(fullName)
-        ? "?"
-        : fullName[0].ToString().ToUpper();
+    var e = Model.Employee;
+    var fullName = $"{e.FirstName} {e.LastName}".Trim();
+    var initial = string.IsNullOrWhiteSpace(fullName) ? "?" : fullName[0].ToString().ToUpper();
+    var hasKin = !string.IsNullOrWhiteSpace(e.EmergencyContactName);
+    var unread = Model.Notifications.Count(n => !n.IsRead);
+    var years = (int)((DateTime.Today - e.DateJoined.Date).TotalDays / 365.25);
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>My profile</h2>
+        <div>
+            <h2>My Profile</h2>
+            <p>Your employment record, the documents on your file and the notices the portal has sent you.</p>
+        </div>
 
-        <p class="text-muted">
-            Your employment record, the documents on your file and the
-            notices the portal has sent you.
-        </p>
+        <a class="btn btn-outline-secondary" asp-area="Identity" asp-page="/Account/Manage/Index">
+            <i class="fas fa-user-gear" aria-hidden="true"></i> My account
+        </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
+
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-briefcase"></i></span>
+            <div>
+                <div class="kpi-label">Years of Service</div>
+                <div class="kpi-value">@(years < 1 ? "Under 1" : years.ToString())</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-folder-open"></i></span>
+            <div>
+                <div class="kpi-label">Documents on File</div>
+                <div class="kpi-value">@Model.Documents.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon @(hasKin && e.NextOfKinConfirmedAt != null ? "is-green" : "is-amber")" aria-hidden="true"><i class="fas fa-people-roof"></i></span>
+            <div>
+                <div class="kpi-label">Next of Kin</div>
+                <div class="kpi-value kpi-value-text">
+                    @(!hasKin ? "Not given" : e.NextOfKinConfirmedAt == null ? "To confirm" : "Confirmed")
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-bell"></i></span>
+            <div>
+                <div class="kpi-label">Unread Notices</div>
+                <div class="kpi-value">@unread</div>
+            </div>
+        </div>
+
+    </div>
 
     <div class="row g-3">
 
-        <div class="col-lg-5">
+        <div class="col-lg-8">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card mb-3">
 
-                <div class="card-body">
+                <h3 class="panel-head">
+                    <i class="fas fa-id-badge" aria-hidden="true"></i> Employment Details
+                </h3>
 
-                    <div class="account-identity">
+                <div class="facts">
 
-                        <div class="account-avatar">@initial</div>
+                    <div class="fact">
+                        <i class="fas fa-hashtag" aria-hidden="true"></i>
+                        <div><span>Employee number</span><strong>@e.EmployeeNumber</strong></div>
+                    </div>
 
+                    <div class="fact">
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                        <div><span>Date joined</span><strong>@e.DateJoined.ToString("d MMM yyyy")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department</span><strong>@e.Department.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-briefcase" aria-hidden="true"></i>
                         <div>
-                            <h5 class="mb-1">@fullName</h5>
-
-                            <div class="text-muted">
-                                @(Model.Employee.JobTitle ?? "No job title recorded")
-                            </div>
-
-                            <div class="mt-2">
-                                <span class="badge bg-primary">
-                                    @Model.Employee.Department.Name
-                                </span>
-
-                                @if (Model.Employee.IsActive)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        Inactive
-                                    </span>
-                                }
-                            </div>
+                            <span>Position</span>
+                            @if (e.JobTitle == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@e.JobTitle</strong>
+                            }
                         </div>
-
                     </div>
 
-                    <hr />
+                    <div class="fact">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <div><span>Email</span><strong class="text-break">@e.Email</strong></div>
+                    </div>
 
-                    <div class="row">
-
-                        <div class="col-6">
-                            <span class="field-label">Employee number</span>
-                            <div class="field-value">
-                                @Model.Employee.EmployeeNumber
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <div>
+                            <span>Phone number</span>
+                            @if (e.PhoneNumber == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@e.PhoneNumber</strong>
+                            }
                         </div>
+                    </div>
 
-                        <div class="col-6">
-                            <span class="field-label">Date joined</span>
-                            <div class="field-value">
-                                @Model.Employee.DateJoined.ToString("dd MMM yyyy")
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
+                        <div>
+                            <span>National ID</span>
+                            @if (e.NationalId == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@e.NationalId</strong>
+                            }
                         </div>
+                    </div>
 
+                    <div class="fact">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <div><span>Status</span><strong>@(e.IsActive ? "Active" : "Inactive")</strong></div>
                     </div>
 
                 </div>
 
-            </div>
-
-        </div>
-
-        <div class="col-lg-7">
-
-            <div class="card shadow-sm h-100">
-
-                <div class="card-header d-flex justify-content-between align-items-center">
-
-                    <span>Contact details</span>
-
-                    <a class="btn btn-sm btn-outline-secondary"
-                       asp-area="Identity"
-                       asp-page="/Account/Manage/Index">
-                        My account
-                    </a>
-
-                </div>
-
-                <div class="card-body d-flex flex-column">
-
-                    <div class="row">
-
-                        <div class="col-md-6 mb-3">
-                            <span class="field-label">Email</span>
-                            <div class="field-value">
-                                @Model.Employee.Email
-                            </div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <span class="field-label">Phone number</span>
-                            <div class="field-value @(Model.Employee.PhoneNumber == null ? "is-empty" : "")">
-                                @(Model.Employee.PhoneNumber ?? "Not recorded")
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <span class="field-label">National ID</span>
-                            <div class="field-value @(Model.Employee.NationalId == null ? "is-empty" : "")">
-                                @(Model.Employee.NationalId ?? "Not recorded")
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <p class="text-muted small mt-auto pt-3 mb-0">
-                        HR keeps this record. To correct anything on this
-                        page, speak to them. Your sign-in email and phone
-                        number are managed separately under
-                        <a asp-area="Identity"
-                           asp-page="/Account/Manage/Index">My account</a>.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mt-3">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-
-            <span>Next of kin</span>
-
-            <span class="table-actions">
-
-                @if (!string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName))
-                {
-                    <a class="btn btn-sm btn-outline-secondary"
-                       asp-action="NextOfKinForm">
-                        <i class="fas fa-download" aria-hidden="true"></i>
-                        Form (PDF)
-                    </a>
-                }
-
-                <a class="btn btn-sm btn-primary"
-                   asp-action="NextOfKin">
-                    @(string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName)
-                        ? "Complete this form"
-                        : "Update")
-                </a>
-
-            </span>
-
-        </div>
-
-        <div class="card-body">
-
-            @if (string.IsNullOrWhiteSpace(Model.Employee.EmergencyContactName))
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128101;</span>
-                    You have not told us who to contact in an emergency.
+                <p class="text-muted small mt-3 mb-0">
+                    HR keeps this record. To correct anything here, speak to them. Your sign-in email
+                    and phone number are managed separately under
+                    <a asp-area="Identity" asp-page="/Account/Manage/Index">My account</a>.
                 </p>
-            }
-            else
-            {
-                <div class="row g-3">
 
-                    <div class="col-sm-6">
-                        <span class="field-label">Contact</span>
-                        <div class="field-value">
-                            @Model.Employee.EmergencyContactName
-                        </div>
-                    </div>
+            </section>
 
-                    <div class="col-sm-6">
-                        <span class="field-label">Relationship</span>
-                        <div class="field-value @(Model.Employee.EmergencyContactRelationship == null ? "is-empty" : "")">
-                            @(Model.Employee.EmergencyContactRelationship
-                                ?? "Not recorded")
-                        </div>
-                    </div>
+            <section class="panel-card mb-3">
 
-                    <div class="col-sm-6">
-                        <span class="field-label">Phone number(s)</span>
-                        <div class="field-value @(Model.Employee.EmergencyContactPhone == null ? "is-empty" : "")">
-                            @(Model.Employee.EmergencyContactPhone
-                                ?? "Not recorded")
-                        </div>
-                    </div>
+                <div class="panel-head-split">
 
-                    <div class="col-sm-6">
-                        <span class="field-label">Address</span>
-                        <div class="field-value @(Model.Employee.EmergencyContactAddress == null ? "is-empty" : "")">
-                            @(Model.Employee.EmergencyContactAddress
-                                ?? "Same as yours")
-                        </div>
+                    <h3 class="panel-head">
+                        <i class="fas fa-people-roof" aria-hidden="true"></i> Next of Kin
+                    </h3>
+
+                    <div class="table-actions">
+
+                        @if (hasKin)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="NextOfKinForm">
+                                <i class="fas fa-download" aria-hidden="true"></i> Form (PDF)
+                            </a>
+                        }
+
+                        <a class="btn btn-sm btn-gold" asp-action="NextOfKin">
+                            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+                            @(hasKin ? "Update" : "Complete this form")
+                        </a>
+
                     </div>
 
                 </div>
 
-                @if (Model.Employee.NextOfKinConfirmedAt != null)
+                @if (!hasKin)
                 {
-                    <p class="text-muted small mt-3 mb-0">
-                        You confirmed these on
-                        @(Model.Employee.NextOfKinConfirmedAt.Value
-                            .ToLocalTime().ToString("d MMM yyyy HH:mm")).
-                    </p>
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-people-roof" aria-hidden="true"></i>
+                        <p>You have not told us who to contact in an emergency.</p>
+                    </div>
                 }
                 else
                 {
-                    <div class="alert alert-warning mt-3 mb-0">
-                        These were entered by HR and you have not
-                        confirmed them yet. Please check them over.
+                    <div class="facts">
+
+                        <div class="fact">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            <div><span>Contact</span><strong>@e.EmergencyContactName</strong></div>
+                        </div>
+
+                        <div class="fact">
+                            <i class="fas fa-heart" aria-hidden="true"></i>
+                            <div>
+                                <span>Relationship</span>
+                                @if (e.EmergencyContactRelationship == null)
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>@e.EmergencyContactRelationship</strong>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="fact">
+                            <i class="fas fa-phone" aria-hidden="true"></i>
+                            <div>
+                                <span>Phone number(s)</span>
+                                @if (e.EmergencyContactPhone == null)
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>@e.EmergencyContactPhone</strong>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="fact">
+                            <i class="fas fa-location-dot" aria-hidden="true"></i>
+                            <div><span>Address</span><strong>@(e.EmergencyContactAddress ?? "Same as yours")</strong></div>
+                        </div>
+
+                    </div>
+
+                    @if (e.NextOfKinConfirmedAt != null)
+                    {
+                        <p class="text-muted small mt-3 mb-0">
+                            You confirmed these on @e.NextOfKinConfirmedAt.Value.ToLocalTime().ToString("d MMM yyyy, HH:mm").
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-3 mb-0">
+                            These were entered by HR and you have not confirmed them yet. Please check them over.
+                        </div>
+                    }
+                }
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-folder-open" aria-hidden="true"></i> My Documents
+                    <span class="tab-count">@Model.Documents.Count</span>
+                </h3>
+
+                @if (!Model.Documents.Any())
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-folder-open" aria-hidden="true"></i>
+                        <p>There are no documents on your file.</p>
                     </div>
                 }
-            }
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mt-3">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-
-            <span>My documents</span>
-
-            <span class="text-muted small">
-                @Model.Documents.Count
-                @(Model.Documents.Count == 1 ? "document" : "documents")
-                on your file
-            </span>
-
-        </div>
-
-        @if (Model.Documents.Any())
-        {
-            <div class="card-body is-table">
-
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle">
-
-                        <thead>
-                            <tr>
-                                <th>Document</th>
-                                <th>Category</th>
-                                <th>Uploaded</th>
-                                <th class="col-actions">Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var document in Model.Documents)
-                        {
-                            <tr>
-
-                                <td>@document.OriginalFileName</td>
-
-                                <td>@document.DocumentCategory.Name</td>
-
-                                <td>
-                                    @document.UploadedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                                <td class="col-actions">
-
-                                    <div class="table-actions">
-
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Document"
-                                           asp-route-id="@document.Id">
-                                            <i class="fas fa-download"
-                                               aria-hidden="true"></i>
-                                            Download
-                                        </a>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-        }
-        else
-        {
-            <div class="card-body">
-
-                <p class="empty-state">
-                    <span class="empty-icon">&#128193;</span>
-                    There are no documents on your file.
-                </p>
-
-            </div>
-        }
-
-    </div>
-
-    <div class="card shadow-sm mt-3 mb-4">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-
-            <span>Notifications</span>
-
-            <a class="btn btn-sm btn-outline-secondary"
-               asp-controller="MyNotifications"
-               asp-action="Index">
-                All notifications
-            </a>
-
-        </div>
-
-        <div class="card-body">
-
-            @if (Model.Notifications.Any())
-            {
-                <ul class="row-list">
-
-                @foreach (var notification in Model.Notifications)
+                else
                 {
-                    <li>
+                    <div class="table-responsive">
 
-                        <span class="row-icon">
-                            <i class="fas @(notification.IsRead ? "fa-envelope-open" : "fa-bell")"
-                               aria-hidden="true"></i>
-                        </span>
+                        <table class="table table-hover align-middle mb-0">
 
-                        <div class="row-main">
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Category</th>
+                                    <th>Uploaded</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
 
-                            <span class="row-title">
-                                @notification.Title
+                            <tbody>
 
-                                @if (!notification.IsRead)
+                                @foreach (var document in Model.Documents)
                                 {
-                                    <span class="badge bg-primary">New</span>
+                                    <tr>
+                                        <td class="fw-semibold text-break">
+                                            <i class="fas fa-file-lines text-muted me-1" aria-hidden="true"></i>
+                                            @document.OriginalFileName
+                                        </td>
+                                        <td>@document.DocumentCategory.Name</td>
+                                        <td class="text-nowrap">@document.UploadedAt.ToString("d MMM yyyy")</td>
+                                        <td>
+                                            <div class="table-actions justify-content-end">
+                                                <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                                                   asp-action="Document" asp-route-id="@document.Id">
+                                                    <i class="fas fa-download" aria-hidden="true"></i> Download
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 }
-                            </span>
 
-                            <span class="row-meta">
-                                @notification.Message
-                                &middot;
-                                @notification.CreatedAt.ToString("dd MMM yyyy HH:mm")
-                            </span>
+                            </tbody>
 
-                        </div>
+                        </table>
 
-                        <div class="table-actions">
-
-                            @if (!string.IsNullOrWhiteSpace(notification.Link))
-                            {
-                                <a class="btn btn-sm btn-outline-secondary"
-                                   href="@notification.Link">
-                                    Open
-                                </a>
-                            }
-
-                            @if (!notification.IsRead)
-                            {
-                                <form asp-action="MarkRead"
-                                      asp-route-id="@notification.Id"
-                                      method="post"
-                                      class="d-inline">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-secondary">
-                                        Mark read
-                                    </button>
-
-                                </form>
-                            }
-
-                        </div>
-
-                    </li>
+                    </div>
                 }
 
-                </ul>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128276;</span>
-                    You have no notifications.
-                </p>
-            }
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3 profile-card">
+
+                <div class="profile-avatar" aria-hidden="true">@initial</div>
+                <div class="profile-name">@fullName</div>
+                <div class="profile-role">@(e.JobTitle ?? "No job title recorded")</div>
+
+                <div class="profile-tags">
+                    <span class="status-badge badge-blue">@e.Department.Name</span>
+                    @if (e.IsActive)
+                    {
+                        <span class="status-badge badge-green">Active</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge badge-gray">Inactive</span>
+                    }
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-bell" aria-hidden="true"></i> Recent Notices
+                    </h3>
+                    <a class="small fw-semibold" asp-controller="MyNotifications" asp-action="Index">See all</a>
+                </div>
+
+                @if (!Model.Notifications.Any())
+                {
+                    <p class="text-muted mb-0">You have no notifications.</p>
+                }
+                else
+                {
+                    <ul class="notice-list">
+                        @foreach (var notification in Model.Notifications)
+                        {
+                            <li class="@(notification.IsRead ? "" : "is-unread")">
+                                <i class="fas @(notification.IsRead ? "fa-envelope-open" : "fa-bell")" aria-hidden="true"></i>
+                                <div>
+                                    <div class="notice-title">
+                                        @if (!string.IsNullOrWhiteSpace(notification.Link))
+                                        {
+                                            <a asp-controller="MyNotifications" asp-action="Open" asp-route-id="@notification.Id">@notification.Title</a>
+                                        }
+                                        else
+                                        {
+                                            @notification.Title
+                                        }
+                                    </div>
+                                    <div class="notice-meta">@notification.CreatedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")</div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+
+            </section>
 
         </div>
 

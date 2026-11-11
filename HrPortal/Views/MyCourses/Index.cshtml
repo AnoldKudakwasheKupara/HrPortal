@@ -1,7 +1,11 @@
-@model List<HrPortal.Entities.CourseApplication>
+@using HrPortal.Entities
+@using HrPortal.Services
+@using HrPortal.ViewModels
+@model MyCoursesIndexViewModel
 
 @{
     ViewData["Title"] = "My Courses";
+    var paged = Model.Page;
 }
 
 <div class="container-fluid">
@@ -9,16 +13,15 @@
     <div class="page-head">
 
         <div>
-            <h2>My courses</h2>
-
-            <p class="text-muted mb-0">
-                Applications to study a professional programme. HR
-                reviews them, then the Managing Consultant decides.
+            <h2>My Courses</h2>
+            <p>
+                Applications to study a professional programme. HR reviews
+                them, then the Managing Consultant decides.
             </p>
         </div>
 
-        <a class="btn btn-primary" asp-action="Create">
-            Apply for a course
+        <a class="btn btn-gold" asp-action="Create">
+            <i class="fas fa-plus" aria-hidden="true"></i> Apply for a course
         </a>
 
     </div>
@@ -33,10 +36,77 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+            <div>
+                <div class="kpi-label">Applications</div>
+                <div class="kpi-value">@Model.Applications.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">In Progress</div>
+                <div class="kpi-value">@Model.InProgress</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Approved</div>
+                <div class="kpi-value">@Model.Approved</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+            <div>
+                <div class="kpi-label">Next Exam</div>
+                @if (Model.NextExam == null)
+                {
+                    <div class="kpi-value kpi-value-text text-muted">None set</div>
+                }
+                else
+                {
+                    <div class="kpi-value kpi-value-text">@Model.NextExam.TargetExamDate!.Value.ToString(Model.NextExam.TargetExamDate.Value.Year == DateTime.Today.Year ? "d MMM" : "d MMM yyyy")</div>
+                    <div class="kpi-note text-truncate" title="@Model.NextExam.ProgramIntended">@Model.NextExam.ProgramIntended</div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-user-graduate" aria-hidden="true"></i> My Applications
+        </h3>
+
+        <partial name="_ListTabs" model="new ListTabsModel(Model.Tabs, Model.Show)" />
+
+        @if (paged.TotalCount == 0)
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                <p>
+                    @if (!Model.Applications.Any())
+                    {
+                        <text>You have not applied for a course yet.</text>
+                        <a asp-action="Create">Apply for a course</a>
+                    }
+                    else
+                    {
+                        <text>No applications here.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
                 <table class="table table-hover align-middle mb-0">
@@ -45,64 +115,60 @@
                         <tr>
                             <th>Application</th>
                             <th>Programme</th>
-                            <th>Target exam</th>
+                            <th>Target Exam</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5"
-                                class="text-center text-muted py-4">
-                                You have not applied for a course yet.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var application in paged.Items)
+                        {
+                            <tr>
 
-                    @foreach (var application in Model)
-                    {
-                        <tr>
+                                <td class="text-nowrap">
+                                    <div class="fw-semibold">@application.ApplicationNumber</div>
+                                    <div class="small text-muted">@application.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</div>
+                                </td>
 
-                            <td>
-                                <strong>@application.ApplicationNumber</strong>
-                                <div class="row-meta">
-                                    @(application.CreatedAt.ToLocalTime().ToString("d MMM yyyy"))
-                                </div>
-                            </td>
+                                <td class="fw-semibold">@application.ProgramIntended</td>
 
-                            <td>@application.ProgramIntended</td>
+                                <td class="text-nowrap">
+                                    @(application.TargetExamDate?.ToString("d MMM yyyy") ?? "-")
+                                </td>
 
-                            <td>
-                                @(application.TargetExamDate == null
-                                    ? "--"
-                                    : application.TargetExamDate.Value.ToString("d MMM yyyy"))
-                            </td>
+                                <td><partial name="_CourseStatusBadge" model="application.Status" /></td>
 
-                            <td>
-                                <partial name="_CourseStatusBadge"
-                                         model="application.Status" />
-                            </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                            <td class="col-actions">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                                           asp-action="Details" asp-route-id="@application.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
 
-                                <div class="table-actions">
+                                        @if (CourseApplicationWorkflowService.IsWithApplicant(application.Status))
+                                        {
+                                            <a class="btn btn-sm btn-outline-success text-nowrap"
+                                               asp-action="Edit" asp-route-id="@application.Id">
+                                                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                            </a>
+                                        }
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Details"
-                                       asp-route-id="@application.Id">
-                                        Open
-                                    </a>
+                                        @if (application.Status == CourseApplicationStatus.Approved)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                                               asp-action="Form" asp-route-id="@application.Id" title="Download the application form">
+                                                <i class="fas fa-download" aria-hidden="true"></i> Form
+                                            </a>
+                                        }
 
-                                </div>
+                                    </div>
+                                </td>
 
-                            </td>
-
-                        </tr>
-                    }
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -110,8 +176,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(paged, "application", "applications")' />
+        }
 
-    </div>
+    </section>
 
 </div>

@@ -1,43 +1,100 @@
-﻿@model IEnumerable<HrPortal.Entities.TrainingAssignment>
+﻿@using HrPortal.ViewModels
+@model MyTrainingIndexViewModel
 
 @{
     ViewData["Title"] = "My Training";
+    var paged = Model.Page;
+    var today = DateTime.Today;
 }
 
 <div class="container-fluid">
 
-    <div class="page-head-simple">
+    <div class="page-head">
 
-        <h2>My Training</h2>
-
-        <p class="text-muted">
-            Courses you have been assigned. Open one to read the
-            materials, then mark it complete and leave feedback.
-        </p>
+        <div>
+            <h2>My Training</h2>
+            <p>
+                Courses you have been assigned. Open one to read the
+                materials, then mark it complete and leave feedback.
+            </p>
+        </div>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-graduation-cap"></i></span>
+            <div>
+                <div class="kpi-label">Assigned</div>
+                <div class="kpi-value">@Model.Assignments.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Outstanding</div>
+                <div class="kpi-value">@Model.OutstandingCount</div>
+                @if (Model.Overdue > 0)
+                {
+                    <div class="kpi-note is-alert">@Model.Overdue overdue</div>
+                }
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Completed</div>
+                <div class="kpi-value">@Model.CompletedCount</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-comment-dots"></i></span>
+            <div>
+                <div class="kpi-label">Feedback Due</div>
+                <div class="kpi-value">@Model.FeedbackDueCount</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-graduation-cap" aria-hidden="true"></i> My Courses to Complete
+        </h3>
+
+        <partial name="_ListTabs" model="new ListTabsModel(Model.Tabs, Model.Show)" />
+
+        @if (paged.TotalCount == 0)
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                <p>
+                    @(Model.Assignments.Any()
+                        ? "Nothing here."
+                        : "You have no training assigned at the moment.")
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -46,116 +103,81 @@
                             <th>Due</th>
                             <th>Status</th>
                             <th>Feedback</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                You have no training assigned at the moment.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var assignment in paged.Items)
+                        {
+                            <tr>
 
-                    @foreach (var assignment in Model)
-                    {
-                        <tr>
+                                <td class="fw-semibold">@assignment.TrainingCourse.Title</td>
 
-                            <td>
-                                <strong>
-                                    @assignment.TrainingCourse.Title
-                                </strong>
-                            </td>
+                                <td class="text-nowrap">@assignment.AssignedAt.ToString("d MMM yyyy")</td>
 
-                            <td>
-                                @assignment.AssignedAt.ToString("dd MMM yyyy")
-                            </td>
-
-                            <td>
-                                @if (assignment.DueDate.HasValue)
-                                {
-                                    if (!assignment.IsCompleted &&
-                                        assignment.DueDate.Value.Date < DateTime.Today)
+                                <td class="text-nowrap">
+                                    @if (assignment.DueDate == null)
                                     {
-                                        <span class="badge bg-danger">
-                                            Overdue
-                                            @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                                        <span class="text-muted">No due date</span>
+                                    }
+                                    else
+                                    {
+                                        @assignment.DueDate.Value.ToString("d MMM yyyy")
+
+                                        @if (MyTrainingIndexViewModel.IsOverdue(assignment, today))
+                                        {
+                                            <span class="status-badge badge-red ms-1">Overdue</span>
+                                        }
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (assignment.IsCompleted)
+                                    {
+                                        <span class="status-badge badge-green">Completed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-amber">Outstanding</span>
+                                    }
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @if (assignment.Feedback != null)
+                                    {
+                                        <span class="status-badge badge-blue">
+                                            <i class="fas fa-star" aria-hidden="true"></i> @assignment.Feedback.Rating / 5
                                         </span>
                                     }
                                     else
                                     {
-                                        @assignment.DueDate.Value.ToString("dd MMM yyyy")
+                                        <span class="text-muted">Not given</span>
                                     }
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        No due date
-                                    </span>
-                                }
-                            </td>
+                                </td>
 
-                            <td>
-                                @if (assignment.IsCompleted)
-                                {
-                                    <span class="badge bg-success">
-                                        Completed
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">
-                                        Outstanding
-                                    </span>
-                                }
-                            </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                            <td>
-                                @if (assignment.Feedback != null)
-                                {
-                                    <span class="badge bg-info text-dark">
-                                        @assignment.Feedback.Rating / 5
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        Not given
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@assignment.Id">
-                                        Open
-                                    </a>
-
-                                    @if (assignment.IsCompleted &&
-                                         assignment.Feedback == null)
-                                    {
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Feedback"
-                                           asp-route-id="@assignment.Id">
-                                            Give feedback
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                                           asp-action="Details" asp-route-id="@assignment.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                    }
 
-                                </div>
+                                        @if (assignment.IsCompleted && assignment.Feedback == null)
+                                        {
+                                            <a class="btn btn-sm btn-outline-success text-nowrap"
+                                               asp-action="Feedback" asp-route-id="@assignment.Id">
+                                                <i class="fas fa-comment-dots" aria-hidden="true"></i> Feedback
+                                            </a>
+                                        }
 
-                            </td>
+                                    </div>
+                                </td>
 
-                        </tr>
-                    }
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -163,8 +185,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "course", "courses")' />
+        }
 
-    </div>
+    </section>
 
 </div>

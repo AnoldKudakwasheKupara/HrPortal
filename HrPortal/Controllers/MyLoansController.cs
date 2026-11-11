@@ -40,7 +40,7 @@ namespace HrPortal.Controllers
             _pdf = pdf;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? show, int page = 1)
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
 
@@ -53,7 +53,7 @@ namespace HrPortal.Controllers
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
 
-            return View(applications);
+            return View(MyLoansIndexViewModel.Build(applications, show, page, DateTime.Today));
         }
 
         public async Task<IActionResult> Details(int? id)

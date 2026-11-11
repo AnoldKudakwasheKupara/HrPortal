@@ -1,5 +1,6 @@
 ﻿using HrPortal.DbContexts;
 using HrPortal.Services;
+using HrPortal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +10,6 @@ namespace HrPortal.Controllers
     [Authorize]
     public class MyNotificationsController : Controller
     {
-        private const int PageSize = 30;
-
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
 
@@ -22,7 +21,7 @@ namespace HrPortal.Controllers
             _currentUser = currentUser;
         }
 
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(string? show, int page = 1)
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
 
@@ -33,28 +32,27 @@ namespace HrPortal.Controllers
                 .AsNoTracking()
                 .Where(n => n.EmployeeId == employeeId.Value);
 
-            var totalCount = await mine.CountAsync();
+            var group = NotificationsIndexViewModel.Normalise(show);
+            var weekAgo = DateTime.UtcNow.AddDays(-7);
 
-            var totalPages =
-                (int)Math.Ceiling(totalCount / (double)PageSize);
+            var shown = group switch
+            {
+                NotificationsIndexViewModel.Unread => mine.Where(n => !n.IsRead),
+                NotificationsIndexViewModel.Read => mine.Where(n => n.IsRead),
+                _ => mine
+            };
 
-            if (page < 1)
-                page = 1;
-
-            if (totalPages > 0 && page > totalPages)
-                page = totalPages;
-
-            var notifications = await mine
-                .OrderByDescending(n => n.CreatedAt)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
-                .ToListAsync();
-
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
-            ViewBag.TotalCount = totalCount;
-
-            return View(notifications);
+            return View(new NotificationsIndexViewModel
+            {
+                Show = group,
+                Total = await mine.CountAsync(),
+                UnreadCount = await mine.CountAsync(n => !n.IsRead),
+                ThisWeek = await mine.CountAsync(n => n.CreatedAt >= weekAgo),
+                Page = await shown
+                    .OrderByDescending(n => n.CreatedAt)
+                    .ThenByDescending(n => n.Id)
+                    .ToPagedResultAsync(page, PagedList.DefaultPageSize)
+            });
         }
 
         public async Task<IActionResult> Open(int id)

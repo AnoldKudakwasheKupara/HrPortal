@@ -5,38 +5,30 @@
 @{
     ViewData["Title"] = "Course Application";
 
-    var withApplicant =
-        CourseApplicationWorkflowService.IsWithApplicant(Model.Status);
-
-    var canSend = CourseApplicationWorkflowService.CanAct(
-        CourseApplicationAction.Submitted, Model.Status);
-
-    var canCancel = CourseApplicationWorkflowService.CanAct(
-        CourseApplicationAction.Cancelled, Model.Status);
+    var withApplicant = CourseApplicationWorkflowService.IsWithApplicant(Model.Status);
+    var canSend = CourseApplicationWorkflowService.CanAct(CourseApplicationAction.Submitted, Model.Status);
+    var canCancel = CourseApplicationWorkflowService.CanAct(CourseApplicationAction.Cancelled, Model.Status);
+    var final = CourseApplicationWorkflowService.IsFinal(Model.Status);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.ApplicationNumber</h2>
-
-            <p class="text-muted mb-0">@Model.ProgramIntended</p>
+            <p>@Model.ProgramIntended</p>
         </div>
 
-        <div class="table-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="Form"
-               asp-route-id="@Model.Id">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Application form (PDF)
+            <partial name="_CourseStatusBadge" model="Model.Status" />
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-secondary" asp-action="Index">
-                Back
-            </a>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
 
         </div>
 
@@ -52,82 +44,98 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <partial name="_CourseApplicationCard" model="Model" />
+    <div class="row g-3">
 
-    @if (withApplicant || canCancel)
-    {
-        <div class="card shadow-sm mb-3">
+        <div class="col-lg-8">
 
-            <div class="card-header">What happens next</div>
+            <partial name="_CourseApplicationCard" model="Model" />
 
-            <div class="card-body">
+            <partial name="_CourseHistoryCard" model="Model" />
 
-                <div class="field-value mb-3">
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> What Happens Next
+                </h3>
+
+                <p class="small text-muted">
                     @if (withApplicant)
                     {
-                        <text>
-                            This is still with you. Send it and HR will
-                            review it, then the Managing Consultant
-                            decides.
-                        </text>
+                        <text>This is still with you. Send it and HR will review it, then the Managing Consultant decides.</text>
+                    }
+                    else if (final)
+                    {
+                        <text>A decision has been made. Nothing more is needed from you.</text>
                     }
                     else
                     {
-                        <text>This is being looked at.</text>
+                        <text>This is being looked at. You will get a notification when it moves on.</text>
                     }
-                </div>
+                </p>
 
-                <div class="table-actions">
+                <div class="d-grid gap-2">
 
                     @if (canSend)
                     {
-                        <form asp-action="Send"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"
-                                   aria-hidden="true"></i>
-                                Send for approval
+                        <form asp-action="Send" asp-route-id="@Model.Id" method="post" class="d-grid">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-paper-plane" aria-hidden="true"></i> Send for approval
                             </button>
-
                         </form>
                     }
 
                     @if (withApplicant)
                     {
-                        <a class="btn btn-outline-secondary"
-                           asp-action="Edit"
-                           asp-route-id="@Model.Id">
-                            Edit
+                        <a class="btn btn-outline-success" asp-action="Edit" asp-route-id="@Model.Id">
+                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                         </a>
                     }
 
                     @if (canCancel)
                     {
-                        <form asp-action="Cancel"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger">
-                                Cancel application
+                        <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-grid"
+                              onsubmit="return confirm('Cancel @Model.ApplicationNumber?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Cancel application
                             </button>
-
                         </form>
                     }
 
+                    <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download the form
+                    </a>
+
                 </div>
 
-            </div>
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Application Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Application No.</dt>
+                    <dd>@Model.ApplicationNumber</dd>
+                    <dt>Status</dt>
+                    <dd><partial name="_CourseStatusBadge" model="Model.Status" /></dd>
+                    <dt>Started</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                    <dt>Sent</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Decided</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+
+            </section>
 
         </div>
-    }
 
-    <partial name="_CourseHistoryCard" model="Model" />
+    </div>
 
 </div>

@@ -5,40 +5,30 @@
 @{
     ViewData["Title"] = "Loan Application";
 
-    var withApplicant =
-        LoanWorkflowService.IsWithApplicant(Model.Status);
-
-    var canSend = LoanWorkflowService.CanAct(
-        LoanApplicationAction.Submitted, Model.Status);
-
-    var canCancel = LoanWorkflowService.CanAct(
-        LoanApplicationAction.Cancelled, Model.Status);
+    var withApplicant = LoanWorkflowService.IsWithApplicant(Model.Status);
+    var canSend = LoanWorkflowService.CanAct(LoanApplicationAction.Submitted, Model.Status);
+    var canCancel = LoanWorkflowService.CanAct(LoanApplicationAction.Cancelled, Model.Status);
+    var final = LoanWorkflowService.IsFinal(Model.Status);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.ApplicationNumber</h2>
-
-            <p class="text-muted mb-0">
-                @LoanCurrencies.InWords(Model.Currency, Model.AmountRequested)
-            </p>
+            <p>@LoanCurrencies.InWords(Model.Currency, Model.AmountRequested)</p>
         </div>
 
-        <div class="table-actions">
+        <div class="head-actions">
 
-            <a class="btn btn-outline-secondary"
-               asp-action="Form"
-               asp-route-id="@Model.Id">
-                <i class="fas fa-download" aria-hidden="true"></i>
-                Application form (PDF)
+            <partial name="_LoanStatusBadge" model="Model.Status" />
+
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-secondary" asp-action="Index">
-                Back
-            </a>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
 
         </div>
 
@@ -54,375 +44,250 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-3">
+    <div class="row g-3">
 
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="col-lg-8">
 
-            <span>The application</span>
+            <section class="panel-card mb-3">
 
-            <partial name="_LoanStatusBadge" model="Model.Status" />
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-hand-holding-dollar" aria-hidden="true"></i> Application Details
+                    </h3>
+                    <partial name="_LoanStatusBadge" model="Model.Status" />
+                </div>
 
-        </div>
+                <div class="facts">
 
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Amount required</span>
-                    <div class="field-value">
-                        @LoanCurrencies.Format(Model.Currency, Model.AmountRequested)
+                    <div class="fact">
+                        <i class="fas fa-money-bill" aria-hidden="true"></i>
+                        <div><span>Amount required</span><strong>@LoanCurrencies.Format(Model.Currency, Model.AmountRequested)</strong></div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Amount authorised</span>
-                    <div class="field-value @(Model.AmountAuthorised == null ? "is-empty" : "")">
-                        @(Model.AmountAuthorised == null
-                            ? "Not yet decided"
-                            : LoanCurrencies.Format(Model.Currency, Model.AmountAuthorised.Value))
+                    <div class="fact">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <div>
+                            <span>Amount authorised</span>
+                            @if (Model.AmountAuthorised == null)
+                            {
+                                <em>Not yet decided</em>
+                            }
+                            else
+                            {
+                                <strong>@LoanCurrencies.Format(Model.Currency, Model.AmountAuthorised.Value)</strong>
+                            }
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Repayment period</span>
-                    <div class="field-value">
-                        @Model.RepaymentMonths months
+                    <div class="fact">
+                        <i class="fas fa-calendar-days" aria-hidden="true"></i>
+                        <div><span>Repayment period</span><strong>@Model.RepaymentMonths months</strong></div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Instalment per month</span>
-                    <div class="field-value">
-                        @(Model.MonthlyInstalment == null
-                            ? "--"
-                            : LoanCurrencies.Format(Model.Currency, Model.MonthlyInstalment.Value))
+                    <div class="fact">
+                        <i class="fas fa-coins" aria-hidden="true"></i>
+                        <div>
+                            <span>Instalment per month</span>
+                            @if (Model.MonthlyInstalment == null)
+                            {
+                                <em>Not yet known</em>
+                            }
+                            else
+                            {
+                                <strong>@LoanCurrencies.Format(Model.Currency, Model.MonthlyInstalment.Value)</strong>
+                            }
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Deductions start</span>
-                    <div class="field-value @(Model.RepaymentStartDate == null ? "is-empty" : "")">
-                        @(Model.RepaymentStartDate == null
-                            ? "Set when sanctioned"
-                            : Model.RepaymentStartDate.Value
-                                .ToString("d MMM yyyy"))
+                    <div class="fact">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        <div>
+                            <span>Deductions start</span>
+                            @if (Model.RepaymentStartDate == null)
+                            {
+                                <em>Set when sanctioned</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.RepaymentStartDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-sm-6 col-lg-3">
-                    <span class="field-label">Applied</span>
-                    <div class="field-value">
-                        @(Model.CreatedAt.ToLocalTime()
-                            .ToString("d MMM yyyy"))
+                    <div class="fact">
+                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                        <div><span>Applied</span><strong>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</strong></div>
                     </div>
+
                 </div>
 
-                <div class="col-12">
-                    <span class="field-label">Purpose</span>
-                    <div class="field-value">@Model.Purpose</div>
+                <div class="panel-block">
+                    <h4><i class="fas fa-bullseye" aria-hidden="true"></i> Purpose</h4>
+                    <p class="pre-line">@Model.Purpose</p>
                 </div>
 
-            </div>
+            </section>
 
-        </div>
+            <section class="panel-card mb-3">
 
-    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-paperclip" aria-hidden="true"></i> Receipts and Quotations
+                    <span class="tab-count">@Model.Attachments.Count</span>
+                </h3>
 
-    <div class="card shadow-sm mb-3">
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-
-            <span>Receipts and quotations</span>
-
-            <span class="text-muted small">
-                @Model.Attachments.Count
-                @(Model.Attachments.Count == 1 ? "file" : "files")
-            </span>
-
-        </div>
-
-        @if (Model.Attachments.Any())
-        {
-            <div class="card-body is-table">
-
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle mb-0">
-
-                        <thead>
-                            <tr>
-                                <th>File</th>
-                                <th>Added</th>
-                                <th class="col-actions">Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var attachment in Model.Attachments
-                            .OrderByDescending(a => a.UploadedAt))
+                @if (!Model.Attachments.Any())
+                {
+                    <p class="text-muted mb-0">Nothing attached yet.</p>
+                }
+                else
+                {
+                    <div class="d-grid gap-2">
+                        @foreach (var attachment in Model.Attachments.OrderByDescending(a => a.UploadedAt))
                         {
-                            <tr>
+                            <div class="doc-row">
 
-                                <td>@attachment.OriginalFileName</td>
+                                <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
 
-                                <td>
-                                    @(attachment.UploadedAt.ToLocalTime()
-                                        .ToString("d MMM yyyy"))
-                                </td>
+                                <div class="doc-info">
+                                    <div class="doc-name text-break">@attachment.OriginalFileName</div>
+                                    <div class="doc-meta">Added @attachment.UploadedAt.ToLocalTime().ToString("d MMM yyyy")</div>
+                                </div>
 
-                                <td class="col-actions">
+                                <div class="doc-buttons">
 
-                                    <div class="table-actions">
+                                    <a class="btn btn-sm btn-outline-secondary" title="Download"
+                                       asp-action="Attachment" asp-route-id="@Model.Id" asp-route-attachmentId="@attachment.Id">
+                                        <i class="fas fa-download" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Download @attachment.OriginalFileName</span>
+                                    </a>
 
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           asp-action="Attachment"
-                                           asp-route-id="@Model.Id"
-                                           asp-route-attachmentId="@attachment.Id">
-                                            Download
-                                        </a>
+                                    @if (withApplicant)
+                                    {
+                                        <form asp-action="Detach" asp-route-id="@Model.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Remove this file?');">
+                                            <input type="hidden" name="attachmentId" value="@attachment.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Remove @attachment.OriginalFileName</span>
+                                            </button>
+                                        </form>
+                                    }
 
-                                        @if (withApplicant)
-                                        {
-                                            <form asp-action="Detach"
-                                                  asp-route-id="@Model.Id"
-                                                  method="post">
+                                </div>
 
-                                                @Html.AntiForgeryToken()
-
-                                                <input type="hidden"
-                                                       name="attachmentId"
-                                                       value="@attachment.Id" />
-
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger">
-                                                    Remove
-                                                </button>
-
-                                            </form>
-                                        }
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
+                            </div>
                         }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-        }
-        else
-        {
-            <div class="card-body">
-
-                <p class="empty-state">
-                    <span class="empty-icon">&#128206;</span>
-                    Nothing attached yet.
-                </p>
-
-            </div>
-        }
-
-        @if (withApplicant)
-        {
-            <div class="card-footer">
-
-                <form asp-action="Attach"
-                      asp-route-id="@Model.Id"
-                      method="post"
-                      enctype="multipart/form-data">
-
-                    @Html.AntiForgeryToken()
-
-                    <div class="row g-2 align-items-end">
-
-                        <div class="col-md-8">
-
-                            <label for="file" class="form-label">
-                                Add a receipt or quotation
-                            </label>
-
-                            <input type="file"
-                                   id="file"
-                                   name="file"
-                                   class="form-control" />
-
-                        </div>
-
-                        <div class="col-md-4">
-
-                            <button type="submit"
-                                    class="btn btn-outline-primary">
-                                <i class="fas fa-paperclip"
-                                   aria-hidden="true"></i>
-                                Attach
-                            </button>
-
-                        </div>
-
                     </div>
+                }
 
-                </form>
+                @if (withApplicant)
+                {
+                    <form asp-action="Attach" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="mt-3">
+                        <label for="file" class="form-label">Add a receipt or quotation</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <input type="file" id="file" name="file" class="form-control flex-grow-1 w-auto" />
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-paperclip" aria-hidden="true"></i> Attach
+                            </button>
+                        </div>
+                    </form>
+                }
 
-            </div>
-        }
+            </section>
 
-    </div>
+            <section class="panel-card mb-3">
 
-    @if (withApplicant || canCancel)
-    {
-        <div class="card shadow-sm mb-3">
+                <h3 class="panel-head">
+                    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> History
+                </h3>
 
-            <div class="card-header">What happens next</div>
+                <partial name="_Timeline" model="Timeline.Of(Model.History)" />
 
-            <div class="card-body">
+            </section>
 
-                <div class="field-value mb-3">
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> What Happens Next
+                </h3>
+
+                <p class="small text-muted">
                     @if (withApplicant)
                     {
-                        <text>
-                            This is still with you. Send it when you are
-                            ready and the Managing Director will decide.
-                        </text>
+                        <text>This is still with you. Send it when you are ready and the Managing Director will decide.</text>
+                    }
+                    else if (final)
+                    {
+                        <text>A decision has been made. Nothing more is needed from you.</text>
                     }
                     else
                     {
-                        <text>
-                            This is with the Managing Director.
-                        </text>
+                        <text>This is being looked at. You will get a notification when it moves on.</text>
                     }
-                </div>
+                </p>
 
-                <div class="table-actions">
+                <div class="d-grid gap-2">
 
                     @if (canSend)
                     {
-                        <form asp-action="Send"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <button type="submit"
-                                    class="btn btn-primary">
-                                <i class="fas fa-paper-plane"
-                                   aria-hidden="true"></i>
-                                Send for approval
+                        <form asp-action="Send" asp-route-id="@Model.Id" method="post" class="d-grid">
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-paper-plane" aria-hidden="true"></i> Send for approval
                             </button>
-
                         </form>
                     }
 
                     @if (withApplicant)
                     {
-                        <a class="btn btn-outline-secondary"
-                           asp-action="Edit"
-                           asp-route-id="@Model.Id">
-                            Edit
+                        <a class="btn btn-outline-success" asp-action="Edit" asp-route-id="@Model.Id">
+                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                         </a>
                     }
 
                     @if (canCancel)
                     {
-                        <form asp-action="Cancel"
-                              asp-route-id="@Model.Id"
-                              method="post">
-
-                            @Html.AntiForgeryToken()
-
-                            <button type="submit"
-                                    class="btn btn-outline-danger">
-                                Cancel application
+                        <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="d-grid"
+                              onsubmit="return confirm('Cancel @Model.ApplicationNumber?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-xmark" aria-hidden="true"></i> Cancel application
                             </button>
-
                         </form>
                     }
 
+                    <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download the form
+                    </a>
+
                 </div>
 
-            </div>
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Application Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Application No.</dt>
+                    <dd>@Model.ApplicationNumber</dd>
+                    <dt>Status</dt>
+                    <dd><partial name="_LoanStatusBadge" model="Model.Status" /></dd>
+                    <dt>Started</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                    <dt>Sent</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Decided</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+
+            </section>
 
         </div>
-    }
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-header">History</div>
-
-        @if (Model.History.Any())
-        {
-            <div class="card-body is-table">
-
-                <div class="table-responsive">
-
-                    <table class="table table-sm align-middle mb-0">
-
-                        <thead>
-                            <tr>
-                                <th>When</th>
-                                <th>What happened</th>
-                                <th>By</th>
-                                <th>Comment</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var entry in Model.History
-                            .OrderByDescending(h => h.ActionDate))
-                        {
-                            <tr>
-
-                                <td>
-                                    @(entry.ActionDate.ToLocalTime()
-                                        .ToString("d MMM yyyy HH:mm"))
-                                </td>
-
-                                <td>@entry.Action</td>
-
-                                <td>
-                                    @(entry.ActionedByEmployee == null
-                                        ? "--"
-                                        : entry.ActionedByEmployee.FirstName
-                                          + " "
-                                          + entry.ActionedByEmployee.LastName)
-                                </td>
-
-                                <td class="text-muted">
-                                    @(string.IsNullOrWhiteSpace(entry.Comment)
-                                        ? "--"
-                                        : entry.Comment)
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-        }
-        else
-        {
-            <div class="card-body">
-
-                <p class="empty-state">
-                    <span class="empty-icon">&#128220;</span>
-                    Nothing has happened to this application yet.
-                </p>
-
-            </div>
-        }
 
     </div>
 
