@@ -41,21 +41,91 @@ namespace HrPortal.Controllers
             _pdf = pdf;
         }
 
-        public async Task<IActionResult> Index()
+        public const int PageSize = 10;
+
+        public async Task<IActionResult> Index(
+            string? q, int? employeeId, DateTime? from, DateTime? to, int page = 1)
         {
             if (!await _access.CanCaptureAsync(User))
                 return Forbid();
 
-            var captured = await _context.CourseApplicationHistories
+            var captured = _context.CourseApplicationHistories
                 .AsNoTracking()
-                .Where(h => h.Action == CourseApplicationAction.CapturedAsApproved)
-                .Include(h => h.CourseApplication)
-                    .ThenInclude(c => c.Employee)
-                .Include(h => h.ActionedByEmployee)
+                .Where(h => h.Action == CourseApplicationAction.CapturedAsApproved);
+
+            var me = await _currentUser.GetEmployeeIdAsync();
+            var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+
+            var model = new CapturedCourseListViewModel
+            {
+                Total = await captured.CountAsync(),
+                Employees = await captured.Select(h => h.CourseApplication.EmployeeId).Distinct().CountAsync(),
+                ThisMonth = await captured.CountAsync(h => h.ActionDate >= monthStart),
+                ByYou = me == null ? 0 : await captured.CountAsync(h => h.ActionedByEmployeeId == me),
+                Search = q?.Trim(),
+                EmployeeId = employeeId,
+                From = from?.Date,
+                To = to?.Date
+            };
+
+            var shown = captured;
+
+            if (!string.IsNullOrWhiteSpace(model.Search))
+            {
+                var term = model.Search.ToLower();
+
+                shown = shown.Where(h =>
+                    h.CourseApplication.ApplicationNumber.ToLower().Contains(term) ||
+                    h.CourseApplication.ProgramIntended.ToLower().Contains(term) ||
+                    h.CourseApplication.Justification.ToLower().Contains(term) ||
+                    (h.CourseApplication.Employee.FirstName + " " + h.CourseApplication.Employee.LastName)
+                        .ToLower().Contains(term));
+            }
+
+            if (employeeId != null)
+                shown = shown.Where(h => h.CourseApplication.EmployeeId == employeeId);
+
+            if (model.From != null)
+                shown = shown.Where(h => h.CourseApplication.CompletedAt >= model.From);
+
+            if (model.To != null)
+            {
+                var before = model.To.Value.AddDays(1);
+                shown = shown.Where(h => h.CourseApplication.CompletedAt < before);
+            }
+
+            model.Page = await shown
                 .OrderByDescending(h => h.ActionDate)
+                .ThenByDescending(h => h.Id)
+                .Select(h => new CapturedCourseRow
+                {
+                    Id = h.CourseApplicationId,
+                    ApplicationNumber = h.CourseApplication.ApplicationNumber,
+                    EmployeeName = h.CourseApplication.Employee.FirstName + " " + h.CourseApplication.Employee.LastName,
+                    Programme = h.CourseApplication.ProgramIntended,
+                    Justification = h.CourseApplication.Justification,
+                    CapturedAt = h.ActionDate,
+                    CapturedBy = h.ActionedByEmployee.FirstName + " " + h.ActionedByEmployee.LastName,
+                    ApprovedOn = h.CourseApplication.CompletedAt,
+                    ApprovedBy = h.Comment,
+                    Status = h.CourseApplication.Status
+                })
+                .ToPagedResultAsync(page, PageSize);
+
+            foreach (var row in model.Page.Items)
+                row.ApprovedBy = CourseCapture.ReadComment(row.ApprovedBy).ApprovedBy;
+
+            var people = await captured
+                .Select(h => h.CourseApplication.Employee)
+                .Distinct()
+                .OrderBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .Select(e => new { e.Id, Name = e.FirstName + " " + e.LastName })
                 .ToListAsync();
 
-            return View(captured);
+            model.EmployeeOptions = new SelectList(people, "Id", "Name", employeeId);
+
+            return View(model);
         }
 
         /// <summary>One captured application, read only.</summary>
