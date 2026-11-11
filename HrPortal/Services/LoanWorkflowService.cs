@@ -34,6 +34,10 @@ namespace HrPortal.Services
             LoanApplicationStatus status) =>
             status is LoanApplicationStatus.SupervisorReview;
 
+        /// <summary>Who an application is now waiting on, in words for a message to the applicant.</summary>
+        public static string WaitingOn(LoanApplicationStatus status) =>
+            status == LoanApplicationStatus.SupervisorReview ? "your supervisor" : "the Managing Director";
+
         public static bool IsWithApplicant(LoanApplicationStatus status) =>
             status is LoanApplicationStatus.Draft
                 or LoanApplicationStatus.ReturnedToApplicant;

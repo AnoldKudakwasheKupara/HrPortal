@@ -36,6 +36,14 @@ namespace HrPortal.Services
             CourseApplicationStatus status) =>
             status is CourseApplicationStatus.SupervisorReview;
 
+        /// <summary>Who an application is now waiting on, in words for a message to the applicant.</summary>
+        public static string WaitingOn(CourseApplicationStatus status) => status switch
+        {
+            CourseApplicationStatus.SupervisorReview => "your supervisor",
+            CourseApplicationStatus.HrApproved => "the Managing Consultant",
+            _ => "HR"
+        };
+
         public static bool IsWithApplicant(
             CourseApplicationStatus status) =>
             status is CourseApplicationStatus.Draft

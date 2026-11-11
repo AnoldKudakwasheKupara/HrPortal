@@ -144,6 +144,14 @@ namespace HrPortal.Services
                 || status == LeaveRequestStatus.Cancelled;
         }
 
+        /// <summary>Who a request is now waiting on, in words for a message to the employee.</summary>
+        public static string WaitingOn(LeaveRequestStatus status) => status switch
+        {
+            LeaveRequestStatus.SupervisorReview => "your supervisor",
+            LeaveRequestStatus.HRApproved or LeaveRequestStatus.MDReview => "the Managing Director",
+            _ => "HR"
+        };
+
         public static bool IsWithEmployee(LeaveRequestStatus status)
         {
             return status == LeaveRequestStatus.Draft

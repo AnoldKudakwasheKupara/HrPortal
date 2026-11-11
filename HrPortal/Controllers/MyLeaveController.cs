@@ -186,8 +186,8 @@ namespace HrPortal.Controllers
                 isResubmission: false);
 
             TempData["Success"] =
-                $"Leave request {request.RequestNumber} submitted " +
-                "for HR review.";
+                $"Leave request {request.RequestNumber} sent to " +
+                $"{LeaveWorkflowService.WaitingOn(request.Status)} for approval.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -289,8 +289,8 @@ namespace HrPortal.Controllers
                 isResubmission: true);
 
             TempData["Success"] =
-                $"Leave request {request.RequestNumber} sent back " +
-                "to HR for review.";
+                $"Leave request {request.RequestNumber} sent again to " +
+                $"{LeaveWorkflowService.WaitingOn(request.Status)} for approval.";
 
             return RedirectToAction(nameof(Index));
         }

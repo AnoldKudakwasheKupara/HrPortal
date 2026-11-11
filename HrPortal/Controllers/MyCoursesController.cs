@@ -274,7 +274,8 @@ namespace HrPortal.Controllers
                 isResubmission);
 
             TempData["Success"] =
-                $"{application.ApplicationNumber} has gone to HR.";
+                $"{application.ApplicationNumber} has gone to " +
+                $"{CourseApplicationWorkflowService.WaitingOn(application.Status)}.";
 
             return RedirectToAction(nameof(Details), new { id });
         }
