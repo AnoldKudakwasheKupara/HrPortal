@@ -4,10 +4,10 @@
     ViewData["Title"] = "Asset Details";
 
     var holder = Model.AssignedToEmployee;
+    var holderName = holder != null ? $"{holder.FirstName} {holder.LastName}" : null;
 
-    var holderName = holder != null
-        ? $"{holder.FirstName} {holder.LastName}"
-        : null;
+    var maintenance = ViewBag.Maintenance as List<HrPortal.Entities.AssetMaintenance>
+        ?? new List<HrPortal.Entities.AssetMaintenance>();
 }
 
 <div class="container-fluid">
@@ -16,343 +16,253 @@
 
         <div>
             <h2>@Model.DeviceModel</h2>
-
-            <div class="detail-badges">
-                <partial name="_AssetConditionBadge"
-                         model="Model.Condition" />
-
-                @if (Model.IsInUse)
-                {
-                    <span class="badge bg-info">In use</span>
-                }
-                else
-                {
-                    <span class="badge bg-secondary">Not in use</span>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Company))
-                {
-                    <span class="badge bg-light text-dark">
-                        @Model.Company
-                    </span>
-                }
-            </div>
+            <p>@(holderName ?? "Unassigned")@(string.IsNullOrWhiteSpace(Model.Company) ? "" : ", " + Model.Company)</p>
         </div>
 
-        <div class="page-head-actions">
-            <a asp-action="Edit" asp-route-id="@Model.Id"
-               class="btn btn-primary">Edit</a>
+        <div class="head-actions">
+
+            <partial name="_AssetConditionBadge" model="Model.Condition" />
+
+            @if (Model.IsInUse)
+            {
+                <span class="status-badge badge-blue">In use</span>
+            }
+            else
+            {
+                <span class="status-badge badge-gray">Not in use</span>
+            }
 
             <partial name="_DownloadPdf" model="Model.Id" />
 
-            <a asp-action="Index" class="btn btn-secondary">Back</a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
         </div>
 
     </div>
 
     <div class="row g-3">
 
-        <div class="col-lg-7">
+        <div class="col-lg-8">
 
-            <div class="card shadow-sm h-100">
+            <section class="panel-card mb-3">
 
-                <div class="card-header">Device</div>
+                <h3 class="panel-head">
+                    <i class="fas fa-laptop" aria-hidden="true"></i> Device
+                </h3>
 
-                <div class="card-body">
+                <div class="facts">
 
-                    <div class="detail-rows">
+                    <div class="fact">
+                        <i class="fas fa-laptop" aria-hidden="true"></i>
+                        <div><span>Device / model</span><strong>@Model.DeviceModel</strong></div>
+                    </div>
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-laptop"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Device / model</span>
-                                <div class="field-value">@Model.DeviceModel</div>
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-microchip" aria-hidden="true"></i>
+                        <div>
+                            <span>Processor</span>
+                            @if (string.IsNullOrWhiteSpace(Model.Processor))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.Processor</strong>
+                            }
                         </div>
+                    </div>
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-microchip"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Processor</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Processor))
-                                {
-                                    <div class="field-value">@Model.Processor</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">
-                                        Not recorded
-                                    </div>
-                                }
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-barcode" aria-hidden="true"></i>
+                        <div>
+                            <span>Serial number</span>
+                            @if (string.IsNullOrWhiteSpace(Model.SerialNumber))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong class="text-break">@Model.SerialNumber</strong>
+                            }
                         </div>
+                    </div>
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-barcode"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Serial number</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.SerialNumber))
-                                {
-                                    <div class="field-value">@Model.SerialNumber</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">
-                                        Not recorded
-                                    </div>
-                                }
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                        <div>
+                            <span>Procured</span>
+                            @if (Model.ProcuredOn == null)
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.ProcuredOn.Value.ToString("d MMM yyyy")</strong>
+                            }
                         </div>
+                    </div>
 
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-calendar-day"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Procured</span>
-                                @if (Model.ProcuredOn.HasValue)
-                                {
-                                    <div class="field-value">
-                                        @Model.ProcuredOn.Value.ToString("dd MMM yyyy")
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">
-                                        Not recorded
-                                    </div>
-                                }
-                            </div>
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div>
+                            <span>Company</span>
+                            @if (string.IsNullOrWhiteSpace(Model.Company))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.Company</strong>
+                            }
                         </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-building"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Company</span>
-                                @if (!string.IsNullOrWhiteSpace(Model.Company))
-                                {
-                                    <div class="field-value">@Model.Company</div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">
-                                        Not recorded
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
                     </div>
 
                 </div>
 
-            </div>
+                <div class="panel-block">
+                    <h4><i class="fas fa-note-sticky" aria-hidden="true"></i> Notes / Issues</h4>
+                    <p class="pre-line">@(string.IsNullOrWhiteSpace(Model.Notes) ? "Nothing recorded against this machine." : Model.Notes)</p>
+                </div>
 
-        </div>
+            </section>
 
-        <div class="col-lg-5">
+            <section class="panel-card mb-3">
 
-            <div class="card shadow-sm h-100">
+                <div class="panel-head-split">
+                    <h3 class="panel-head">
+                        <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i> Maintenance
+                        <span class="tab-count">@maintenance.Count</span>
+                    </h3>
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="AssetMaintenance" asp-action="Create" asp-route-assetId="@Model.Id">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Schedule maintenance
+                    </a>
+                </div>
 
-                <div class="card-header">Assignment</div>
+                @if (!maintenance.Any())
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
+                        <p>No maintenance has been scheduled for this machine.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
 
-                <div class="card-body">
+                        <table class="table table-hover align-middle mb-0">
 
-                    <div class="assignment-holder">
+                            <thead>
+                                <tr>
+                                    <th>Work</th>
+                                    <th>Scheduled</th>
+                                    <th>Done By</th>
+                                    <th class="num">Cost</th>
+                                    <th>Status</th>
+                                    <th>Work Done / Notes</th>
+                                </tr>
+                            </thead>
 
-                        @if (holderName != null)
-                        {
-                            <span class="assignment-avatar">
-                                @holderName.Trim()[0].ToString().ToUpper()
-                            </span>
+                            <tbody>
 
-                            <div>
-                                <div class="assignment-name">
-                                    @holderName
-                                </div>
-                                <div class="assignment-sub">
-                                    @(holder!.Department?.Name
-                                        ?? "No department")
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <span class="assignment-avatar is-empty">
-                                <i class="fas fa-user-slash"></i>
-                            </span>
+                                @foreach (var m in maintenance)
+                                {
+                                    <tr>
+                                        <td>@m.Type</td>
+                                        <td class="text-nowrap">
+                                            @m.ScheduledFor.ToString("d MMM yyyy")
+                                            @if (m.CompletedOn.HasValue)
+                                            {
+                                                <div class="small text-muted">Done @m.CompletedOn.Value.ToString("d MMM yyyy")</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (m.Vendor != null)
+                                            {
+                                                @m.Vendor.Name
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(m.PerformedBy))
+                                            {
+                                                @m.PerformedBy
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="num">@(m.Cost?.ToString("0.00") ?? "-")</td>
+                                        <td><partial name="_MaintenanceStatusBadge" model="m" /></td>
+                                        <td class="text-muted">@(string.IsNullOrWhiteSpace(m.Notes) ? "-" : m.Notes)</td>
+                                    </tr>
+                                }
 
-                            <div>
-                                <div class="assignment-name">
-                                    Unassigned
-                                </div>
-                                <div class="assignment-sub">
-                                    Not issued to anyone
-                                </div>
-                            </div>
-                        }
+                            </tbody>
+
+                        </table>
 
                     </div>
+                }
 
-                    <div class="detail-rows mt-2">
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Assigned on</span>
-                                @if (Model.AssignedOn.HasValue)
-                                {
-                                    <div class="field-value">
-                                        @(Model.AssignedOn.Value.ToLocalTime()
-                                            .ToString("dd MMM yyyy"))
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="field-value is-empty">--</div>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <span class="detail-icon">
-                                <i class="fas fa-circle-check"></i>
-                            </span>
-                            <div class="detail-text">
-                                <span class="field-label">Status</span>
-                                <div class="field-value">
-                                    @(Model.IsInUse ? "In use" : "Not in use")
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
+            </section>
 
         </div>
 
-    </div>
+        <div class="col-lg-4">
 
-    @{
-        var maintenance =
-            ViewBag.Maintenance as List<HrPortal.Entities.AssetMaintenance>
-            ?? new List<HrPortal.Entities.AssetMaintenance>();
-    }
+            <section class="panel-card mb-3 profile-card">
 
-    <div class="card shadow-sm mt-3">
+                @if (holderName != null)
+                {
+                    <div class="profile-avatar" aria-hidden="true">@holderName.Trim()[0].ToString().ToUpper()</div>
+                    <div class="profile-name">@holderName</div>
+                    <div class="profile-role">@(holder!.Department?.Name ?? "No department")</div>
+                }
+                else
+                {
+                    <div class="profile-avatar" aria-hidden="true"><i class="fas fa-user-slash"></i></div>
+                    <div class="profile-name">Unassigned</div>
+                    <div class="profile-role">Not issued to anyone</div>
+                }
 
-        <div class="card-header d-flex justify-content-between align-items-center">
+            </section>
 
-            <span>Maintenance</span>
+            <section class="panel-card mb-3">
 
-            <a class="btn btn-sm btn-outline-secondary"
-               asp-controller="AssetMaintenance"
-               asp-action="Create"
-               asp-route-assetId="@Model.Id">
-                Schedule maintenance
-            </a>
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
 
-        </div>
-
-        <div class="card-body @(maintenance.Any() ? "is-table" : "")">
-
-            @if (maintenance.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Work</th>
-                                <th>Scheduled</th>
-                                <th>Done by</th>
-                                <th class="num">Cost</th>
-                                <th>Status</th>
-                                <th>Work done / notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @foreach (var m in maintenance)
-                        {
-                            <tr>
-                                <td>@m.Type</td>
-                                <td>
-                                    @m.ScheduledFor.ToString("d MMM yyyy")
-                                    @if (m.CompletedOn.HasValue)
-                                    {
-                                        <div class="text-muted small">
-                                            Done @m.CompletedOn.Value.ToString("d MMM yyyy")
-                                        </div>
-                                    }
-                                </td>
-                                <td>
-                                    @if (m.Vendor != null)
-                                    {
-                                        @m.Vendor.Name
-                                    }
-                                    else if (!string.IsNullOrWhiteSpace(m.PerformedBy))
-                                    {
-                                        @m.PerformedBy
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">--</span>
-                                    }
-                                </td>
-                                <td class="num">@(m.Cost?.ToString("0.00") ?? "--")</td>
-                                <td>
-                                    <partial name="_MaintenanceStatusBadge" model="m" />
-                                </td>
-                                <td class="text-muted">
-                                    @(string.IsNullOrWhiteSpace(m.Notes)
-                                        ? "--" : m.Notes)
-                                </td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit asset
+                    </a>
+                    <a class="btn btn-outline-secondary" asp-controller="AssetMaintenance" asp-action="Create" asp-route-assetId="@Model.Id">
+                        <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i> Schedule maintenance
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="fas fa-trash" aria-hidden="true"></i> Delete asset
+                    </a>
                 </div>
-            }
-            else
-            {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128736;</span>
-                    No maintenance has been scheduled for this machine.
-                </p>
-            }
 
-        </div>
+            </section>
 
-    </div>
+            <section class="panel-card mb-3">
 
-    <div class="card shadow-sm mt-3">
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Assignment
+                </h3>
 
-        <div class="card-header">Notes / issues</div>
+                <dl class="info-list">
+                    <dt>Held by</dt>
+                    <dd>@(holderName ?? "Unassigned")</dd>
+                    <dt>Assigned on</dt>
+                    <dd>@(Model.AssignedOn?.ToLocalTime().ToString("d MMM yyyy") ?? "-")</dd>
+                    <dt>Status</dt>
+                    <dd>@(Model.IsInUse ? "In use" : "Not in use")</dd>
+                    <dt>Condition</dt>
+                    <dd>@Model.Condition</dd>
+                </dl>
 
-        <div class="card-body">
-
-            @if (!string.IsNullOrWhiteSpace(Model.Notes))
-            {
-                <div class="field-value mb-0">@Model.Notes</div>
-            }
-            else
-            {
-                <div class="field-value is-empty mb-0">
-                    Nothing recorded against this machine.
-                </div>
-            }
+            </section>
 
         </div>
 

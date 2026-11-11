@@ -1,4 +1,5 @@
 @using HrPortal.Controllers
+@using HrPortal.ViewModels
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model IEnumerable<HrPortal.Entities.Certification>
 
@@ -6,24 +7,34 @@
     ViewData["Title"] = "Certifications";
 
     var show = ViewBag.Show as string;
-    var employees = ViewBag.Employees as List<SelectListItem>
-        ?? new List<SelectListItem>();
+    var employees = ViewBag.Employees as List<SelectListItem> ?? new List<SelectListItem>();
     var employeeFilter = ViewBag.EmployeeFilter as int?;
     var today = DateTime.Today;
+    var expired = (int)ViewBag.Expired;
+    var expiring = (int)ViewBag.Expiring;
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all
+        .Where(c => PagedList.Matches(search, c.Name, c.IssuedBy, c.Reference, c.Employee.FirstName + " " + c.Employee.LastName))
+        .ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+    var filtered = !string.IsNullOrEmpty(show) || employeeFilter != null || search != null;
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Certifications</h2>
-            <p class="text-muted mb-0">
-                Qualifications people hold, and when they stop being
-                valid.
-            </p>
+            <p>Qualifications people hold, and when they stop being valid.</p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">Record Certification</a>
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Record Certification
+        </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -31,193 +42,198 @@
         <div class="alert alert-success">@TempData["Success"]</div>
     }
 
-    <div class="report-stats">
+    <div class="kpis">
 
-        <div class="report-stat">
-            <span class="report-stat-label">Recorded</span>
-            <span class="report-stat-value">@ViewBag.Total</span>
-            <span class="report-stat-note">Across all staff</span>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-award"></i></span>
+            <div>
+                <div class="kpi-label">Recorded</div>
+                <div class="kpi-value">@ViewBag.Total</div>
+            </div>
         </div>
 
-        <a class="report-stat @(((int)ViewBag.Expired) > 0 ? "is-critical" : "")"
-           asp-action="Index" asp-route-show="expired">
-            <span class="report-stat-label">Lapsed</span>
-            <span class="report-stat-value">@ViewBag.Expired</span>
-            <span class="report-stat-note">Past their expiry</span>
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-show="expired">
+            <span class="kpi-icon @(expired > 0 ? "is-red" : "is-gray")" aria-hidden="true"><i class="fas fa-circle-xmark"></i></span>
+            <div>
+                <div class="kpi-label">Lapsed</div>
+                <div class="kpi-value">@expired</div>
+                <div class="kpi-note">Past their expiry</div>
+            </div>
         </a>
 
-        <a class="report-stat @(((int)ViewBag.Expiring) > 0 ? "is-warning" : "")"
-           asp-action="Index" asp-route-show="expiring">
-            <span class="report-stat-label">Expiring soon</span>
-            <span class="report-stat-value">@ViewBag.Expiring</span>
-            <span class="report-stat-note">
-                Within @CertificationController.ExpiringWindowDays days
-            </span>
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-show="expiring">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Expiring Soon</div>
+                <div class="kpi-value">@expiring</div>
+                <div class="kpi-note">Within @CertificationController.ExpiringWindowDays days</div>
+            </div>
         </a>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Do not expire</span>
-            <span class="report-stat-value">@ViewBag.NeverExpires</span>
-            <span class="report-stat-note">No expiry recorded</span>
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-infinity"></i></span>
+            <div>
+                <div class="kpi-label">Do Not Expire</div>
+                <div class="kpi-value">@ViewBag.NeverExpires</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <form method="get" class="filter-bar" data-auto-submit>
 
-                <div class="col-md-3">
-                    <label class="form-label">Show</label>
-                    <select name="show" class="form-select">
-                        <option value="">Everything</option>
-                        <option value="current" selected="@(show == "current")">
-                            Current only
-                        </option>
-                        <option value="expiring" selected="@(show == "expiring")">
-                            Expiring soon
-                        </option>
-                        <option value="expired" selected="@(show == "expired")">
-                            Lapsed
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Employee</label>
-                    <select name="employeeId" class="form-select">
-                        <option value="">Everyone</option>
-                        @foreach (var e in employees)
-                        {
-                            <option value="@e.Value"
-                                    selected="@(employeeFilter?.ToString() == e.Value)">
-                                @e.Text
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
+        <div class="filter-bar-search">
+            <label for="cert-q" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="cert-q" type="search" name="q" value="@search" class="form-control" placeholder="Certification, issuer, person..." />
+            </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+        <div>
+            <label for="cert-show" class="form-label">Show</label>
+            <select id="cert-show" name="show" class="form-select">
+                <option value="">Everything</option>
+                <option value="current" selected="@(show == "current")">Current only</option>
+                <option value="expiring" selected="@(show == "expiring")">Expiring soon</option>
+                <option value="expired" selected="@(show == "expired")">Lapsed</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="cert-employee" class="form-label">Employee</label>
+            <select id="cert-employee" name="employeeId" class="form-select">
+                <option value="">Everyone</option>
+                @foreach (var e in employees)
+                {
+                    <option value="@e.Value" selected="@(employeeFilter?.ToString() == e.Value)">@e.Text</option>
+                }
+            </select>
+        </div>
+
+        <div></div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-award" aria-hidden="true"></i> Certifications
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-award" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>Nothing matches these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No certifications have been recorded yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Certification</th>
-                            <th>Held by</th>
-                            <th>Issued by</th>
+                            <th>Held By</th>
+                            <th>Issued By</th>
                             <th>Issued</th>
                             <th>Expires</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                Nothing matches this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var c in Model)
+                        @foreach (var c in paged.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@c.Name</strong>
+                                    <div class="fw-semibold">@c.Name</div>
                                     @if (c.TrainingCourse != null)
                                     {
-                                        <div class="text-muted small">
-                                            from @c.TrainingCourse.Title
-                                        </div>
+                                        <div class="small text-muted">from @c.TrainingCourse.Title</div>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(c.Reference))
                                     {
-                                        <div class="text-muted small">
-                                            @c.Reference
-                                        </div>
+                                        <div class="small text-muted">@c.Reference</div>
                                     }
                                 </td>
-
-                                <td>
-                                    @(c.Employee.FirstName + " " +
-                                      c.Employee.LastName)
-                                </td>
-
-                                <td>@(string.IsNullOrWhiteSpace(c.IssuedBy) ? "--" : c.IssuedBy)</td>
-
-                                <td>@c.IssuedOn.ToString("d MMM yyyy")</td>
-
-                                <td>
+                                <td>@(c.Employee.FirstName + " " + c.Employee.LastName)</td>
+                                <td>@(string.IsNullOrWhiteSpace(c.IssuedBy) ? "-" : c.IssuedBy)</td>
+                                <td class="text-nowrap">@c.IssuedOn.ToString("d MMM yyyy")</td>
+                                <td class="text-nowrap">
                                     @if (c.ExpiryDate == null)
                                     {
-                                        <span class="text-muted">
-                                            Does not expire
-                                        </span>
+                                        <span class="text-muted">Does not expire</span>
                                     }
                                     else
                                     {
                                         var days = (c.ExpiryDate.Value.Date - today).Days;
 
-                                        <span class="@(days < 0
-                                            ? "badge bg-danger"
-                                            : days <= CertificationController.ExpiringWindowDays
-                                                ? "badge bg-warning text-dark"
-                                                : "")">
+                                        <span class="@(days < 0 ? "status-badge badge-red" : days <= CertificationController.ExpiringWindowDays ? "status-badge badge-amber" : "")">
                                             @c.ExpiryDate.Value.ToString("d MMM yyyy")
                                         </span>
 
                                         @if (days < 0)
                                         {
-                                            <div class="text-muted small">
-                                                lapsed @(-days) day(s) ago
-                                            </div>
+                                            <div class="small text-muted">lapsed @(-days) day(s) ago</div>
                                         }
                                     }
                                 </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@c.Id">
-                                            Edit
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@c.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                         </a>
-                                        <form asp-action="Delete"
-                                              asp-route-id="@c.Id"
-                                              method="post" class="d-inline">
-                                            @Html.AntiForgeryToken()
+                                        <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Remove this certification?');">
                                             <input type="hidden" name="id" value="@c.Id" />
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-                                                Remove
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Remove @c.Name</span>
                                             </button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "certification", "certifications")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

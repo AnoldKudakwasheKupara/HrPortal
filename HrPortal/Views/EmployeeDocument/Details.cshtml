@@ -2,154 +2,189 @@
 
 @{
     ViewData["Title"] = "Document Details";
+
+    var uploadedBy = !string.IsNullOrWhiteSpace(Model.UploadedByName)
+        ? Model.UploadedByName
+        : Model.UploadedByEmployee != null
+            ? $"{Model.UploadedByEmployee.FirstName} {Model.UploadedByEmployee.LastName}"
+            : null;
+
+    var days = Model.ExpiryDate == null ? (int?)null : (Model.ExpiryDate.Value.Date - DateTime.Today).Days;
+    var canPreview = HrPortal.Services.FileStorageService.CanPreview(Model.OriginalFileName);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
-            <h2>@Model.OriginalFileName</h2>
-
-            <p class="text-muted">
-                Document Details
-            </p>
+            <h2 class="text-break">@Model.OriginalFileName</h2>
+            <p>@Model.Employee.FirstName @Model.Employee.LastName, @Model.DocumentCategory.Name</p>
         </div>
 
-        <div>
+        <div class="head-actions">
 
-            @if (HrPortal.Services.FileStorageService
-                .CanPreview(Model.OriginalFileName))
+            @if (days < 0)
             {
-                <a asp-action="Preview"
-                   asp-route-id="@Model.Id"
-                   target="_blank"
-                   class="btn btn-outline-primary">
-
-                    Preview
-
-                </a>
+                <span class="status-badge badge-red">Expired</span>
             }
-
-            <a asp-action="Download"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-primary">
-
-                Download
-
-            </a>
-
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-primary">
-
-                Edit
-
-            </a>
+            else if (days <= 30)
+            {
+                <span class="status-badge badge-amber">Expiring soon</span>
+            }
 
             <partial name="_DownloadPdf" model="@Model.Id" />
 
-            <a asp-action="Index"
-               class="btn btn-secondary">
-
-                Back
-
-            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
 
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row g-3">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
+                <h3 class="panel-head">
+                    <i class="fas fa-file-lines" aria-hidden="true"></i> Document Details
+                </h3>
 
-                    <span class="field-label">File Name</span>
+                <div class="facts">
 
-                    <div class="field-value">
-                        @Model.OriginalFileName
+                    <div class="fact">
+                        <i class="fas fa-file" aria-hidden="true"></i>
+                        <div><span>File name</span><strong class="text-break">@Model.OriginalFileName</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Employee</span><strong>@Model.Employee.FirstName @Model.Employee.LastName</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department</span><strong>@(Model.Employee.Department?.Name ?? "--")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-folder-tree" aria-hidden="true"></i>
+                        <div><span>Category</span><strong>@Model.DocumentCategory.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                        <div>
+                            <span>Expires</span>
+                            @if (Model.ExpiryDate == null)
+                            {
+                                <em>Does not expire</em>
+                            }
+                            else
+                            {
+                                <strong class="@(days < 0 ? "text-danger" : "")">@Model.ExpiryDate.Value.ToString("d MMM yyyy")</strong>
+                            }
+                        </div>
                     </div>
 
                 </div>
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Employee</span>
-
-                    <div class="field-value">
-                        @Model.Employee.FirstName
-                        @Model.Employee.LastName
-                    </div>
-
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(Model.Description ?? "No description provided.")</p>
                 </div>
 
-                <div class="col-md-4">
+            </section>
 
-                    <span class="field-label">Department</span>
+            <section class="panel-card mb-3">
 
-                    <div class="field-value">
-                        @Model.Employee.Department.Name
+                <h3 class="panel-head">
+                    <i class="fas fa-paperclip" aria-hidden="true"></i> File
+                </h3>
+
+                <div class="doc-row">
+
+                    <span class="doc-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+
+                    <div class="doc-info">
+                        <div class="doc-name text-break">@Model.OriginalFileName</div>
+                        <div class="doc-meta">Uploaded @Model.UploadedAt.ToString("d MMM yyyy")</div>
                     </div>
 
-                </div>
+                    <div class="doc-buttons">
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Category</span>
-
-                    <div class="field-value">
-                        @Model.DocumentCategory.Name
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">Uploaded By</span>
-
-                    <div class="field-value">
-                        @if (!string.IsNullOrWhiteSpace(Model.UploadedByName))
+                        @if (canPreview)
                         {
-                            @Model.UploadedByName
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Preview" asp-route-id="@Model.Id"
+                               target="_blank" rel="noopener" title="Preview">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                                <span class="visually-hidden">Preview @Model.OriginalFileName</span>
+                            </a>
                         }
-                        else if (Model.UploadedByEmployee != null)
-                        {
-                            @Model.UploadedByEmployee.FirstName
-                            @Model.UploadedByEmployee.LastName
-                        }
-                        else
-                        {
-                            <span class="text-muted">Not recorded</span>
-                        }
+
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Download" asp-route-id="@Model.Id" title="Download">
+                            <i class="fas fa-download" aria-hidden="true"></i>
+                            <span class="visually-hidden">Download @Model.OriginalFileName</span>
+                        </a>
+
                     </div>
 
                 </div>
 
-                <div class="col-md-4">
+            </section>
 
-                    <span class="field-label">Uploaded</span>
+        </div>
 
-                    <div class="field-value">
-                        @Model.UploadedAt.ToString("dd MMM yyyy HH:mm")
-                    </div>
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
+
+                <div class="d-grid gap-2">
+
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                    </a>
+
+                    @if (canPreview)
+                    {
+                        <a asp-action="Preview" asp-route-id="@Model.Id" target="_blank" rel="noopener" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye" aria-hidden="true"></i> Preview
+                        </a>
+                    }
+
+                    <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download
+                    </a>
+
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="fas fa-trash" aria-hidden="true"></i> Delete
+                    </a>
 
                 </div>
 
-                <div class="col-12">
+            </section>
 
-                    <span class="field-label">Description</span>
+            <section class="panel-card mb-3">
 
-                    <div class="field-value">
-                        @(Model.Description ?? "No description provided.")
-                    </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Document Information
+                </h3>
 
-                </div>
+                <dl class="info-list">
+                    <dt>Uploaded</dt>
+                    <dd>@Model.UploadedAt.ToString("d MMM yyyy, HH:mm")</dd>
+                    <dt>Uploaded by</dt>
+                    <dd>@(uploadedBy ?? "Not recorded")</dd>
+                    <dt>Expires</dt>
+                    <dd>@(Model.ExpiryDate?.ToString("d MMM yyyy") ?? "Does not expire")</dd>
+                </dl>
 
-            </div>
+            </section>
 
         </div>
 

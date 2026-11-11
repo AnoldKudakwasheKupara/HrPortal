@@ -132,6 +132,21 @@ namespace HrPortal.Controllers
                 .Take(PageSize)
                 .ToListAsync();
 
+            var dayStart = DateTime.UtcNow.Date;
+            var weekStart = dayStart.AddDays(-6);
+
+            ViewBag.Stats = new[]
+            {
+                await _context.AuditLogs.CountAsync(),
+                await _context.AuditLogs.CountAsync(a => a.Timestamp >= dayStart),
+                await _context.AuditLogs.CountAsync(a => a.Timestamp >= weekStart),
+                await _context.AuditLogs
+                    .Where(a => a.Timestamp >= weekStart && a.EmployeeId != null)
+                    .Select(a => a.EmployeeId)
+                    .Distinct()
+                    .CountAsync()
+            };
+
             await LoadFilters();
 
             ViewBag.SelectedEmployeeId = employeeId;

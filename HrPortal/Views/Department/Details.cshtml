@@ -2,171 +2,171 @@
 
 @{
     ViewData["Title"] = "Department Details";
+    var active = Model.Employees.Count(e => e.IsActive);
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.Name</h2>
-
-            <p class="text-muted">
-                Department Details
-            </p>
+            <p>@(Model.Description ?? "Department details")</p>
         </div>
 
-        <div>
+        <div class="head-actions">
 
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-primary">
-
-                Edit
-
-            </a>
-
-            <partial name="_DownloadPdf" model="@Model.Id" />
-
-            <a asp-action="Index"
-               class="btn btn-secondary">
-
-                Back
-
-            </a>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-md-6">
-
-                    <span class="field-label">Department Name</span>
-
-                    <div class="field-value">
-                        @Model.Name
-                    </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                    <span class="field-label">Status</span>
-
-                    <div class="field-value">
-
-                        @if (Model.IsActive)
-                        {
-                            <span class="badge bg-success">
-                                Active
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                Inactive
-                            </span>
-                        }
-
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Description</span>
-
-                    <div class="field-value">
-                        @(Model.Description ?? "No description provided.")
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm">
-
-        <div class="card-header">Employees in this Department</div>
-
-        <div class="card-body @(Model.Employees.Any() ? "is-table" : "")">
-
-            @if (Model.Employees.Any())
+            @if (Model.IsActive)
             {
-                <div class="table-responsive">
-
-                    <table class="table">
-
-                        <thead>
-                            <tr>
-                                <th>Employee Number</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var employee in Model.Employees)
-                        {
-                            <tr>
-
-                                <td>
-                                    @employee.EmployeeNumber
-                                </td>
-
-                                <td>
-                                    @employee.FirstName
-                                    @employee.LastName
-                                </td>
-
-                                <td>
-                                    @employee.Email
-                                </td>
-
-                                <td>
-
-                                    @if (employee.IsActive)
-                                    {
-                                        <span class="badge bg-success">
-                                            Active
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">
-                                            Inactive
-                                        </span>
-                                    }
-
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
+                <span class="status-badge badge-green">Active</span>
             }
             else
             {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128101;</span>
-                    No employees are currently assigned to this department.
-                </p>
+                <span class="status-badge badge-gray">Inactive</span>
             }
+
+            <partial name="_DownloadPdf" model="@Model.Id" />
+
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
+        </div>
+
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-lg-8">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-sitemap" aria-hidden="true"></i> Department Details
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department name</span><strong>@Model.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <div><span>Status</span><strong>@(Model.IsActive ? "Active" : "Inactive")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <div><span>Active staff</span><strong>@active</strong></div>
+                    </div>
+
+                </div>
+
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(Model.Description ?? "No description provided.")</p>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-users" aria-hidden="true"></i> Employees in This Department
+                    <span class="tab-count">@Model.Employees.Count</span>
+                </h3>
+
+                @if (!Model.Employees.Any())
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-users-slash" aria-hidden="true"></i>
+                        <p>No employees are currently assigned to this department.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee No.</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var employee in Model.Employees.OrderBy(e => e.FirstName).ThenBy(e => e.LastName))
+                                {
+                                    <tr>
+                                        <td class="text-nowrap">@employee.EmployeeNumber</td>
+                                        <td class="fw-semibold">@employee.FirstName @employee.LastName</td>
+                                        <td class="text-break">@employee.Email</td>
+                                        <td>
+                                            @if (employee.IsActive)
+                                            {
+                                                <span class="status-badge badge-green">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge badge-gray">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
+
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit department
+                    </a>
+                    <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download details (PDF)
+                    </a>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Department Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Status</dt>
+                    <dd>@(Model.IsActive ? "Active" : "Inactive")</dd>
+                    <dt>Employees</dt>
+                    <dd>@Model.Employees.Count</dd>
+                    <dt>Active</dt>
+                    <dd>@active</dd>
+                    <dt>Inactive</dt>
+                    <dd>@(Model.Employees.Count - active)</dd>
+                </dl>
+
+            </section>
 
         </div>
 

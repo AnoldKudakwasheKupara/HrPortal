@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Employee Documents";
+
+    var stats = (int[])ViewBag.Stats;
+    var filtered = ViewBag.SelectedEmployeeId != null || ViewBag.SelectedCategoryId != null;
 }
 
 <div class="container-fluid">
@@ -10,105 +13,117 @@
 
         <div>
             <h2>Employee Documents</h2>
-
-            <p class="text-muted">
-                Contracts, certificates and other files held on file
-                for each employee.
-            </p>
+            <p>Contracts, certificates and other files held on file for each employee.</p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Upload Document
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-upload" aria-hidden="true"></i> Upload Document
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm mb-4">
+    <div class="kpis">
 
-        <div class="card-body">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-folder-open"></i></span>
+            <div>
+                <div class="kpi-label">Documents</div>
+                <div class="kpi-value">@stats[0]</div>
+            </div>
+        </div>
 
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-2 align-items-end">
+        <div class="kpi">
+            <span class="kpi-icon @(stats[1] > 0 ? "is-red" : "is-gray")" aria-hidden="true"><i class="fas fa-circle-xmark"></i></span>
+            <div>
+                <div class="kpi-label">Expired</div>
+                <div class="kpi-value">@stats[1]</div>
+            </div>
+        </div>
 
-                <div class="col-md-4">
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Expiring in 30 Days</div>
+                <div class="kpi-value">@stats[2]</div>
+            </div>
+        </div>
 
-                    <label for="employeeId"
-                           class="form-label">
-                        Employee
-                    </label>
-
-                    <select id="employeeId"
-                            name="employeeId"
-                            asp-items="ViewBag.Employees"
-                            class="form-select">
-
-                        <option value="">
-                            -- All Employees --
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <label for="categoryId"
-                           class="form-label">
-                        Category
-                    </label>
-
-                    <select id="categoryId"
-                            name="categoryId"
-                            asp-items="ViewBag.Categories"
-                            class="form-select">
-
-                        <option value="">
-                            -- All Categories --
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-auto">
-
-                    <button type="submit"
-                            class="btn btn-outline-secondary">
-                        Filter
-                    </button>
-
-                </div>
-
-            </form>
-
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-upload"></i></span>
+            <div>
+                <div class="kpi-label">Uploaded This Month</div>
+                <div class="kpi-value">@stats[3]</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <form asp-action="Index" method="get" class="filter-bar filter-bar-short" data-auto-submit>
 
-        <div class="card-body is-table">
+        <div>
+            <label for="employeeId" class="form-label">Employee</label>
+            <select id="employeeId" name="employeeId" asp-items="ViewBag.Employees" class="form-select">
+                <option value="">All employees</option>
+            </select>
+        </div>
 
+        <div>
+            <label for="categoryId" class="form-label">Category</label>
+            <select id="categoryId" name="categoryId" asp-items="ViewBag.Categories" class="form-select">
+                <option value="">All categories</option>
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-folder-open" aria-hidden="true"></i> Documents
+            <span class="tab-count">@Model.TotalCount</span>
+        </h3>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-folder-open" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>No documents match these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No documents have been uploaded yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -117,159 +132,99 @@
                             <th>Category</th>
                             <th>Expires</th>
                             <th>Uploaded</th>
-                            <th>Uploaded By</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Items.Any())
-                    {
-                        <tr>
-                            <td colspan="7"
-                                class="text-center text-muted py-4">
-                                No documents match this filter.
-                            </td>
-                        </tr>
-                    }
-
-                    @foreach (var document in Model.Items)
-                    {
-                        <tr>
-
-                            <td>
-                                <strong>
-                                    @document.OriginalFileName
-                                </strong>
-                            </td>
-
-                            <td>
-                                @document.Employee.FirstName
-                                @document.Employee.LastName
-                            </td>
-
-                            <td>
-                                @document.DocumentCategory.Name
-                            </td>
-
-                            <td>
-                                @if (document.ExpiryDate == null)
-                                {
-                                    <span class="text-muted">--</span>
-                                }
-                                else
-                                {
-                                    var days =
-                                        (document.ExpiryDate.Value.Date
-                                            - DateTime.Today).Days;
-
-                                    <span class="@(days < 0
-                                        ? "badge bg-danger"
-                                        : days <= 30
-                                            ? "badge bg-warning text-dark"
-                                            : "")">
-                                        @document.ExpiryDate.Value.ToString("dd MMM yyyy")
-                                    </span>
-
-                                    @if (days < 0)
+                        @foreach (var document in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold text-break">@document.OriginalFileName</td>
+                                <td>@document.Employee.FirstName @document.Employee.LastName</td>
+                                <td>@document.DocumentCategory.Name</td>
+                                <td class="text-nowrap">
+                                    @if (document.ExpiryDate == null)
                                     {
-                                        <div class="text-muted small">
-                                            expired
-                                        </div>
+                                        <span class="text-muted">-</span>
                                     }
-                                }
-                            </td>
-
-                            <td>
-                                @document.UploadedAt.ToString("dd MMM yyyy")
-                            </td>
-
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(
-                                    document.UploadedByName))
-                                {
-                                    @document.UploadedByName
-                                }
-                                else if (document.UploadedByEmployee != null)
-                                {
-                                    @document.UploadedByEmployee.FirstName
-                                    @document.UploadedByEmployee.LastName
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        Not recorded
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@document.Id">
-
-                                        View
-
-                                    </a>
-
-                                    @if (HrPortal.Services.FileStorageService
-                                        .CanPreview(document.OriginalFileName))
+                                    else
                                     {
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Preview"
-                                           asp-route-id="@document.Id"
-                                           target="_blank">
+                                        var days = (document.ExpiryDate.Value.Date - DateTime.Today).Days;
 
-                                            Preview
+                                        <span class="@(days < 0 ? "status-badge badge-red" : days <= 30 ? "status-badge badge-amber" : "")">
+                                            @document.ExpiryDate.Value.ToString("d MMM yyyy")
+                                        </span>
 
+                                        @if (days < 0)
+                                        {
+                                            <div class="small text-muted">expired</div>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    <div class="text-nowrap">@document.UploadedAt.ToString("d MMM yyyy")</div>
+                                    <div class="small text-muted">
+                                        @if (!string.IsNullOrWhiteSpace(document.UploadedByName))
+                                        {
+                                            @document.UploadedByName
+                                        }
+                                        else if (document.UploadedByEmployee != null)
+                                        {
+                                            @document.UploadedByEmployee.FirstName<text> </text>@document.UploadedByEmployee.LastName
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@document.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                    }
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Download"
-                                       asp-route-id="@document.Id">
+                                        @if (HrPortal.Services.FileStorageService.CanPreview(document.OriginalFileName))
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" asp-action="Preview" asp-route-id="@document.Id"
+                                               target="_blank" rel="noopener" title="Preview">
+                                                <i class="fas fa-up-right-from-square" aria-hidden="true"></i>
+                                                <span class="visually-hidden">Preview @document.OriginalFileName</span>
+                                            </a>
+                                        }
 
-                                        Download
+                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Download" asp-route-id="@document.Id" title="Download">
+                                            <i class="fas fa-download" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Download @document.OriginalFileName</span>
+                                        </a>
 
-                                    </a>
+                                        <a class="btn btn-sm btn-outline-success" asp-action="Edit" asp-route-id="@document.Id" title="Edit">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Edit @document.OriginalFileName</span>
+                                        </a>
 
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@document.Id">
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@document.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete @document.OriginalFileName</span>
+                                        </a>
 
-                                        Edit
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-danger"
-                                       asp-action="Delete"
-                                       asp-route-id="@document.Id">
-
-                                        Delete
-
-                                    </a>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
                 </table>
 
-            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "documents")' />
-
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "document", "documents")' />
+        }
 
-    </div>
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

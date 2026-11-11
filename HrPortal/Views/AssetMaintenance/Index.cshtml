@@ -6,6 +6,9 @@
     ViewData["Title"] = "Maintenance Schedule";
 
     var today = DateTime.Today;
+    var overdueOnly = string.Equals(Context.Request.Query["overdueOnly"], "true", StringComparison.OrdinalIgnoreCase);
+    var overdue = (int)ViewBag.Overdue;
+    var filtered = ViewBag.AssetFilter != null || ViewBag.StatusFilter != null || ViewBag.TypeFilter != null || overdueOnly;
 
     List<SelectListItem> Items(object? bag) =>
         bag as List<SelectListItem> ?? new List<SelectListItem>();
@@ -14,17 +17,16 @@
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Maintenance Schedule</h2>
-            <p class="text-muted mb-0">
-                Servicing, repairs and inspections booked against the
-                machines on the register.
-            </p>
+            <p>Servicing, repairs and inspections booked against the machines on the register.</p>
         </div>
 
-        <a asp-action="Create" class="btn btn-primary">
-            Schedule Maintenance
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Schedule Maintenance
         </a>
+
     </div>
 
     @if (TempData["Success"] != null)
@@ -37,145 +39,163 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="report-stats">
+    <div class="kpis">
 
-        <a class="report-stat @(((int)ViewBag.Overdue) > 0 ? "is-critical" : "")"
-           asp-action="Index" asp-route-overdueOnly="true">
-            <span class="report-stat-label">Overdue</span>
-            <span class="report-stat-value">@ViewBag.Overdue</span>
-            <span class="report-stat-note">Past the booked date</span>
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-overdueOnly="true">
+            <span class="kpi-icon @(overdue > 0 ? "is-red" : "is-gray")" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+            <div>
+                <div class="kpi-label">Overdue</div>
+                <div class="kpi-value">@overdue</div>
+                <div class="kpi-note">Past the booked date</div>
+            </div>
         </a>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Due in 30 days</span>
-            <span class="report-stat-value">@ViewBag.DueSoon</span>
-            <span class="report-stat-note">Coming up</span>
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
+            <div>
+                <div class="kpi-label">Due in 30 Days</div>
+                <div class="kpi-value">@ViewBag.DueSoon</div>
+            </div>
         </div>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Open</span>
-            <span class="report-stat-value">@ViewBag.Scheduled</span>
-            <span class="report-stat-note">Still to be done</span>
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Open</div>
+                <div class="kpi-value">@ViewBag.Scheduled</div>
+            </div>
         </div>
 
-        <div class="report-stat">
-            <span class="report-stat-label">Done this year</span>
-            <span class="report-stat-value">@ViewBag.CompletedThisYear</span>
-            <span class="report-stat-note">@today.Year</span>
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Done in @today.Year</div>
+                <div class="kpi-value">@ViewBag.CompletedThisYear</div>
+            </div>
         </div>
 
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <form method="get" class="filter-bar" data-auto-submit>
 
-                <div class="col-md-4">
-                    <label class="form-label">Asset</label>
-                    <select name="assetId" class="form-select">
-                        <option value="">All assets</option>
-                        @foreach (var a in Items(ViewBag.Assets))
-                        {
-                            <option value="@a.Value"
-                                    selected="@((ViewBag.AssetFilter as int?)?.ToString() == a.Value)">
-                                @a.Text
-                            </option>
-                        }
-                    </select>
-                </div>
+        @if (overdueOnly)
+        {
+            <input type="hidden" name="overdueOnly" value="true" />
+        }
 
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var s in Enum.GetValues<MaintenanceStatus>())
-                        {
-                            <option value="@s"
-                                    selected="@(ViewBag.StatusFilter as MaintenanceStatus? == s)">
-                                @s
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Work</label>
-                    <select name="type" class="form-select">
-                        <option value="">All</option>
-                        @foreach (var t in Enum.GetValues<MaintenanceType>())
-                        {
-                            <option value="@t"
-                                    selected="@(ViewBag.TypeFilter as MaintenanceType? == t)">
-                                @t
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Filter
-                    </button>
-                </div>
-
-            </form>
+        <div>
+            <label for="m-asset" class="form-label">Asset</label>
+            <select id="m-asset" name="assetId" class="form-select">
+                <option value="">All assets</option>
+                @foreach (var a in Items(ViewBag.Assets))
+                {
+                    <option value="@a.Value" selected="@((ViewBag.AssetFilter as int?)?.ToString() == a.Value)">@a.Text</option>
+                }
+            </select>
         </div>
-    </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+        <div>
+            <label for="m-status" class="form-label">Status</label>
+            <select id="m-status" name="status" class="form-select">
+                <option value="">All statuses</option>
+                @foreach (var s in Enum.GetValues<MaintenanceStatus>())
+                {
+                    <option value="@s" selected="@(ViewBag.StatusFilter as MaintenanceStatus? == s)">@s</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label for="m-type" class="form-label">Work</label>
+            <select id="m-type" name="type" class="form-select">
+                <option value="">All work</option>
+                @foreach (var t in Enum.GetValues<MaintenanceType>())
+                {
+                    <option value="@t" selected="@(ViewBag.TypeFilter as MaintenanceType? == t)">@t</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            @if (overdueOnly)
+            {
+                <span class="status-badge badge-red mb-2">Overdue only</span>
+            }
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Apply</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset Filters
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i> Maintenance
+            <span class="tab-count">@Model.TotalCount</span>
+        </h3>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>Nothing matches these filters.</text>
+                        <a asp-action="Index">Reset filters</a>
+                    }
+                    else
+                    {
+                        <text>No maintenance has been scheduled yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Asset</th>
                             <th>Work</th>
                             <th>Scheduled</th>
-                            <th>Done by</th>
+                            <th>Done By</th>
                             <th class="num">Cost</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Items.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                Nothing matches this filter.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var m in Model.Items)
+                        @foreach (var m in Model.Items)
                         {
                             <tr>
                                 <td>
-                                    <strong>@m.Asset.DeviceModel</strong>
+                                    <div class="fw-semibold">@m.Asset.DeviceModel</div>
                                     @if (!string.IsNullOrWhiteSpace(m.Asset.SerialNumber))
                                     {
-                                        <div class="text-muted small">
-                                            @m.Asset.SerialNumber
-                                        </div>
+                                        <div class="small text-muted">@m.Asset.SerialNumber</div>
                                     }
                                 </td>
-
                                 <td>@m.Type</td>
-
-                                <td>
+                                <td class="text-nowrap">
                                     @m.ScheduledFor.ToString("d MMM yyyy")
                                     @if (m.CompletedOn.HasValue)
                                     {
-                                        <div class="text-muted small">
-                                            Done @m.CompletedOn.Value.ToString("d MMM yyyy")
-                                        </div>
+                                        <div class="small text-muted">Done @m.CompletedOn.Value.ToString("d MMM yyyy")</div>
                                     }
                                 </td>
-
                                 <td>
                                     @if (m.Vendor != null)
                                     {
@@ -187,57 +207,50 @@
                                     }
                                     else
                                     {
-                                        <span class="text-muted">--</span>
+                                        <span class="text-muted">-</span>
                                     }
                                 </td>
-
-                                <td class="num">
-                                    @(m.Cost?.ToString("0.00") ?? "--")
-                                </td>
-
+                                <td class="num">@(m.Cost?.ToString("0.00") ?? "-")</td>
+                                <td><partial name="_MaintenanceStatusBadge" model="m" /></td>
                                 <td>
-                                    <partial name="_MaintenanceStatusBadge" model="m" />
-                                </td>
-
-                                <td class="col-actions">
-                                    <div class="table-actions">
+                                    <div class="table-actions justify-content-end">
 
                                         @if (m.Status == MaintenanceStatus.Scheduled)
                                         {
-                                            <form asp-action="Complete"
-                                                  asp-route-id="@m.Id"
-                                                  method="post">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-primary">
-                                                    Mark done
+                                            <form asp-action="Complete" asp-route-id="@m.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                                    <i class="fas fa-check" aria-hidden="true"></i> Mark done
                                                 </button>
                                             </form>
                                         }
 
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit" asp-route-id="@m.Id">
-                                            Edit
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@m.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
                                         </a>
 
-                                        <a class="btn btn-sm btn-outline-danger"
-                                           asp-action="Delete" asp-route-id="@m.Id">
-                                            Delete
+                                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@m.Id" title="Delete">
+                                            <i class="fas fa-trash" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Delete this maintenance record</span>
                                         </a>
 
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
 
-            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "maintenance records")' />
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(Model, "record", "records")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

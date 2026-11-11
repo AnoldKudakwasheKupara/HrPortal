@@ -1,82 +1,124 @@
+@using HrPortal.ViewModels
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model IEnumerable<HrPortal.ViewModels.DirectoryEntryViewModel>
 
 @{
     ViewData["Title"] = "Staff Directory";
 
-    var departments = ViewBag.Departments as List<SelectListItem>
-        ?? new List<SelectListItem>();
-
+    var departments = ViewBag.Departments as List<SelectListItem> ?? new List<SelectListItem>();
     var search = ViewBag.Search as string;
     var departmentFilter = ViewBag.DepartmentFilter as int?;
+    var filtered = !string.IsNullOrWhiteSpace(search) || departmentFilter != null;
+
+    var all = Model.ToList();
+    var paged = PagedList.Of(all, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
 
     <div class="page-head">
+
         <div>
             <h2>Staff Directory</h2>
-            <p class="text-muted mb-0">
-                Who works here and how to reach them. Work contact
-                details only.
-            </p>
+            <p>Who works here and how to reach them. Work contact details only.</p>
         </div>
 
-        <span class="badge bg-light text-dark align-self-start">
-            @ViewBag.TotalActive on the books
-        </span>
     </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form method="get" class="row g-2 align-items-end">
+    <div class="kpis">
 
-                <div class="col-md-5">
-                    <label class="form-label">Search</label>
-                    <input name="search" class="form-control"
-                           value="@search"
-                           placeholder="Name, job title or email" />
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Department</label>
-                    <select name="departmentId" class="form-select">
-                        <option value="">All departments</option>
-                        @foreach (var d in departments)
-                        {
-                            <option value="@d.Value"
-                                    selected="@(departmentFilter?.ToString() == d.Value)">
-                                @d.Text
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-secondary w-100">
-                        Search
-                    </button>
-                </div>
-
-                <div class="col-md-1">
-                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
-                        Clear
-                    </a>
-                </div>
-
-            </form>
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-users"></i></span>
+            <div>
+                <div class="kpi-label">On the Books</div>
+                <div class="kpi-value">@ViewBag.TotalActive</div>
+            </div>
         </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-sitemap"></i></span>
+            <div>
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">@departments.Count</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-phone"></i></span>
+            <div>
+                <div class="kpi-label">With a Phone Number</div>
+                <div class="kpi-value">@all.Count(p => !string.IsNullOrWhiteSpace(p.PhoneNumber))</div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body is-table">
+    <form method="get" class="filter-bar filter-bar-short" data-auto-submit>
+
+        <div>
+            <label for="dir-search" class="form-label">Search</label>
+            <div class="filter-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="dir-search" type="search" name="search" class="form-control" value="@search" placeholder="Name, job title or email" />
+            </div>
+        </div>
+
+        <div>
+            <label for="dir-department" class="form-label">Department</label>
+            <select id="dir-department" name="departmentId" class="form-select">
+                <option value="">All departments</option>
+                @foreach (var d in departments)
+                {
+                    <option value="@d.Value" selected="@(departmentFilter?.ToString() == d.Value)">@d.Text</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </noscript>
+            <a asp-action="Index" class="btn btn-outline-primary text-nowrap">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Clear
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-address-book" aria-hidden="true"></i> People
+            <span class="tab-count">@all.Count</span>
+        </h3>
+
+        @if (!all.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <p>
+                    @if (filtered)
+                    {
+                        <text>Nobody matches that search.</text>
+                        <a asp-action="Index">Clear</a>
+                    }
+                    else
+                    {
+                        <text>Nobody is in the directory yet.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Job title</th>
+                            <th>Job Title</th>
                             <th>Department</th>
                             <th>Email</th>
                             <th>Phone</th>
@@ -85,37 +127,17 @@
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">
-                                Nobody matches that search.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var p in Model)
+                        @foreach (var p in paged.Items)
                         {
                             <tr>
-                                <td><strong>@p.Name</strong></td>
-
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(p.JobTitle)
-                                        ? "--"
-                                        : p.JobTitle)
-                                </td>
-
+                                <td class="fw-semibold">@p.Name</td>
+                                <td>@(string.IsNullOrWhiteSpace(p.JobTitle) ? "-" : p.JobTitle)</td>
                                 <td>@p.Department</td>
-
-                                <td>
-                                    <a href="mailto:@p.Email">@p.Email</a>
-                                </td>
-
-                                <td>
+                                <td class="text-break"><a href="mailto:@p.Email">@p.Email</a></td>
+                                <td class="text-nowrap">
                                     @if (string.IsNullOrWhiteSpace(p.PhoneNumber))
                                     {
-                                        <span class="text-muted">--</span>
+                                        <span class="text-muted">-</span>
                                     }
                                     else
                                     {
@@ -124,13 +146,20 @@
                                 </td>
                             </tr>
                         }
-                    }
 
                     </tbody>
 
                 </table>
+
             </div>
-        </div>
-    </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "person", "people")' />
+        }
+
+    </section>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filters.js" asp-append-version="true"></script>
+}

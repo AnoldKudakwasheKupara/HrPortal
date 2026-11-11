@@ -4,152 +4,160 @@
     ViewData["Title"] = "Document Category Details";
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.Name</h2>
-
-            <p class="text-muted">
-                Document Category Details
-            </p>
+            <p>@(Model.Description ?? "Document category details")</p>
         </div>
 
-        <div>
+        <div class="head-actions">
 
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-primary">
-
-                Edit
-
-            </a>
-
-            <partial name="_DownloadPdf" model="@Model.Id" />
-
-            <a asp-action="Index"
-               class="btn btn-secondary">
-
-                Back
-
-            </a>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mb-4">
-
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-md-6">
-
-                    <span class="field-label">Category Name</span>
-
-                    <div class="field-value">
-                        @Model.Name
-                    </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                    <span class="field-label">Status</span>
-
-                    <div class="field-value">
-
-                        @if (Model.IsActive)
-                        {
-                            <span class="badge bg-success">
-                                Active
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                Inactive
-                            </span>
-                        }
-
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Description</span>
-
-                    <div class="field-value">
-                        @(Model.Description ?? "No description provided.")
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm">
-
-        <div class="card-header">Documents in this Category</div>
-
-        <div class="card-body @(Model.Documents.Any() ? "is-table" : "")">
-
-            @if (Model.Documents.Any())
+            @if (Model.IsActive)
             {
-                <div class="table-responsive">
-
-                    <table class="table">
-
-                        <thead>
-                            <tr>
-                                <th>Document</th>
-                                <th>Employee</th>
-                                <th>Uploaded</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        @foreach (var document in Model.Documents
-                            .OrderByDescending(d => d.UploadedAt))
-                        {
-                            <tr>
-
-                                <td>
-                                    @document.OriginalFileName
-                                </td>
-
-                                <td>
-                                    @document.Employee.FirstName
-                                    @document.Employee.LastName
-                                </td>
-
-                                <td>
-                                    @document.UploadedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                            </tr>
-                        }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
+                <span class="status-badge badge-green">Active</span>
             }
             else
             {
-                <p class="empty-state">
-                    <span class="empty-icon">&#128193;</span>
-                    No documents are currently filed under this category.
-                </p>
+                <span class="status-badge badge-gray">Inactive</span>
             }
+
+            <partial name="_DownloadPdf" model="@Model.Id" />
+
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
+        </div>
+
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-lg-8">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-folder-tree" aria-hidden="true"></i> Category Details
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-tag" aria-hidden="true"></i>
+                        <div><span>Category name</span><strong>@Model.Name</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <div><span>Status</span><strong>@(Model.IsActive ? "Active" : "Inactive")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <div><span>Who can see</span><strong>@(Model.IsRestricted ? "HR only" : "Everyone allowed")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-file-lines" aria-hidden="true"></i>
+                        <div><span>Documents</span><strong>@Model.Documents.Count</strong></div>
+                    </div>
+
+                </div>
+
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(Model.Description ?? "No description provided.")</p>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-file-lines" aria-hidden="true"></i> Documents in This Category
+                    <span class="tab-count">@Model.Documents.Count</span>
+                </h3>
+
+                @if (!Model.Documents.Any())
+                {
+                    <div class="list-empty mb-0">
+                        <i class="fas fa-folder-open" aria-hidden="true"></i>
+                        <p>No documents are currently filed under this category.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Employee</th>
+                                    <th>Uploaded</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var document in Model.Documents.OrderByDescending(d => d.UploadedAt))
+                                {
+                                    <tr>
+                                        <td class="fw-semibold text-break">@document.OriginalFileName</td>
+                                        <td>@document.Employee.FirstName @document.Employee.LastName</td>
+                                        <td class="text-nowrap">@document.UploadedAt.ToString("d MMM yyyy")</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
+
+                <div class="d-grid gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit category
+                    </a>
+                    <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download details (PDF)
+                    </a>
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Category Information
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Status</dt>
+                    <dd>@(Model.IsActive ? "Active" : "Inactive")</dd>
+                    <dt>Visibility</dt>
+                    <dd>@(Model.IsRestricted ? "HR only" : "Everyone allowed")</dd>
+                    <dt>Documents</dt>
+                    <dd>@Model.Documents.Count</dd>
+                </dl>
+
+            </section>
 
         </div>
 

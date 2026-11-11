@@ -133,6 +133,17 @@ namespace HrPortal.Controllers
                     .Include(d => d.UploadedByEmployee),
                 User);
 
+            var today = DateTime.Today;
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+
+            ViewBag.Stats = new[]
+            {
+                await query.CountAsync(),
+                await query.CountAsync(d => d.ExpiryDate != null && d.ExpiryDate < today),
+                await query.CountAsync(d => d.ExpiryDate != null && d.ExpiryDate >= today && d.ExpiryDate <= today.AddDays(30)),
+                await query.CountAsync(d => d.UploadedAt >= monthStart)
+            };
+
             if (employeeId.HasValue)
             {
                 query = query.Where(d =>

@@ -2,136 +2,98 @@
 
 @{
     ViewData["Title"] = "Audit Entry Details";
+    var who = Model.Employee == null ? "System" : $"{Model.Employee.FirstName} {Model.Employee.LastName}";
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
             <h2>@Model.Action</h2>
-
-            <p class="text-muted">
-                Audit Entry Details
-            </p>
+            <p>@Model.EntityName, @Model.Timestamp.ToLocalTime().ToString("d MMM yyyy, HH:mm")</p>
         </div>
 
-        <partial name="_DownloadPdf" model="@Model.Id" />
-
-        <a asp-action="Index"
-           class="btn btn-secondary">
-
-            Back
-
-        </a>
+        <div class="head-actions">
+            <partial name="_DownloadPdf" model="@Model.Id" />
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row g-3">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
+                <h3 class="panel-head">
+                    <i class="fas fa-clipboard-list" aria-hidden="true"></i> Entry Details
+                </h3>
 
-                    <span class="field-label">Action</span>
+                <div class="facts">
 
-                    <div class="field-value">
-                        @Model.Action
+                    <div class="fact">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        <div><span>Action</span><strong>@Model.Action</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-database" aria-hidden="true"></i>
+                        <div><span>Entity</span><strong>@Model.EntityName</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-hashtag" aria-hidden="true"></i>
+                        <div>
+                            <span>Record</span>
+                            @if (string.IsNullOrWhiteSpace(Model.EntityId))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.EntityId</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Performed by</span><strong>@who</strong></div>
                     </div>
 
                 </div>
 
-                <div class="col-md-4">
-
-                    <span class="field-label">Entity</span>
-
-                    <div class="field-value">
-                        @Model.EntityName
-                    </div>
-
+                <div class="panel-block">
+                    <h4><i class="fas fa-align-left" aria-hidden="true"></i> Description</h4>
+                    <p class="pre-line">@(Model.Description ?? "No description recorded.")</p>
                 </div>
 
-                <div class="col-md-4">
+            </section>
 
-                    <span class="field-label">Record</span>
+        </div>
 
-                    <div class="field-value">
-                        @if (!string.IsNullOrWhiteSpace(Model.EntityId))
-                        {
-                            @Model.EntityId
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                Not recorded
-                            </span>
-                        }
-                    </div>
+        <div class="col-lg-4">
 
-                </div>
+            <section class="panel-card mb-3">
 
-                <div class="col-md-4">
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Entry Information
+                </h3>
 
-                    <span class="field-label">Performed By</span>
+                <dl class="info-list">
+                    <dt>When</dt>
+                    <dd>@Model.Timestamp.ToLocalTime().ToString("d MMM yyyy, HH:mm:ss")</dd>
+                    <dt>By</dt>
+                    <dd>@who</dd>
+                    <dt>IP address</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.IpAddress) ? "Not recorded" : Model.IpAddress)</dd>
+                    <dt>Entry No.</dt>
+                    <dd>@Model.Id</dd>
+                </dl>
 
-                    <div class="field-value">
-                        @if (Model.Employee != null)
-                        {
-                            @Model.Employee.FirstName
-                            @Model.Employee.LastName
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                System
-                            </span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">When</span>
-
-                    <div class="field-value">
-                        @Model.Timestamp.ToString("dd MMM yyyy HH:mm:ss")
-                    </div>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <span class="field-label">IP Address</span>
-
-                    <div class="field-value">
-                        @if (!string.IsNullOrWhiteSpace(Model.IpAddress))
-                        {
-                            @Model.IpAddress
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                Not recorded
-                            </span>
-                        }
-                    </div>
-
-                </div>
-
-                <div class="col-12">
-
-                    <span class="field-label">Description</span>
-
-                    <div class="field-value">
-                        @(Model.Description ?? "No description recorded.")
-                    </div>
-
-                </div>
-
-            </div>
+            </section>
 
         </div>
 

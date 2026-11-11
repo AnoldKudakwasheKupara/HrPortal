@@ -1,7 +1,13 @@
-﻿@model IEnumerable<HrPortal.Entities.DocumentCategory>
+﻿@using HrPortal.ViewModels
+@model IEnumerable<HrPortal.Entities.DocumentCategory>
 
 @{
     ViewData["Title"] = "Document Categories";
+
+    var all = Model.ToList();
+    var search = PagedList.SearchFrom(Context.Request);
+    var shown = all.Where(c => PagedList.Matches(search, c.Name, c.Description)).ToList();
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
 }
 
 <div class="container-fluid">
@@ -10,41 +16,82 @@
 
         <div>
             <h2>Document Categories</h2>
-
-            <p class="text-muted">
-                Manage the categories employee documents are filed under.
-            </p>
+            <p>Manage the categories employee documents are filed under.</p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Add Category
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Add Category
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="card shadow-sm">
+    <div class="kpis">
 
-        <div class="card-body is-table">
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-folder-tree"></i></span>
+            <div>
+                <div class="kpi-label">Categories</div>
+                <div class="kpi-value">@all.Count</div>
+            </div>
+        </div>
 
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Active</div>
+                <div class="kpi-value">@all.Count(c => c.IsActive)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-lock"></i></span>
+            <div>
+                <div class="kpi-label">HR Only</div>
+                <div class="kpi-value">@all.Count(c => c.IsRestricted)</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-file-lines"></i></span>
+            <div>
+                <div class="kpi-label">Documents Filed</div>
+                <div class="kpi-value">@all.Sum(c => c.Documents.Count)</div>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-folder-tree" aria-hidden="true"></i> Categories
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(null, search, "Search categories...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-folder-tree" aria-hidden="true"></i>
+                <p>@(all.Any() ? "No categories match." : "No document categories have been added yet.")</p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0">
 
                     <thead>
                         <tr>
@@ -52,116 +99,65 @@
                             <th>Description</th>
                             <th>Documents</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5"
-                                class="text-center text-muted py-4">
-                                No document categories have been added yet.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var category in paged.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">@category.Name</span>
+                                    @if (category.IsRestricted)
+                                    {
+                                        <span class="status-badge badge-amber ms-1">HR only</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(category.Description))
+                                    {
+                                        @category.Description
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No description</span>
+                                    }
+                                </td>
+                                <td><span class="status-badge badge-blue">@category.Documents.Count</span></td>
+                                <td>
+                                    @if (category.IsActive)
+                                    {
+                                        <span class="status-badge badge-green">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-gray">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                    @foreach (var category in Model)
-                    {
-                        <tr>
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@category.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
 
-                            <td>
-                                <strong>
-                                    @category.Name
-                                </strong>
-                                @if (category.IsRestricted)
-                                {
-                                    <span class="badge bg-warning text-dark">
-                                        HR only
-                                    </span>
-                                }
-                            </td>
+                                        <a class="btn btn-sm btn-outline-success text-nowrap" asp-action="Edit" asp-route-id="@category.Id">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                        </a>
 
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(
-                                    category.Description))
-                                {
-                                    @category.Description
-                                }
-                                else
-                                {
-                                    <span class="text-muted">
-                                        No description
-                                    </span>
-                                }
-                            </td>
+                                        <form asp-action="ToggleStatus" asp-route-id="@category.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+                                                <i class="fas @(category.IsActive ? "fa-toggle-off" : "fa-toggle-on")" aria-hidden="true"></i>
+                                                @(category.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
 
-                            <td>
-                                <span class="badge bg-primary">
-                                    @category.Documents.Count
-                                </span>
-                            </td>
-
-                            <td>
-                                @if (category.IsActive)
-                                {
-                                    <span class="badge bg-success">
-                                        Active
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        Inactive
-                                    </span>
-                                }
-                            </td>
-
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@category.Id">
-
-                                        View
-
-                                    </a>
-
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       asp-action="Edit"
-                                       asp-route-id="@category.Id">
-
-                                        Edit
-
-                                    </a>
-
-                                    <form asp-action="ToggleStatus"
-                                          asp-route-id="@category.Id"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary">
-
-                                            @(category.IsActive
-                                                ? "Deactivate"
-                                                : "Activate")
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -169,8 +165,9 @@
 
             </div>
 
-        </div>
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "category", "categories")' />
+        }
 
-    </div>
+    </section>
 
 </div>

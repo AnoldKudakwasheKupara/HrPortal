@@ -4,339 +4,380 @@
     ViewData["Title"] = "Employee Details";
 
     var seesPersonal = ViewBag.SeesPersonal == true;
+    var fullName = $"{Model.FirstName} {Model.LastName}".Trim();
+    var initial = string.IsNullOrWhiteSpace(fullName) ? "?" : fullName[0].ToString().ToUpper();
 }
 
-<div class="container">
+<div class="container-fluid">
 
     <div class="page-head">
 
         <div>
-            <h2>
-                @Model.FirstName @Model.LastName
-            </h2>
-
-            <p class="text-muted">
-                @Model.EmployeeNumber
-            </p>
+            <h2>@fullName</h2>
+            <p>@Model.EmployeeNumber@(string.IsNullOrWhiteSpace(Model.JobTitle) ? "" : ", " + Model.JobTitle)</p>
         </div>
 
-        <div>
-            @if (Model.User != null)
-            {
-                <a asp-action="ResetPassword"
-                   asp-route-id="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Reset Password
-                </a>
-            }
-            else if (Model.IsActive)
-            {
-                <a asp-action="AllowLogin"
-                   asp-route-id="@Model.Id"
-                   class="btn btn-outline-primary">
-                    Allow Login
-                </a>
-            }
+        <div class="head-actions">
 
-            @if (seesPersonal && !string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+            @if (Model.IsActive)
             {
-                <a asp-action="NextOfKinForm"
-                   asp-route-id="@Model.Id"
-                   class="btn btn-outline-secondary">
-                    <i class="fas fa-download" aria-hidden="true"></i>
-                    Next of kin (PDF)
-                </a>
+                <span class="status-badge badge-green">Employed</span>
             }
-
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-primary">
-                Edit
-            </a>
+            else
+            {
+                <span class="status-badge badge-gray">Left@(Model.EndDate != null ? " " + Model.EndDate.Value.ToString("d MMM yyyy") : "")</span>
+            }
 
             <partial name="_DownloadPdf" model="@Model.Id" />
 
-            <a asp-action="Index"
-               class="btn btn-secondary">
-                Back
-            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+
         </div>
 
     </div>
 
-    <div class="card shadow-sm">
+    <div class="row g-3">
 
-        <div class="card-body">
+        <div class="col-lg-8">
 
-            <div class="row">
+            <section class="panel-card mb-3">
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Employee Number</span>
-                    <div class="field-value">@Model.EmployeeNumber</div>
-                </div>
+                <h3 class="panel-head">
+                    <i class="fas fa-id-badge" aria-hidden="true"></i> Employment Details
+                </h3>
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Department</span>
-                    <div class="field-value">@Model.Department?.Name</div>
-                </div>
+                <div class="facts">
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Reports to</span>
-                    <div class="field-value">
-                        @if (Model.Supervisor != null)
-                        {
-                            <a asp-action="Details"
-                               asp-route-id="@Model.Supervisor.Id">
-                                @Model.Supervisor.FirstName
-                                @Model.Supervisor.LastName
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="text-muted">
-                                Nobody &mdash; requests go straight to HR
-                            </span>
-                        }
+                    <div class="fact">
+                        <i class="fas fa-hashtag" aria-hidden="true"></i>
+                        <div><span>Employee number</span><strong>@Model.EmployeeNumber</strong></div>
                     </div>
-                </div>
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">First Name</span>
-                    <div class="field-value">@Model.FirstName</div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Last Name</span>
-                    <div class="field-value">@Model.LastName</div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Employment</span>
-                    <div class="field-value">
-                        @Html.DisplayFor(m => m.EmploymentType)
-                        @if (Model.ContractEndDate != null)
-                        {
-                            <span class="text-muted">
-                                &mdash; ends
-                                @Model.ContractEndDate.Value.ToString("d MMM yyyy")
-                            </span>
-                        }
+                    <div class="fact">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        <div><span>Department</span><strong>@(Model.Department?.Name ?? "--")</strong></div>
                     </div>
-                </div>
 
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Status</span>
-                    <div class="field-value">
-                        @if (Model.IsActive)
-                        {
-                            <span class="badge bg-success">Employed</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                Left@(Model.EndDate != null
-                                    ? " " + Model.EndDate.Value.ToString("d MMM yyyy")
-                                    : "")
-                            </span>
-                            @if (!string.IsNullOrWhiteSpace(Model.LeavingReason))
+                    <div class="fact">
+                        <i class="fas fa-briefcase" aria-hidden="true"></i>
+                        <div>
+                            <span>Job title</span>
+                            @if (string.IsNullOrWhiteSpace(Model.JobTitle))
                             {
-                                <div class="text-muted small">
-                                    @Model.LeavingReason
-                                </div>
+                                <em>Not recorded</em>
                             }
-                        }
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Job Title</span>
-                    <div class="field-value">
-                        @(string.IsNullOrWhiteSpace(Model.JobTitle)
-                            ? "Not recorded"
-                            : Model.JobTitle)
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Email</span>
-                    <div class="field-value">@Model.Email</div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Phone Number</span>
-                    <div class="field-value">@Model.PhoneNumber</div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">National ID</span>
-                    @if (seesPersonal)
-                    {
-                        <div class="field-value">@Model.NationalId</div>
-                    }
-                    else
-                    {
-                        <partial name="_HrOnly" />
-                    }
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Date Joined</span>
-                    <div class="field-value">
-                        @Model.DateJoined.ToString("dd MMM yyyy")
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Status</span>
-                    <div class="field-value">
-                        @if (Model.IsActive)
-                        {
-                            <span class="badge bg-success">
-                                Active
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-danger">
-                                Inactive
-                            </span>
-                        }
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <span class="field-label">Login Account</span>
-                    <div class="field-value">
-                        @if (Model.User != null)
-                        {
-                            <span class="badge bg-success">
-                                Created
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">
-                                Not Created
-                            </span>
-                        }
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="card shadow-sm mt-3">
-
-        <div class="card-header">Personal details</div>
-
-        <div class="card-body">
-            <div class="row">
-
-                <div class="col-md-4 mb-3">
-                    <span class="field-label">Date of Birth</span>
-                    @if (seesPersonal)
-                    {
-                        <div class="field-value">
-                            @(Model.DateOfBirth?.ToString("d MMM yyyy") ?? "Not recorded")
+                            else
+                            {
+                                <strong>@Model.JobTitle</strong>
+                            }
                         </div>
-                    }
-                    else
-                    {
-                        <partial name="_HrOnly" />
-                    }
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
+                        <div>
+                            <span>Reports to</span>
+                            @if (Model.Supervisor != null)
+                            {
+                                <strong><a asp-action="Details" asp-route-id="@Model.Supervisor.Id">@Model.Supervisor.FirstName @Model.Supervisor.LastName</a></strong>
+                            }
+                            else
+                            {
+                                <em>Nobody, requests go straight to HR</em>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-file-contract" aria-hidden="true"></i>
+                        <div>
+                            <span>Employment</span>
+                            <strong>
+                                @Html.DisplayFor(m => m.EmploymentType)
+                                @if (Model.ContractEndDate != null)
+                                {
+                                    <text>, ends @Model.ContractEndDate.Value.ToString("d MMM yyyy")</text>
+                                }
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                        <div><span>Date joined</span><strong>@Model.DateJoined.ToString("d MMM yyyy")</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <div><span>Email</span><strong class="text-break">@Model.Email</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <div>
+                            <span>Phone number</span>
+                            @if (string.IsNullOrWhiteSpace(Model.PhoneNumber))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.PhoneNumber</strong>
+                            }
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <span class="field-label">Gender</span>
-                    <div class="field-value">@Html.DisplayFor(m => m.Gender)</div>
-                </div>
+                @if (!Model.IsActive && !string.IsNullOrWhiteSpace(Model.LeavingReason))
+                {
+                    <div class="panel-block">
+                        <h4><i class="fas fa-door-open" aria-hidden="true"></i> Reason for Leaving</h4>
+                        <p class="pre-line">@Model.LeavingReason</p>
+                    </div>
+                }
 
-                <div class="col-md-4 mb-3">
-                    <span class="field-label">Marital Status</span>
-                    <div class="field-value">@Html.DisplayFor(m => m.MaritalStatus)</div>
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-user" aria-hidden="true"></i> Personal Details
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-id-card" aria-hidden="true"></i>
+                        <div>
+                            <span>National ID</span>
+                            @if (seesPersonal)
+                            {
+                                if (string.IsNullOrWhiteSpace(Model.NationalId))
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>@Model.NationalId</strong>
+                                }
+                            }
+                            else
+                            {
+                                <partial name="_HrOnly" />
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-cake-candles" aria-hidden="true"></i>
+                        <div>
+                            <span>Date of birth</span>
+                            @if (seesPersonal)
+                            {
+                                if (Model.DateOfBirth == null)
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>@Model.DateOfBirth.Value.ToString("d MMM yyyy")</strong>
+                                }
+                            }
+                            else
+                            {
+                                <partial name="_HrOnly" />
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-venus-mars" aria-hidden="true"></i>
+                        <div><span>Gender</span><strong>@Html.DisplayFor(m => m.Gender)</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-ring" aria-hidden="true"></i>
+                        <div><span>Marital status</span><strong>@Html.DisplayFor(m => m.MaritalStatus)</strong></div>
+                    </div>
+
                 </div>
 
                 @if (seesPersonal)
                 {
-                    <div class="col-12 mb-3">
-                        <span class="field-label">Home Address</span>
-                        <div class="field-value">
-                            @(string.IsNullOrWhiteSpace(Model.Address)
-                                ? "Not recorded"
-                                : Model.Address)
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <span class="field-label">Emergency Contact</span>
-                        <div class="field-value">
-                            @if (string.IsNullOrWhiteSpace(Model.EmergencyContactName))
-                            {
-                                <span class="text-muted">Not recorded</span>
-                            }
-                            else
-                            {
-                                @Model.EmergencyContactName
-                                @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactRelationship))
-                                {
-                                    <span class="text-muted">
-                                        (@Model.EmergencyContactRelationship)
-                                    </span>
-                                }
-                            }
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <span class="field-label">Emergency Contact Phone</span>
-                        <div class="field-value">
-                            @(string.IsNullOrWhiteSpace(Model.EmergencyContactPhone)
-                                ? "Not recorded"
-                                : Model.EmergencyContactPhone)
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <span class="field-label">Emergency Contact Address</span>
-                        <div class="field-value">
-                            @(string.IsNullOrWhiteSpace(Model.EmergencyContactAddress)
-                                ? "Same as the employee's"
-                                : Model.EmergencyContactAddress)
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <span class="field-label">Next Of Kin Confirmed</span>
-                        <div class="field-value">
-                            @if (Model.NextOfKinConfirmedAt == null)
-                            {
-                                <span class="badge bg-warning">
-                                    Not confirmed by the employee
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">Confirmed</span>
-                                <span class="text-muted">
-                                    @(Model.NextOfKinConfirmedAt.Value.ToLocalTime()
-                                        .ToString("d MMM yyyy HH:mm"))
-                                </span>
-                            }
-                        </div>
+                    <div class="panel-block">
+                        <h4><i class="fas fa-house" aria-hidden="true"></i> Home Address</h4>
+                        <p class="pre-line">@(string.IsNullOrWhiteSpace(Model.Address) ? "Not recorded" : Model.Address)</p>
                     </div>
                 }
                 else
                 {
-                    <div class="col-12 mb-3">
-                        <span class="field-label">Home address and next of kin</span>
+                    <div class="panel-block">
+                        <h4><i class="fas fa-house" aria-hidden="true"></i> Home Address and Next of Kin</h4>
                         <partial name="_HrOnly" />
                     </div>
                 }
 
-            </div>
+            </section>
+
+            @if (seesPersonal)
+            {
+                <section class="panel-card mb-3">
+
+                    <div class="panel-head-split">
+                        <h3 class="panel-head">
+                            <i class="fas fa-people-roof" aria-hidden="true"></i> Next of Kin
+                        </h3>
+                        @if (Model.NextOfKinConfirmedAt == null)
+                        {
+                            <span class="status-badge badge-amber">Not confirmed by the employee</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge badge-green">Confirmed @Model.NextOfKinConfirmedAt.Value.ToLocalTime().ToString("d MMM yyyy, HH:mm")</span>
+                        }
+                    </div>
+
+                    <div class="facts">
+
+                        <div class="fact">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            <div>
+                                <span>Contact</span>
+                                @if (string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>
+                                        @Model.EmergencyContactName
+                                        @if (!string.IsNullOrWhiteSpace(Model.EmergencyContactRelationship))
+                                        {
+                                            <text>(@Model.EmergencyContactRelationship)</text>
+                                        }
+                                    </strong>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="fact">
+                            <i class="fas fa-phone" aria-hidden="true"></i>
+                            <div>
+                                <span>Contact phone</span>
+                                @if (string.IsNullOrWhiteSpace(Model.EmergencyContactPhone))
+                                {
+                                    <em>Not recorded</em>
+                                }
+                                else
+                                {
+                                    <strong>@Model.EmergencyContactPhone</strong>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="fact">
+                            <i class="fas fa-location-dot" aria-hidden="true"></i>
+                            <div>
+                                <span>Contact address</span>
+                                <strong>@(string.IsNullOrWhiteSpace(Model.EmergencyContactAddress) ? "Same as the employee's" : Model.EmergencyContactAddress)</strong>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+            }
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3 profile-card">
+
+                <div class="profile-avatar" aria-hidden="true">@initial</div>
+                <div class="profile-name">@fullName</div>
+                <div class="profile-role">@(string.IsNullOrWhiteSpace(Model.JobTitle) ? "No job title recorded" : Model.JobTitle)</div>
+
+                <div class="profile-tags">
+                    @if (Model.Department != null)
+                    {
+                        <span class="status-badge badge-blue">@Model.Department.Name</span>
+                    }
+                    @if (Model.IsActive)
+                    {
+                        <span class="status-badge badge-green">Active</span>
+                    }
+                    else
+                    {
+                        <span class="status-badge badge-red">Inactive</span>
+                    }
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-bolt" aria-hidden="true"></i> Actions
+                </h3>
+
+                <div class="d-grid gap-2">
+
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                    </a>
+
+                    @if (Model.User != null)
+                    {
+                        <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                            <i class="fas fa-key" aria-hidden="true"></i> Reset password
+                        </a>
+                    }
+                    else if (Model.IsActive)
+                    {
+                        <a asp-action="AllowLogin" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                            <i class="fas fa-key" aria-hidden="true"></i> Allow login
+                        </a>
+                    }
+
+                    @if (seesPersonal && !string.IsNullOrWhiteSpace(Model.EmergencyContactName))
+                    {
+                        <a asp-action="NextOfKinForm" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                            <i class="fas fa-download" aria-hidden="true"></i> Next of kin (PDF)
+                        </a>
+                    }
+
+                    <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download details (PDF)
+                    </a>
+
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Account
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Status</dt>
+                    <dd>@(Model.IsActive ? "Active" : "Inactive")</dd>
+                    <dt>Login account</dt>
+                    <dd>@(Model.User != null ? "Created" : "Not created")</dd>
+                    <dt>Joined</dt>
+                    <dd>@Model.DateJoined.ToString("d MMM yyyy")</dd>
+                    @if (!Model.IsActive && Model.EndDate != null)
+                    {
+                        <dt>Left</dt>
+                        <dd>@Model.EndDate.Value.ToString("d MMM yyyy")</dd>
+                    }
+                </dl>
+
+            </section>
+
         </div>
 
     </div>
