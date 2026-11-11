@@ -21,6 +21,44 @@ namespace HrPortal.ViewModels
         public bool IsPaged => TotalPages > 1;
     }
 
+    /// <summary>One tab in a row of filter pills, with how many it holds.</summary>
+    public sealed record ListTab(string Key, string Text, string Icon, string Tint, int Count);
+
+    /// <summary>A row of filter pills; the chosen key goes in the query string as <see cref="Param"/>.</summary>
+    public sealed record ListTabsModel(IReadOnlyList<ListTab> Tabs, string Current, string Param = "show", string AllKey = "all");
+
+    /// <summary>What the numbered pager needs, whatever the list holds.</summary>
+    public sealed record PagerSummary(int Page, int PageSize, int TotalCount, int TotalPages, string Noun)
+    {
+        public static PagerSummary From<T>(PagedResult<T> paged, string noun) =>
+            new(paged.Page, paged.PageSize, paged.TotalCount, paged.TotalPages, noun);
+
+        public static PagerSummary From<T>(PagedResult<T> paged, string one, string many) =>
+            From(paged, paged.TotalCount == 1 ? one : many);
+    }
+
+    public static class PagedList
+    {
+        public const int DefaultPageSize = 10;
+
+        /// <summary>A page of a list already in memory. Out of range pages show the nearest page.</summary>
+        public static PagedResult<T> Of<T>(IReadOnlyList<T> items, int page, int pageSize = DefaultPageSize)
+        {
+            var totalPages = (int)Math.Ceiling(items.Count / (double)pageSize);
+
+            page = Math.Clamp(page, 1, Math.Max(totalPages, 1));
+
+            return new PagedResult<T>
+            {
+                Items = items.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = items.Count,
+                TotalPages = totalPages
+            };
+        }
+    }
+
     public static class PagedQueryExtensions
     {
         public static async Task<PagedResult<T>> ToPagedResultAsync<T>(

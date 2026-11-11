@@ -4,11 +4,6 @@
     ViewData["Title"] = "Captured Course Approvals";
 
     var paged = Model.Page;
-    var pager = HrPortal.ViewModels.PagerViewModel.From(Context.Request, paged, "entries");
-    var first = paged.TotalCount == 0 ? 0 : (paged.Page - 1) * paged.PageSize + 1;
-    var last = Math.Min(paged.Page * paged.PageSize, paged.TotalCount);
-    var startPage = Math.Max(1, Math.Min(paged.Page - 2, paged.TotalPages - 4));
-    var endPage = Math.Min(Math.Max(paged.TotalPages, 1), startPage + 4);
 }
 
 <div class="container-fluid">
@@ -197,37 +192,7 @@
 
                 </div>
 
-                <div class="num-pager">
-
-                    <span class="text-muted">
-                        Showing @first to @last of @paged.TotalCount @(paged.TotalCount == 1 ? "entry" : "entries")
-                    </span>
-
-                    <nav aria-label="Pages">
-                        <ul class="pagination pagination-sm mb-0">
-
-                            <li class="page-item @(paged.HasPrevious ? "" : "disabled")">
-                                <a class="page-link" href="@(paged.HasPrevious ? pager.UrlForPage(paged.Page - 1) : null)"
-                                   aria-disabled="@(paged.HasPrevious ? null : "true")">&lsaquo; Previous</a>
-                            </li>
-
-                            @for (var p = startPage; p <= endPage; p++)
-                            {
-                                <li class="page-item @(p == paged.Page ? "active" : "")">
-                                    <a class="page-link" href="@pager.UrlForPage(p)"
-                                       aria-current="@(p == paged.Page ? "page" : null)">@p</a>
-                                </li>
-                            }
-
-                            <li class="page-item @(paged.HasNext ? "" : "disabled")">
-                                <a class="page-link" href="@(paged.HasNext ? pager.UrlForPage(paged.Page + 1) : null)"
-                                   aria-disabled="@(paged.HasNext ? null : "true")">Next &rsaquo;</a>
-                            </li>
-
-                        </ul>
-                    </nav>
-
-                </div>
+                <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(paged, "entry", "entries")' />
 
             </div>
 

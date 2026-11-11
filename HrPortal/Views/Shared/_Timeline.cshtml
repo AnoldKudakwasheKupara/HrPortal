@@ -1,0 +1,25 @@
+@model IReadOnlyList<HrPortal.Services.TimelineEntry>
+
+@if (!Model.Any())
+{
+    <p class="text-muted mb-0">Nothing has happened yet.</p>
+}
+else
+{
+    <ol class="timeline">
+        @foreach (var step in Model)
+        {
+            <li class="@step.Tone">
+                <span class="timeline-dot" aria-hidden="true"><i class="fas @step.Icon"></i></span>
+                <div class="timeline-body">
+                    <div class="timeline-title">@step.Text</div>
+                    <div class="timeline-meta">@step.Who &middot; @step.When.ToLocalTime().ToString("d MMM yyyy, HH:mm")</div>
+                    @if (step.Comment != null)
+                    {
+                        <div class="timeline-note">@step.Comment</div>
+                    }
+                </div>
+            </li>
+        }
+    </ol>
+}

@@ -15,18 +15,13 @@
         : start.Year == end.Year ? $"{start:d MMM} – {end:d MMM yyyy}"
         : $"{start:d MMM yyyy} – {end:d MMM yyyy}";
 
-    var tabs = new (string Key, string Text, string Icon, string Tint, int Count)[]
-    {
-        (MyLeaveList.All, "All Requests", "fa-list-ul", "is-teal", Model.Requests.Count),
-        (MyLeaveList.Open, "In Progress", "fa-hourglass-half", "is-blue", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Open))),
-        (MyLeaveList.Approved, "Approved", "fa-circle-check", "is-green", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Approved))),
-        (MyLeaveList.Closed, "Rejected / Cancelled", "fa-circle-xmark", "is-amber", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Closed)))
-    };
+    var tabs = RequestGroups.Tabs(
+        Model.Requests,
+        r => LeaveWorkflowService.IsFinal(r.Status),
+        r => r.Status == LeaveRequestStatus.Approved,
+        "All Requests");
 
     var paged = Model.Page;
-    var pager = PagerViewModel.From(Context.Request, paged, "requests");
-    var first = paged.TotalCount == 0 ? 0 : (paged.Page - 1) * paged.PageSize + 1;
-    var last = Math.Min(paged.Page * paged.PageSize, paged.TotalCount);
 }
 
 <div class="container-fluid">
@@ -172,20 +167,7 @@
             <i class="fas fa-clipboard-list" aria-hidden="true"></i> My Requests
         </h3>
 
-        <nav class="todo-tabs mb-3" aria-label="Filter requests">
-            @foreach (var tab in tabs)
-            {
-                var active = tab.Key == Model.Show;
-
-                <a class="todo-pill @tab.Tint @(active ? "active" : "")"
-                   asp-action="Index" asp-route-show="@(tab.Key == MyLeaveList.All ? null : tab.Key)"
-                   aria-current="@(active ? "page" : null)">
-                    <i class="fas @tab.Icon" aria-hidden="true"></i>
-                    @tab.Text
-                    <span class="todo-pill-count">@tab.Count</span>
-                </a>
-            }
-        </nav>
+        <partial name="_ListTabs" model="new ListTabsModel(tabs, Model.Show)" />
 
         @if (paged.TotalCount == 0)
         {
@@ -275,33 +257,7 @@
 
             </div>
 
-            <div class="num-pager num-pager-flush">
-
-                <span class="text-muted">
-                    Showing @first to @last of @paged.TotalCount @(paged.TotalCount == 1 ? "request" : "requests")
-                </span>
-
-                @if (paged.TotalPages > 1)
-                {
-                    <nav aria-label="Pages">
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item @(paged.HasPrevious ? "" : "disabled")">
-                                <a class="page-link" href="@(paged.HasPrevious ? pager.UrlForPage(paged.Page - 1) : null)">&lsaquo; Previous</a>
-                            </li>
-                            @for (var p = 1; p <= paged.TotalPages; p++)
-                            {
-                                <li class="page-item @(p == paged.Page ? "active" : "")">
-                                    <a class="page-link" href="@pager.UrlForPage(p)" aria-current="@(p == paged.Page ? "page" : null)">@p</a>
-                                </li>
-                            }
-                            <li class="page-item @(paged.HasNext ? "" : "disabled")">
-                                <a class="page-link" href="@(paged.HasNext ? pager.UrlForPage(paged.Page + 1) : null)">Next &rsaquo;</a>
-                            </li>
-                        </ul>
-                    </nav>
-                }
-
-            </div>
+            <partial name="_NumberedPager" model='HrPortal.ViewModels.PagerSummary.From(paged, "request", "requests")' />
         }
 
     </section>

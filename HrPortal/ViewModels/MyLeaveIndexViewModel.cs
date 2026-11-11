@@ -28,40 +28,20 @@ namespace HrPortal.ViewModels
     /// <summary>Groups and pages an employee's own leave requests.</summary>
     public static class MyLeaveList
     {
-        public const string All = "all";
-        public const string Open = "open";
-        public const string Approved = "approved";
-        public const string Closed = "closed";
+        public const string All = RequestGroups.All;
+        public const string Open = RequestGroups.Open;
+        public const string Approved = RequestGroups.Approved;
+        public const string Closed = RequestGroups.Closed;
 
         public const int PageSize = 10;
 
-        public static string Normalise(string? show) =>
-            show is Open or Approved or Closed ? show : All;
+        public static string Normalise(string? show) => RequestGroups.Normalise(show);
 
-        public static bool InGroup(LeaveRequestStatus status, string show) => show switch
-        {
-            Open => !LeaveWorkflowService.IsFinal(status),
-            Approved => status == LeaveRequestStatus.Approved,
-            Closed => LeaveWorkflowService.IsFinal(status) && status != LeaveRequestStatus.Approved,
-            _ => true
-        };
+        public static bool InGroup(LeaveRequestStatus status, string show) =>
+            RequestGroups.In(show, LeaveWorkflowService.IsFinal(status), status == LeaveRequestStatus.Approved);
 
-        public static PagedResult<LeaveRequest> Page(IReadOnlyList<LeaveRequest> requests, string show, int page)
-        {
-            var shown = requests.Where(r => InGroup(r.Status, show)).ToList();
-            var totalPages = (int)Math.Ceiling(shown.Count / (double)PageSize);
-
-            page = Math.Clamp(page, 1, Math.Max(totalPages, 1));
-
-            return new PagedResult<LeaveRequest>
-            {
-                Items = shown.Skip((page - 1) * PageSize).Take(PageSize).ToList(),
-                Page = page,
-                PageSize = PageSize,
-                TotalCount = shown.Count,
-                TotalPages = totalPages
-            };
-        }
+        public static PagedResult<LeaveRequest> Page(IReadOnlyList<LeaveRequest> requests, string show, int page) =>
+            PagedList.Of(requests.Where(r => InGroup(r.Status, show)).ToList(), page, PageSize);
 
         /// <summary>Approved days that start in the given year.</summary>
         public static decimal DaysTaken(IEnumerable<LeaveRequest> requests, int year) =>

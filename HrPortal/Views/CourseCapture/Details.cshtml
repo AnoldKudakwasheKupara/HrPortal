@@ -20,14 +20,6 @@
     string Who(CourseApplicationHistory h) =>
         h.ActionedByEmployee == null ? "--" : h.ActionedByEmployee.FirstName + " " + h.ActionedByEmployee.LastName;
 
-    (string Text, string Icon, string Tone) Step(CourseApplicationAction action) => action switch
-    {
-        CourseApplicationAction.CapturedAsApproved => ("Captured as approved", "fa-check", "is-green"),
-        CourseApplicationAction.CaptureCorrected => ("Details corrected", "fa-pen", "is-blue"),
-        CourseApplicationAction.Commented => ("Comment", "fa-comment", "is-teal"),
-        _ => (System.Text.RegularExpressions.Regex.Replace(action.ToString(), "(?<=[a-z])(?=[A-Z])", " "), "fa-circle", "is-teal")
-    };
-
     string Attempt() => Model.Sitting switch
     {
         CourseSitting.NextLevel => "Proceeding to the next level",
@@ -216,26 +208,7 @@
                                     <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Application History
                                 </h3>
 
-                                <ol class="timeline">
-                                    @foreach (var h in history.Take(4))
-                                    {
-                                        var step = Step(h.Action);
-
-                                        <li class="@step.Tone">
-                                            <span class="timeline-dot" aria-hidden="true"><i class="fas @step.Icon"></i></span>
-                                            <div class="timeline-body">
-                                                <div class="timeline-title">@step.Text</div>
-                                                <div class="timeline-meta">
-                                                    @Who(h) &middot; @h.ActionDate.ToLocalTime().ToString("d MMM yyyy, HH:mm")
-                                                </div>
-                                                @if (!string.IsNullOrWhiteSpace(h.Comment))
-                                                {
-                                                    <div class="timeline-note">@h.Comment</div>
-                                                }
-                                            </div>
-                                        </li>
-                                    }
-                                </ol>
+                                <partial name="_Timeline" model="Timeline.Of(history.Take(4))" />
 
                                 @if (history.Count > 4)
                                 {

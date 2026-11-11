@@ -1,0 +1,50 @@
+@model HrPortal.ViewModels.PagerSummary
+@using Microsoft.AspNetCore.WebUtilities
+
+@{
+    string Url(int page)
+    {
+        var query = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(q => q.Key, q => (string?)q.Value.ToString());
+
+        query["page"] = page.ToString();
+
+        return QueryHelpers.AddQueryString(Context.Request.Path, query);
+    }
+
+    var first = Model.TotalCount == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
+    var last = Math.Min(Model.Page * Model.PageSize, Model.TotalCount);
+    var start = Math.Max(1, Math.Min(Model.Page - 2, Model.TotalPages - 4));
+    var end = Math.Min(Model.TotalPages, start + 4);
+}
+
+<div class="num-pager">
+
+    <span class="text-muted">Showing @first to @last of @Model.TotalCount @Model.Noun</span>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Pages">
+            <ul class="pagination pagination-sm mb-0">
+
+                <li class="page-item @(Model.Page > 1 ? "" : "disabled")">
+                    <a class="page-link" href="@(Model.Page > 1 ? Url(Model.Page - 1) : null)">&lsaquo; Previous</a>
+                </li>
+
+                @for (var p = start; p <= end; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="@Url(p)" aria-current="@(p == Model.Page ? "page" : null)">@p</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.Page < Model.TotalPages ? "" : "disabled")">
+                    <a class="page-link" href="@(Model.Page < Model.TotalPages ? Url(Model.Page + 1) : null)">Next &rsaquo;</a>
+                </li>
+
+            </ul>
+        </nav>
+    }
+
+</div>

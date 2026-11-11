@@ -1,0 +1,31 @@
+@model HrPortal.ViewModels.ListTabsModel
+@using Microsoft.AspNetCore.WebUtilities
+
+@{
+    string Url(string key)
+    {
+        var query = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, Model.Param, StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(q => q.Key, q => (string?)q.Value.ToString());
+
+        if (key != Model.AllKey)
+            query[Model.Param] = key;
+
+        return QueryHelpers.AddQueryString(Context.Request.Path, query);
+    }
+}
+
+<nav class="filter-pills mb-3" aria-label="Filter">
+    @foreach (var tab in Model.Tabs)
+    {
+        var active = tab.Key == Model.Current;
+
+        <a class="filter-pill @tab.Tint @(active ? "active" : "")" href="@Url(tab.Key)"
+           aria-current="@(active ? "page" : null)">
+            <i class="fas @tab.Icon" aria-hidden="true"></i>
+            @tab.Text
+            <span class="filter-pill-count">@tab.Count</span>
+        </a>
+    }
+</nav>

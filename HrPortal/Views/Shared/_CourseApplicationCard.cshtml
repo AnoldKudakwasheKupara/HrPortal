@@ -7,111 +7,121 @@
     var nationalId = ViewData["HidePersonal"] as bool? == true
         ? HrPortal.Services.PersonalData.MaskId(Model.Employee.NationalId)
         : Model.Employee.NationalId;
+
+    var attempt = Model.Sitting switch
+    {
+        CourseSitting.NextLevel => "Proceeding to the next level",
+        CourseSitting.Rewriting => "Re-writing",
+        _ => "First attempt"
+    };
 }
 
-<div class="card shadow-sm mb-3">
+<section class="panel-card mb-3">
 
-    <div class="card-header d-flex justify-content-between align-items-center">
-
-        <span>The application</span>
-
+    <div class="panel-head-split">
+        <h3 class="panel-head">
+            <i class="fas fa-briefcase" aria-hidden="true"></i> Application Details
+        </h3>
         <partial name="_CourseStatusBadge" model="Model.Status" />
-
     </div>
 
-    <div class="card-body">
+    <div class="facts">
 
-        <div class="row g-3">
+        <div class="fact">
+            <i class="fas fa-user" aria-hidden="true"></i>
+            <div><span>Applicant</span><strong>@Model.Employee.FirstName @Model.Employee.LastName</strong></div>
+        </div>
 
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Applicant</span>
-                <div class="field-value">
-                    @Model.Employee.FirstName @Model.Employee.LastName
-                </div>
+        <div class="fact">
+            <i class="fas fa-id-card" aria-hidden="true"></i>
+            <div>
+                <span>I.D. No.</span>
+                @if (nationalId == null)
+                {
+                    <em>Not recorded</em>
+                }
+                else
+                {
+                    <strong>@nationalId</strong>
+                }
             </div>
+        </div>
 
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">I.D. no.</span>
-                <div class="field-value @(nationalId == null ? "is-empty" : "")">
-                    @(nationalId ?? "Not recorded")
-                </div>
+        <div class="fact">
+            <i class="fas fa-building" aria-hidden="true"></i>
+            <div><span>Department</span><strong>@(Model.Employee.Department?.Name ?? "--")</strong></div>
+        </div>
+
+        <div class="fact">
+            <i class="fas fa-briefcase" aria-hidden="true"></i>
+            <div>
+                <span>Position</span>
+                @if (Model.Employee.JobTitle == null)
+                {
+                    <em>Not recorded</em>
+                }
+                else
+                {
+                    <strong>@Model.Employee.JobTitle</strong>
+                }
             </div>
+        </div>
 
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Department</span>
-                <div class="field-value">
-                    @(Model.Employee.Department?.Name ?? "--")
-                </div>
+        <div class="fact">
+            <i class="fas fa-layer-group" aria-hidden="true"></i>
+            <div><span>Programme intended</span><strong>@Model.ProgramIntended</strong></div>
+        </div>
+
+        <div class="fact">
+            <i class="fas fa-calendar-days" aria-hidden="true"></i>
+            <div>
+                <span>Target exam date</span>
+                @if (Model.TargetExamDate == null)
+                {
+                    <em>Not given</em>
+                }
+                else
+                {
+                    <strong>@Model.TargetExamDate.Value.ToString("d MMM yyyy")</strong>
+                }
             </div>
+        </div>
 
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Position</span>
-                <div class="field-value @(Model.Employee.JobTitle == null ? "is-empty" : "")">
-                    @(Model.Employee.JobTitle ?? "Not recorded")
-                </div>
-            </div>
+        <div class="fact">
+            <i class="fas fa-circle-check" aria-hidden="true"></i>
+            <div><span>Sat before</span><strong>@(Model.HasSatBefore ? "Yes" : "No")</strong></div>
+        </div>
 
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Programme intended</span>
-                <div class="field-value">@Model.ProgramIntended</div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Target exam date</span>
-                <div class="field-value @(Model.TargetExamDate == null ? "is-empty" : "")">
-                    @(Model.TargetExamDate == null
-                        ? "Not given"
-                        : Model.TargetExamDate.Value.ToString("d MMM yyyy"))
-                </div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">Sat before</span>
-                <div class="field-value">
-                    @(Model.HasSatBefore ? "Yes" : "No")
-                </div>
-            </div>
-
-            <div class="col-sm-6 col-lg-3">
-                <span class="field-label">This attempt</span>
-                <div class="field-value">
-                    @(Model.Sitting switch
-                    {
-                        CourseSitting.NextLevel => "Proceeding to the next level",
-                        CourseSitting.Rewriting => "Re-writing",
-                        _ => "First attempt"
-                    })
-                </div>
-            </div>
-
-            <div class="col-12">
-                <span class="field-label">Justification and relevance</span>
-                <div class="field-value">@Model.Justification</div>
-            </div>
-
-            <div class="col-12">
-                <span class="field-label">Pledge</span>
-                <div class="field-value @(Model.PledgedAt == null ? "is-empty" : "")">
-                    @if (Model.PledgedAt == null && captured)
-                    {
-                        <text>On the paper form, approved before the portal</text>
-                    }
-                    else if (Model.PledgedAt == null)
-                    {
-                        <text>Not made yet</text>
-                    }
-                    else
-                    {
-                        <text>
-                            Made on
-                            @(Model.PledgedAt.Value.ToLocalTime().ToString("d MMM yyyy HH:mm"))
-                        </text>
-                    }
-                </div>
-            </div>
-
+        <div class="fact">
+            <i class="fas fa-rotate" aria-hidden="true"></i>
+            <div><span>This attempt</span><strong>@attempt</strong></div>
         </div>
 
     </div>
 
-</div>
+    <div class="panel-block">
+        <h4><i class="fas fa-bullseye" aria-hidden="true"></i> Justification and Relevance</h4>
+        <p class="pre-line">@Model.Justification</p>
+    </div>
+
+    <div class="panel-block">
+        <h4><i class="fas fa-file-signature" aria-hidden="true"></i> Pledge</h4>
+        <p>
+            <em>
+                @if (Model.PledgedAt == null && captured)
+                {
+                    <text>On the paper form, approved before the portal.</text>
+                }
+                else if (Model.PledgedAt == null)
+                {
+                    <text>Not made yet.</text>
+                }
+                else
+                {
+                    <text>Made on @Model.PledgedAt.Value.ToLocalTime().ToString("d MMM yyyy, HH:mm").</text>
+                }
+            </em>
+        </p>
+    </div>
+
+</section>

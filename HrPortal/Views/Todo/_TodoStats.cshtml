@@ -30,13 +30,11 @@
         <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-calendar-days"></i></span>
         <div>
             <div class="kpi-label">Due Soon (&le; 7 days)</div>
-            <div class="kpi-value">
-                @Model.DueSoon
-                @if (Model.Overdue > 0)
-                {
-                    <span class="status-badge badge-red ms-1">@Model.Overdue overdue</span>
-                }
-            </div>
+            <div class="kpi-value">@Model.DueSoon</div>
+            @if (Model.Overdue > 0)
+            {
+                <div class="kpi-note is-alert">@Model.Overdue overdue</div>
+            }
         </div>
     </div>
 

@@ -50,17 +50,17 @@
 
 <div class="todo-filters">
 
-    <nav class="todo-tabs" aria-label="Filter by status">
+    <nav class="filter-pills" aria-label="Filter by status">
         @foreach (var tab in tabs)
         {
             var active = tab.Status == Model.Status;
 
-            <a class="todo-pill @tab.Tint @(active ? "active" : "")"
+            <a class="filter-pill @tab.Tint @(active ? "active" : "")"
                href="@TabUrl(tab.Status)"
                aria-current="@(active ? "page" : null)">
                 <i class="fas @tab.Icon" aria-hidden="true"></i>
                 @tab.Text
-                <span class="todo-pill-count">@tab.Count</span>
+                <span class="filter-pill-count">@tab.Count</span>
             </a>
         }
     </nav>
