@@ -1026,6 +1026,9 @@ namespace HrPortal.Controllers
 
             await _userManager.UpdateSecurityStampAsync(employee.User);
 
+            await _userManager.SetLockoutEndDateAsync(employee.User, null);
+            await _userManager.ResetAccessFailedCountAsync(employee.User);
+
             await _audit.LogAsync(
                 AuditService.PasswordReset,
                 nameof(Employee),

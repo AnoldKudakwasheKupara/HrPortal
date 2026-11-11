@@ -76,6 +76,9 @@ public class ResetPasswordModel : PageModel
         var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
         if (result.Succeeded)
         {
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+
             return RedirectToPage("./ResetPasswordConfirmation");
         }
 
