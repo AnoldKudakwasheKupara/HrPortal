@@ -63,11 +63,6 @@
     content: "\f07c";
 }
 
-[data-section="FundReports"] .page-head::before,
-[data-section="FundReports"] .page-head-simple::before {
-    content: "\f201";
-}
-
 [data-section="Help"] .page-head::before,
 [data-section="Help"] .page-head-simple::before {
     content: "\f059";

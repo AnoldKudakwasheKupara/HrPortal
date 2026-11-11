@@ -18,12 +18,6 @@
 
         public const string ComplianceOnly = ComplianceOfficer;
 
-        /// <summary>
-        /// Opens pension fund reporting for someone outside the Consultancy
-        /// and IT departments, who have it already. See FundReportingAccess.
-        /// </summary>
-        public const string InvestmentAnalyst = "Investment Analyst";
-
         public const string AdminOnly = Administrator;
 
         public const string AdminOrHr =

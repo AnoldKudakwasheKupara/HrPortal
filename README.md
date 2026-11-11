@@ -126,17 +126,6 @@ from a similarity of 75 out of 100; to raise fewer, set
 contain text; a scanned image is kept but reported as unreadable, to be
 checked by hand.
 
-Pension fund reporting (Fund Reporting → Pension Funds) is open to everyone in
-the Consultancy and IT departments, going by the department's name, and to
-anyone else given the Investment Analyst role. Only Intellego has it: another company's brand file has to
-set `"FundReporting": true`. It follows the Reporting System Developer Guide.
-Load each fund's positions, transactions and cash_recon CSV files, decide any
-statement labels and securities it asks about, enter the month-end ZWG rates,
-and a quarter's figures appear once every blocking check is clear. The
-tolerances in section 8 of the guide can be changed under `FundReporting` in
-configuration (see `FundReportingOptions`). It does not yet read manager PDFs,
-check that expected statements arrived, or write the Word report.
-
 Leave balances: a leave type with **Days earned per month** set (Leave
 Types) has a running balance per employee. HR uploads the starting figures
 under Leave Balances → Upload Balances. The portal adds the monthly days on

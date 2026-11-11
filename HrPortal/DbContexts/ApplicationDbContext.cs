@@ -42,17 +42,6 @@ namespace HrPortal.DbContexts
         public DbSet<SanctionsConcernNote> SanctionsConcernNotes { get; set; }
         public DbSet<SanctionsClientList> SanctionsClientLists { get; set; }
         public DbSet<SanctionsClient> SanctionsClients { get; set; }
-        public DbSet<PensionFund> PensionFunds { get; set; }
-        public DbSet<FundAccount> FundAccounts { get; set; }
-        public DbSet<FundSecurity> FundSecurities { get; set; }
-        public DbSet<FundPosition> FundPositions { get; set; }
-        public DbSet<FundTransaction> FundTransactions { get; set; }
-        public DbSet<FundStatementBalance> FundStatementBalances { get; set; }
-        public DbSet<FundTransactionRule> FundTransactionRules { get; set; }
-        public DbSet<FundFxRate> FundFxRates { get; set; }
-        public DbSet<FundPolicyLine> FundPolicyLines { get; set; }
-        public DbSet<FundMarketQuarter> FundMarketQuarters { get; set; }
-        public DbSet<FundStatementImport> FundStatementImports { get; set; }
 
         public DbSet<TrainingAssignment> TrainingAssignments { get; set; }
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; }
@@ -559,120 +548,6 @@ namespace HrPortal.DbContexts
                     .WithMany(l => l.Clients)
                     .HasForeignKey(c => c.SanctionsClientListId)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<PensionFund>(entity =>
-            {
-                entity.Property(f => f.Name).IsRequired().HasMaxLength(200);
-                entity.HasIndex(f => f.Name).IsUnique();
-            });
-
-            builder.Entity<FundAccount>(entity =>
-            {
-                entity.Property(a => a.Manager).IsRequired().HasMaxLength(100);
-                entity.Property(a => a.AccountNumber).IsRequired().HasMaxLength(100);
-                entity.Property(a => a.SubFund).HasMaxLength(100);
-                entity.HasIndex(a => new { a.PensionFundId, a.Manager, a.AccountNumber }).IsUnique();
-
-                entity.HasOne(a => a.Fund)
-                    .WithMany(f => f.Accounts)
-                    .HasForeignKey(a => a.PensionFundId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<FundSecurity>(entity =>
-            {
-                entity.Property(s => s.SecurityCode).IsRequired().HasMaxLength(100);
-                entity.Property(s => s.Name).IsRequired().HasMaxLength(300);
-                entity.Property(s => s.AssetClass).HasConversion<string>().HasMaxLength(30);
-                entity.Property(s => s.ConfirmedByName).HasMaxLength(200);
-                entity.HasIndex(s => s.SecurityCode).IsUnique();
-            });
-
-            builder.Entity<FundPosition>(entity =>
-            {
-                entity.Property(p => p.SecurityCode).IsRequired().HasMaxLength(100);
-                entity.Property(p => p.SecurityName).IsRequired().HasMaxLength(300);
-                entity.Property(p => p.Currency).IsRequired().HasMaxLength(3);
-                entity.Property(p => p.SourceFile).HasMaxLength(255);
-                entity.Property(p => p.SourceSection).HasMaxLength(100);
-                entity.Property(p => p.Confidence).HasMaxLength(20);
-                entity.HasIndex(p => new { p.FundAccountId, p.Month });
-
-                entity.HasOne(p => p.Account)
-                    .WithMany()
-                    .HasForeignKey(p => p.FundAccountId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<FundTransaction>(entity =>
-            {
-                entity.Property(t => t.Currency).IsRequired().HasMaxLength(3);
-                entity.Property(t => t.SecurityCode).HasMaxLength(100);
-                entity.Property(t => t.SecurityName).HasMaxLength(300);
-                entity.Property(t => t.TxnType).IsRequired().HasMaxLength(200);
-                entity.Property(t => t.Treatment).HasConversion<string>().HasMaxLength(20);
-                entity.Property(t => t.SourceFile).HasMaxLength(255);
-                entity.Property(t => t.SourceLabel).IsRequired().HasMaxLength(200);
-                entity.Property(t => t.Comment).HasMaxLength(1000);
-                entity.HasIndex(t => new { t.FundAccountId, t.Month });
-                entity.HasIndex(t => t.Treatment);
-
-                entity.HasOne(t => t.Account)
-                    .WithMany()
-                    .HasForeignKey(t => t.FundAccountId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<FundStatementBalance>(entity =>
-            {
-                entity.Property(b => b.Currency).IsRequired().HasMaxLength(3);
-                entity.Property(b => b.SourceFile).HasMaxLength(255);
-                entity.HasIndex(b => new { b.FundAccountId, b.Month, b.Currency });
-
-                entity.HasOne(b => b.Account)
-                    .WithMany()
-                    .HasForeignKey(b => b.FundAccountId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<FundTransactionRule>(entity =>
-            {
-                entity.Property(r => r.Manager).IsRequired().HasMaxLength(100);
-                entity.Property(r => r.Label).IsRequired().HasMaxLength(200);
-                entity.Property(r => r.Treatment).HasConversion<string>().HasMaxLength(20);
-                entity.Property(r => r.DecidedByName).HasMaxLength(200);
-                entity.HasIndex(r => new { r.Manager, r.Label }).IsUnique();
-            });
-
-            builder.Entity<FundFxRate>(entity =>
-            {
-                entity.HasIndex(r => r.Month).IsUnique();
-            });
-
-            builder.Entity<FundPolicyLine>(entity =>
-            {
-                entity.Property(l => l.AssetClass).HasConversion<string>().HasMaxLength(30);
-                entity.HasIndex(l => new { l.PensionFundId, l.AssetClass }).IsUnique();
-
-                entity.HasOne(l => l.Fund)
-                    .WithMany(f => f.PolicyLines)
-                    .HasForeignKey(l => l.PensionFundId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            builder.Entity<FundMarketQuarter>(entity =>
-            {
-                entity.HasIndex(m => new { m.Year, m.Quarter }).IsUnique();
-            });
-
-            builder.Entity<FundStatementImport>(entity =>
-            {
-                entity.Property(i => i.Kind).IsRequired().HasMaxLength(20);
-                entity.Property(i => i.FileName).IsRequired().HasMaxLength(255);
-                entity.Property(i => i.Sha256).IsRequired().HasMaxLength(64);
-                entity.Property(i => i.UploadedByName).HasMaxLength(200);
-                entity.HasIndex(i => i.PensionFundId);
             });
 
             builder.Entity<ExpiryReminder>(entity =>
