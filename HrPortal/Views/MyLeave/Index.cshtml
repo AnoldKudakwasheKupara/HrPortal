@@ -1,118 +1,214 @@
 @using HrPortal.Entities
 @using HrPortal.Services
-@model HrPortal.ViewModels.MyLeaveIndexViewModel
+@using HrPortal.ViewModels
+@model MyLeaveIndexViewModel
 
 @{
     ViewData["Title"] = "My Leave";
+    var year = DateTime.Today.Year;
+
+    string Days(decimal d) => d.ToString("0.##") + (d == 1 ? " day" : " days");
+
+    string Span(DateTime start, DateTime end) =>
+        start.Date == end.Date ? start.ToString("d MMM yyyy")
+        : start.Year == end.Year && start.Month == end.Month ? $"{start.Day}–{end:d MMM yyyy}"
+        : start.Year == end.Year ? $"{start:d MMM} – {end:d MMM yyyy}"
+        : $"{start:d MMM yyyy} – {end:d MMM yyyy}";
+
+    var tabs = new (string Key, string Text, string Icon, string Tint, int Count)[]
+    {
+        (MyLeaveList.All, "All Requests", "fa-list-ul", "is-teal", Model.Requests.Count),
+        (MyLeaveList.Open, "In Progress", "fa-hourglass-half", "is-blue", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Open))),
+        (MyLeaveList.Approved, "Approved", "fa-circle-check", "is-green", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Approved))),
+        (MyLeaveList.Closed, "Rejected / Cancelled", "fa-circle-xmark", "is-amber", Model.Requests.Count(r => MyLeaveList.InGroup(r.Status, MyLeaveList.Closed)))
+    };
+
+    var paged = Model.Page;
+    var pager = PagerViewModel.From(Context.Request, paged, "requests");
+    var first = paged.TotalCount == 0 ? 0 : (paged.Page - 1) * paged.PageSize + 1;
+    var last = Math.Min(paged.Page * paged.PageSize, paged.TotalCount);
 }
 
 <div class="container-fluid">
 
-    <div class="page-head">
+    <div class="icon-head icon-head-wide">
+
+        <span class="icon-head-tile" aria-hidden="true">
+            <i class="fas fa-calendar-days"></i>
+        </span>
 
         <div>
             <h2>My Leave</h2>
-
-            <p class="text-muted">
+            <p>
                 @(Model.Balances.Any()
                     ? "Your leave balances and the requests you have made."
                     : "The leave requests you have made.")
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Request Leave
+        <a asp-action="Create" class="btn btn-gold">
+            <i class="fas fa-plus" aria-hidden="true"></i> Request Leave
         </a>
 
     </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            @TempData["Error"]
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
+
+    <div class="kpis">
+
+        <div class="kpi">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">In Progress</div>
+                <div class="kpi-value">@Model.InProgress</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Approved in @year</div>
+                <div class="kpi-value">@Model.ApprovedThisYear</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-umbrella-beach"></i></span>
+            <div>
+                <div class="kpi-label">Days Taken in @year</div>
+                <div class="kpi-value">@Model.DaysTakenThisYear.ToString("0.##")</div>
+            </div>
+        </div>
+
+        <div class="kpi">
+            <span class="kpi-icon is-amber" aria-hidden="true"><i class="fas fa-plane-departure"></i></span>
+            <div>
+                <div class="kpi-label">Next Leave</div>
+                @if (Model.NextLeave == null)
+                {
+                    <div class="kpi-value kpi-value-text text-muted">None booked</div>
+                }
+                else
+                {
+                    <div class="kpi-value kpi-value-text" title="@Model.NextLeave.LeaveType.Name">@Model.NextLeave.StartDate.ToString(Model.NextLeave.StartDate.Year == year ? "d MMM" : "d MMM yyyy")</div>
+                    <div class="kpi-note">@Days(Model.NextLeave.NumberOfDays), @Model.NextLeave.LeaveType.Name.Replace(" Leave", "")</div>
+                }
+            </div>
+        </div>
+
+    </div>
 
     @if (Model.Balances.Any())
     {
-        <div class="card shadow-sm mb-4">
+        <section class="panel-card mb-4">
 
-            <div class="card-header">My Balances for @DateTime.Today.Year</div>
+            <h3 class="panel-head">
+                <i class="fas fa-scale-balanced" aria-hidden="true"></i> My Balances for @year
+            </h3>
 
-            <div class="card-body is-table">
+            <div class="balance-grid">
 
-                <div class="table-responsive">
+                @foreach (var balance in Model.Balances)
+                {
+                    var allocated = balance.AllocatedDays;
+                    var scale = Math.Max(allocated, balance.UsedDays + balance.PendingDays);
+                    decimal Pct(decimal d) => scale <= 0 ? 0 : Math.Round(Math.Clamp(d, 0, scale) / scale * 100, 1);
+                    var over = balance.RemainingDays < 0;
 
-                    <table class="table align-middle">
+                    <div class="balance-card @(over ? "is-over" : "")">
 
-                        <thead>
-                            <tr>
-                                <th>Leave Type</th>
-                                <th>Opening + earned</th>
-                                <th>Used</th>
-                                <th>Pending</th>
-                                <th>Remaining</th>
-                            </tr>
-                        </thead>
+                        <div class="balance-top">
+                            <span class="balance-name">@balance.LeaveType.Name</span>
+                            <span class="balance-left">
+                                <strong>@balance.RemainingDays.ToString("0.##")</strong>
+                                @(Math.Abs(balance.RemainingDays) == 1 ? "day" : "days") @(over ? "over" : "left")
+                            </span>
+                        </div>
 
-                        <tbody>
+                        <div class="balance-bar" role="img"
+                             aria-label="@balance.UsedDays.ToString("0.##") used, @balance.PendingDays.ToString("0.##") pending, @balance.RemainingDays.ToString("0.##") remaining of @allocated.ToString("0.##")">
+                            <span class="is-used" style="width: @Pct(balance.UsedDays).ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                            <span class="is-pending" style="width: @Pct(balance.PendingDays).ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                        </div>
 
-                        @foreach (var balance in Model.Balances)
-                        {
-                            <tr>
-                                <td>@balance.LeaveType.Name</td>
-                                <td>@balance.AllocatedDays.ToString("0.##")</td>
-                                <td>@balance.UsedDays.ToString("0.##")</td>
-                                <td>@balance.PendingDays.ToString("0.##")</td>
-                                <td>
-                                    <span class="badge @(balance.RemainingDays < 0 ? "bg-danger" : "bg-success")">
-                                        @balance.RemainingDays.ToString("0.##")
-                                    </span>
-                                </td>
-                            </tr>
-                        }
+                        <dl class="balance-figures">
+                            <div><dt>Opening + earned</dt><dd>@allocated.ToString("0.##")</dd></div>
+                            <div><dt><span class="legend-dot is-used"></span>Used</dt><dd>@balance.UsedDays.ToString("0.##")</dd></div>
+                            <div><dt><span class="legend-dot is-pending"></span>Pending</dt><dd>@balance.PendingDays.ToString("0.##")</dd></div>
+                        </dl>
 
-                        </tbody>
-
-                    </table>
-
-                </div>
+                    </div>
+                }
 
             </div>
 
-        </div>
+            @if (Model.Statement.Any())
+            {
+                <details class="balance-workings">
+                    <summary>
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                        How your balance was worked out
+                    </summary>
+                    <div class="pt-3">
+                        <partial name="_LeaveStatement" model="Model.Statement" />
+                    </div>
+                </details>
+            }
+
+        </section>
     }
 
-    @if (Model.Statement.Any())
-    {
-        <div class="card shadow-sm mb-4">
-            <details>
-                <summary class="card-header">How your balance was worked out</summary>
-                <div class="card-body">
-                    <partial name="_LeaveStatement" model="Model.Statement" />
-                </div>
-            </details>
-        </div>
-    }
+    <section class="panel-card mb-4">
 
-    <div class="card shadow-sm">
+        <h3 class="panel-head">
+            <i class="fas fa-clipboard-list" aria-hidden="true"></i> My Requests
+        </h3>
 
-        <div class="card-header">My Requests</div>
+        <nav class="todo-tabs mb-3" aria-label="Filter requests">
+            @foreach (var tab in tabs)
+            {
+                var active = tab.Key == Model.Show;
 
-        <div class="card-body is-table">
+                <a class="todo-pill @tab.Tint @(active ? "active" : "")"
+                   asp-action="Index" asp-route-show="@(tab.Key == MyLeaveList.All ? null : tab.Key)"
+                   aria-current="@(active ? "page" : null)">
+                    <i class="fas @tab.Icon" aria-hidden="true"></i>
+                    @tab.Text
+                    <span class="todo-pill-count">@tab.Count</span>
+                </a>
+            }
+        </nav>
 
+        @if (paged.TotalCount == 0)
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-calendar-xmark" aria-hidden="true"></i>
+                <p>
+                    @if (!Model.Requests.Any())
+                    {
+                        <text>You have not made any leave requests yet.</text>
+                        <a asp-action="Create">Request leave</a>
+                    }
+                    else
+                    {
+                        <text>No requests here.</text>
+                    }
+                </p>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle mb-0 table-soft-head">
 
                     <thead>
                         <tr>
@@ -121,92 +217,57 @@
                             <th>Dates</th>
                             <th>Days</th>
                             <th>Status</th>
-                            <th class="col-actions">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
 
-                    @if (!Model.Requests.Any())
-                    {
-                        <tr>
-                            <td colspan="6"
-                                class="text-center text-muted py-4">
-                                You have not made any leave requests yet.
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var request in paged.Items)
+                        {
+                            <tr>
 
-                    @foreach (var request in Model.Requests)
-                    {
-                        <tr>
+                                <td class="text-nowrap fw-semibold">@request.RequestNumber</td>
 
-                            <td>
-                                <strong>@request.RequestNumber</strong>
-                            </td>
+                                <td>@request.LeaveType.Name</td>
 
-                            <td>
-                                @request.LeaveType.Name
-                            </td>
+                                <td class="text-nowrap">@Span(request.StartDate, request.EndDate)</td>
 
-                            <td>
-                                @request.StartDate.ToString("dd MMM yyyy")
-                                &ndash;
-                                @request.EndDate.ToString("dd MMM yyyy")
-                            </td>
+                                <td>@request.NumberOfDays.ToString("0.##")</td>
 
-                            <td>
-                                @request.NumberOfDays.ToString("0.##")
-                            </td>
+                                <td><partial name="_LeaveStatusBadge" model="request.Status" /></td>
 
-                            <td>
-                                <partial name="_LeaveStatusBadge"
-                                         model="request.Status" />
-                            </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
 
-                            <td class="col-actions">
-
-                                <div class="table-actions">
-
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       asp-action="Details"
-                                       asp-route-id="@request.Id">
-                                        View
-                                    </a>
-
-                                    @if (LeaveWorkflowService.IsWithEmployee(
-                                        request.Status))
-                                    {
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           asp-action="Edit"
-                                           asp-route-id="@request.Id">
-                                            Edit and resend
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                                           asp-action="Details" asp-route-id="@request.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
                                         </a>
-                                    }
 
-                                    @if (!LeaveWorkflowService.IsFinal(
-                                        request.Status))
-                                    {
-                                        <form asp-action="Cancel"
-                                              asp-route-id="@request.Id"
-                                              method="post">
+                                        @if (LeaveWorkflowService.IsWithEmployee(request.Status))
+                                        {
+                                            <a class="btn btn-sm btn-outline-success text-nowrap"
+                                               asp-action="Edit" asp-route-id="@request.Id" title="Edit and resend">
+                                                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                                            </a>
+                                        }
 
-                                            @Html.AntiForgeryToken()
+                                        @if (!LeaveWorkflowService.IsFinal(request.Status))
+                                        {
+                                            <form asp-action="Cancel" asp-route-id="@request.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Cancel @request.RequestNumber?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">
+                                                    <i class="fas fa-xmark" aria-hidden="true"></i> Cancel
+                                                </button>
+                                            </form>
+                                        }
 
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-                                                Cancel
-                                            </button>
+                                    </div>
+                                </td>
 
-                                        </form>
-                                    }
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    }
+                            </tr>
+                        }
 
                     </tbody>
 
@@ -214,8 +275,35 @@
 
             </div>
 
-        </div>
+            <div class="num-pager num-pager-flush">
 
-    </div>
+                <span class="text-muted">
+                    Showing @first to @last of @paged.TotalCount @(paged.TotalCount == 1 ? "request" : "requests")
+                </span>
+
+                @if (paged.TotalPages > 1)
+                {
+                    <nav aria-label="Pages">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(paged.HasPrevious ? "" : "disabled")">
+                                <a class="page-link" href="@(paged.HasPrevious ? pager.UrlForPage(paged.Page - 1) : null)">&lsaquo; Previous</a>
+                            </li>
+                            @for (var p = 1; p <= paged.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == paged.Page ? "active" : "")">
+                                    <a class="page-link" href="@pager.UrlForPage(p)" aria-current="@(p == paged.Page ? "page" : null)">@p</a>
+                                </li>
+                            }
+                            <li class="page-item @(paged.HasNext ? "" : "disabled")">
+                                <a class="page-link" href="@(paged.HasNext ? pager.UrlForPage(paged.Page + 1) : null)">Next &rsaquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+
+            </div>
+        }
+
+    </section>
 
 </div>

@@ -40,7 +40,7 @@ namespace HrPortal.Controllers
             _pdf = pdf;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? show, int page = 1)
         {
             var employeeId = await _currentUser.GetEmployeeIdAsync();
 
@@ -69,6 +69,16 @@ namespace HrPortal.Controllers
                 model.Statement.AddRange(
                     await _balances.StatementAsync(employeeId.Value, balance.LeaveTypeId));
             }
+
+            var year = DateTime.Today.Year;
+
+            model.Show = MyLeaveList.Normalise(show);
+            model.Page = MyLeaveList.Page(model.Requests, model.Show, page);
+            model.InProgress = model.Requests.Count(r => !LeaveWorkflowService.IsFinal(r.Status));
+            model.ApprovedThisYear = model.Requests.Count(r =>
+                r.Status == LeaveRequestStatus.Approved && r.StartDate.Year == year);
+            model.DaysTakenThisYear = MyLeaveList.DaysTaken(model.Requests, year);
+            model.NextLeave = MyLeaveList.Next(model.Requests, DateTime.Today);
 
             return View(model);
         }

@@ -3523,3 +3523,172 @@ a.strip-item:hover {
     color: var(--gray-800);
     overflow-wrap: anywhere;
 }
+
+.kpi-value-text {
+    font-size: 1.15rem;
+}
+
+.kpi-note {
+    font-size: .78rem;
+    color: var(--text-muted);
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.balance-card {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-light);
+    border-radius: .6rem;
+    background: var(--primary-softer);
+}
+
+.balance-card.is-over {
+    background: var(--danger-light);
+    border-color: #fed7d7;
+}
+
+.balance-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .6rem;
+}
+
+.balance-name {
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.balance-left {
+    font-size: .85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.balance-left strong {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.balance-card.is-over .balance-left strong {
+    color: var(--danger);
+}
+
+.balance-bar {
+    display: flex;
+    height: .55rem;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--primary-edge);
+    border-radius: 1rem;
+}
+
+.balance-bar .is-used {
+    background: var(--primary);
+}
+
+.balance-bar .is-pending {
+    background: var(--warning);
+}
+
+.balance-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.25rem;
+    margin: .7rem 0 0;
+    font-size: .8rem;
+}
+
+.balance-figures div {
+    display: flex;
+    gap: .35rem;
+}
+
+.balance-figures dt {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.balance-figures dd {
+    margin: 0;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.legend-dot {
+    display: inline-block;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+}
+
+.legend-dot.is-used {
+    background: var(--primary);
+}
+
+.legend-dot.is-pending {
+    background: var(--warning);
+}
+
+.balance-workings {
+    margin-top: 1rem;
+    padding-top: .85rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.balance-workings summary {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    list-style: none;
+}
+
+.balance-workings summary::-webkit-details-marker {
+    display: none;
+}
+
+.balance-workings summary i {
+    font-size: .7rem;
+    transition: transform .2s ease;
+}
+
+.balance-workings[open] summary i {
+    transform: rotate(90deg);
+}
+
+.num-pager-flush {
+    padding: .85rem 0 0;
+    border-top: 0;
+}
+
+.table-soft-head .badge {
+    white-space: normal;
+    text-align: left;
+}
+
+.panel-card > .table-responsive {
+    margin-inline: -1.4rem;
+}
+
+.panel-card > .table-responsive > .table > :not(caption) > * > :first-child {
+    padding-left: 1.4rem;
+}
+
+.panel-card > .table-responsive > .table > :not(caption) > * > :last-child {
+    padding-right: 1.4rem;
+}
+
+.panel-card > .num-pager-flush {
+    margin-top: .25rem;
+}
