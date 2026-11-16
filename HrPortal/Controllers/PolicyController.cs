@@ -370,7 +370,7 @@ namespace HrPortal.Controllers
                 .ToListAsync();
 
             ViewBag.StatusFilter = status;
-            ViewBag.ActiveStaff = await _context.Employees
+            ViewBag.ActiveStaff = await _context.StaffHere
                 .CountAsync(e => e.IsActive);
 
             return View(policies);

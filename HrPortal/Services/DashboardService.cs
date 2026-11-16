@@ -191,10 +191,10 @@ namespace HrPortal.Services
                         r.CompletedAt != null &&
                         r.CompletedAt >= monthStart),
 
-                ActiveEmployees = await _context.Employees
+                ActiveEmployees = await _context.StaffHere
                     .CountAsync(e => e.IsActive),
 
-                EmployeesWithoutLogin = await _context.Employees
+                EmployeesWithoutLogin = await _context.StaffHere
                     .CountAsync(e => e.IsActive && e.UserId == null),
 
                 OnLeaveToday = await _context.LeaveRequests
@@ -241,7 +241,7 @@ namespace HrPortal.Services
 
             return new MdDashboardSection
             {
-                WeeklyReportStaff = await _context.Employees
+                WeeklyReportStaff = await _context.StaffHere
                     .CountAsync(e => e.IsActive && e.UserId != null),
 
                 WeeklyReportsSubmitted = await _context.WeeklyReports
@@ -313,18 +313,18 @@ namespace HrPortal.Services
 
             return new AdminDashboardSection
             {
-                Employees = await _context.Employees.CountAsync(),
+                Employees = await _context.StaffHere.CountAsync(),
 
-                ActiveEmployees = await _context.Employees
+                ActiveEmployees = await _context.StaffHere
                     .CountAsync(e => e.IsActive),
 
                 Departments = await _context.Departments
                     .CountAsync(d => d.IsActive),
 
-                SignInAccounts = await _context.Employees
+                SignInAccounts = await _context.StaffHere
                     .CountAsync(e => e.UserId != null),
 
-                EmployeesWithoutLogin = await _context.Employees
+                EmployeesWithoutLogin = await _context.StaffHere
                     .CountAsync(e => e.IsActive && e.UserId == null),
 
                 DocumentCategories = await _context.DocumentCategories

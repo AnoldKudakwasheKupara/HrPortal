@@ -91,7 +91,7 @@ namespace HrPortal.Controllers
                 return View();
             }
 
-            var employees = (await _context.Employees.AsNoTracking()
+            var employees = (await _context.StaffHere.AsNoTracking()
                     .Select(e => new { e.Id, e.EmployeeNumber, e.FirstName, e.LastName, e.Email, e.IsActive })
                     .ToListAsync())
                 .Select(e => new LeaveBalanceEmployee(e.Id, e.EmployeeNumber, $"{e.FirstName} {e.LastName}", e.Email, e.IsActive))
@@ -152,7 +152,7 @@ namespace HrPortal.Controllers
                         g => g.Key,
                         g => LeaveBalanceService.Available(g.OrderByDescending(b => b.Year).First()));
 
-            var employees = await _context.Employees.AsNoTracking()
+            var employees = await _context.StaffHere.AsNoTracking()
                 .Where(e => e.IsActive && e.EmploymentType != EmploymentType.Intern)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
@@ -278,7 +278,7 @@ namespace HrPortal.Controllers
             var ratedTypes = (List<LeaveType>)ViewBag.RatedTypes;
             var ratedIds = ratedTypes.Select(t => t.Id).ToList();
 
-            ViewBag.WithoutBalance = await _context.Employees
+            ViewBag.WithoutBalance = await _context.StaffHere
                 .CountAsync(e =>
                     e.IsActive &&
                     e.EmploymentType != EmploymentType.Intern &&
@@ -509,7 +509,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadLookups()
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)

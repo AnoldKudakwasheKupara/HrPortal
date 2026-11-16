@@ -248,7 +248,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadLookups()
         {
-            ViewBag.Employees = await _context.Employees
+            ViewBag.Employees = await _context.StaffHere
                 .AsNoTracking()
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.FirstName)

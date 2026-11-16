@@ -365,7 +365,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadEmployees()
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)

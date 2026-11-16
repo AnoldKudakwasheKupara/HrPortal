@@ -480,6 +480,7 @@ namespace HrPortal.Services
             var prefix = $"CA-{year}-";
 
             var lastNumber = await _context.CourseApplications
+                .IgnoreQueryFilters()
                 .Where(c => c.ApplicationNumber.StartsWith(prefix))
                 .OrderByDescending(c => c.ApplicationNumber)
                 .Select(c => c.ApplicationNumber)

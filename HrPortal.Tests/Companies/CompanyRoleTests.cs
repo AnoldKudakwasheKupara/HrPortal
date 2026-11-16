@@ -8,8 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Tests.Companies
 {
-    public class CompanyRoleTests
+    public class CompanyRoleTests : IDisposable
     {
+        public void Dispose()
+        {
+            CompanyScope.Enter(null);
+            Brand.Enter(Brand.Main);
+        }
+
         private const int HrRole = 10;
         private const int MdRole = 11;
         private const int AdminRole = 12;

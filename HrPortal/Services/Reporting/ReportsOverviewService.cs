@@ -100,10 +100,10 @@ namespace HrPortal.Services.Reporting
 
             if (model.ShowPeople)
             {
-                model.ActiveEmployees = await _context.Employees
+                model.ActiveEmployees = await _context.StaffHere
                     .CountAsync(e => e.IsActive);
 
-                model.EmployeesWithoutLogin = await _context.Employees
+                model.EmployeesWithoutLogin = await _context.StaffHere
                     .CountAsync(e => e.IsActive && e.UserId == null);
             }
 
@@ -117,7 +117,7 @@ namespace HrPortal.Services.Reporting
                     .Distinct()
                     .CountAsync();
 
-                var active = await _context.Employees
+                var active = await _context.StaffHere
                     .CountAsync(e => e.IsActive);
 
                 model.EmployeesWithoutDocuments =

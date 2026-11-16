@@ -65,7 +65,7 @@ namespace HrPortal.Services
         /// </summary>
         public async Task<List<PrivacyNoticeReader>> ReadersAsync()
         {
-            var people = await _context.Employees
+            var people = await _context.StaffHere
                 .AsNoTracking()
                 .Where(e => e.IsActive && e.UserId != null)
                 .Select(e => new

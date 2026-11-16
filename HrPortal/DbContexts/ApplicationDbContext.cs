@@ -1,5 +1,6 @@
 using HrPortal.Entities;
 using HrPortal.Data;
+using HrPortal.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -20,6 +21,23 @@ namespace HrPortal.DbContexts
         public DbSet<Company> Companies { get; set; }
         public DbSet<EmployeeCompany> EmployeeCompanies { get; set; }
         public DbSet<CompanyRole> CompanyRoles { get; set; }
+
+        /// <summary>
+        /// The company whose records queries show, or null for every
+        /// company. See <see cref="CompanyScope"/>.
+        /// </summary>
+        public int? CompanyFilter => CompanyScope.Current;
+
+        /// <summary>
+        /// The people who work for the company whose portal this is.
+        /// Staff lists, pickers and counts start here; looking somebody
+        /// up who acted on a record, or the person signed in, does not,
+        /// since they may work elsewhere in the group.
+        /// </summary>
+        public IQueryable<Employee> StaffHere =>
+            Employees.Where(e =>
+                CompanyFilter == null ||
+                e.Companies.Any(m => m.CompanyId == CompanyFilter));
 
         /// <summary>
         /// The sign-ins that hold any of these roles: everywhere, or
@@ -237,6 +255,42 @@ namespace HrPortal.DbContexts
 
                 entity.HasIndex(m => m.CompanyId);
             });
+
+            builder.Entity<LeaveRequest>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<LeaveBalance>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<LeaveBalanceEntry>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<LoanApplication>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<CourseApplication>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<EmployeeDocument>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<Certification>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<TrainingAssignment>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<TodoItem>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
 
             builder.Entity<CompanyRole>(entity =>
             {

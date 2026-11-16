@@ -273,7 +273,7 @@ namespace HrPortal.Controllers
 
             var employee = model.EmployeeId == null
                 ? null
-                : await _context.Employees
+                : await _context.StaffHere
                     .AsNoTracking()
                     .FirstOrDefaultAsync(e => e.Id == model.EmployeeId && e.IsActive);
 
@@ -359,7 +359,7 @@ namespace HrPortal.Controllers
 
             var employee = model.EmployeeId == null
                 ? null
-                : await _context.Employees
+                : await _context.StaffHere
                     .AsNoTracking()
                     .FirstOrDefaultAsync(e => e.Id == model.EmployeeId &&
                         (e.IsActive || e.Id == application.EmployeeId));
@@ -406,7 +406,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadEmployeesAsync(int? alsoInclude = null)
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .AsNoTracking()
                 .Where(e => e.IsActive || e.Id == alsoInclude)
                 .OrderBy(e => e.FirstName)

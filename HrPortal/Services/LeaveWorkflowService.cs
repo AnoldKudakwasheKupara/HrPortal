@@ -679,6 +679,7 @@ namespace HrPortal.Services
             var prefix = $"LR-{year}-";
 
             var lastNumber = await _context.LeaveRequests
+                .IgnoreQueryFilters()
                 .Where(r => r.RequestNumber.StartsWith(prefix))
                 .OrderByDescending(r => r.RequestNumber)
                 .Select(r => r.RequestNumber)

@@ -140,7 +140,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadEmployees()
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .OrderBy(e => e.FirstName)
                 .ThenBy(e => e.LastName)
                 .Select(e => new

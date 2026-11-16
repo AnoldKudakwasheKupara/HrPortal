@@ -5,8 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Tests.Companies
 {
-    public class CompanyServiceTests
+    public class CompanyServiceTests : IDisposable
     {
+        public void Dispose()
+        {
+            CompanyScope.Enter(null);
+            Brand.Enter(Brand.Main);
+        }
+
         private const int IntellegoOnly = 1;
         private const int Shared = 2;
         private const int MmcOnly = 3;

@@ -29,7 +29,7 @@ namespace HrPortal.Services
         /// </summary>
         public async Task<List<Employee>> CandidatesAsync(int employeeId)
         {
-            var people = await _context.Employees
+            var people = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Where(e => e.IsActive)

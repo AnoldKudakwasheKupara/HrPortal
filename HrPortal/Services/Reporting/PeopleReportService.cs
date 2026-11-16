@@ -25,7 +25,7 @@ namespace HrPortal.Services.Reporting
         {
             var today = DateTime.Today;
 
-            var query = _context.Employees
+            var query = _context.StaffHere
                 .Include(e => e.Department)
                 .AsNoTracking()
                 .AsQueryable();
@@ -274,7 +274,7 @@ namespace HrPortal.Services.Reporting
 
             var withDocs = rows.Select(r => r.Employee).Distinct().Count();
 
-            var activeEmployees = await _context.Employees
+            var activeEmployees = await _context.StaffHere
                 .CountAsync(e => e.IsActive);
 
             var model = new ReportViewModel<DocumentReportRow>

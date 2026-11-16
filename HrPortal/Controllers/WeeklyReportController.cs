@@ -148,7 +148,7 @@ namespace HrPortal.Controllers
 
             var start = WeeklyReportBuilder.WeekStart(week ?? DateTime.Today);
 
-            var people = _context.Employees
+            var people = _context.StaffHere
                 .AsNoTracking()
                 .Where(e => e.IsActive);
 

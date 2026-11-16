@@ -21,7 +21,7 @@ namespace HrPortal.Controllers
             string? search,
             int? departmentId)
         {
-            var query = _context.Employees
+            var query = _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Where(e => e.IsActive);
@@ -64,7 +64,7 @@ namespace HrPortal.Controllers
             ViewBag.Search = search;
             ViewBag.DepartmentFilter = departmentId;
 
-            ViewBag.TotalActive = await _context.Employees
+            ViewBag.TotalActive = await _context.StaffHere
                 .CountAsync(e => e.IsActive);
 
             return View(people);

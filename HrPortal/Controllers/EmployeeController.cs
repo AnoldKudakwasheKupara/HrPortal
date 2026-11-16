@@ -63,7 +63,7 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.User)
@@ -81,7 +81,7 @@ namespace HrPortal.Controllers
         /// </summary>
         public async Task<IActionResult> List()
         {
-            var employees = await _context.Employees
+            var employees = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Supervisor)
@@ -173,7 +173,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Supervisor)
@@ -204,7 +204,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.Supervisor)
@@ -287,7 +287,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .FirstOrDefaultAsync(e => e.Id == id);
@@ -495,7 +495,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.Companies)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -572,7 +572,7 @@ namespace HrPortal.Controllers
 
             if (!SeesPersonal)
             {
-                var current = await _context.Employees
+                var current = await _context.StaffHere
                     .AsNoTracking()
                     .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -619,7 +619,7 @@ namespace HrPortal.Controllers
                 return View(model);
             }
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.User)
                 .Include(e => e.Companies)
                 .FirstOrDefaultAsync(e => e.Id == id);
@@ -710,7 +710,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
@@ -757,7 +757,7 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -974,7 +974,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -1009,7 +1009,7 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -1077,7 +1077,7 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .AsNoTracking()
                 .Include(e => e.Department)
                 .Include(e => e.User)
@@ -1097,7 +1097,7 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var employee = await _context.Employees
+            var employee = await _context.StaffHere
                 .Include(e => e.User)
                 .Include(e => e.Documents)
                 .FirstOrDefaultAsync(e => e.Id == id);
@@ -1268,7 +1268,7 @@ namespace HrPortal.Controllers
                 .ToList();
 
             var candidates = employeeId == null
-                ? await _context.Employees
+                ? await _context.StaffHere
                     .AsNoTracking()
                     .Where(e => e.IsActive)
                     .OrderBy(e => e.LastName)

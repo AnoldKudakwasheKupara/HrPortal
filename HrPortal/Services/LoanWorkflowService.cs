@@ -399,6 +399,7 @@ namespace HrPortal.Services
             var prefix = $"LN-{year}-";
 
             var lastNumber = await _context.LoanApplications
+                .IgnoreQueryFilters()
                 .Where(l => l.ApplicationNumber.StartsWith(prefix))
                 .OrderByDescending(l => l.ApplicationNumber)
                 .Select(l => l.ApplicationNumber)

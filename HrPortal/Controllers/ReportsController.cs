@@ -363,7 +363,7 @@ namespace HrPortal.Controllers
                 .Select(d => new SelectListItem(d.Name, d.Id.ToString()))
                 .ToListAsync();
 
-            ViewBag.Employees = await _context.Employees
+            ViewBag.Employees = await _context.StaffHere
                 .OrderBy(e => e.FirstName)
                 .Select(e => new SelectListItem(
                     e.FirstName + " " + e.LastName,

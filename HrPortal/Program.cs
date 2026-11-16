@@ -300,6 +300,8 @@ using (var scope = app.Services.CreateScope())
 
         await CompanyService.EnsureForBrandsAsync(db, Brand.All);
 
+        CompanyScope.Learn(await db.Companies.AsNoTracking().ToListAsync());
+
         var userManager =
             services.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -357,10 +359,36 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
-app.Use((context, next) =>
+/// <summary>
+/// Each request takes the brand and the company of the address it came
+/// in on. A company the portal cannot find, which would only happen if
+/// the database was out of reach when it started, sees nothing rather
+/// than every company's records.
+/// </summary>
+app.Use(async (context, next) =>
 {
-    Brand.Enter(Brand.ForHost(context.Request.Host.Host));
-    return next();
+    var brand = Brand.ForHost(context.Request.Host.Host);
+
+    Brand.Enter(brand);
+
+    if (CompanyScope.IdFor(brand.Key) == null)
+    {
+        try
+        {
+            CompanyScope.Learn(await context.RequestServices
+                .GetRequiredService<ApplicationDbContext>()
+                .Companies
+                .AsNoTracking()
+                .ToListAsync());
+        }
+        catch (NpgsqlException)
+        {
+        }
+    }
+
+    CompanyScope.Enter(CompanyScope.IdFor(brand.Key) ?? -1);
+
+    await next();
 });
 
 app.Use(HrPortal.Security.SecurityHeaders.AddAsync);
