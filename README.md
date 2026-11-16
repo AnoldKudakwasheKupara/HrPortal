@@ -134,10 +134,56 @@ final approval, allows the balance to go below zero, and carries it across
 years. Each change is listed on the balance's page and on the employee's My
 Leave page.
 
-## Running it for another company in the group
+## The group's companies
 
-One codebase, one deployment and one database per company. With nothing set,
-the portal is Intellego. To add a company, say with the key `example`:
+One service and one database serve every company in the group, today
+Intellego and MMC Capital. The web address a person uses decides which
+company's portal they see: its name, colours and logo, its staff and its
+records. Any address not listed belongs to the main company, which is
+Intellego unless `Brand__Key` says otherwise.
+
+On Render, add each company's address to the same service as a custom domain
+and set, for MMC Capital say:
+
+- `Brand__Hosts__mmc`: the addresses that show MMC, without `https://`,
+  separated by commas, such as `hr.mmccapitalzim.com`.
+- `Brand__Urls__mmc`: where its emails link to, such as
+  `https://hr.mmccapitalzim.com`. The main company uses
+  `Email__PortalBaseUrl`.
+
+Running locally, `http://mmc.localhost:<port>` shows MMC.
+
+**People.** Every employee has a home company and works for one or more
+companies, both set on the employee form. Somebody who works for both, such
+as the IT team, has one record, one sign-in and one leave balance, and sees
+the same requests on either portal. Nobody can sign in to the portal of a
+company they do not work for; the administrator can sign in everywhere.
+Taking somebody off a company ends any sign-in they have there.
+
+**Roles.** Administrator and Employee hold everywhere. HR Officer, MD,
+Compliance Officer and any role added later are given on the Roles page of
+the company's own portal and hold only there, so the HR Manager at MMC is an
+ordinary employee on Intellego's portal. Everybody who held a role before
+companies were added holds it at Intellego.
+
+**What is separate.** Each portal shows its own staff, and their leave,
+balances, loans, course applications, documents, certifications, training
+and to-dos; its own policies, document folders, training courses, company
+weekly reports and departments. A department can instead serve the whole
+group, as IT does.
+
+**What is shared.** Assets, vendors, licences, the IT log and the password
+vault; leave types, public holidays and document categories; the audit log,
+settings and notifications. Sanctions screening is one register for the whole
+group for now.
+
+**Approvals.** A request is decided by the HR and directors of the company
+that employs the person, whichever portal it was made on. The other portal
+shows it without the buttons. Supervisors act wherever they are. At MMC,
+HR's approval of leave is final; loans and courses end with a director, and
+either director may decide.
+
+**Adding a company**, say with the key `example`:
 
 1. Add `HrPortal/Brands/example.json`:
 
@@ -162,14 +208,18 @@ the portal is Intellego. To add a company, say with the key `example`:
    carry white text, so they must be dark enough for it. To set a shade exactly,
    add it under `"Overrides"`, using a name from `CssVariables` in
    `Services/Brand.cs`.
+
+   A company that names its approvers differently, or whose HR has the last
+   word on leave, says so in the same file, as `Brands/mmc.json` does:
+   `HrTitle`, `DirectorTitle`, `TheDirector`, `TheDirectorShort`,
+   `CourseApproverTitle`, `TheCourseApprover` and `LeaveEndsWithHr`.
 2. Add its artwork to `HrPortal/wwwroot/brands/example/`, under the same names as
    `brands/intellego`: `logo.png`, `logo-on-dark.png`, `logo-email.png`,
    `icon-32.png`, `icon-180.png` and `icon-512.png`.
 3. Add its front page wording in `HrPortal/Views/Brands/example/_About.cshtml`. The
    page still works without it, showing no About section.
-4. Deploy a separate Render service and database with `Brand__Key` set to the
-   company's key. The portal refuses to start if it has no brand file. Copy
-   `render.yaml` as a starting point; the new service needs its own database, its
-   own email settings, as above, and its own address.
+4. Set `Brand__Hosts__example` and `Brand__Urls__example`, and add the address
+   to the Render service. The company itself is added to the database when the
+   portal starts.
 
 `dotnet test` checks every brand has its artwork and readable colours.
