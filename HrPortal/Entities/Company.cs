@@ -26,6 +26,16 @@ namespace HrPortal.Entities
     }
 
     /// <summary>
+    /// A record that belongs to one company and is only seen on its
+    /// portal, such as a policy or a document folder. A new one is
+    /// given the company whose portal it was made on.
+    /// </summary>
+    public interface ICompanyOwned
+    {
+        int CompanyId { get; set; }
+    }
+
+    /// <summary>
     /// A role somebody holds at one company, such as HR at MMC Capital
     /// for somebody who is an ordinary employee at Intellego. Roles
     /// that hold everywhere stay with the sign-in itself.

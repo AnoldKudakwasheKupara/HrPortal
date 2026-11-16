@@ -54,7 +54,7 @@ namespace HrPortal.Controllers
                 })
                 .ToListAsync();
 
-            ViewBag.Departments = await _context.Departments
+            ViewBag.Departments = await _context.DepartmentsHere
                 .AsNoTracking()
                 .Where(d => d.IsActive)
                 .OrderBy(d => d.Name)

@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model int?
+@{
+    var companies = (List<SelectListItem>)ViewBag.Companies;
+}
+
+<div class="mb-3">
+
+    <label for="CompanyId" class="form-label">Company</label>
+
+    <select id="CompanyId" name="CompanyId" class="form-select">
+        <option value="" selected="@(Model == null)">The whole group</option>
+        @foreach (var company in companies)
+        {
+            <option value="@company.Value" selected="@(Model?.ToString() == company.Value)">@company.Text</option>
+        }
+    </select>
+
+    <div class="form-text">
+        A department for the whole group, such as IT, is offered on
+        every company's portal.
+    </div>
+
+    <span class="text-danger field-validation-valid"
+          data-valmsg-for="CompanyId"
+          data-valmsg-replace="true">@ViewData.ModelState["CompanyId"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+
+</div>

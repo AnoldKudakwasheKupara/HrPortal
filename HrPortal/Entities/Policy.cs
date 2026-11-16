@@ -1,8 +1,11 @@
 namespace HrPortal.Entities
 {
-    public class Policy
+    public class Policy : ICompanyOwned
     {
         public int Id { get; set; }
+
+        /// <summary>The company it belongs to; see <see cref="ICompanyOwned"/>.</summary>
+        public int CompanyId { get; set; }
 
         public string Title { get; set; } = string.Empty;
 

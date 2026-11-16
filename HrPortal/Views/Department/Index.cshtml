@@ -118,7 +118,13 @@
                         @foreach (var department in paged.Items)
                         {
                             <tr>
-                                <td class="fw-semibold">@department.Name</td>
+                                <td class="fw-semibold">
+                                    @department.Name
+                                    @if (department.CompanyId == null)
+                                    {
+                                        <span class="status-badge badge-gray ms-1">Whole group</span>
+                                    }
+                                </td>
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(department.Description))
                                     {

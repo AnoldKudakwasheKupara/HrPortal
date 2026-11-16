@@ -15,15 +15,54 @@ namespace HrPortal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly RecordDocumentPdfService _pdf;
         private readonly AuditService _audit;
+        private readonly CompanyService _companies;
 
         public DepartmentController(
             ApplicationDbContext context,
             RecordDocumentPdfService pdf,
-            AuditService audit)
+            AuditService audit,
+            CompanyService companies)
         {
             _context = context;
             _pdf = pdf;
             _audit = audit;
+            _companies = companies;
+        }
+
+        private async Task LoadCompaniesAsync()
+        {
+            ViewBag.Companies = (await _companies.AllAsync())
+                .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(
+                    CompanyService.NameOf(c),
+                    c.Id.ToString()))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Whether the company chosen is a real one, or empty for the
+        /// whole group, and the name is not already used there.
+        /// </summary>
+        private async Task CheckAsync(string name, int? companyId, int? existingId)
+        {
+            if (companyId != null &&
+                !(await _companies.AllAsync()).Any(c => c.Id == companyId))
+            {
+                ModelState.AddModelError("CompanyId", "Choose a company from the list.");
+            }
+
+            var lowered = name.ToLower();
+
+            if (await _context.Departments.AnyAsync(d =>
+                    d.Id != existingId &&
+                    d.CompanyId == companyId &&
+                    d.Name.ToLower() == lowered))
+            {
+                ModelState.AddModelError(
+                    "Name",
+                    companyId == null
+                        ? "A department for the whole group already uses this name."
+                        : "That company already has a department with this name.");
+            }
         }
 
         /// <summary>
@@ -35,9 +74,10 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var department = await _context.Departments
+            var department = await _context.DepartmentsHere
                 .AsNoTracking()
                 .Include(d => d.Employees)
+                .Include(d => d.Company)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (department == null)
@@ -85,9 +125,10 @@ namespace HrPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var departments = await _context.Departments
+            var departments = await _context.DepartmentsHere
                 .AsNoTracking()
                 .Include(d => d.Employees)
+                .Include(d => d.Company)
                 .OrderBy(d => d.Name)
                 .ToListAsync();
 
@@ -99,9 +140,10 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var department = await _context.Departments
+            var department = await _context.DepartmentsHere
                 .AsNoTracking()
                 .Include(d => d.Employees)
+                .Include(d => d.Company)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (department == null)
@@ -110,9 +152,14 @@ namespace HrPortal.Controllers
             return View(department);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            await LoadCompaniesAsync();
+
+            return View(new DepartmentCreateViewModel
+            {
+                CompanyId = await _companies.CurrentIdAsync()
+            });
         }
 
         [HttpPost]
@@ -120,20 +167,14 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Create(
             DepartmentCreateViewModel model)
         {
+            var name = model.Name?.Trim() ?? string.Empty;
+
+            if (ModelState.IsValid)
+                await CheckAsync(name, model.CompanyId, null);
+
             if (!ModelState.IsValid)
-                return View(model);
-
-            var name = model.Name.Trim();
-
-            var exists = await _context.Departments
-                .AnyAsync(d => d.Name.ToLower() == name.ToLower());
-
-            if (exists)
             {
-                ModelState.AddModelError(
-                    "Name",
-                    "A department with this name already exists.");
-
+                await LoadCompaniesAsync();
                 return View(model);
             }
 
@@ -141,6 +182,7 @@ namespace HrPortal.Controllers
             {
                 Name = name,
                 Description = model.Description?.Trim(),
+                CompanyId = model.CompanyId,
                 IsActive = true
             };
 
@@ -159,8 +201,8 @@ namespace HrPortal.Controllers
             if (id == null)
                 return NotFound();
 
-            var department = await _context.Departments
-                .FindAsync(id);
+            var department = await _context.DepartmentsHere
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (department == null)
                 return NotFound();
@@ -170,8 +212,11 @@ namespace HrPortal.Controllers
                 Id = department.Id,
                 Name = department.Name,
                 Description = department.Description,
+                CompanyId = department.CompanyId,
                 IsActive = department.IsActive
             };
+
+            await LoadCompaniesAsync();
 
             return View(model);
         }
@@ -185,33 +230,26 @@ namespace HrPortal.Controllers
             if (id != model.Id)
                 return NotFound();
 
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var department = await _context.Departments
-                .FindAsync(id);
+            var department = await _context.DepartmentsHere
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (department == null)
                 return NotFound();
 
-            var name = model.Name.Trim();
+            var name = model.Name?.Trim() ?? string.Empty;
 
-            var duplicateExists = await _context.Departments
-                .AnyAsync(d =>
-                    d.Id != id &&
-                    d.Name.ToLower() == name.ToLower());
+            if (ModelState.IsValid)
+                await CheckAsync(name, model.CompanyId, id);
 
-            if (duplicateExists)
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError(
-                    "Name",
-                    "Another department already uses this name.");
-
+                await LoadCompaniesAsync();
                 return View(model);
             }
 
             department.Name = name;
             department.Description = model.Description?.Trim();
+            department.CompanyId = model.CompanyId;
             department.IsActive = model.IsActive;
 
             await _context.SaveChangesAsync();
@@ -231,7 +269,7 @@ namespace HrPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var department = await _context.Departments
+            var department = await _context.DepartmentsHere
                 .Include(d => d.Employees)
                 .FirstOrDefaultAsync(d => d.Id == id);
 

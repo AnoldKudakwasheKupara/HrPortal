@@ -1,8 +1,11 @@
 namespace HrPortal.Entities
 {
-    public class WeeklyReport
+    public class WeeklyReport : ICompanyOwned
     {
         public int Id { get; set; }
+
+        /// <summary>The company it belongs to; see <see cref="ICompanyOwned"/>.</summary>
+        public int CompanyId { get; set; }
 
         /// <summary>
         /// Whose report this is. Each person writes their own; only

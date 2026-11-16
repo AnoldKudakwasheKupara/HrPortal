@@ -510,6 +510,9 @@ namespace HrPortal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -523,8 +526,10 @@ namespace HrPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("CompanyId", "Name")
                         .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("CompanyId", "Name"), false);
 
                     b.ToTable("Departments");
                 });
@@ -1404,6 +1409,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -1469,6 +1477,8 @@ namespace HrPortal.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("ReviewDate");
 
@@ -1663,6 +1673,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -1680,7 +1693,9 @@ namespace HrPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CompanyId", "Name")
                         .IsUnique();
 
                     b.ToTable("RepositoryFolders");
@@ -2337,6 +2352,9 @@ namespace HrPortal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -2369,6 +2387,8 @@ namespace HrPortal.Migrations
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("CreatedByEmployeeId");
 
@@ -2612,6 +2632,9 @@ namespace HrPortal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -2642,6 +2665,8 @@ namespace HrPortal.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("EmployeeId", "PeriodStart")
                         .IsUnique();
@@ -2958,6 +2983,16 @@ namespace HrPortal.Migrations
                     b.Navigation("CourseApplication");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Department", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Company");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.Employee", b =>
                 {
                     b.HasOne("HrPortal.Entities.Department", "Department")
@@ -3218,6 +3253,12 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("HrPortal.Entities.Policy", b =>
                 {
+                    b.HasOne("HrPortal.Entities.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("HrPortal.Entities.Policy", "Supersedes")
                         .WithMany()
                         .HasForeignKey("SupersedesPolicyId")
@@ -3284,6 +3325,15 @@ namespace HrPortal.Migrations
                         .IsRequired();
 
                     b.Navigation("Folder");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.RepositoryFolder", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HrPortal.Entities.SanctionsChange", b =>
@@ -3405,6 +3455,12 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("HrPortal.Entities.TrainingCourse", b =>
                 {
+                    b.HasOne("HrPortal.Entities.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("HrPortal.Entities.Employee", "CreatedByEmployee")
                         .WithMany()
                         .HasForeignKey("CreatedByEmployeeId")
@@ -3472,6 +3528,12 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("HrPortal.Entities.WeeklyReport", b =>
                 {
+                    b.HasOne("HrPortal.Entities.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("HrPortal.Entities.Employee", "Employee")
                         .WithMany()
                         .HasForeignKey("EmployeeId")

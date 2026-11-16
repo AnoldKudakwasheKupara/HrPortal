@@ -1255,7 +1255,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadLookups(int? employeeId = null)
         {
-            await LoadDepartments();
+            await LoadDepartments(employeeId);
 
             var companies = await _companies.AllAsync();
 
@@ -1288,10 +1288,23 @@ namespace HrPortal.Controllers
                 .ToList();
         }
 
-        private async Task LoadDepartments()
+        /// <summary>
+        /// This company's departments and the group-wide ones, plus the
+        /// one the person is in, which may be the other company's when
+        /// they work for both, so saving the form does not move them.
+        /// </summary>
+        private async Task LoadDepartments(int? employeeId)
         {
-            var departments = await _context.Departments
+            var current = employeeId == null
+                ? null
+                : await _context.Employees
+                    .Where(e => e.Id == employeeId)
+                    .Select(e => (int?)e.DepartmentId)
+                    .FirstOrDefaultAsync();
+
+            var departments = await _context.DepartmentsHere
                 .Where(d => d.IsActive)
+                .Union(_context.Departments.Where(d => d.Id == current))
                 .OrderBy(d => d.Name)
                 .ToListAsync();
 

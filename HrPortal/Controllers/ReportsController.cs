@@ -357,7 +357,7 @@ namespace HrPortal.Controllers
 
         private async Task LoadLookups()
         {
-            ViewBag.Departments = await _context.Departments
+            ViewBag.Departments = await _context.DepartmentsHere
                 .Where(d => d.IsActive)
                 .OrderBy(d => d.Name)
                 .Select(d => new SelectListItem(d.Name, d.Id.ToString()))

@@ -156,19 +156,25 @@ namespace HrPortal.Services
             await _context.PolicyReadings
                 .AnyAsync(r => r.PolicyId == policyId && r.EmployeeId == employeeId);
 
-        /// <summary>The employees a policy is meant for, narrowed to the roles its audience allows.</summary>
+        /// <summary>
+        /// The employees a policy is meant for: the people who work for
+        /// its company, narrowed to the roles its audience allows there.
+        /// </summary>
         public IQueryable<Employee> AudienceOf(Policy policy)
         {
             var roles = AudienceRules.RolesFor(policy.Audience);
+            var company = policy.CompanyId;
 
             var employees = _context.Employees
                 .AsNoTracking()
-                .Where(e => e.IsActive);
+                .Where(e =>
+                    e.IsActive &&
+                    e.Companies.Any(m => m.CompanyId == company));
 
             if (roles == null)
                 return employees;
 
-            var users = _context.UserIdsWithRole(roles, null);
+            var users = _context.UserIdsWithRole(roles, company);
 
             return employees.Where(e =>
                 e.UserId != null &&

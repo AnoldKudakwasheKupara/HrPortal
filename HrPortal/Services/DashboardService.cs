@@ -318,7 +318,7 @@ namespace HrPortal.Services
                 ActiveEmployees = await _context.StaffHere
                     .CountAsync(e => e.IsActive),
 
-                Departments = await _context.Departments
+                Departments = await _context.DepartmentsHere
                     .CountAsync(d => d.IsActive),
 
                 SignInAccounts = await _context.StaffHere

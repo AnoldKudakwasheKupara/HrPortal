@@ -1,8 +1,11 @@
 namespace HrPortal.Entities
 {
-    public class RepositoryFolder
+    public class RepositoryFolder : ICompanyOwned
     {
         public int Id { get; set; }
+
+        /// <summary>The company it belongs to; see <see cref="ICompanyOwned"/>.</summary>
+        public int CompanyId { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

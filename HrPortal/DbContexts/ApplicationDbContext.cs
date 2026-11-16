@@ -62,6 +62,64 @@ namespace HrPortal.DbContexts
 
             return everywhere.Union(atCompany);
         }
+
+        /// <summary>
+        /// This company's departments and the ones that serve the whole
+        /// group. A department is not hidden from the database as a
+        /// whole, because somebody who works for both companies may sit
+        /// in the other company's department and must still be listed.
+        /// </summary>
+        public IQueryable<Department> DepartmentsHere =>
+            Departments.Where(d =>
+                CompanyFilter == null ||
+                d.CompanyId == null ||
+                d.CompanyId == CompanyFilter);
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            StampCompany();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(
+            bool acceptAllChangesOnSuccess,
+            CancellationToken cancellationToken = default)
+        {
+            StampCompany();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        /// <summary>
+        /// Gives a new company record the company whose portal it was
+        /// made on, or the main company for work done outside a request.
+        /// </summary>
+        private void StampCompany()
+        {
+            foreach (var entry in ChangeTracker.Entries<ICompanyOwned>())
+            {
+                if (entry.State == EntityState.Added && entry.Entity.CompanyId == 0)
+                {
+                    entry.Entity.CompanyId =
+                        CompanyFilter is int here && here > 0
+                            ? here
+                            : CompanyScope.IdFor(Brand.Main.Key) ?? Company.IntellegoId;
+                }
+            }
+        }
+
+        private static void OwnedByCompany<T>(ModelBuilder builder)
+            where T : class, ICompanyOwned
+        {
+            builder.Entity<T>()
+                .HasOne<Company>()
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<T>()
+                .HasIndex(x => x.CompanyId);
+        }
+
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestHistory> LeaveRequestHistories { get; set; }
@@ -322,9 +380,42 @@ namespace HrPortal.DbContexts
                     .IsRequired()
                     .HasMaxLength(150);
 
-                entity.HasIndex(d => d.Name)
-                    .IsUnique();
+                entity.HasIndex(d => new { d.CompanyId, d.Name })
+                    .IsUnique()
+                    .AreNullsDistinct(false);
+
+                entity.HasOne(d => d.Company)
+                    .WithMany()
+                    .HasForeignKey(d => d.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
+
+            OwnedByCompany<Policy>(builder);
+            OwnedByCompany<RepositoryFolder>(builder);
+            OwnedByCompany<TrainingCourse>(builder);
+
+            builder.Entity<Policy>().HasQueryFilter(x =>
+                CompanyFilter == null || x.CompanyId == CompanyFilter);
+
+            builder.Entity<RepositoryFolder>().HasQueryFilter(x =>
+                CompanyFilter == null || x.CompanyId == CompanyFilter);
+
+            builder.Entity<RepositoryDocument>().HasQueryFilter(x =>
+                CompanyFilter == null || x.Folder.CompanyId == CompanyFilter);
+
+            builder.Entity<TrainingCourse>().HasQueryFilter(x =>
+                CompanyFilter == null || x.CompanyId == CompanyFilter);
+
+            builder.Entity<TrainingMaterial>().HasQueryFilter(x =>
+                CompanyFilter == null || x.TrainingCourse.CompanyId == CompanyFilter);
+
+            OwnedByCompany<WeeklyReport>(builder);
+
+            builder.Entity<WeeklyReport>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                (x.EmployeeId == null
+                    ? x.CompanyId == CompanyFilter
+                    : EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter)));
 
             builder.Entity<LeaveType>(entity =>
             {
@@ -1019,7 +1110,7 @@ namespace HrPortal.DbContexts
                     .HasConversion<string>()
                     .HasMaxLength(30);
 
-                entity.HasIndex(f => f.Name).IsUnique();
+                entity.HasIndex(f => new { f.CompanyId, f.Name }).IsUnique();
             });
 
             builder.Entity<RepositoryDocument>(entity =>
