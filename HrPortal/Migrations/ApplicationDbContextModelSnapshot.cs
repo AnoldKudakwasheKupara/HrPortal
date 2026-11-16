@@ -334,6 +334,43 @@ namespace HrPortal.Migrations
                     b.ToTable("Certifications");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Companies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Key = "intellego",
+                            Name = "Intellego Investment Consultants"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Key = "mmc",
+                            Name = "MMC Capital"
+                        });
+                });
+
             modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
                 {
                     b.Property<int>("Id")
@@ -570,6 +607,9 @@ namespace HrPortal.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int>("HomeCompanyId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -622,12 +662,29 @@ namespace HrPortal.Migrations
                     b.HasIndex("EmployeeNumber")
                         .IsUnique();
 
+                    b.HasIndex("HomeCompanyId");
+
                     b.HasIndex("SupervisorId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("Employees");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.EmployeeCompany", b =>
+                {
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("EmployeeId", "CompanyId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("EmployeeCompanies");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.EmployeeDocument", b =>
@@ -2866,6 +2923,12 @@ namespace HrPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("HrPortal.Entities.Company", "HomeCompany")
+                        .WithMany()
+                        .HasForeignKey("HomeCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("HrPortal.Entities.Employee", "Supervisor")
                         .WithMany("DirectReports")
                         .HasForeignKey("SupervisorId")
@@ -2878,9 +2941,30 @@ namespace HrPortal.Migrations
 
                     b.Navigation("Department");
 
+                    b.Navigation("HomeCompany");
+
                     b.Navigation("Supervisor");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.EmployeeCompany", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Company", "Company")
+                        .WithMany("Members")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany("Companies")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.EmployeeDocument", b =>
@@ -3431,6 +3515,11 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.Company", b =>
+                {
+                    b.Navigation("Members");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
                 {
                     b.Navigation("History");
@@ -3448,6 +3537,8 @@ namespace HrPortal.Migrations
 
             modelBuilder.Entity("HrPortal.Entities.Employee", b =>
                 {
+                    b.Navigation("Companies");
+
                     b.Navigation("DirectReports");
 
                     b.Navigation("Documents");

@@ -68,6 +68,19 @@ namespace HrPortal.Entities
 
         public int? UserId { get; set; }
 
+        /// <summary>
+        /// The company that employs them. Somebody who works for two
+        /// companies has their requests approved by this one, and the
+        /// other portal shows them without letting anybody act.
+        /// </summary>
+        public int HomeCompanyId { get; set; } = Company.IntellegoId;
+
+        public Company HomeCompany { get; set; } = null!;
+
+        /// <summary>The companies whose portals they can use.</summary>
+        public ICollection<EmployeeCompany> Companies { get; set; }
+            = new List<EmployeeCompany>();
+
         public bool IsActive { get; set; } = true;
 
         /// <summary>

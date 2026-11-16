@@ -173,6 +173,7 @@ builder.Services.AddSingleton<HrPortal.Services.Sanctions.SanctionsReportPdfServ
 builder.Services.AddMemoryCache();
 builder.Services.AddHostedService<DailyReminderWorker>();
 builder.Services.AddScoped<SupervisorService>();
+builder.Services.AddScoped<CompanyService>();
 
 builder.Services.AddScoped<SupervisorQueueService>();
 builder.Services.AddScoped<DashboardService>();
@@ -296,6 +297,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await db.Database.MigrateAsync();
+
+        await CompanyService.EnsureForBrandsAsync(db, Brand.All);
 
         var userManager =
             services.GetRequiredService<UserManager<ApplicationUser>>();

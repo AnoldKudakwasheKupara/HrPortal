@@ -31,6 +31,7 @@ namespace HrPortal.Controllers
         private readonly SupervisorService _supervisors;
         private readonly EmailService _email;
         private readonly EmailOptions _emailOptions;
+        private readonly CompanyService _companies;
 
         public EmployeeController(
             ApplicationDbContext context,
@@ -43,8 +44,10 @@ namespace HrPortal.Controllers
             ListDocumentPdfService lists,
             SupervisorService supervisors,
             EmailService email,
-            IOptions<EmailOptions> emailOptions)
+            IOptions<EmailOptions> emailOptions,
+            CompanyService companies)
         {
+            _companies = companies;
             _context = context;
             _records = records;
             _userManager = userManager;
@@ -307,9 +310,13 @@ namespace HrPortal.Controllers
         {
             await LoadLookups();
 
+            var here = await _companies.CurrentIdAsync();
+
             return View(new EmployeeCreateViewModel
             {
-                DateJoined = DateTime.Today
+                DateJoined = DateTime.Today,
+                CompanyIds = [here],
+                HomeCompanyId = here
             });
         }
 
@@ -318,6 +325,8 @@ namespace HrPortal.Controllers
         public async Task<IActionResult> Create(
             EmployeeCreateViewModel model)
         {
+            await CheckCompaniesAsync(model);
+
             if (!ModelState.IsValid)
             {
                 await LoadLookups();
@@ -380,6 +389,10 @@ namespace HrPortal.Controllers
                 EmploymentType = model.EmploymentType,
                 ContractEndDate = model.ContractEndDate,
                 DepartmentId = model.DepartmentId,
+                HomeCompanyId = model.HomeCompanyId,
+                Companies = model.CompanyIds
+                    .Select(id => new EmployeeCompany { CompanyId = id })
+                    .ToList(),
                 IsActive = true
             };
 
@@ -483,7 +496,8 @@ namespace HrPortal.Controllers
                 return NotFound();
 
             var employee = await _context.Employees
-                .FindAsync(id);
+                .Include(e => e.Companies)
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employee == null)
                 return NotFound();
@@ -514,6 +528,10 @@ namespace HrPortal.Controllers
                 ContractEndDate = employee.ContractEndDate,
                 DepartmentId = employee.DepartmentId,
                 SupervisorId = employee.SupervisorId,
+                CompanyIds = employee.Companies
+                    .Select(m => m.CompanyId)
+                    .ToList(),
+                HomeCompanyId = employee.HomeCompanyId,
                 IsActive = employee.IsActive,
                 EndDate = employee.EndDate,
                 LeavingReason = employee.LeavingReason
@@ -583,6 +601,8 @@ namespace HrPortal.Controllers
                 ModelState.AddModelError(error.Field, error.Message);
             }
 
+            await CheckCompaniesAsync(model);
+
             var supervisorProblem = await _supervisors
                 .RejectionReasonAsync(id, model.SupervisorId);
 
@@ -601,10 +621,13 @@ namespace HrPortal.Controllers
 
             var employee = await _context.Employees
                 .Include(e => e.User)
+                .Include(e => e.Companies)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employee == null)
                 return NotFound();
+
+            var companiesChanged = SetCompanies(employee, model);
 
             employee.EmployeeNumber = model.EmployeeNumber;
             employee.FirstName = model.FirstName;
@@ -664,11 +687,17 @@ namespace HrPortal.Controllers
 
             await _context.SaveChangesAsync();
 
+            if (companiesChanged && employee.User != null)
+                await _userManager.UpdateSecurityStampAsync(employee.User);
+
             await _audit.LogAsync(
                 AuditService.Updated,
                 nameof(Employee),
                 employee.EmployeeNumber,
-                $"{employee.FirstName} {employee.LastName} updated.");
+                $"{employee.FirstName} {employee.LastName} updated." +
+                (companiesChanged
+                    ? $" Now works for {await CompanyNamesAsync(model.CompanyIds)}."
+                    : ""));
 
             TempData["Success"] =
                 "Employee updated successfully.";
@@ -1147,9 +1176,96 @@ namespace HrPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>
+        /// Checks the companies ticked on the form. With only one
+        /// company the form does not ask, and everybody works for it.
+        /// </summary>
+        private async Task CheckCompaniesAsync(IWorksForCompanies model)
+        {
+            var all = await _companies.AllAsync();
+
+            if (all.Count < 2)
+            {
+                var here = await _companies.CurrentIdAsync();
+
+                model.CompanyIds = [here];
+                model.HomeCompanyId = here;
+                ModelState.Remove(nameof(model.CompanyIds));
+                ModelState.Remove(nameof(model.HomeCompanyId));
+                return;
+            }
+
+            model.CompanyIds = model.CompanyIds
+                .Where(id => all.Any(c => c.Id == id))
+                .Distinct()
+                .Order()
+                .ToList();
+
+            if (model.CompanyIds.Count == 0)
+            {
+                ModelState.AddModelError(
+                    nameof(model.CompanyIds),
+                    "Tick at least one company they work for.");
+            }
+            else if (!model.CompanyIds.Contains(model.HomeCompanyId))
+            {
+                ModelState.AddModelError(
+                    nameof(model.HomeCompanyId),
+                    "Their home company has to be one they work for.");
+            }
+        }
+
+        /// <summary>
+        /// Brings the companies somebody works for into line with the
+        /// form, and says whether anything changed, since leaving a
+        /// company has to end any sign-in they have there.
+        /// </summary>
+        private static bool SetCompanies(Employee employee, IWorksForCompanies model)
+        {
+            var changed = employee.HomeCompanyId != model.HomeCompanyId;
+
+            employee.HomeCompanyId = model.HomeCompanyId;
+
+            foreach (var gone in employee.Companies
+                         .Where(m => !model.CompanyIds.Contains(m.CompanyId))
+                         .ToList())
+            {
+                employee.Companies.Remove(gone);
+                changed = true;
+            }
+
+            foreach (var id in model.CompanyIds
+                         .Where(id => employee.Companies.All(m => m.CompanyId != id)))
+            {
+                employee.Companies.Add(new EmployeeCompany { CompanyId = id });
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private async Task<string> CompanyNamesAsync(IEnumerable<int> ids)
+        {
+            var all = await _companies.AllAsync();
+
+            return string.Join(
+                " and ",
+                all.Where(c => ids.Contains(c.Id)).Select(CompanyService.NameOf));
+        }
+
         private async Task LoadLookups(int? employeeId = null)
         {
             await LoadDepartments();
+
+            var companies = await _companies.AllAsync();
+
+            ViewBag.Companies = companies
+                .Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = CompanyService.NameOf(c)
+                })
+                .ToList();
 
             var candidates = employeeId == null
                 ? await _context.Employees

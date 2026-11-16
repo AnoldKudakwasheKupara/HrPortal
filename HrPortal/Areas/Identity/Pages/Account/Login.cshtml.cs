@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using HrPortal.Data;
+using HrPortal.Security;
+using HrPortal.Services;
 
 namespace HrPortal.Areas.Identity.Pages.Account;
 
@@ -89,6 +91,16 @@ public class LoginModel : PageModel
             {
                 _logger.LogWarning("User account locked out.");
                 return RedirectToPage("./Lockout");
+            }
+            if (result.IsNotAllowed &&
+                _signInManager is EmployeeSignInManager { RefusedHomeCompany: { } home } &&
+                home.Key != Brand.Current.Key)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    $"Your account is not set up for {Brand.Current.PortalName}. " +
+                    $"Please sign in through {CompanyService.PortalOf(home)} instead.");
+                return Page();
             }
             else
             {

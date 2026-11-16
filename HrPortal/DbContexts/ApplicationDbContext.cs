@@ -17,6 +17,8 @@ namespace HrPortal.DbContexts
 
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Department> Departments { get; set; }
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<EmployeeCompany> EmployeeCompanies { get; set; }
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestHistory> LeaveRequestHistories { get; set; }
@@ -154,6 +156,61 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(e => e.SupervisorId);
+
+                entity.HasOne(e => e.HomeCompany)
+                    .WithMany()
+                    .HasForeignKey(e => e.HomeCompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Company>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+
+                entity.Property(c => c.Id)
+                    .ValueGeneratedNever();
+
+                entity.Property(c => c.Key)
+                    .IsRequired()
+                    .HasMaxLength(40);
+
+                entity.HasIndex(c => c.Key)
+                    .IsUnique();
+
+                entity.Property(c => c.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.HasData(
+                    new Company
+                    {
+                        Id = Company.IntellegoId,
+                        Key = "intellego",
+                        Name = "Intellego Investment Consultants"
+                    },
+                    new Company
+                    {
+                        Id = Company.MmcId,
+                        Key = "mmc",
+                        Name = "MMC Capital"
+                    });
+            });
+
+            builder.Entity<EmployeeCompany>(entity =>
+            {
+                entity.HasKey(m => new { m.EmployeeId, m.CompanyId });
+
+                entity.HasOne(m => m.Employee)
+                    .WithMany(e => e.Companies)
+                    .HasForeignKey(m => m.EmployeeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(m => m.Company)
+                    .WithMany(c => c.Members)
+                    .HasForeignKey(m => m.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(m => m.CompanyId);
             });
 
             builder.Entity<Department>(entity =>

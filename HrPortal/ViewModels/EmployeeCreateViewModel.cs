@@ -3,7 +3,7 @@ using HrPortal.Entities;
 
 namespace HrPortal.ViewModels
 {
-    public class EmployeeCreateViewModel
+    public class EmployeeCreateViewModel : IWorksForCompanies
     {
         [Required]
         [Display(Name = "Employee Number")]
@@ -79,6 +79,12 @@ namespace HrPortal.ViewModels
         [Required]
         [Display(Name = "Department")]
         public int DepartmentId { get; set; }
+
+        [Display(Name = "Works for")]
+        public List<int> CompanyIds { get; set; } = new();
+
+        [Display(Name = "Home company")]
+        public int HomeCompanyId { get; set; }
 
         [Display(Name = "Create Login Account")]
         public bool CreateLoginAccount { get; set; }

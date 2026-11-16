@@ -152,7 +152,13 @@ namespace HrPortal.Data
 
             var department = await FindOrCreateItDepartmentAsync(context);
 
+            var home = await context.Companies
+                .Where(c => c.Key == Brand.Main.Key)
+                .Select(c => c.Id)
+                .FirstAsync();
+
             var employee = await context.Employees
+                .Include(e => e.Companies)
                 .FirstOrDefaultAsync(e =>
                     e.UserId == admin.Id ||
                     e.Email.ToLower() == email);
@@ -161,6 +167,8 @@ namespace HrPortal.Data
             {
                 context.Employees.Add(new Employee
                 {
+                    HomeCompanyId = home,
+                    Companies = { new EmployeeCompany { CompanyId = home } },
                     EmployeeNumber = await UniqueEmployeeNumberAsync(
                         context,
                         "ADMIN"),
@@ -189,6 +197,13 @@ namespace HrPortal.Data
             if (employee.DepartmentId != department.Id)
             {
                 employee.DepartmentId = department.Id;
+                changed = true;
+            }
+
+            if (employee.Companies.Count == 0)
+            {
+                employee.HomeCompanyId = home;
+                employee.Companies.Add(new EmployeeCompany { CompanyId = home });
                 changed = true;
             }
 

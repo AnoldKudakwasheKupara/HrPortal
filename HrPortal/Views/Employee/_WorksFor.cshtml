@@ -1,0 +1,57 @@
+@model HrPortal.ViewModels.IWorksForCompanies
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var companies = (List<SelectListItem>)ViewBag.Companies;
+}
+
+@if (companies.Count > 1)
+{
+    <div class="col-md-6 mb-3">
+
+        <span class="form-label d-block">Works for</span>
+
+        <div>
+            @foreach (var company in companies)
+            {
+                var id = int.Parse(company.Value);
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="CompanyIds"
+                           value="@company.Value"
+                           id="works-for-@company.Value"
+                           checked="@Model.CompanyIds.Contains(id)" />
+                    <label class="form-check-label"
+                           for="works-for-@company.Value">@company.Text</label>
+                </div>
+            }
+        </div>
+
+        <div class="form-text">
+            Somebody who works for more than one company signs in to
+            each portal with the same details.
+        </div>
+
+        <span asp-validation-for="CompanyIds" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-6 mb-3">
+
+        <label asp-for="HomeCompanyId" class="form-label">Home company</label>
+
+        <select asp-for="HomeCompanyId"
+                asp-items="companies"
+                class="form-select">
+        </select>
+
+        <div class="form-text">
+            The company that employs them, which approves their leave,
+            loan and course requests.
+        </div>
+
+        <span asp-validation-for="HomeCompanyId" class="text-danger"></span>
+
+    </div>
+}
