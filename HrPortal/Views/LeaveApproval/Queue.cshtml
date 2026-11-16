@@ -32,7 +32,7 @@
             <p>
                 @if (stage == "HR")
                 {
-                    <text>Requests submitted by employees, waiting for your review. Approving sends the request to the Managing Director.</text>
+                    <text>Requests submitted by employees, waiting for your review. Approving sends the request to @Brand.Current.TheDirector.</text>
                 }
                 else if (stage == "Supervisor")
                 {

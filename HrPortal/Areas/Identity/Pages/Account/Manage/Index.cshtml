@@ -49,7 +49,7 @@
                                     foreach (var role in Model.Roles)
                                     {
                                         <span class="badge bg-primary">
-                                            @role
+                                            @HrPortal.Services.Brand.Current.RoleTitle(role)
                                         </span>
                                     }
                                 }

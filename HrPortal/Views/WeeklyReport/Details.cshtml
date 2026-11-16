@@ -178,7 +178,7 @@
                     <p class="small text-muted">
                         @if (!submitted)
                         {
-                            <text>This is a draft that only you can see. @(personal ? "Submit it and your supervisor and the Managing Director can read it." : "Issue it when it is ready.")</text>
+                            <text>This is a draft that only you can see. @(personal ? "Submit it and your supervisor and " + Brand.Current.TheDirector + " can read it." : "Issue it when it is ready.")</text>
                         }
                         else
                         {

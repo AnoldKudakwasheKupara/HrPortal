@@ -36,7 +36,7 @@ namespace HrPortal.Services
 
         /// <summary>Who an application is now waiting on, in words for a message to the applicant.</summary>
         public static string WaitingOn(LoanApplicationStatus status) =>
-            status == LoanApplicationStatus.SupervisorReview ? "your supervisor" : "the Managing Director";
+            status == LoanApplicationStatus.SupervisorReview ? "your supervisor" : Brand.Current.TheDirector;
 
         public static bool IsWithApplicant(LoanApplicationStatus status) =>
             status is LoanApplicationStatus.Draft
@@ -193,8 +193,8 @@ namespace HrPortal.Services
             _notifications.Notify(
                 application.EmployeeId,
                 "Loan application approved by your supervisor",
-                $"{application.ApplicationNumber} has gone on to the " +
-                "Managing Director.",
+                $"{application.ApplicationNumber} has gone on to " +
+                $"{Brand.Current.TheDirector}.",
                 $"/MyLoans/Details/{application.Id}");
 
             await _context.SaveChangesAsync();

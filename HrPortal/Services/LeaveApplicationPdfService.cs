@@ -341,9 +341,9 @@ namespace HrPortal.Services
                         LeaveRequestAction.RejectedByHR =>
                             "Rejected by HR",
                         LeaveRequestAction.ApprovedByMD =>
-                            "Approved by the Managing Director",
+                            $"Approved by {Brand.Current.TheDirector}",
                         LeaveRequestAction.RejectedByMD =>
-                            "Rejected by the Managing Director",
+                            $"Rejected by {Brand.Current.TheDirector}",
                         _ => decision.Action.ToString()
                     };
 

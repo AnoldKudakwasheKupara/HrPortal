@@ -527,7 +527,7 @@ namespace HrPortal.Controllers
 
             TempData["Success"] = report.EmployeeId == null
                 ? "Report issued."
-                : "Submitted. Your supervisor and the Managing Director can " +
+                : $"Submitted. Your supervisor and {Brand.Current.TheDirector} can " +
                   "now read it.";
 
             return RedirectToAction(nameof(Details), new { id = report.Id });

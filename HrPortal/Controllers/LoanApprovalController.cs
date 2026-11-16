@@ -170,8 +170,8 @@ namespace HrPortal.Controllers
                     : settled
                         ? "Sanctioned, declined, returned and " +
                           "cancelled applications."
-                        : "Awaiting the Managing Director's " +
-                          "decision. Oldest first.");
+                        : $"Awaiting a decision from {Brand.Current.TheDirector}. " +
+                          "Oldest first.");
 
             list.Column("Reference", 1.2f)
                 .Column("Employee", 1.5f)
@@ -236,7 +236,7 @@ namespace HrPortal.Controllers
                 (application, actorId) =>
                     _workflow.SupervisorApproveAsync(
                         application, actorId, comment),
-                "Approved and sent to the Managing Director.");
+                $"Approved and sent to {Brand.Current.TheDirector}.");
 
         [HttpPost]
         [ValidateAntiForgeryToken]

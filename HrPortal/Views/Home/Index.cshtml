@@ -102,7 +102,7 @@
         tiles.Add(("Queue", "fa-inbox", "Awaiting review", h.AwaitingReview.ToString("N0"),
             h.AwaitingReview == 0 ? "nothing to review" : "waiting on HR", "Review",
             h.AwaitingReview > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "Index"));
-        tiles.Add(("Pipeline", "fa-stamp", "With the MD", h.WithMd.ToString("N0"),
+        tiles.Add(("Pipeline", "fa-stamp", "With " + Brand.Current.TheDirectorShort, h.WithMd.ToString("N0"),
             "cleared HR, awaiting sign-off", "See them", "tone-violet", "LeaveRequest", "Index"));
         tiles.Add(("Follow-up", "fa-rotate-left", "Returned", h.ReturnedToEmployees.ToString("N0"),
             "sent back and not resubmitted", "See them", h.ReturnedToEmployees > 0 ? "tone-amber" : "tone-slate",
@@ -116,7 +116,7 @@
             "leave requests completed", "Open", "tone-green", "Reports", "LeaveRequests"));
 
         jumps.Add(("Queue", "fa-inbox", "Leave to review",
-            "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to the MD.",
+            "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to " + Brand.Current.TheDirectorShort + ".",
             h.AwaitingReview.ToString("N0"), h.AwaitingReview == 1 ? "request waiting" : "requests waiting",
             "Review leave", "is-hero", "LeaveApproval", "Index"));
         jumps.Add(("People", "fa-id-card", "Employee records", "Every record, document and certification on file.",
@@ -151,7 +151,7 @@
             m.WeeklyReportsSubmitted >= m.WeeklyReportStaff ? "tone-green" : "tone-violet", "WeeklyReport", "Overview"));
 
         jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
-            "Requests that have cleared the supervisor and HR and now wait on the Managing Director.",
+            "Requests that have cleared the supervisor and HR and now wait on " + Brand.Current.TheDirector + ".",
             m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
             "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
         jumps.Add(("Progress", "fa-table-columns", "Weekly progress", "What everybody worked on this week, who has submitted and who has not.",
@@ -199,7 +199,7 @@
             me.UnreadNotifications > 0 ? "tone-gold" : "tone-slate", "MyNotifications", "Index"));
 
         jumps.Add(("Leave", "fa-calendar-plus", "Book time off",
-            "Your request goes to your supervisor first where you have one, then to HR, then to the Managing Director.",
+            "Your request goes to your supervisor first where you have one, then to HR, then to " + Brand.Current.TheDirector + ".",
             me.HasBalances ? me.RemainingDays.ToString("0.#") : null, me.HasBalances ? "days available" : null,
             "Request leave", "is-hero", "MyLeave", "Create"));
         jumps.Add(("Learning", "fa-graduation-cap", "My training", "Courses assigned to you, with their materials and due dates.",
@@ -265,8 +265,8 @@
     {
         <div class="alert alert-warning dash-alert">
             <strong>Nobody can approve at every stage.</strong>
-            @if (!Model.Admin.HasHrOfficer) { <text>Nobody holds the HR Officer role. </text> }
-            @if (!Model.Admin.HasMd) { <text>Nobody holds the MD role. </text> }
+            @if (!Model.Admin.HasHrOfficer) { <text>Nobody holds the HR Officer role here, so there is no @Brand.Current.HrTitle. </text> }
+            @if (!Model.Admin.HasMd) { <text>Nobody holds the MD role here, so there is no @Brand.Current.DirectorTitle. </text> }
             Requests will still be raised, but nobody is told to act on them.
             <a asp-controller="Role" asp-action="Index">Grant the roles</a>.
         </div>

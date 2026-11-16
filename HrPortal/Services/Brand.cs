@@ -116,6 +116,40 @@ namespace HrPortal.Services
 
         public BrandColors Colors { get; set; } = BrandColors.Intellego();
 
+        /// <summary>
+        /// What the company calls the person who holds the HR Officer
+        /// role, such as "HR Manager".
+        /// </summary>
+        public string HrTitle { get; set; } = "HR Officer";
+
+        /// <summary>
+        /// What the company calls the people who hold the MD role and
+        /// give the final decision, such as "Managing Director".
+        /// </summary>
+        public string DirectorTitle { get; set; } = "Managing Director";
+
+        /// <summary>
+        /// The final approver in a sentence: "the Managing Director",
+        /// or "a director" where any of several may decide.
+        /// </summary>
+        public string TheDirector { get; set; } = "the Managing Director";
+
+        /// <summary>The same, short enough for a button or a stage: "the MD".</summary>
+        public string TheDirectorShort { get; set; } = "the MD";
+
+        /// <summary>A phrase made to start a sentence.</summary>
+        public static string Capitalised(string phrase) =>
+            phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..];
+
+        /// <summary>The name to show for a role this company may call something else.</summary>
+        public string RoleTitle(string role) =>
+            role switch
+            {
+                "HR Officer" => HrTitle,
+                "MD" => DirectorTitle,
+                _ => role
+            };
+
         public bool IsDefault => Key == DefaultKey;
 
         /// <summary>The address of a piece of artwork, for a page.</summary>

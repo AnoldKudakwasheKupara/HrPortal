@@ -215,7 +215,7 @@ namespace HrPortal.Controllers
                     Stage.Hr =>
                         "Awaiting HR review. Oldest first.",
                     Stage.Md =>
-                        "Awaiting the Managing Director. Oldest first.",
+                        $"Awaiting {Brand.Current.TheDirector}. Oldest first.",
                     _ =>
                         "Awaiting your approval as supervisor. " +
                         "Oldest first."
@@ -303,7 +303,7 @@ namespace HrPortal.Controllers
                 comment,
                 (request, actorId) =>
                     _workflow.HrApproveAsync(request, actorId, comment),
-                "Leave request approved and sent to the MD.");
+                $"Leave request approved and sent to {Brand.Current.TheDirectorShort}.");
         }
 
         [HttpPost]

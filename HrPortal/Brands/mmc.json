@@ -5,6 +5,10 @@
   "LegalName": "MMC Capital",
   "LetterheadName": "MMC CAPITAL",
   "Tagline": "Stockbroking | Advisory",
+  "HrTitle": "HR Manager",
+  "DirectorTitle": "Director",
+  "TheDirector": "a director",
+  "TheDirectorShort": "a director",
   "Colors": {
     "Primary": "#102147",
     "Sidebar": "#0b1733",

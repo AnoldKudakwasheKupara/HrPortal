@@ -97,8 +97,8 @@
                         ?? "User";
 
                     var roleName = User.IsInRole("Administrator") ? "Administrator"
-                        : User.IsInRole("HR Officer") ? "HR Officer"
-                        : User.IsInRole("MD") ? "Managing Director"
+                        : User.IsInRole("HR Officer") ? Brand.Current.HrTitle
+                        : User.IsInRole("MD") ? Brand.Current.DirectorTitle
                         : "Employee";
 
                     var unread = await NotificationBadge.UnreadCountAsync();

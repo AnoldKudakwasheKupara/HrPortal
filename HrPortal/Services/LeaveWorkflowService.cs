@@ -148,7 +148,7 @@ namespace HrPortal.Services
         public static string WaitingOn(LeaveRequestStatus status) => status switch
         {
             LeaveRequestStatus.SupervisorReview => "your supervisor",
-            LeaveRequestStatus.HRApproved or LeaveRequestStatus.MDReview => "the Managing Director",
+            LeaveRequestStatus.HRApproved or LeaveRequestStatus.MDReview => Brand.Current.TheDirector,
             _ => "HR"
         };
 
@@ -240,8 +240,8 @@ namespace HrPortal.Services
                     ? $"Sent to {supervisor.FirstName} " +
                       $"{supervisor.LastName} for supervisor approval."
                     : isHrOfficersOwn
-                        ? "Sent straight to the Managing Director: the " +
-                          "request belongs to the HR Officer."
+                        ? $"Sent straight to {Brand.Current.TheDirector}: the " +
+                          $"request belongs to the {Brand.Current.HrTitle}."
                         : comment);
 
             if (supervisor != null)
@@ -260,7 +260,7 @@ namespace HrPortal.Services
                     ApprovalRole.MD,
                     request.EmployeeId,
                     "Leave request awaiting final approval",
-                    $"{request.RequestNumber} is the HR Officer's own " +
+                    $"{request.RequestNumber} is the {Brand.Current.HrTitle}'s own " +
                     "request and needs your decision.",
                     $"/LeaveApproval/Details/{request.Id}",
                     EmailKind.ActionNeeded);
@@ -284,7 +284,7 @@ namespace HrPortal.Services
                 request.RequestNumber,
                 $"{request.NumberOfDays:0.##} day(s) submitted " +
                 (isHrOfficersOwn
-                    ? "straight to the MD."
+                    ? $"straight to {Brand.Current.TheDirectorShort}."
                     : "for review."));
         }
 
@@ -447,7 +447,7 @@ namespace HrPortal.Services
                 request.EmployeeId,
                 "Leave approved by HR",
                 $"{request.RequestNumber} has been approved by HR and " +
-                "sent to the Managing Director.",
+                $"sent to {Brand.Current.TheDirector}.",
                 $"/MyLeave/Details/{request.Id}");
 
             await _notifications.NotifyApproverAsync(
@@ -465,7 +465,7 @@ namespace HrPortal.Services
                 AuditService.LeaveApproved,
                 nameof(LeaveRequest),
                 request.RequestNumber,
-                "Approved by HR and sent to the MD.");
+                $"Approved by HR and sent to {Brand.Current.TheDirectorShort}.");
         }
 
         public async Task HrRejectAsync(
@@ -568,8 +568,8 @@ namespace HrPortal.Services
             _notifications.Notify(
                 request.EmployeeId,
                 "Leave approved",
-                $"{request.RequestNumber} has been approved by the " +
-                "Managing Director.",
+                $"{request.RequestNumber} has been approved by " +
+                $"{Brand.Current.TheDirector}.",
                 $"/MyLeave/Details/{request.Id}",
                 EmailKind.Approved);
 
@@ -579,7 +579,7 @@ namespace HrPortal.Services
                 AuditService.LeaveApproved,
                 nameof(LeaveRequest),
                 request.RequestNumber,
-                $"Approved by the MD. {request.NumberOfDays:0.##} " +
+                $"Approved by {Brand.Current.TheDirectorShort}. {request.NumberOfDays:0.##} " +
                 "day(s) deducted from the balance.");
         }
 
@@ -607,8 +607,8 @@ namespace HrPortal.Services
             _notifications.Notify(
                 request.EmployeeId,
                 "Leave rejected",
-                $"{request.RequestNumber} was rejected by the " +
-                "Managing Director." + Because(comment),
+                $"{request.RequestNumber} was rejected by " +
+                $"{Brand.Current.TheDirector}." + Because(comment),
                 $"/MyLeave/Details/{request.Id}",
                 EmailKind.Declined);
 
@@ -618,7 +618,7 @@ namespace HrPortal.Services
                 AuditService.LeaveRejected,
                 nameof(LeaveRequest),
                 request.RequestNumber,
-                "Rejected by the MD.");
+                $"Rejected by {Brand.Current.TheDirectorShort}.");
         }
 
         public async Task CancelAsync(

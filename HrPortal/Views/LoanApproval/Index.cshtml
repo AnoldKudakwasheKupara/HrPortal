@@ -39,7 +39,7 @@
             <h2>@ViewData["Title"]</h2>
             <p>
                 @(isSupervisor
-                    ? "Applications from the people who report to you. Approving sends the application on to the Managing Director."
+                    ? "Applications from the people who report to you. Approving sends the application on to " + Brand.Current.TheDirector + "."
                     : settled
                         ? "Applications that have been sanctioned, declined, returned or cancelled."
                         : "Applications waiting on your decision.")

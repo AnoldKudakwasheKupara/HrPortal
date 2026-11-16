@@ -44,7 +44,7 @@ namespace HrPortal.Services
                     new("Returned", Back),
                 LeaveRequestStatus.HRApproved or
                 LeaveRequestStatus.MDReview =>
-                    new("With the MD", Waiting),
+                    new($"With {Brand.Current.TheDirectorShort}", Waiting),
                 LeaveRequestStatus.HRRejected =>
                     new("Rejected by HR", Refused),
                 LeaveRequestStatus.Approved =>
@@ -66,7 +66,7 @@ namespace HrPortal.Services
                 LoanApplicationStatus.SupervisorRejected =>
                     new("Declined by the supervisor", Refused),
                 LoanApplicationStatus.Submitted =>
-                    new("With the MD", Waiting),
+                    new($"With {Brand.Current.TheDirectorShort}", Waiting),
                 LoanApplicationStatus.ReturnedToApplicant =>
                     new("Returned", Back),
                 LoanApplicationStatus.Approved =>

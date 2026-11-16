@@ -73,6 +73,24 @@ namespace HrPortal.Tests.Branding
         }
 
         [Fact]
+        public void A_company_can_name_its_HR_and_directors_its_own_way()
+        {
+            File("example", """{ "HrTitle": "HR Manager", "DirectorTitle": "Director", "TheDirector": "a director" }""");
+
+            var example = Load("example");
+            var intellego = Load(null);
+
+            Assert.Equal("HR Manager", example.RoleTitle("HR Officer"));
+            Assert.Equal("Director", example.RoleTitle("MD"));
+            Assert.Equal("Compliance Officer", example.RoleTitle("Compliance Officer"));
+            Assert.Equal("A director", Brand.Capitalised(example.TheDirector));
+
+            Assert.Equal("HR Officer", intellego.RoleTitle("HR Officer"));
+            Assert.Equal("Managing Director", intellego.RoleTitle("MD"));
+            Assert.Equal("the MD", intellego.TheDirectorShort);
+        }
+
+        [Fact]
         public void An_exact_shade_in_the_file_wins()
         {
             File("example", """{ "Colors": { "Primary": "#102a6b", "Overrides": { "--primary-dark": "#123456" } } }""");
