@@ -258,6 +258,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.MD,
+                    request.EmployeeId,
                     "Leave request awaiting final approval",
                     $"{request.RequestNumber} is the HR Officer's own " +
                     "request and needs your decision.",
@@ -268,6 +269,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.HROfficer,
+                    request.EmployeeId,
                     "Leave request submitted",
                     $"{request.RequestNumber} is waiting for your review.",
                     $"/LeaveApproval/Details/{request.Id}",
@@ -317,6 +319,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 isHrOfficersOwn ? ApprovalRole.MD : ApprovalRole.HROfficer,
+                request.EmployeeId,
                 "Leave request approved by supervisor",
                 $"{request.RequestNumber} has been approved by the " +
                 "employee's supervisor and is waiting for you.",
@@ -449,6 +452,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.MD,
+                request.EmployeeId,
                 "Leave request awaiting final approval",
                 $"{request.RequestNumber} has cleared HR and needs " +
                 "your decision.",
@@ -643,6 +647,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.HROfficer,
+                    request.EmployeeId,
                     "Leave request withdrawn",
                     $"{request.RequestNumber} was withdrawn by the " +
                     "employee and no longer needs your review.",
@@ -652,6 +657,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.MD,
+                    request.EmployeeId,
                     "Leave request withdrawn",
                     $"{request.RequestNumber} was withdrawn by the " +
                     "employee and no longer needs your decision.",

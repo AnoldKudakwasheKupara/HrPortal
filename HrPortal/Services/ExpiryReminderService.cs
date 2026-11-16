@@ -159,8 +159,6 @@ namespace HrPortal.Services
             if (certifications.Count == 0)
                 return 0;
 
-            var hr = await _people.EmployeeIdsAsync(ApprovalRole.HROfficer);
-
             var sent = 0;
 
             foreach (var certification in certifications)
@@ -180,6 +178,10 @@ namespace HrPortal.Services
                 var kind = KindFor(stage);
                 var holder = certification.Employee;
                 var name = $"{holder.FirstName} {holder.LastName}";
+
+                var hr = await _people.EmployeeIdsForAsync(
+                    ApprovalRole.HROfficer,
+                    holder.Id);
 
                 var issuer = string.IsNullOrWhiteSpace(certification.IssuedBy)
                     ? string.Empty

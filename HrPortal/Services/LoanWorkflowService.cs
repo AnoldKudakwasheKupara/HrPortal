@@ -142,6 +142,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.MD,
+                    application.EmployeeId,
                     "Loan application to sanction",
                     $"{application.ApplicationNumber} from " +
                     $"{Who(application)} for " +
@@ -181,6 +182,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.MD,
+                application.EmployeeId,
                 "Loan application to sanction",
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} has been approved by their " +

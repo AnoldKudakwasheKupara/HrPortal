@@ -153,6 +153,7 @@ namespace HrPortal.Services
             {
                 await _notifications.NotifyApproverAsync(
                     ApprovalRole.HROfficer,
+                    application.EmployeeId,
                     "Course application to review",
                     $"{application.ApplicationNumber} from " +
                     $"{Who(application)} for " +
@@ -190,6 +191,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.HROfficer,
+                application.EmployeeId,
                 "Course application to review",
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} has been approved by their " +
@@ -295,6 +297,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.MD,
+                application.EmployeeId,
                 "Course application to decide",
                 $"{application.ApplicationNumber} from " +
                 $"{Who(application)} for " +
@@ -407,6 +410,7 @@ namespace HrPortal.Services
 
             await _notifications.NotifyApproverAsync(
                 ApprovalRole.HROfficer,
+                application.EmployeeId,
                 "Course application approved",
                 $"{application.ApplicationNumber} for " +
                 $"{Who(application)} is approved and ready to print " +

@@ -30,11 +30,23 @@ namespace HrPortal.Services
     public class ApproverDirectory
     {
         private readonly ApplicationDbContext _context;
+        private readonly CompanyService _companies;
 
-        public ApproverDirectory(ApplicationDbContext context)
+        public ApproverDirectory(
+            ApplicationDbContext context,
+            CompanyService companies)
         {
             _context = context;
+            _companies = companies;
         }
+
+        /// <summary>Whether anybody holds it at this portal's company.</summary>
+        public async Task<bool> AnybodyHereAsync(ApprovalRole role) =>
+            await AnybodyAsync(role, await _companies.CurrentIdAsync());
+
+        /// <summary>The people who hold it at this portal's company.</summary>
+        public async Task<List<ApproverPerson>> PeopleHereAsync(ApprovalRole role) =>
+            await PeopleAsync(role, await _companies.CurrentIdAsync());
 
         /// <summary>
         /// The sign-in role that carries this approval role. The two
@@ -54,58 +66,87 @@ namespace HrPortal.Services
             };
 
         /// <summary>
-        /// Active employees with a sign-in that holds the role.
-        /// Somebody who has left, or who has no account to sign in
-        /// with, cannot approve anything.
+        /// Active employees with a sign-in that holds the role at the
+        /// company. Somebody who has left, or who has no account to
+        /// sign in with, cannot approve anything.
         /// </summary>
-        private IQueryable<Employee> Holders(ApprovalRole role) =>
-            HoldersOf(SignInRole(role));
+        private IQueryable<Employee> Holders(ApprovalRole role, int companyId) =>
+            HoldersOf(SignInRole(role), companyId);
 
-        private IQueryable<Employee> HoldersOf(string signInRole)
+        private IQueryable<Employee> HoldersOf(string signInRole, int? companyId)
         {
+            var users = _context.UserIdsWithRole([signInRole], companyId);
+
             return _context.Employees
                 .AsNoTracking()
                 .Where(e =>
                     e.IsActive &&
                     e.UserId != null &&
-                    _context.UserRoles.Any(ur =>
-                        ur.UserId == e.UserId.Value &&
-                        _context.Roles.Any(r =>
-                            r.Id == ur.RoleId &&
-                            r.Name == signInRole)));
+                    users.Contains(e.UserId.Value));
         }
 
-        public Task<List<int>> EmployeeIdsAsync(ApprovalRole role) =>
-            Holders(role).Select(e => e.Id).ToListAsync();
+        /// <summary>
+        /// The people who hold the role at the company that employs
+        /// somebody, so their requests reach their own approvers.
+        /// </summary>
+        public async Task<List<int>> EmployeeIdsForAsync(ApprovalRole role, int employeeId)
+        {
+            var home = await HomeCompanyOfAsync(employeeId);
+
+            return home == null
+                ? []
+                : await Holders(role, home.Value).Select(e => e.Id).ToListAsync();
+        }
 
         /// <summary>
         /// The same, for a sign-in role that is not an approval stage,
-        /// such as the administrators who look after licences.
+        /// such as the administrators who look after licences. A role
+        /// held at one company needs the company named.
         /// </summary>
-        public Task<List<int>> EmployeeIdsWithRoleAsync(string signInRole) =>
-            HoldersOf(signInRole).Select(e => e.Id).ToListAsync();
+        public Task<List<int>> EmployeeIdsWithRoleAsync(string signInRole, int? companyId = null)
+        {
+            if (companyId == null && Roles.IsCompanyRole(signInRole))
+                throw new ArgumentException(
+                    $"'{signInRole}' is held at one company, so say which.",
+                    nameof(companyId));
+
+            return HoldersOf(signInRole, companyId).Select(e => e.Id).ToListAsync();
+        }
 
         /// <summary>
-        /// Whether this employee is one of the people who hold the
-        /// role -- which is how the portal knows a request belongs
-        /// to an approver and should not wait for their own decision.
+        /// Whether this employee holds the role at the company that
+        /// employs them -- which is how the portal knows a request
+        /// belongs to an approver and should not wait for their own
+        /// decision.
         /// </summary>
-        public Task<bool> HoldsAsync(ApprovalRole role, int employeeId) =>
-            Holders(role).AnyAsync(e => e.Id == employeeId);
+        public async Task<bool> HoldsAsync(ApprovalRole role, int employeeId)
+        {
+            var home = await HomeCompanyOfAsync(employeeId);
+
+            return home != null &&
+                   await Holders(role, home.Value).AnyAsync(e => e.Id == employeeId);
+        }
 
         /// <summary>
-        /// Whether anybody holds it at all. Nobody means requests
-        /// will reach that stage and sit there unannounced, which is
-        /// worth warning an administrator about.
+        /// Whether anybody holds it at the company at all. Nobody
+        /// means requests will reach that stage and sit there
+        /// unannounced, which is worth warning an administrator about.
         /// </summary>
-        public Task<bool> AnybodyAsync(ApprovalRole role) =>
-            Holders(role).AnyAsync();
+        public Task<bool> AnybodyAsync(ApprovalRole role, int companyId) =>
+            Holders(role, companyId).AnyAsync();
+
+        private Task<int?> HomeCompanyOfAsync(int employeeId) =>
+            _context.Employees
+                .Where(e => e.Id == employeeId)
+                .Select(e => (int?)e.HomeCompanyId)
+                .FirstOrDefaultAsync();
 
         /// <summary>
-        /// Everybody who holds it, with how to reach them.
+        /// Everybody who holds it at the company, with how to reach
+        /// them.
         /// </summary>
-        public Task<List<ApproverPerson>> PeopleAsync(ApprovalRole role) =>
-            Holders(role)
+        public Task<List<ApproverPerson>> PeopleAsync(ApprovalRole role, int companyId) =>
+            Holders(role, companyId)
                 .OrderBy(e => e.LastName)
                 .ThenBy(e => e.FirstName)
                 .Select(e => new ApproverPerson(

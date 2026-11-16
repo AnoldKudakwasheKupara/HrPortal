@@ -1,5 +1,6 @@
 ﻿using HrPortal.Data;
 using HrPortal.DbContexts;
+using HrPortal.Entities;
 using HrPortal.ViewModels;
 using HrPortal.Security;
 using HrPortal.Services;
@@ -17,30 +18,130 @@ namespace HrPortal.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly AuditService _audit;
+        private readonly CompanyService _companies;
 
         public RoleController(
             RoleManager<IdentityRole<int>> roleManager,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
-            AuditService audit)
+            AuditService audit,
+            CompanyService companies)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             _audit = audit;
+            _companies = companies;
         }
+
+        /// <summary>
+        /// Who holds the role: everywhere for a role that holds at
+        /// every company, otherwise at this portal's company.
+        /// </summary>
+        private async Task<HashSet<int>> HolderIdsAsync(IdentityRole<int> role)
+        {
+            if (!Roles.IsCompanyRole(role.Name))
+            {
+                return (await _userManager.GetUsersInRoleAsync(role.Name!))
+                    .Select(u => u.Id)
+                    .ToHashSet();
+            }
+
+            var here = await _companies.CurrentIdAsync();
+
+            return (await _context.CompanyRoles
+                    .Where(cr => cr.CompanyId == here && cr.RoleId == role.Id)
+                    .Select(cr => cr.UserId)
+                    .ToListAsync())
+                .ToHashSet();
+        }
+
+        /// <summary>
+        /// Who can be given the role. A role held at one company can
+        /// only go to somebody who works there, or to a sign-in with
+        /// no staff record.
+        /// </summary>
+        private async Task<List<ApplicationUser>> CandidatesAsync(IdentityRole<int> role)
+        {
+            var users = _userManager.Users;
+
+            if (Roles.IsCompanyRole(role.Name))
+            {
+                var here = await _companies.CurrentIdAsync();
+
+                users = users.Where(u =>
+                    !_context.Employees.Any(e => e.UserId == u.Id) ||
+                    _context.Employees.Any(e =>
+                        e.UserId == u.Id &&
+                        e.Companies.Any(m => m.CompanyId == here)));
+            }
+
+            return await users.OrderBy(u => u.Email).ToListAsync();
+        }
+
+        private async Task<string?> CompanyNameForAsync(IdentityRole<int> role) =>
+            Roles.IsCompanyRole(role.Name)
+                ? CompanyService.NameOf(await _companies.CurrentAsync())
+                : null;
+
+        private async Task<IdentityResult> GiveAsync(ApplicationUser user, IdentityRole<int> role)
+        {
+            if (!Roles.IsCompanyRole(role.Name))
+                return await _userManager.AddToRoleAsync(user, role.Name!);
+
+            _context.CompanyRoles.Add(new CompanyRole
+            {
+                UserId = user.Id,
+                CompanyId = await _companies.CurrentIdAsync(),
+                RoleId = role.Id
+            });
+
+            await _context.SaveChangesAsync();
+
+            return IdentityResult.Success;
+        }
+
+        private async Task<IdentityResult> TakeAsync(ApplicationUser user, IdentityRole<int> role)
+        {
+            if (!Roles.IsCompanyRole(role.Name))
+                return await _userManager.RemoveFromRoleAsync(user, role.Name!);
+
+            var here = await _companies.CurrentIdAsync();
+
+            var held = await _context.CompanyRoles
+                .Where(cr => cr.UserId == user.Id && cr.CompanyId == here && cr.RoleId == role.Id)
+                .ToListAsync();
+
+            _context.CompanyRoles.RemoveRange(held);
+
+            await _context.SaveChangesAsync();
+
+            return IdentityResult.Success;
+        }
+
+        private async Task<int> HoldersAnywhereAsync(IdentityRole<int> role) =>
+            await _context.UserRoles.CountAsync(ur => ur.RoleId == role.Id) +
+            await _context.CompanyRoles.CountAsync(cr => cr.RoleId == role.Id);
 
         public async Task<IActionResult> Index()
         {
+            var here = await _companies.CurrentAsync();
+
             var counts = await _context.UserRoles
                 .AsNoTracking()
-                .GroupBy(ur => ur.RoleId)
+                .Select(ur => ur.RoleId)
+                .Concat(_context.CompanyRoles
+                    .Where(cr => cr.CompanyId == here.Id)
+                    .Select(cr => cr.RoleId))
+                .GroupBy(id => id)
                 .Select(g => new
                 {
                     RoleId = g.Key,
                     Count = g.Count()
                 })
                 .ToDictionaryAsync(x => x.RoleId, x => x.Count);
+
+            ViewBag.CompanyName = CompanyService.NameOf(here);
 
             var model = await _roleManager.Roles
                 .AsNoTracking()
@@ -119,13 +220,11 @@ namespace HrPortal.Controllers
                 return NotFound();
             }
 
-            var users = await _userManager.GetUsersInRoleAsync(role.Name!);
-
             var model = new RoleEditViewModel
             {
                 Id = role.Id,
                 Name = role.Name ?? string.Empty,
-                UserCount = users.Count
+                UserCount = await HoldersAnywhereAsync(role)
             };
 
             return View(model);
@@ -220,13 +319,14 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var users = await _userManager.GetUsersInRoleAsync(roleName);
+            var holders = await HoldersAnywhereAsync(role);
 
-            if (users.Count > 0)
+            if (holders > 0)
             {
                 TempData["ErrorMessage"] =
                     $"The role '{roleName}' cannot be deleted because " +
-                    $"{users.Count} user(s) are assigned to it.";
+                    $"{holders} user(s) are assigned to it, at this " +
+                    "company or another.";
 
                 return RedirectToAction(nameof(Index));
             }
@@ -257,20 +357,15 @@ namespace HrPortal.Controllers
                 return NotFound();
             }
 
-            var users = await _userManager.Users
-                .OrderBy(u => u.Email)
-                .ToListAsync();
+            var users = await CandidatesAsync(role);
 
-            var usersInRole =
-                await _userManager.GetUsersInRoleAsync(role.Name!);
-
-            var usersInRoleIds =
-                usersInRole.Select(u => u.Id).ToHashSet();
+            var usersInRoleIds = await HolderIdsAsync(role);
 
             var model = new RoleUsersViewModel
             {
                 RoleId = role.Id,
                 RoleName = role.Name ?? string.Empty,
+                CompanyName = await CompanyNameForAsync(role),
                 Users = users.Select(user => new RoleUserViewModel
                 {
                     UserId = user.Id,
@@ -318,15 +413,15 @@ namespace HrPortal.Controllers
                 }
             }
 
-            var currentUsers =
-                await _userManager.GetUsersInRoleAsync(roleName);
+            var currentUserIds = await HolderIdsAsync(role);
 
-            var currentUserIds =
-                currentUsers.Select(u => u.Id).ToHashSet();
+            var candidateIds = (await CandidatesAsync(role))
+                .Select(u => u.Id)
+                .ToHashSet();
 
             var selectedUserIds =
                 model.Users
-                    .Where(u => u.IsInRole)
+                    .Where(u => u.IsInRole && candidateIds.Contains(u.UserId))
                     .Select(u => u.UserId)
                     .ToHashSet();
 
@@ -341,8 +436,7 @@ namespace HrPortal.Controllers
 
                 if (user != null)
                 {
-                    var result =
-                        await _userManager.AddToRoleAsync(user, roleName);
+                    var result = await GiveAsync(user, role);
 
                     if (result.Succeeded)
                     {
@@ -386,10 +480,7 @@ namespace HrPortal.Controllers
                         continue;
                     }
 
-                    var result =
-                        await _userManager.RemoveFromRoleAsync(
-                            user,
-                            roleName);
+                    var result = await TakeAsync(user, role);
 
                     if (result.Succeeded)
                     {
@@ -426,30 +517,24 @@ namespace HrPortal.Controllers
                 if (removed.Count > 0)
                     changes.Add("removed " + string.Join(", ", removed));
 
+                var companyName = await CompanyNameForAsync(role);
+
                 await _audit.LogAsync(
                     AuditService.RoleChanged,
                     "Role",
-                    roleName,
+                    companyName == null ? roleName : $"{roleName} at {companyName}",
                     char.ToUpper(string.Join("; ", changes)[0]) +
                     string.Join("; ", changes).Substring(1) + ".");
             }
 
             if (ModelState.ErrorCount > 0)
             {
-                var refreshedUsers =
-                    await _userManager.Users
-                        .OrderBy(u => u.Email)
-                        .ToListAsync();
+                var refreshedUsers = await CandidatesAsync(role);
 
-                var refreshedRoleUsers =
-                    await _userManager.GetUsersInRoleAsync(roleName);
-
-                var refreshedIds =
-                    refreshedRoleUsers
-                        .Select(u => u.Id)
-                        .ToHashSet();
+                var refreshedIds = await HolderIdsAsync(role);
 
                 model.RoleName = roleName;
+                model.CompanyName = await CompanyNameForAsync(role);
 
                 model.Users = refreshedUsers.Select(user =>
                     new RoleUserViewModel

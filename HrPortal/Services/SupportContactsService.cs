@@ -47,7 +47,7 @@ namespace HrPortal.Services
         /// </summary>
         private async Task<List<SupportPerson>> HrAsync()
         {
-            var people = await _approvers.PeopleAsync(
+            var people = await _approvers.PeopleHereAsync(
                 ApprovalRole.HROfficer);
 
             return people

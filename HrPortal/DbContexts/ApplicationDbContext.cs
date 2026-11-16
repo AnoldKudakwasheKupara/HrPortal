@@ -19,6 +19,31 @@ namespace HrPortal.DbContexts
         public DbSet<Department> Departments { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<EmployeeCompany> EmployeeCompanies { get; set; }
+        public DbSet<CompanyRole> CompanyRoles { get; set; }
+
+        /// <summary>
+        /// The sign-ins that hold any of these roles: everywhere, or
+        /// at the company given. With no company, a role held at any
+        /// company counts.
+        /// </summary>
+        public IQueryable<int> UserIdsWithRole(IReadOnlyCollection<string> roles, int? companyId)
+        {
+            var roleIds = Roles
+                .Where(r => roles.Contains(r.Name!))
+                .Select(r => r.Id);
+
+            var everywhere = UserRoles
+                .Where(ur => roleIds.Contains(ur.RoleId))
+                .Select(ur => ur.UserId);
+
+            var atCompany = CompanyRoles
+                .Where(cr =>
+                    roleIds.Contains(cr.RoleId) &&
+                    (companyId == null || cr.CompanyId == companyId))
+                .Select(cr => cr.UserId);
+
+            return everywhere.Union(atCompany);
+        }
         public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestHistory> LeaveRequestHistories { get; set; }
@@ -211,6 +236,28 @@ namespace HrPortal.DbContexts
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasIndex(m => m.CompanyId);
+            });
+
+            builder.Entity<CompanyRole>(entity =>
+            {
+                entity.HasKey(r => new { r.UserId, r.CompanyId, r.RoleId });
+
+                entity.HasOne<ApplicationUser>()
+                    .WithMany()
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Company)
+                    .WithMany()
+                    .HasForeignKey(r => r.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<IdentityRole<int>>()
+                    .WithMany()
+                    .HasForeignKey(r => r.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(r => new { r.CompanyId, r.RoleId });
             });
 
             builder.Entity<Department>(entity =>

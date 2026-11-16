@@ -9,10 +9,14 @@ namespace HrPortal.Services.Reporting
     public class PeopleReportService
     {
         private readonly ApplicationDbContext _context;
+        private readonly CompanyService _companies;
 
-        public PeopleReportService(ApplicationDbContext context)
+        public PeopleReportService(
+            ApplicationDbContext context,
+            CompanyService companies)
         {
             _context = context;
+            _companies = companies;
         }
 
         public async Task<ReportPayload> EmployeesAsync(
@@ -48,8 +52,16 @@ namespace HrPortal.Services.Reporting
                 .Select(e => e.UserId!.Value)
                 .ToList();
 
+            var here = await _companies.CurrentIdAsync();
+
+            var held = _context.UserRoles
+                .Select(ur => new { ur.UserId, ur.RoleId })
+                .Concat(_context.CompanyRoles
+                    .Where(cr => cr.CompanyId == here)
+                    .Select(cr => new { cr.UserId, cr.RoleId }));
+
             var roleRows = await (
-                    from userRole in _context.UserRoles
+                    from userRole in held
                     join role in _context.Roles
                         on userRole.RoleId equals role.Id
                     where userIds.Contains(userRole.UserId)

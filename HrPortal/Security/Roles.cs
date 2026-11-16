@@ -34,5 +34,15 @@
             Administrator + "," + Md;
 
         public const string MdOnly = Md;
+
+        /// <summary>
+        /// Whether a role is held at one company at a time. Only the
+        /// administrator, who looks after every company, and the
+        /// baseline employee role hold everywhere; somebody can be HR
+        /// at one company and an ordinary employee at another.
+        /// </summary>
+        public static bool IsCompanyRole(string? role) =>
+            !string.Equals(role, Administrator, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(role, Employee, StringComparison.OrdinalIgnoreCase);
     }
 }

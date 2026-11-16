@@ -6,6 +6,12 @@
 
         public string RoleName { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The company the role is being given at, or null for a role
+        /// that holds everywhere.
+        /// </summary>
+        public string? CompanyName { get; set; }
+
         public List<RoleUserViewModel> Users { get; set; } = new();
     }
 

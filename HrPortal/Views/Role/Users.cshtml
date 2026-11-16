@@ -11,7 +11,14 @@
 
         <div>
             <h2>Manage Role Users</h2>
-            <p>Role: <strong>@Model.RoleName</strong></p>
+            @if (Model.CompanyName == null)
+            {
+                <p>Role: <strong>@Model.RoleName</strong>, held at every company.</p>
+            }
+            else
+            {
+                <p>Role: <strong>@Model.RoleName</strong> at <strong>@Model.CompanyName</strong>. Only people who work there are listed.</p>
+            }
         </div>
 
         <a asp-action="Index" class="btn btn-outline-secondary">Back to Roles</a>

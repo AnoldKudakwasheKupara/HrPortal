@@ -41,7 +41,7 @@ namespace HrPortal.Controllers
             return View(new WelcomeViewModel
             {
                 FirstName = employee?.FirstName,
-                HrContacts = await _approvers.PeopleAsync(
+                HrContacts = await _approvers.PeopleHereAsync(
                     ApprovalRole.HROfficer)
             });
         }

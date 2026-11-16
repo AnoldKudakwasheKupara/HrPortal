@@ -165,15 +165,14 @@ namespace HrPortal.Services
                 .AsNoTracking()
                 .Where(e => e.IsActive);
 
-            return roles == null
-                ? employees
-                : employees.Where(e =>
-                    e.UserId != null &&
-                    _context.UserRoles.Any(ur =>
-                        ur.UserId == e.UserId!.Value &&
-                        _context.Roles.Any(r =>
-                            r.Id == ur.RoleId &&
-                            roles.Contains(r.Name!))));
+            if (roles == null)
+                return employees;
+
+            var users = _context.UserIdsWithRole(roles, null);
+
+            return employees.Where(e =>
+                e.UserId != null &&
+                users.Contains(e.UserId!.Value));
         }
 
         public async Task<ServiceResult> PublishAsync(int id)

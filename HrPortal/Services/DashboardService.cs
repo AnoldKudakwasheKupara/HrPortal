@@ -369,10 +369,10 @@ namespace HrPortal.Services
                 ActivitiesOutstanding = await _context.ItActivities
                     .CountAsync(a => a.Status != ItActivityStatus.Resolved),
 
-                HasHrOfficer = await _approvers.AnybodyAsync(
+                HasHrOfficer = await _approvers.AnybodyHereAsync(
                     ApprovalRole.HROfficer),
 
-                HasMd = await _approvers.AnybodyAsync(ApprovalRole.MD),
+                HasMd = await _approvers.AnybodyHereAsync(ApprovalRole.MD),
 
                 RecentActivity = await _context.AuditLogs
                     .Include(a => a.Employee)

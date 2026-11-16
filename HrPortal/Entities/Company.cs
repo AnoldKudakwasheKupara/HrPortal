@@ -26,6 +26,22 @@ namespace HrPortal.Entities
     }
 
     /// <summary>
+    /// A role somebody holds at one company, such as HR at MMC Capital
+    /// for somebody who is an ordinary employee at Intellego. Roles
+    /// that hold everywhere stay with the sign-in itself.
+    /// </summary>
+    public class CompanyRole
+    {
+        public int UserId { get; set; }
+
+        public int CompanyId { get; set; }
+
+        public Company Company { get; set; } = null!;
+
+        public int RoleId { get; set; }
+    }
+
+    /// <summary>
     /// Says that somebody works for a company, so they can sign in to
     /// its portal and appear on its staff list.
     /// </summary>

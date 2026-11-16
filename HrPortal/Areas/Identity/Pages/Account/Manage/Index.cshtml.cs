@@ -67,7 +67,11 @@ public class IndexModel : PageModel
         EmailConfirmed = user.EmailConfirmed;
         TwoFactorEnabled = user.TwoFactorEnabled;
 
-        Roles = await _userManager.GetRolesAsync(user);
+        Roles = User.FindAll(System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .Distinct()
+            .Order()
+            .ToList();
 
         Employee = await _currentUser.GetEmployeeAsync();
 

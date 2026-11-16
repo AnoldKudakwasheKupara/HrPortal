@@ -371,6 +371,26 @@ namespace HrPortal.Migrations
                         });
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.CompanyRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "CompanyId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("CompanyId", "RoleId");
+
+                    b.ToTable("CompanyRoles");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>
                 {
                     b.Property<int>("Id")
@@ -2883,6 +2903,29 @@ namespace HrPortal.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("TrainingCourse");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.CompanyRole", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HrPortal.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.CourseApplication", b =>

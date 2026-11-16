@@ -59,19 +59,21 @@ namespace HrPortal.Services
         }
 
         /// <summary>
-        /// Tells everybody who holds the role, not one person named
-        /// on a settings page. A company with two HR officers has
-        /// two people who may act, and a request either of them can
-        /// decide should reach both.
+        /// Tells everybody who holds the role at the company that
+        /// employs the person the request is from, not one person
+        /// named on a settings page. A company with two HR officers
+        /// has two people who may act, and a request either of them
+        /// can decide should reach both.
         /// </summary>
         public async Task NotifyApproverAsync(
             ApprovalRole role,
+            int requesterId,
             string title,
             string message,
             string? link = null,
             EmailKind? email = null)
         {
-            var approvers = await _approvers.EmployeeIdsAsync(role);
+            var approvers = await _approvers.EmployeeIdsForAsync(role, requesterId);
 
             foreach (var employeeId in approvers)
                 Notify(employeeId, title, message, link, email);
