@@ -92,7 +92,7 @@ namespace HrPortal.Services
                 CourseApplicationStatus.ReturnedToApplicant =>
                     new("Returned", Back),
                 CourseApplicationStatus.HrApproved =>
-                    new("With the Managing Consultant", Waiting),
+                    new($"With {Brand.Current.TheCourseApprover}", Waiting),
                 CourseApplicationStatus.HrRejected =>
                     new("Declined by HR", Refused),
                 CourseApplicationStatus.Approved =>

@@ -8,7 +8,7 @@
     var decision = ViewBag.Decision as HrPortal.ViewModels.LoanDecisionViewModel
         ?? new HrPortal.ViewModels.LoanDecisionViewModel();
 
-    var awaiting = LoanWorkflowService.IsAwaitingMd(Model.Status) && User.IsInRole(HrPortal.Security.Roles.Md);
+    var awaiting = LoanWorkflowService.IsAwaitingMd(Model.Status) && User.IsInRole(HrPortal.Security.Roles.Md) && (bool)(ViewBag.DecidedHere ?? false);
     var asSupervisor = LoanWorkflowService.IsAwaitingSupervisor(Model.Status) && (bool)(ViewBag.CanActAsSupervisor ?? false);
 }
 

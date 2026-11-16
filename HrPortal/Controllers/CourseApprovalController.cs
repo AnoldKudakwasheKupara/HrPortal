@@ -110,6 +110,14 @@ namespace HrPortal.Controllers
                     .OrderByDescending(c => c.CompletedAt);
             }
 
+            var here = _context.CompanyFilter;
+
+            if (stage != Stage.Supervisor)
+            {
+                query = query.Where(c =>
+                    here == null || c.Employee.HomeCompanyId == here);
+            }
+
             query = stage switch
             {
                 Stage.Supervisor => query.Where(c =>
@@ -179,7 +187,7 @@ namespace HrPortal.Controllers
                     Stage.Hr =>
                         "Awaiting HR review. Oldest first.",
                     Stage.Md =>
-                        "Awaiting the Managing Consultant. " +
+                        $"Awaiting {Brand.Current.TheCourseApprover}. " +
                         "Oldest first.",
                     Stage.Approved =>
                         "Approved applications, most recent first.",
@@ -309,7 +317,7 @@ namespace HrPortal.Controllers
 
             ViewBag.Stage = stage == Stage.Hr
                 ? "HR review"
-                : "Managing Consultant";
+                : Brand.Current.CourseApproverTitle;
 
             ViewBag.Queue = stage;
 
@@ -344,6 +352,9 @@ namespace HrPortal.Controllers
 
             ViewBag.CanActAsSupervisor =
                 await IsSupervisorOfAsync(application);
+
+            ViewBag.DecidedHere =
+                await _context.DecidedHereAsync(application.EmployeeId);
 
             return View(application);
         }
@@ -433,6 +444,18 @@ namespace HrPortal.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
+            if (action is not (CourseApplicationAction.ApprovedBySupervisor
+                    or CourseApplicationAction.RejectedBySupervisor
+                    or CourseApplicationAction.ReturnedBySupervisor) &&
+                !await _context.DecidedHereAsync(application.EmployeeId))
+            {
+                TempData["Error"] =
+                    "This application is decided by the company that " +
+                    "employs the person, on its own portal.";
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             if (!CourseApplicationWorkflowService.CanAct(
                     action,
                     application.Status))
@@ -451,8 +474,8 @@ namespace HrPortal.Controllers
                     await _workflow.HrApproveAsync(
                         application, actedBy.Value, comment);
                     TempData["Success"] =
-                        $"{application.ApplicationNumber} sent to the " +
-                        "Managing Consultant.";
+                        $"{application.ApplicationNumber} sent to " +
+                        $"{Brand.Current.TheCourseApprover}.";
                     break;
 
                 case CourseApplicationAction.RejectedByHr:

@@ -17,9 +17,7 @@ namespace HrPortal.Services
         {
             ["CapturedAsApproved"] = "Captured as approved",
             ["CaptureCorrected"] = "Details corrected",
-            ["Commented"] = "Comment",
-            ["ApprovedByManagingConsultant"] = "Approved by the Managing Consultant",
-            ["RejectedByManagingConsultant"] = "Rejected by the Managing Consultant"
+            ["Commented"] = "Comment"
         };
 
         /// <summary>"ApprovedByHR" reads "Approved by HR", "ReturnedBySupervisor" "Returned by the supervisor".</summary>
@@ -27,6 +25,20 @@ namespace HrPortal.Services
         {
             if (Named.TryGetValue(action, out var named))
                 return named;
+
+            var brand = Brand.Current;
+
+            switch (action)
+            {
+                case "ApprovedByManagingConsultant":
+                    return $"Approved by {brand.TheCourseApprover}";
+                case "RejectedByManagingConsultant":
+                    return $"Rejected by {brand.TheCourseApprover}";
+                case "ApprovedByMD":
+                    return $"Approved by {brand.TheDirectorShort}";
+                case "RejectedByMD":
+                    return $"Rejected by {brand.TheDirectorShort}";
+            }
 
             var words = Regex.Split(action, "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
                 .Select((w, i) => w switch

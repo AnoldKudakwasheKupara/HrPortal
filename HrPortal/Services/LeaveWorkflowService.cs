@@ -432,6 +432,12 @@ namespace HrPortal.Services
         {
             EnsureCanAct(LeaveRequestAction.ApprovedByHR, request);
 
+            if (await HrDecidesAsync(request.EmployeeId))
+            {
+                await HrApproveFinallyAsync(request, actedByEmployeeId, comment);
+                return;
+            }
+
             var previous = request.Status;
 
             request.Status = LeaveRequestStatus.HRApproved;
@@ -466,6 +472,60 @@ namespace HrPortal.Services
                 nameof(LeaveRequest),
                 request.RequestNumber,
                 $"Approved by HR and sent to {Brand.Current.TheDirectorShort}.");
+        }
+
+        /// <summary>
+        /// Whether HR's approval is the last word on this person's
+        /// leave, which their own company decides.
+        /// </summary>
+        public async Task<bool> HrDecidesAsync(int employeeId)
+        {
+            var company = await _context.Employees
+                .Where(e => e.Id == employeeId)
+                .Select(e => e.HomeCompany.Key)
+                .FirstOrDefaultAsync();
+
+            return Brand.ForKey(company)?.LeaveEndsWithHr == true;
+        }
+
+        /// <summary>
+        /// HR's approval at a company where it is final: the request is
+        /// approved and the days come off the balance there and then.
+        /// </summary>
+        private async Task HrApproveFinallyAsync(
+            LeaveRequest request,
+            int actedByEmployeeId,
+            string? comment)
+        {
+            var previous = request.Status;
+
+            request.Status = LeaveRequestStatus.Approved;
+            request.CompletedAt = DateTime.UtcNow;
+
+            await _balances.ConsumeAsync(request);
+
+            AddHistory(
+                request,
+                actedByEmployeeId,
+                LeaveRequestAction.ApprovedByHR,
+                previous,
+                comment);
+
+            _notifications.Notify(
+                request.EmployeeId,
+                "Leave approved",
+                $"{request.RequestNumber} has been approved by HR.",
+                $"/MyLeave/Details/{request.Id}",
+                EmailKind.Approved);
+
+            await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(
+                AuditService.LeaveApproved,
+                nameof(LeaveRequest),
+                request.RequestNumber,
+                $"Approved by HR. {request.NumberOfDays:0.##} " +
+                "day(s) deducted from the balance.");
         }
 
         public async Task HrRejectAsync(

@@ -168,18 +168,21 @@ namespace HrPortal.Services
             var today = DateTime.Today;
             var monthStart = new DateTime(today.Year, today.Month, 1);
             var soon = today.AddDays(StartingSoonDays);
+            var here = _context.CompanyFilter;
 
             return new HrDashboardSection
             {
                 AwaitingReview = await _context.LeaveRequests
                     .CountAsync(r =>
-                        r.Status == LeaveRequestStatus.Submitted ||
-                        r.Status == LeaveRequestStatus.HRReview),
+                        (here == null || r.Employee.HomeCompanyId == here) &&
+                        (r.Status == LeaveRequestStatus.Submitted ||
+                         r.Status == LeaveRequestStatus.HRReview)),
 
                 WithMd = await _context.LeaveRequests
                     .CountAsync(r =>
-                        r.Status == LeaveRequestStatus.HRApproved ||
-                        r.Status == LeaveRequestStatus.MDReview),
+                        (here == null || r.Employee.HomeCompanyId == here) &&
+                        (r.Status == LeaveRequestStatus.HRApproved ||
+                         r.Status == LeaveRequestStatus.MDReview)),
 
                 ReturnedToEmployees = await _context.LeaveRequests
                     .CountAsync(r =>
@@ -214,8 +217,9 @@ namespace HrPortal.Services
                     .Include(r => r.Employee)
                     .Include(r => r.LeaveType)
                     .Where(r =>
-                        r.Status == LeaveRequestStatus.Submitted ||
-                        r.Status == LeaveRequestStatus.HRReview)
+                        (here == null || r.Employee.HomeCompanyId == here) &&
+                        (r.Status == LeaveRequestStatus.Submitted ||
+                         r.Status == LeaveRequestStatus.HRReview))
                     .OrderBy(r => r.SubmittedAt)
                     .Take(ListLength)
                     .ToListAsync(),
@@ -238,6 +242,7 @@ namespace HrPortal.Services
             var today = DateTime.Today;
             var monthStart = new DateTime(today.Year, today.Month, 1);
             var soon = today.AddDays(StartingSoonDays);
+            var here = _context.CompanyFilter;
 
             return new MdDashboardSection
             {
@@ -254,8 +259,9 @@ namespace HrPortal.Services
 
                 AwaitingFinalApproval = await _context.LeaveRequests
                     .CountAsync(r =>
-                        r.Status == LeaveRequestStatus.HRApproved ||
-                        r.Status == LeaveRequestStatus.MDReview),
+                        (here == null || r.Employee.HomeCompanyId == here) &&
+                        (r.Status == LeaveRequestStatus.HRApproved ||
+                         r.Status == LeaveRequestStatus.MDReview)),
 
                 ApprovedThisMonth = await _context.LeaveRequests
                     .CountAsync(r =>
@@ -286,8 +292,9 @@ namespace HrPortal.Services
                     .Include(r => r.Employee)
                     .Include(r => r.LeaveType)
                     .Where(r =>
-                        r.Status == LeaveRequestStatus.HRApproved ||
-                        r.Status == LeaveRequestStatus.MDReview)
+                        (here == null || r.Employee.HomeCompanyId == here) &&
+                        (r.Status == LeaveRequestStatus.HRApproved ||
+                         r.Status == LeaveRequestStatus.MDReview))
                     .OrderBy(r => r.SubmittedAt)
                     .Take(ListLength)
                     .ToListAsync(),

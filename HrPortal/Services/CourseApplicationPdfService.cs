@@ -345,7 +345,7 @@ namespace HrPortal.Services
                     e, "Human Resources", hr));
 
                 column.Item().Element(e => Approver(
-                    e, "Managing Consultant", consultant));
+                    e, Brand.Current.CourseApproverTitle, consultant));
 
                 var captured = application.History
                     .FirstOrDefault(h => h.Action == CourseApplicationAction.CapturedAsApproved);

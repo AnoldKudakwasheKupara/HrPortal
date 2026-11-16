@@ -9,8 +9,9 @@
 
     var isHr = User.IsInRole(Roles.HrOfficer);
     var isMd = User.IsInRole(Roles.Md);
-    var hrTurn = isHr && CourseApplicationWorkflowService.IsAwaitingHr(Model.Status);
-    var mdTurn = isMd && CourseApplicationWorkflowService.IsAwaitingManagingConsultant(Model.Status);
+    var decidedHere = (bool)(ViewBag.DecidedHere ?? false);
+    var hrTurn = isHr && decidedHere && CourseApplicationWorkflowService.IsAwaitingHr(Model.Status);
+    var mdTurn = isMd && decidedHere && CourseApplicationWorkflowService.IsAwaitingManagingConsultant(Model.Status);
     var supervisorTurn = CourseApplicationWorkflowService.IsAwaitingSupervisor(Model.Status) &&
                          (bool)(ViewBag.CanActAsSupervisor ?? false);
 }
@@ -102,7 +103,7 @@
                     </h3>
 
                     <form asp-action="HrApprove" asp-route-id="@Model.Id" method="post" class="mb-3">
-                        <label for="approveComment" class="form-label">Pass to the Managing Consultant</label>
+                        <label for="approveComment" class="form-label">Pass to @Brand.Current.TheCourseApprover</label>
                         <input type="text" id="approveComment" name="comment" class="form-control mb-2" placeholder="Optional" />
                         <div class="d-grid">
                             <button type="submit" class="btn btn-gold">

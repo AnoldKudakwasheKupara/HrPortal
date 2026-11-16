@@ -102,8 +102,11 @@
         tiles.Add(("Queue", "fa-inbox", "Awaiting review", h.AwaitingReview.ToString("N0"),
             h.AwaitingReview == 0 ? "nothing to review" : "waiting on HR", "Review",
             h.AwaitingReview > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "Index"));
-        tiles.Add(("Pipeline", "fa-stamp", "With " + Brand.Current.TheDirectorShort, h.WithMd.ToString("N0"),
-            "cleared HR, awaiting sign-off", "See them", "tone-violet", "LeaveRequest", "Index"));
+        if (!Brand.Current.LeaveEndsWithHr)
+        {
+            tiles.Add(("Pipeline", "fa-stamp", "With " + Brand.Current.TheDirectorShort, h.WithMd.ToString("N0"),
+                "cleared HR, awaiting sign-off", "See them", "tone-violet", "LeaveRequest", "Index"));
+        }
         tiles.Add(("Follow-up", "fa-rotate-left", "Returned", h.ReturnedToEmployees.ToString("N0"),
             "sent back and not resubmitted", "See them", h.ReturnedToEmployees > 0 ? "tone-amber" : "tone-slate",
             "LeaveRequest", "Index"));
@@ -116,7 +119,9 @@
             "leave requests completed", "Open", "tone-green", "Reports", "LeaveRequests"));
 
         jumps.Add(("Queue", "fa-inbox", "Leave to review",
-            "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to " + Brand.Current.TheDirectorShort + ".",
+            Brand.Current.LeaveEndsWithHr
+                ? "Requests submitted by staff and cleared by their supervisor, waiting on your decision, which is final."
+                : "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to " + Brand.Current.TheDirectorShort + ".",
             h.AwaitingReview.ToString("N0"), h.AwaitingReview == 1 ? "request waiting" : "requests waiting",
             "Review leave", "is-hero", "LeaveApproval", "Index"));
         jumps.Add(("People", "fa-id-card", "Employee records", "Every record, document and certification on file.",
@@ -135,11 +140,16 @@
         var m = Model.Md;
         lede = "Here's what is waiting on your decision.";
         metaNote = $"{m.OnLeaveToday:N0} on leave today";
-        primary = ("Final approval", "LeaveApproval", "FinalApproval");
+        primary = Brand.Current.LeaveEndsWithHr
+            ? ("Loan applications", "LoanApproval", "Index")
+            : ("Final approval", "LeaveApproval", "FinalApproval");
 
-        tiles.Add(("Decide", "fa-stamp", "To sanction", m.AwaitingFinalApproval.ToString("N0"),
-            m.AwaitingFinalApproval == 0 ? "nothing waiting" : "leave waiting on you", "Review",
-            m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "FinalApproval"));
+        if (!Brand.Current.LeaveEndsWithHr)
+        {
+            tiles.Add(("Decide", "fa-stamp", "To sanction", m.AwaitingFinalApproval.ToString("N0"),
+                m.AwaitingFinalApproval == 0 ? "nothing waiting" : "leave waiting on you", "Review",
+                m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "FinalApproval"));
+        }
         tiles.Add(("Done", "fa-calendar-check", "Approved", m.ApprovedThisMonth.ToString("N0"),
             $"{m.DaysApprovedThisMonth:0.#} days this month", "See them", "tone-green", "LeaveRequest", "Index"));
         tiles.Add(("Done", "fa-ban", "Rejected", m.RejectedThisMonth.ToString("N0"),
@@ -150,15 +160,18 @@
             $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview",
             m.WeeklyReportsSubmitted >= m.WeeklyReportStaff ? "tone-green" : "tone-violet", "WeeklyReport", "Overview"));
 
-        jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
-            "Requests that have cleared the supervisor and HR and now wait on " + Brand.Current.TheDirector + ".",
-            m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
-            "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
+        if (!Brand.Current.LeaveEndsWithHr)
+        {
+            jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
+                "Requests that have cleared the supervisor and HR and now wait on " + Brand.Current.TheDirector + ".",
+                m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
+                "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
+        }
         jumps.Add(("Progress", "fa-table-columns", "Weekly progress", "What everybody worked on this week, who has submitted and who has not.",
             m.WeeklyReportsSubmitted.ToString("N0"), $"of {m.WeeklyReportStaff:N0} submitted",
             "Open the overview", "tone-violet", "WeeklyReport", "Overview"));
         jumps.Add(("Finance", "fa-hand-holding-dollar", "Loan applications", "Staff loans to sanction, return or decline.",
-            null, null, "Open", "tone-ink", "LoanApproval", "Index"));
+            null, null, "Open", Brand.Current.LeaveEndsWithHr ? "is-hero" : "tone-ink", "LoanApproval", "Index"));
         jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what.",
             null, null, "Decide", "tone-teal", "CourseApproval", "Index"));
         jumps.Add(("Insight", "fa-chart-column", "Reports", "Leave, absence and how the portal is used.",
@@ -199,7 +212,9 @@
             me.UnreadNotifications > 0 ? "tone-gold" : "tone-slate", "MyNotifications", "Index"));
 
         jumps.Add(("Leave", "fa-calendar-plus", "Book time off",
-            "Your request goes to your supervisor first where you have one, then to HR, then to " + Brand.Current.TheDirector + ".",
+            Brand.Current.LeaveEndsWithHr
+                ? "Your request goes to your supervisor first where you have one, then to HR, who decide."
+                : "Your request goes to your supervisor first where you have one, then to HR, then to " + Brand.Current.TheDirector + ".",
             me.HasBalances ? me.RemainingDays.ToString("0.#") : null, me.HasBalances ? "days available" : null,
             "Request leave", "is-hero", "MyLeave", "Create"));
         jumps.Add(("Learning", "fa-graduation-cap", "My training", "Courses assigned to you, with their materials and due dates.",

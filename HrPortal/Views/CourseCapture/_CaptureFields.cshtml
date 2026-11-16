@@ -88,7 +88,7 @@
 
             <div class="col-md-6">
                 <label asp-for="ApprovedBy" class="form-label">Approved by (optional)</label>
-                <input asp-for="ApprovedBy" class="form-control" placeholder="Managing Consultant" />
+                <input asp-for="ApprovedBy" class="form-control" placeholder="@Brand.Current.CourseApproverTitle" />
                 <span asp-validation-for="ApprovedBy" class="text-danger"></span>
             </div>
 

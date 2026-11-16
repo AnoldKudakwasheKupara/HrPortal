@@ -64,6 +64,17 @@ namespace HrPortal.DbContexts
         }
 
         /// <summary>
+        /// Whether HR and the directors on this portal decide this
+        /// person's requests. They do for the people their company
+        /// employs; somebody employed by the other company has their
+        /// requests shown here but decided on that company's portal.
+        /// </summary>
+        public Task<bool> DecidedHereAsync(int employeeId) =>
+            CompanyFilter == null
+                ? Task.FromResult(true)
+                : Employees.AnyAsync(e => e.Id == employeeId && e.HomeCompanyId == CompanyFilter);
+
+        /// <summary>
         /// This company's departments and the ones that serve the whole
         /// group. A department is not hidden from the database as a
         /// whole, because somebody who works for both companies may sit

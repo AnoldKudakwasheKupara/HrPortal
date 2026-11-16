@@ -27,6 +27,7 @@ namespace HrPortal.Controllers
         private readonly LeaveApplicationPdfService _pdf;
         private readonly ListDocumentPdfService _lists;
         private readonly LeaveBalanceService _balances;
+        private readonly CompanyService _companies;
 
         public LeaveApprovalController(
             ApplicationDbContext context,
@@ -34,8 +35,10 @@ namespace HrPortal.Controllers
             LeaveBalanceService balances,
             CurrentUserService currentUser,
             LeaveApplicationPdfService pdf,
-            ListDocumentPdfService lists)
+            ListDocumentPdfService lists,
+            CompanyService companies)
         {
+            _companies = companies;
             _balances = balances;
             _context = context;
             _workflow = workflow;
@@ -54,6 +57,20 @@ namespace HrPortal.Controllers
                 return true;
 
             return await IsSupervisorOfAsync(request);
+        }
+
+        /// <summary>
+        /// Whether HR and the directors on this portal decide this
+        /// request. They do for the people their company employs; the
+        /// request of somebody employed by the other company is shown
+        /// here but decided there.
+        /// </summary>
+        private async Task<bool> DecidedHereAsync(int employeeId)
+        {
+            var here = await _companies.CurrentIdAsync();
+
+            return await _context.Employees.AnyAsync(e =>
+                e.Id == employeeId && e.HomeCompanyId == here);
         }
 
         private async Task<bool> IsSupervisorOfAsync(LeaveRequest request)
@@ -112,7 +129,7 @@ namespace HrPortal.Controllers
         /// hold a different set of requests from the screen it came
         /// from.
         /// </summary>
-        private IQueryable<LeaveRequest> Queue(Stage stage, int? me)
+        private IQueryable<LeaveRequest> Queue(Stage stage, int? me, int here)
         {
             var requests = _context.LeaveRequests
                 .AsNoTracking()
@@ -128,12 +145,14 @@ namespace HrPortal.Controllers
                     r.Employee.SupervisorId == me.GetValueOrDefault()),
 
                 Stage.Hr => requests.Where(r =>
-                    r.Status == LeaveRequestStatus.Submitted ||
-                    r.Status == LeaveRequestStatus.HRReview),
+                    r.Employee.HomeCompanyId == here &&
+                    (r.Status == LeaveRequestStatus.Submitted ||
+                     r.Status == LeaveRequestStatus.HRReview)),
 
                 _ => requests.Where(r =>
-                    r.Status == LeaveRequestStatus.HRApproved ||
-                    r.Status == LeaveRequestStatus.MDReview)
+                    r.Employee.HomeCompanyId == here &&
+                    (r.Status == LeaveRequestStatus.HRApproved ||
+                     r.Status == LeaveRequestStatus.MDReview))
             };
 
             return requests.OrderBy(r => r.SubmittedAt);
@@ -142,7 +161,7 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Index()
         {
-            var requests = await Queue(Stage.Hr, null).ToListAsync();
+            var requests = await Queue(Stage.Hr, null, await _companies.CurrentIdAsync()).ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting HR Review";
             ViewBag.Stage = "HR";
@@ -161,7 +180,7 @@ namespace HrPortal.Controllers
         {
             var me = await _currentUser.GetEmployeeIdAsync();
 
-            var requests = await Queue(Stage.Supervisor, me)
+            var requests = await Queue(Stage.Supervisor, me, await _companies.CurrentIdAsync())
                 .ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting Your Approval";
@@ -174,7 +193,7 @@ namespace HrPortal.Controllers
         [Authorize(Roles = Roles.MdOnly)]
         public async Task<IActionResult> FinalApproval()
         {
-            var requests = await Queue(Stage.Md, null).ToListAsync();
+            var requests = await Queue(Stage.Md, null, await _companies.CurrentIdAsync()).ToListAsync();
 
             ViewData["Title"] = "Leave Awaiting Final Approval";
             ViewBag.Stage = "MD";
@@ -206,7 +225,7 @@ namespace HrPortal.Controllers
             if (!allowed)
                 return Forbid();
 
-            var requests = await Queue(stage, me).ToListAsync();
+            var requests = await Queue(stage, me, await _companies.CurrentIdAsync()).ToListAsync();
 
             var list = new ListDocument(
                 "Leave Approvals",
@@ -272,16 +291,22 @@ namespace HrPortal.Controllers
                 request.LeaveTypeId,
                 request.StartDate.Year);
 
+            var decidedHere = await DecidedHereAsync(request.EmployeeId);
+
+            ViewBag.HrDecides = await _workflow.HrDecidesAsync(request.EmployeeId);
+
             var model = new LeaveApprovalViewModel
             {
                 Request = request,
                 Balance = balance,
                 CanActAsHr =
                     LeaveWorkflowService.IsAwaitingHr(request.Status) &&
-                    User.IsInRole(Roles.HrOfficer),
+                    User.IsInRole(Roles.HrOfficer) &&
+                    decidedHere,
                 CanActAsMd =
                     LeaveWorkflowService.IsAwaitingMd(request.Status) &&
-                    User.IsInRole(Roles.Md),
+                    User.IsInRole(Roles.Md) &&
+                    decidedHere,
                 CanActAsSupervisor =
                     LeaveWorkflowService.IsAwaitingSupervisor(
                         request.Status) &&
@@ -298,12 +323,21 @@ namespace HrPortal.Controllers
             int id,
             string? comment)
         {
+            var request = await _context.LeaveRequests
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            var final = request != null &&
+                        await _workflow.HrDecidesAsync(request.EmployeeId);
+
             return await ActAsHr(
                 id,
                 comment,
                 (request, actorId) =>
                     _workflow.HrApproveAsync(request, actorId, comment),
-                $"Leave request approved and sent to {Brand.Current.TheDirectorShort}.");
+                final
+                    ? "Leave request approved."
+                    : $"Leave request approved and sent to {Brand.Current.TheDirectorShort}.");
         }
 
         [HttpPost]
@@ -455,7 +489,8 @@ namespace HrPortal.Controllers
                 commentRequired,
                 LeaveWorkflowService.IsAwaitingHr,
                 "This request is not waiting for HR review.",
-                nameof(Index));
+                nameof(Index),
+                decidedHereOnly: true);
         }
 
         private async Task<IActionResult> ActAsMd(
@@ -473,7 +508,8 @@ namespace HrPortal.Controllers
                 commentRequired,
                 LeaveWorkflowService.IsAwaitingMd,
                 "This request has not yet cleared HR review.",
-                nameof(FinalApproval));
+                nameof(FinalApproval),
+                decidedHereOnly: true);
         }
 
         private async Task<IActionResult> Act(
@@ -484,13 +520,23 @@ namespace HrPortal.Controllers
             bool commentRequired,
             Func<LeaveRequestStatus, bool> stageCheck,
             string wrongStageMessage,
-            string queueAction)
+            string queueAction,
+            bool decidedHereOnly = false)
         {
             var request = await _context.LeaveRequests
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (request == null)
                 return NotFound();
+
+            if (decidedHereOnly && !await DecidedHereAsync(request.EmployeeId))
+            {
+                TempData["Error"] =
+                    "This request is decided by the company that employs " +
+                    "the person, on its own portal.";
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
 
             if (!stageCheck(request.Status))
             {

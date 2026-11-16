@@ -40,7 +40,7 @@ namespace HrPortal.Services
         public static string WaitingOn(CourseApplicationStatus status) => status switch
         {
             CourseApplicationStatus.SupervisorReview => "your supervisor",
-            CourseApplicationStatus.HrApproved => "the Managing Consultant",
+            CourseApplicationStatus.HrApproved => Brand.Current.TheCourseApprover,
             _ => "HR"
         };
 
@@ -308,8 +308,8 @@ namespace HrPortal.Services
             _notifications.Notify(
                 application.EmployeeId,
                 "Course application cleared HR",
-                $"{application.ApplicationNumber} is now with the " +
-                "Managing Consultant.",
+                $"{application.ApplicationNumber} is now with " +
+                $"{Brand.Current.TheCourseApprover}.",
                 $"/MyCourses/Details/{application.Id}");
 
             await _context.SaveChangesAsync();

@@ -32,7 +32,7 @@
             <p>
                 @if (stage == "HR")
                 {
-                    <text>Requests submitted by employees, waiting for your review. Approving sends the request to @Brand.Current.TheDirector.</text>
+                    <text>Requests submitted by employees, waiting for your review. @(Brand.Current.LeaveEndsWithHr ? "Your approval is final and takes the days off their balance." : $"Approving sends the request to {Brand.Current.TheDirector}.")</text>
                 }
                 else if (stage == "Supervisor")
                 {

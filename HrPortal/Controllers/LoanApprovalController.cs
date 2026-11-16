@@ -101,11 +101,19 @@ namespace HrPortal.Controllers
             int? me,
             bool settled)
         {
+            var here = _context.CompanyFilter;
+
             var query = _context.LoanApplications
                 .AsNoTracking()
                 .Include(l => l.Employee)
                     .ThenInclude(e => e.Department)
                 .AsQueryable();
+
+            if (stage != Stage.Supervisor)
+            {
+                query = query.Where(l =>
+                    here == null || l.Employee.HomeCompanyId == here);
+            }
 
             query = stage == Stage.Supervisor
                 ? query.Where(l =>
@@ -325,6 +333,9 @@ namespace HrPortal.Controllers
             ViewBag.CanActAsSupervisor =
                 await IsSupervisorOfAsync(application);
 
+            ViewBag.DecidedHere =
+                await _context.DecidedHereAsync(application.EmployeeId);
+
             ViewBag.Decision = new LoanDecisionViewModel
             {
                 Id = application.Id,
@@ -354,6 +365,15 @@ namespace HrPortal.Controllers
                 TempData["Error"] =
                     "Your sign-in is not linked to an employee " +
                     "record, so the decision cannot be recorded.";
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (!await _context.DecidedHereAsync(application.EmployeeId))
+            {
+                TempData["Error"] =
+                    "This application is decided by the company that " +
+                    "employs the person, on its own portal.";
 
                 return RedirectToAction(nameof(Details), new { id });
             }
@@ -491,6 +511,15 @@ namespace HrPortal.Controllers
                 TempData["Error"] =
                     "Your sign-in is not linked to an employee " +
                     "record, so the decision cannot be recorded.";
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (!await _context.DecidedHereAsync(application.EmployeeId))
+            {
+                TempData["Error"] =
+                    "This application is decided by the company that " +
+                    "employs the person, on its own portal.";
 
                 return RedirectToAction(nameof(Details), new { id });
             }

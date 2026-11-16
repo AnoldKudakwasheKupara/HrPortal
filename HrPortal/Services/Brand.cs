@@ -137,6 +137,22 @@ namespace HrPortal.Services
         /// <summary>The same, short enough for a button or a stage: "the MD".</summary>
         public string TheDirectorShort { get; set; } = "the MD";
 
+        /// <summary>
+        /// Who gives the final decision on a course application, such
+        /// as "Managing Consultant".
+        /// </summary>
+        public string CourseApproverTitle { get; set; } = "Managing Consultant";
+
+        /// <summary>The same in a sentence: "the Managing Consultant".</summary>
+        public string TheCourseApprover { get; set; } = "the Managing Consultant";
+
+        /// <summary>
+        /// Whether HR's approval of leave is the final decision, with no
+        /// director after it. It follows the company that employs the
+        /// person asking, whichever portal they ask on.
+        /// </summary>
+        public bool LeaveEndsWithHr { get; set; }
+
         /// <summary>A phrase made to start a sentence.</summary>
         public static string Capitalised(string phrase) =>
             phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..];

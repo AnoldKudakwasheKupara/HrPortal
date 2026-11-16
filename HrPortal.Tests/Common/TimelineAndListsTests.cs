@@ -10,7 +10,7 @@ namespace HrPortal.Tests.Common
 
         [Theory]
         [InlineData("ApprovedByHR", "Approved by HR")]
-        [InlineData("RejectedByMD", "Rejected by MD")]
+        [InlineData("RejectedByMD", "Rejected by the MD")]
         [InlineData("ReturnedBySupervisor", "Returned by the supervisor")]
         [InlineData("ApprovedByHr", "Approved by HR")]
         [InlineData("ApprovedByManagingConsultant", "Approved by the Managing Consultant")]
