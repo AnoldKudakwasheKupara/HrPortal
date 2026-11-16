@@ -114,13 +114,13 @@ namespace HrPortal.Services
 
             var rendered = NotificationEmail.Render(
                 notification,
-                _options.PortalBaseUrl,
+                _options.LinkBase,
                 hasLogo: logo != null);
 
             var message = new MimeMessage();
 
             message.From.Add(
-                new MailboxAddress(_options.FromName, _options.FromAddress));
+                new MailboxAddress(_options.SenderName, _options.FromAddress));
 
             message.To.Add(new MailboxAddress(
                 notification.DisplayName ?? string.Empty,

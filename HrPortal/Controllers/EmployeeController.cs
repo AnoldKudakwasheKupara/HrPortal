@@ -920,7 +920,7 @@ namespace HrPortal.Controllers
                 pageHandler: null,
                 values: new { area = "Identity", code })!;
 
-            if (string.IsNullOrWhiteSpace(_emailOptions.PortalBaseUrl))
+            if (string.IsNullOrWhiteSpace(_emailOptions.LinkBase))
                 link = $"{Request.Scheme}://{Request.Host}{link}";
 
             return await _email.SendNotificationAsync(

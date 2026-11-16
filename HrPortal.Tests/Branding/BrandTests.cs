@@ -101,6 +101,76 @@ namespace HrPortal.Tests.Branding
         public void Colours_mix_as_expected(string a, string b, double amount, string expected) =>
             Assert.Equal(expected, BrandColors.Mix(a, b, amount));
 
+        private (IReadOnlyList<Brand> Brands, string MainKey) LoadAll(Dictionary<string, string?> settings) =>
+            Brand.LoadAll(new ConfigurationBuilder().AddInMemoryCollection(settings).Build(), _root);
+
+        [Fact]
+        public void Every_brand_file_is_loaded_with_its_addresses_and_link_base()
+        {
+            File("example", """{ "PortalName": "Example Portal", "Hosts": ["example.localhost"] }""");
+
+            var (brands, main) = LoadAll(new()
+            {
+                ["Brand:Hosts:example"] = "hr.example.com, HR.Example.org",
+                ["Brand:Urls:example"] = "https://hr.example.com/"
+            });
+
+            Assert.Equal("intellego", main);
+            Assert.Equal(new[] { "intellego", "example" }, brands.Select(b => b.Key));
+
+            var example = brands.Single(b => b.Key == "example");
+
+            Assert.Equal(new[] { "example.localhost", "hr.example.com", "hr.example.org" }, example.Hosts);
+            Assert.Equal("https://hr.example.com", example.PortalUrl);
+            Assert.Null(brands.Single(b => b.Key == "intellego").PortalUrl);
+        }
+
+        [Fact]
+        public void A_main_brand_with_no_file_still_stops_the_portal()
+        {
+            Assert.Throws<InvalidOperationException>(() => LoadAll(new() { ["Brand:Key"] = "missing" }));
+        }
+
+        [Fact]
+        public void Addresses_map_to_their_brand_and_one_address_cannot_serve_two()
+        {
+            var a = new Brand { Key = "a", Hosts = ["a.localhost"] };
+            var b = new Brand { Key = "b", Hosts = ["b.localhost", "hr.b.com"] };
+
+            var map = Brand.HostMap([a, b]);
+
+            Assert.Same(b, map["HR.B.COM"]);
+            Assert.Same(a, map["a.localhost"]);
+            Assert.False(map.ContainsKey("localhost"));
+
+            var clash = new Brand { Key = "c", Hosts = ["a.localhost"] };
+
+            Assert.Throws<InvalidOperationException>(() => Brand.HostMap([a, clash]));
+        }
+
+        [Fact]
+        public async Task A_brand_entered_for_a_request_stays_with_that_request_only()
+        {
+            var mine = new Brand { Key = "mine", PortalName = "Mine" };
+            var seenElsewhere = "";
+
+            Brand.Enter(mine);
+
+            await Task.Yield();
+
+            Assert.Same(mine, Brand.Current);
+
+            await Task.Run(() => { }).ContinueWith(_ => { }, TaskScheduler.Default);
+
+            ExecutionContext.SuppressFlow();
+            var other = new Thread(() => seenElsewhere = Brand.Current.Key);
+            other.Start();
+            other.Join();
+            ExecutionContext.RestoreFlow();
+
+            Assert.NotEqual("mine", seenElsewhere);
+        }
+
         [Fact]
         public void Every_colour_the_style_sheets_use_can_be_set()
         {

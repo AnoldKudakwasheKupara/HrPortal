@@ -36,7 +36,17 @@ namespace HrPortal.Services
 
         public string FromAddress { get; set; } = string.Empty;
 
-        public string FromName { get; set; } = Brand.Current.PortalName;
+        public string? FromName { get; set; }
+
+        /// <summary>The sender name for the brand being served: the setting, or the portal's name.</summary>
+        public string SenderName => string.IsNullOrWhiteSpace(FromName) ? Brand.Current.PortalName : FromName;
+
+        /// <summary>
+        /// Where email links point for the brand being served: its own address,
+        /// or PortalBaseUrl for the main brand. Null means the address the
+        /// request came in on.
+        /// </summary>
+        public string? LinkBase => Brand.Current.PortalUrl ?? (Brand.Current.Key == Brand.Main.Key ? PortalBaseUrl : null);
 
         public string? PortalBaseUrl { get; set; }
 

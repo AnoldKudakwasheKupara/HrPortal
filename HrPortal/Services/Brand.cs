@@ -5,26 +5,98 @@ using System.Text.RegularExpressions;
 namespace HrPortal.Services
 {
     /// <summary>
-    /// Who this copy of the portal belongs to. Each company in the group
-    /// runs its own deployment of the same code, and one deployment is
-    /// one company, so this is set once at startup and read from
+    /// The company a page is for. One deployment serves every company in
+    /// the group, each on its own web address, so the brand is chosen
+    /// for each request from the address it came in on and read from
     /// anywhere, including the static code behind printed documents and
-    /// emails.
+    /// emails. Work done outside a request, such as the nightly
+    /// reminders, sees the deployment's main brand unless it enters
+    /// another.
     ///
-    /// The defaults are Intellego. Setting Brand__Key to another company
-    /// reads Brands/{key}.json, with its artwork in wwwroot/brands/{key}
-    /// and any front page wording in Views/Brands/{key}/_About.cshtml.
+    /// The defaults are Intellego. Every Brands/{key}.json is another
+    /// company, with its artwork in wwwroot/brands/{key} and any front
+    /// page wording in Views/Brands/{key}/_About.cshtml. Brand__Key picks
+    /// the main brand; Brand__Hosts__{key} lists the addresses that show
+    /// a brand, and Brand__Urls__{key} the address its emails link to.
     /// </summary>
     public sealed class Brand
     {
         public const string DefaultKey = "intellego";
 
-        public static Brand Current { get; private set; } = new();
+        private static readonly AsyncLocal<Brand?> Request = new();
 
-        /// <summary>Called once, as the portal starts.</summary>
-        public static void Use(Brand brand) => Current = brand;
+        private static Brand _main = new();
+
+        private static IReadOnlyDictionary<string, Brand> _byKey =
+            new Dictionary<string, Brand> { [DefaultKey] = _main };
+
+        private static IReadOnlyDictionary<string, Brand> _byHost =
+            new Dictionary<string, Brand>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>The brand of the request being served, or the main brand.</summary>
+        public static Brand Current => Request.Value ?? _main;
+
+        /// <summary>The brand the deployment falls back to, for unknown addresses and background work.</summary>
+        public static Brand Main => _main;
+
+        public static IReadOnlyCollection<Brand> All => _byKey.Values.ToList();
+
+        /// <summary>Makes one brand the only brand. Used by tests and single-company setups.</summary>
+        public static void Use(Brand brand) => UseAll([brand], brand.Key);
+
+        public static void UseAll(IEnumerable<Brand> brands, string mainKey)
+        {
+            var byKey = brands.ToDictionary(b => b.Key);
+
+            if (!byKey.TryGetValue(mainKey, out var main))
+                throw new InvalidOperationException($"There is no brand \"{mainKey}\" to use as the main brand.");
+
+            _byKey = byKey;
+            _byHost = HostMap(byKey.Values);
+            _main = main;
+            Request.Value = null;
+        }
+
+        /// <summary>Each listed web address and its brand. An address listed for two brands is refused.</summary>
+        public static IReadOnlyDictionary<string, Brand> HostMap(IEnumerable<Brand> brands)
+        {
+            var byHost = new Dictionary<string, Brand>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var brand in brands)
+            {
+                foreach (var host in brand.Hosts)
+                {
+                    if (byHost.TryGetValue(host, out var other) && other.Key != brand.Key)
+                        throw new InvalidOperationException($"The address {host} is listed for both {other.Key} and {brand.Key}.");
+
+                    byHost[host] = brand;
+                }
+            }
+
+            return byHost;
+        }
+
+        /// <summary>The brand for a web address; the main brand for any address not listed.</summary>
+        public static Brand ForHost(string? host) =>
+            host != null && _byHost.TryGetValue(host, out var brand) ? brand : _main;
+
+        public static Brand? ForKey(string? key) =>
+            key != null && _byKey.TryGetValue(key, out var brand) ? brand : null;
+
+        /// <summary>Makes a brand current for the rest of this request or piece of work.</summary>
+        public static void Enter(Brand brand) => Request.Value = brand;
 
         public string Key { get; set; } = DefaultKey;
+
+        /// <summary>The web addresses, without scheme or port, that show this brand.</summary>
+        public string[] Hosts { get; set; } = [];
+
+        /// <summary>
+        /// Where links in this company's emails point, such as
+        /// https://hr.example.com. Null falls back to Email:PortalBaseUrl
+        /// for the main brand, or the address the request came in on.
+        /// </summary>
+        public string? PortalUrl { get; set; }
 
         /// <summary>What the portal is called: the sidebar, page titles, emails.</summary>
         public string PortalName { get; set; } = "My Intellego";
@@ -56,29 +128,78 @@ namespace HrPortal.Services
         /// no brand file stops the portal starting rather than showing
         /// one company's staff another company's name.
         /// </summary>
-        public static Brand Load(IConfiguration configuration, string contentRoot)
+        public static Brand Load(IConfiguration configuration, string contentRoot) =>
+            Load(configuration["Brand:Key"]?.Trim(), configuration, contentRoot);
+
+        /// <summary>Every company with a brand file, plus Intellego, and the key of the main one.</summary>
+        public static (IReadOnlyList<Brand> Brands, string MainKey) LoadAll(IConfiguration configuration, string contentRoot)
         {
-            var key = configuration["Brand:Key"]?.Trim();
+            var keys = new List<string> { DefaultKey };
+            var folder = Path.Combine(contentRoot, "Brands");
+
+            if (Directory.Exists(folder))
+            {
+                keys.AddRange(Directory.GetFiles(folder, "*.json")
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .Where(k => k != null && k != DefaultKey)
+                    .Select(k => k!)
+                    .OrderBy(k => k));
+            }
+
+            var main = configuration["Brand:Key"]?.Trim();
+
+            if (string.IsNullOrEmpty(main))
+                main = DefaultKey;
+
+            if (!keys.Contains(main))
+                keys.Add(main);
+
+            return (keys.Select(k => Load(k, configuration, contentRoot)).ToList(), main);
+        }
+
+        private static Brand Load(string? key, IConfiguration configuration, string contentRoot)
+        {
+            Brand brand;
 
             if (string.IsNullOrEmpty(key) || key == DefaultKey)
-                return new Brand();
+            {
+                brand = new Brand();
+            }
+            else
+            {
+                if (!Regex.IsMatch(key, "^[a-z0-9-]+$"))
+                    throw new InvalidOperationException($"Brand:Key \"{key}\" should be lower case letters, numbers and hyphens.");
 
-            if (!Regex.IsMatch(key, "^[a-z0-9-]+$"))
-                throw new InvalidOperationException($"Brand:Key \"{key}\" should be lower case letters, numbers and hyphens.");
+                var path = Path.Combine(contentRoot, "Brands", key + ".json");
 
-            var path = Path.Combine(contentRoot, "Brands", key + ".json");
+                if (!File.Exists(path))
+                    throw new InvalidOperationException($"Brand:Key is \"{key}\" but {path} does not exist.");
 
-            if (!File.Exists(path))
-                throw new InvalidOperationException($"Brand:Key is \"{key}\" but {path} does not exist.");
+                brand = new Brand { Colors = new BrandColors() };
 
-            var brand = new Brand { Colors = new BrandColors() };
+                new ConfigurationBuilder()
+                    .AddJsonFile(path)
+                    .Build()
+                    .Bind(brand);
 
-            new ConfigurationBuilder()
-                .AddJsonFile(path)
-                .Build()
-                .Bind(brand);
+                brand.Key = key;
+            }
 
-            brand.Key = key;
+            var hosts = configuration[$"Brand:Hosts:{brand.Key}"];
+
+            if (!string.IsNullOrWhiteSpace(hosts))
+            {
+                brand.Hosts = brand.Hosts
+                    .Concat(hosts.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries))
+                    .Select(h => h.Trim().ToLowerInvariant())
+                    .Distinct()
+                    .ToArray();
+            }
+
+            var url = configuration[$"Brand:Urls:{brand.Key}"];
+
+            if (!string.IsNullOrWhiteSpace(url))
+                brand.PortalUrl = url.Trim().TrimEnd('/');
 
             return brand;
         }

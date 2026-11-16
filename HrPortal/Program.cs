@@ -20,7 +20,8 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-Brand.Use(Brand.Load(builder.Configuration, builder.Environment.ContentRootPath));
+var (brands, mainBrand) = Brand.LoadAll(builder.Configuration, builder.Environment.ContentRootPath);
+Brand.UseAll(brands, mainBrand);
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
@@ -352,6 +353,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
+
+app.Use((context, next) =>
+{
+    Brand.Enter(Brand.ForHost(context.Request.Host.Host));
+    return next();
+});
 
 app.Use(HrPortal.Security.SecurityHeaders.AddAsync);
 

@@ -75,7 +75,7 @@ public class ForgotPasswordModel : PageModel
             pageHandler: null,
             values: new { area = "Identity", code })!;
 
-        if (string.IsNullOrWhiteSpace(_options.PortalBaseUrl))
+        if (string.IsNullOrWhiteSpace(_options.LinkBase))
             link = $"{Request.Scheme}://{Request.Host}{link}";
 
         var employee = await _context.Employees

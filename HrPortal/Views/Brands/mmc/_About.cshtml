@@ -1,0 +1,128 @@
+@{
+    var values = new (string Icon, string Title, string Point)[]
+    {
+        ("fa-shield-halved", "Professionalism",
+            "Maintaining the highest standards of professional conduct in all our interactions and services."),
+        ("fa-bolt", "Responsiveness",
+            "Being agile and attentive to our clients' needs, delivering timely solutions and support."),
+        ("fa-lightbulb", "Innovation & Integrity",
+            "Embracing creative solutions while upholding unwavering ethical standards in everything we do."),
+        ("fa-scale-balanced", "Compliance",
+            "Adhering strictly to regulatory requirements and industry best practices to protect our stakeholders."),
+        ("fa-gem", "Excellence",
+            "Striving for superior performance and continuous improvement in all aspects of our business."),
+        ("fa-people-group", "Respect for the Individual",
+            "Valuing every person's unique contribution and treating all with dignity and fairness.")
+    };
+}
+
+<section class="band" id="about">
+
+    <div class="band-inner story-layout">
+
+        <div>
+            <span class="eyebrow">Who we are</span>
+
+            <p class="story-lede">
+                Independent, research-driven stockbroking and advisory services.
+            </p>
+        </div>
+
+        <div class="story-body">
+
+            <p>
+                MMC Capital is an independent financial institution specializing in both
+                stockbroking and advisory services, dedicated to achieving sustained, long-term
+                growth in capital and income for our clients.
+            </p>
+
+            <p>
+                MMC Stockbrokers is licensed by the Securities &amp; Exchange Commission of
+                Zimbabwe and is a member of the Zimbabwe Stock Exchange and the Victoria Falls
+                Stock Exchange. Every one of us plays a part in that work, and this portal is
+                here to support you while you do it.
+            </p>
+
+            <div class="service-chips" id="services">
+                <span class="service-chip">MMC Stockbrokers</span>
+                <span class="service-chip">MMC Capital Advisory</span>
+                <span class="service-chip">Research</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="band is-ruled">
+
+    <div class="band-inner statement-layout">
+
+        <div class="statement">
+
+            <span class="statement-icon">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+            </span>
+
+            <div>
+                <span class="eyebrow">Our vision</span>
+                <p>To be the Leading Financial Business partner in Africa.</p>
+            </div>
+
+        </div>
+
+        <div class="statement">
+
+            <span class="statement-icon">
+                <i class="fas fa-bullseye" aria-hidden="true"></i>
+            </span>
+
+            <div>
+                <span class="eyebrow">Our mission</span>
+                <p>
+                    To deliver stockbroking and advisory services competitively for the benefit
+                    of all our stakeholders through compliance, expertise, and relationships.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="band is-ruled" id="values">
+
+    <div class="band-inner">
+
+        <span class="eyebrow">Our core values</span>
+
+        <div class="value-grid">
+
+            @foreach (var value in values)
+            {
+                <div class="value">
+
+                    <span class="value-icon">
+                        <i class="fas @value.Icon" aria-hidden="true"></i>
+                    </span>
+
+                    <div class="value-text">
+
+                        <span class="value-title">@value.Title</span>
+
+                        <ul class="value-points">
+                            <li>@value.Point</li>
+                        </ul>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</section>
