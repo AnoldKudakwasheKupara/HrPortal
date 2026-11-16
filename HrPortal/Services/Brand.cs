@@ -153,6 +153,12 @@ namespace HrPortal.Services
         /// </summary>
         public bool LeaveEndsWithHr { get; set; }
 
+        /// <summary>
+        /// Whether the company keeps a register of client complaints in
+        /// the portal, as a stockbroker must.
+        /// </summary>
+        public bool ComplaintsRegister { get; set; }
+
         /// <summary>A phrase made to start a sentence.</summary>
         public static string Capitalised(string phrase) =>
             phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..];

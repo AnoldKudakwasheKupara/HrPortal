@@ -1,0 +1,83 @@
+@using HrPortal.Entities
+@model HrPortal.ViewModels.ComplaintFormViewModel
+
+<div class="section-heading">The client</div>
+
+<div class="row">
+
+    <div class="col-md-3 mb-3">
+        <label asp-for="ReceivedOn" class="form-label"></label>
+        <input asp-for="ReceivedOn" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <span asp-validation-for="ReceivedOn" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-5 mb-3">
+        <label asp-for="ClientName" class="form-label"></label>
+        <input asp-for="ClientName" class="form-control" autocomplete="off" />
+        <span asp-validation-for="ClientName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ClientPhone" class="form-label"></label>
+        <input asp-for="ClientPhone" class="form-control" type="tel" autocomplete="off" />
+        <span asp-validation-for="ClientPhone" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="ClientEmail" class="form-label"></label>
+        <input asp-for="ClientEmail" class="form-control" type="email" autocomplete="off" />
+        <span asp-validation-for="ClientEmail" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label asp-for="StaffInvolved" class="form-label"></label>
+        <input asp-for="StaffInvolved" class="form-control" placeholder="Who dealt with the client" />
+        <span asp-validation-for="StaffInvolved" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-3">
+    <label asp-for="Nature" class="form-label"></label>
+    <textarea asp-for="Nature" class="form-control" rows="3"
+              placeholder="What the client was unhappy about, in their terms"></textarea>
+    <span asp-validation-for="Nature" class="text-danger"></span>
+</div>
+
+<div class="section-heading">What was done</div>
+
+<div class="mb-3">
+    <label asp-for="ActionTaken" class="form-label"></label>
+    <textarea asp-for="ActionTaken" class="form-control" rows="3"
+              placeholder="Who was contacted and what the client was told"></textarea>
+    <span asp-validation-for="ActionTaken" class="text-danger"></span>
+</div>
+
+<div class="row">
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            @foreach (var s in Enum.GetValues<ComplaintStatus>())
+            {
+                <option value="@s" selected="@(Model.Status == s)">@s</option>
+            }
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label asp-for="ResolvedOn" class="form-label"></label>
+        <input asp-for="ResolvedOn" class="form-control" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <div class="form-text">Only kept once it is Resolved; today if left blank.</div>
+        <span asp-validation-for="ResolvedOn" class="text-danger"></span>
+    </div>
+
+</div>
+
+<div class="mb-4">
+    <label asp-for="Remarks" class="form-label"></label>
+    <textarea asp-for="Remarks" class="form-control" rows="2"
+              placeholder="Anything learned, or to watch for next time"></textarea>
+    <span asp-validation-for="Remarks" class="text-danger"></span>
+</div>

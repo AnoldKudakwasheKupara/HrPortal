@@ -12,6 +12,7 @@
   "CourseApproverTitle": "Director",
   "TheCourseApprover": "a director",
   "LeaveEndsWithHr": true,
+  "ComplaintsRegister": true,
   "Colors": {
     "Primary": "#102147",
     "Sidebar": "#0b1733",

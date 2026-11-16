@@ -1,0 +1,178 @@
+@using HrPortal.Entities
+@model Complaint
+
+@{
+    ViewData["Title"] = "Complaint from " + Model.ClientName;
+    var resolved = Model.Status == ComplaintStatus.Resolved;
+    var days = Model.ReceivedOn != null && Model.ResolvedOn != null && Model.ResolvedOn >= Model.ReceivedOn
+        ? (int?)(Model.ResolvedOn.Value - Model.ReceivedOn.Value).TotalDays
+        : null;
+
+    string Or(string? value, string empty = "Not recorded") => string.IsNullOrWhiteSpace(value) ? empty : value;
+}
+
+<div class="container-fluid">
+
+    <div class="icon-head icon-head-wide">
+
+        <span class="icon-head-tile" aria-hidden="true">
+            <i class="fas fa-comment-dots"></i>
+        </span>
+
+        <div>
+            <h2>@Model.ClientName</h2>
+            <p>Complaint received @(Model.ReceivedOn?.ToString("d MMMM yyyy") ?? "on a date not recorded")</p>
+        </div>
+
+        <div class="head-actions">
+
+            <span class="meta-pill @(resolved ? "is-green" : "is-amber")">
+                <i class="fas @(resolved ? "fa-circle-check" : "fa-hourglass-half")" aria-hidden="true"></i>
+                @Model.Status
+            </span>
+
+            @if (resolved && Model.ResolvedOn != null)
+            {
+                <span class="meta-pill">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    Resolved @Model.ResolvedOn.Value.ToString("d MMM yyyy")@(days == null ? "" : days == 0 ? ", same day" : $", after {days} day{(days == 1 ? "" : "s")}")
+                </span>
+            }
+
+            <a class="btn btn-gold" asp-action="Edit" asp-route-id="@Model.Id">
+                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Update
+            </a>
+
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="row g-3">
+
+        <div class="col-lg-8">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-comment-dots" aria-hidden="true"></i> The Complaint
+                </h3>
+
+                <p class="mb-0 pre-line">@Or(Model.Nature, "No details were recorded.")</p>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-list-check" aria-hidden="true"></i> Action Taken
+                </h3>
+
+                <p class="mb-0 pre-line">@Or(Model.ActionTaken, "Nothing has been recorded yet.")</p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Remarks))
+                {
+                    <h4 class="small text-uppercase text-muted mt-3 mb-1">Remarks</h4>
+                    <p class="mb-0 pre-line">@Model.Remarks</p>
+                }
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-user" aria-hidden="true"></i> Client
+                </h3>
+
+                <div class="facts">
+
+                    <div class="fact">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <div><span>Name</span><strong>@Model.ClientName</strong></div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <div>
+                            <span>Phone</span>
+                            @if (string.IsNullOrWhiteSpace(Model.ClientPhone))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong><a href="tel:@Model.ClientPhone">@Model.ClientPhone</a></strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <div>
+                            <span>Email</span>
+                            @if (string.IsNullOrWhiteSpace(Model.ClientEmail))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong><a href="mailto:@Model.ClientEmail">@Model.ClientEmail</a></strong>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="fact">
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
+                        <div>
+                            <span>Staff involved</span>
+                            @if (string.IsNullOrWhiteSpace(Model.StaffInvolved))
+                            {
+                                <em>Not recorded</em>
+                            }
+                            else
+                            {
+                                <strong>@Model.StaffInvolved</strong>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Record
+                </h3>
+
+                <p class="small text-muted mb-3">
+                    Recorded @Model.RecordedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm")@(string.IsNullOrWhiteSpace(Model.RecordedBy) ? "" : $" by {Model.RecordedBy}").
+                </p>
+
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      data-confirm="Delete the complaint from @Model.ClientName? This cannot be undone."
+                      onsubmit="return confirm(this.dataset.confirm);">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-trash" aria-hidden="true"></i> Delete
+                    </button>
+                </form>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>

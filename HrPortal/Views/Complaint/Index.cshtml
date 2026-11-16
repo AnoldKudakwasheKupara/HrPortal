@@ -1,0 +1,219 @@
+@using HrPortal.Entities
+@using HrPortal.ViewModels
+@model HrPortal.ViewModels.PagedResult<HrPortal.Entities.Complaint>
+
+@{
+    ViewData["Title"] = "Complaints Register";
+
+    var search = ViewBag.Search as string;
+    var statusFilter = ViewBag.StatusFilter as ComplaintStatus?;
+    var pending = (int)ViewBag.Pending;
+    var average = ViewBag.AverageDays as double?;
+
+    string Short(string? text, int length) =>
+        string.IsNullOrWhiteSpace(text) ? "" : text.Length <= length ? text : text[..length].TrimEnd() + "…";
+}
+
+<div class="container-fluid">
+
+    <div class="icon-head icon-head-wide">
+
+        <span class="icon-head-tile" aria-hidden="true">
+            <i class="fas fa-comment-dots"></i>
+        </span>
+
+        <div>
+            <h2>Complaints Register</h2>
+            <p>Every complaint from a client, what was done about it and where it stands.</p>
+        </div>
+
+        <div class="head-actions">
+            <a asp-action="Import" class="btn btn-outline-secondary">
+                <i class="fas fa-file-arrow-up" aria-hidden="true"></i> Import from spreadsheet
+            </a>
+            <a asp-action="Create" class="btn btn-gold">
+                <i class="fas fa-plus" aria-hidden="true"></i> Record a Complaint
+            </a>
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">@TempData["Error"]</div>
+    }
+
+    <div class="kpis">
+
+        <a class="kpi text-decoration-none" asp-action="Index">
+            <span class="kpi-icon is-blue" aria-hidden="true"><i class="fas fa-comment-dots"></i></span>
+            <div>
+                <div class="kpi-label">In the Register</div>
+                <div class="kpi-value">@ViewBag.Total</div>
+                <div class="kpi-note">@ViewBag.ThisYear received in @DateTime.Today.Year</div>
+            </div>
+        </a>
+
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-status="@ComplaintStatus.Pending">
+            <span class="kpi-icon @(pending > 0 ? "is-amber" : "is-green")" aria-hidden="true"><i class="fas fa-hourglass-half"></i></span>
+            <div>
+                <div class="kpi-label">Pending</div>
+                <div class="kpi-value">@pending</div>
+                <div class="kpi-note">@(pending == 0 ? "Nothing outstanding" : "Still to resolve")</div>
+            </div>
+        </a>
+
+        <a class="kpi text-decoration-none" asp-action="Index" asp-route-status="@ComplaintStatus.Resolved">
+            <span class="kpi-icon is-green" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+            <div>
+                <div class="kpi-label">Resolved</div>
+                <div class="kpi-value">@ViewBag.Resolved</div>
+                <div class="kpi-note">Closed with the client</div>
+            </div>
+        </a>
+
+        <div class="kpi">
+            <span class="kpi-icon is-teal" aria-hidden="true"><i class="fas fa-stopwatch"></i></span>
+            <div>
+                <div class="kpi-label">Time to Resolve</div>
+                <div class="kpi-value">@(average == null ? "–" : average.Value.ToString("0"))</div>
+                <div class="kpi-note">@(average == null ? "No dated resolutions yet" : "Days on average")</div>
+            </div>
+        </div>
+
+    </div>
+
+    <form method="get" class="filter-bar" data-auto-submit>
+
+        <div class="flex-grow-1">
+            <label for="complaint-search" class="form-label">Search</label>
+            <input id="complaint-search" type="search" name="q" class="form-control" value="@search"
+                   placeholder="Client, email, phone, complaint or staff member" />
+        </div>
+
+        <div>
+            <label for="complaint-status" class="form-label">Status</label>
+            <select id="complaint-status" name="status" class="form-select">
+                <option value="">All</option>
+                @foreach (var s in Enum.GetValues<ComplaintStatus>())
+                {
+                    <option value="@s" selected="@(statusFilter == s)">@s</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-bar-actions">
+            <noscript>
+                <button type="submit" class="btn btn-outline-secondary">Filter</button>
+            </noscript>
+            <a class="btn btn-outline-primary text-nowrap" asp-action="Index">
+                <i class="fas fa-filter-circle-xmark" aria-hidden="true"></i> Reset
+            </a>
+        </div>
+
+    </form>
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-comment-dots" aria-hidden="true"></i> Complaints
+            <span class="tab-count">@Model.TotalCount</span>
+        </h3>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-comment-dots" aria-hidden="true"></i>
+                <p>
+                    @(string.IsNullOrWhiteSpace(search) && statusFilter == null
+                        ? "No complaints recorded yet. Record one, or import the register you kept in a spreadsheet."
+                        : "No complaints match.")
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Received</th>
+                            <th>Client</th>
+                            <th>Complaint</th>
+                            <th>Staff Involved</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var c in Model.Items)
+                        {
+                            <tr>
+                                <td class="text-nowrap">
+                                    @if (c.ReceivedOn == null)
+                                    {
+                                        <span class="text-muted">Not dated</span>
+                                    }
+                                    else
+                                    {
+                                        @c.ReceivedOn.Value.ToString("d MMM yyyy")
+                                    }
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@c.ClientName</div>
+                                    <div class="small text-muted">@(c.ClientEmail ?? c.ClientPhone)</div>
+                                </td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(c.Nature))
+                                    {
+                                        <span class="text-muted">Not recorded</span>
+                                    }
+                                    else
+                                    {
+                                        <span title="@c.Nature">@Short(c.Nature, 90)</span>
+                                    }
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(c.StaffInvolved) ? "–" : c.StaffInvolved)</td>
+                                <td>
+                                    <span class="status-badge @(c.Status == ComplaintStatus.Resolved ? "badge-green" : "badge-amber")">@c.Status</span>
+                                    @if (c.ResolvedOn != null)
+                                    {
+                                        <div class="small text-muted">@c.ResolvedOn.Value.ToString("d MMM yyyy")</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@c.Id" title="View">
+                                            <i class="fas fa-eye" aria-hidden="true"></i>
+                                            <span class="visually-hidden">View the complaint from @c.ClientName</span>
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-success" asp-action="Edit" asp-route-id="@c.Id" title="Update">
+                                            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
+                                            <span class="visually-hidden">Update the complaint from @c.ClientName</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(Model, "complaint", "complaints")' />
+        }
+
+    </section>
+
+</div>
