@@ -20,18 +20,24 @@ namespace HrPortal.Services
 
         private readonly BrandAssets _brand;
 
+        private readonly LeaveBalanceService _balances;
+
         public LeaveApplicationPdfService(
             ApplicationDbContext context,
-            BrandAssets brand)
+            BrandAssets brand,
+            LeaveBalanceService balances)
         {
             _context = context;
             _brand = brand;
+            _balances = balances;
         }
 
         /// <summary>
         /// Looks up what the form prints beside the request itself:
         /// every leave type, so the boxes match the paper form, and
-        /// the balance behind the type applied for.
+        /// the balance behind the type applied for: the live one for a
+        /// type that earns days monthly, whatever year the leave falls
+        /// in, as the screens show it.
         /// </summary>
         public async Task<byte[]> RenderAsync(LeaveRequest request)
         {
@@ -41,12 +47,10 @@ namespace HrPortal.Services
                 .OrderBy(l => l.Name)
                 .ToListAsync();
 
-            var balance = await _context.LeaveBalances
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b =>
-                    b.EmployeeId == request.EmployeeId &&
-                    b.LeaveTypeId == request.LeaveTypeId &&
-                    b.Year == request.StartDate.Year);
+            var balance = await _balances.FindBalanceAsync(
+                request.EmployeeId,
+                request.LeaveTypeId,
+                request.StartDate.Year);
 
             return Build(request, leaveTypes, balance).GeneratePdf();
         }
@@ -117,6 +121,9 @@ namespace HrPortal.Services
 
                 column.Item().Element(e =>
                     Boxes(e, request, leaveTypes, balance));
+
+                column.Item().Element(e => DocumentStyle.Note(
+                    e, BalanceNote(request, balance, DateTime.Today)));
 
                 column.Item().Element(e => DocumentStyle.Section(
                     e,
@@ -268,6 +275,32 @@ namespace HrPortal.Services
                             : DocumentStyle.Ink);
                 }
             });
+        }
+
+        /// <summary>
+        /// Says when the figures were taken, since they move as leave is
+        /// earned and taken, or that there are none to show.
+        /// </summary>
+        public static string BalanceNote(
+            LeaveRequest request,
+            LeaveBalance? balance,
+            DateTime asAt)
+        {
+            if (balance == null)
+            {
+                return $"No {request.LeaveType.Name} balance has been " +
+                       "set up, so HR checks the days.";
+            }
+
+            var note = $"Days as they stood on {asAt:d MMMM yyyy}.";
+
+            if (balance.PendingDays > 0)
+            {
+                note += $" The balance already takes off " +
+                        $"{balance.PendingDays:0.##} days awaiting approval.";
+            }
+
+            return note;
         }
 
         /// <summary>
