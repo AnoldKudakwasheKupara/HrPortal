@@ -1,0 +1,81 @@
+@model HrPortal.Services.LeaveDaysPanel
+
+<div class="card shadow-sm mb-3 leave-days">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+
+        <span>@Model.Heading</span>
+
+        <span class="text-muted small">As at @DateTime.Today.ToString("d MMM yyyy")</span>
+
+    </div>
+
+    @if (!Model.Rows.Any())
+    {
+        <div class="card-body">
+            <p class="text-muted mb-0">
+                No leave balances are held yet. HR checks the days when the request reaches them.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="card-body is-table">
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Type of leave</th>
+                            <th class="num">Taken</th>
+                            <th class="num">Accrued</th>
+                            <th class="num">Pending</th>
+                            <th class="num">Balance</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var row in Model.Rows)
+                        {
+                            var applied = row.Type.Id == Model.AppliedFor;
+
+                            <tr class="@(applied ? "table-active fw-semibold" : "")">
+                                <td>
+                                    @row.Type.Name
+                                    @if (applied)
+                                    {
+                                        <div class="small text-muted fw-normal">Applied for</div>
+                                    }
+                                </td>
+
+                                @if (row.Balance == null)
+                                {
+                                    <td colspan="4" class="text-muted fw-normal">Not set up by HR yet</td>
+                                }
+                                else
+                                {
+                                    <td class="num">@row.Balance.UsedDays.ToString("0.##")</td>
+                                    <td class="num">@row.Balance.AllocatedDays.ToString("0.##")</td>
+                                    <td class="num">@row.Balance.PendingDays.ToString("0.##")</td>
+                                    <td class="num @(row.Balance.RemainingDays < 0 ? "text-danger" : "")">@row.Balance.RemainingDays.ToString("0.##")</td>
+                                }
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="card-footer small text-muted">
+            In days. Pending days are awaiting approval and already come off the balance.
+        </div>
+    }
+
+</div>

@@ -129,6 +129,49 @@ namespace HrPortal.Services
         }
 
         /// <summary>
+        /// The leave days somebody has now, one row per leave type that
+        /// keeps a balance: the live one for a type with a monthly rate,
+        /// otherwise this year's. A type with a monthly rate that has no
+        /// balance yet still gets a row, without figures, so a form can
+        /// say so instead of leaving it out. Interns earn no such days,
+        /// so they only get rows for balances actually held.
+        /// </summary>
+        public async Task<List<LeaveDays>> CurrentAsync(int employeeId, DateTime today)
+        {
+            var held = await _context.LeaveBalances
+                .AsNoTracking()
+                .Include(b => b.LeaveType)
+                .Where(b =>
+                    b.EmployeeId == employeeId &&
+                    b.LeaveType.IsActive &&
+                    (b.LeaveType.MonthlyAccrualDays > 0 || b.Year == today.Year))
+                .ToListAsync();
+
+            var rows = held
+                .GroupBy(b => b.LeaveTypeId)
+                .Select(g => g.OrderByDescending(b => b.Year).First())
+                .Select(b => new LeaveDays(b.LeaveType, b))
+                .ToList();
+
+            var intern = await _context.Employees
+                .AnyAsync(e => e.Id == employeeId && e.EmploymentType == EmploymentType.Intern);
+
+            if (!intern)
+            {
+                var earning = await _context.LeaveTypes
+                    .AsNoTracking()
+                    .Where(t => t.IsActive && t.MonthlyAccrualDays > 0)
+                    .ToListAsync();
+
+                rows.AddRange(earning
+                    .Where(t => rows.All(r => r.Type.Id != t.Id))
+                    .Select(t => new LeaveDays(t, null)));
+            }
+
+            return rows.OrderBy(r => r.Type.Name).ToList();
+        }
+
+        /// <summary>
         /// Adds every month due to every active employee's balance, and
         /// starts a balance for anyone who has just joined. Interns are
         /// left out of both. It works from

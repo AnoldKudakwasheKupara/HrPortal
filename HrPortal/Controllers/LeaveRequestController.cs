@@ -18,14 +18,18 @@ namespace HrPortal.Controllers
 
         private readonly LeaveApplicationPdfService _pdf;
 
+        private readonly LeaveBalanceService _balances;
+
         public LeaveRequestController(
             ApplicationDbContext context,
             RecordScope scope,
-            LeaveApplicationPdfService pdf)
+            LeaveApplicationPdfService pdf,
+            LeaveBalanceService balances)
         {
             _context = context;
             _scope = scope;
             _pdf = pdf;
+            _balances = balances;
         }
 
         public async Task<IActionResult> Index(
@@ -111,6 +115,11 @@ namespace HrPortal.Controllers
 
             if (request == null)
                 return NotFound();
+
+            ViewBag.LeaveDays = new LeaveDaysPanel(
+                $"{request.Employee.FirstName}'s leave days",
+                await _balances.CurrentAsync(request.EmployeeId, DateTime.Today),
+                request.LeaveTypeId);
 
             return View(request);
         }

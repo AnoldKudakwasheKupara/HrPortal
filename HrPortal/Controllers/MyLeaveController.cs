@@ -379,16 +379,11 @@ namespace HrPortal.Controllers
 
             ViewBag.Applicant = employee;
 
-            ViewBag.Balances = employee == null
-                ? new List<LeaveBalance>()
-                : await _context.LeaveBalances
-                    .AsNoTracking()
-                    .Include(b => b.LeaveType)
-                    .Where(b =>
-                        b.EmployeeId == employee.Id &&
-                        b.Year == DateTime.Today.Year)
-                    .OrderBy(b => b.LeaveType.Name)
-                    .ToListAsync();
+            ViewBag.LeaveDays = new LeaveDaysPanel(
+                "Your leave days",
+                employee == null
+                    ? new List<LeaveDays>()
+                    : await _balances.CurrentAsync(employee.Id, DateTime.Today));
         }
     }
 }

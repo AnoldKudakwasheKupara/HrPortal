@@ -3892,3 +3892,9 @@ a.strip-item:hover {
         min-width: 0;
     }
 }
+
+.leave-days .table > :not(caption) > * > * {
+    padding-left: .6rem;
+    padding-right: .6rem;
+    white-space: normal;
+}
