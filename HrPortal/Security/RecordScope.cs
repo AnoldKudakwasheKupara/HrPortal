@@ -38,7 +38,7 @@ namespace HrPortal.Security
             var type = typeof(T);
 
             if (type == typeof(LeaveRequest))
-                return isHr || isMd;
+                return isHr || isMd || user.IsInRole(Roles.LeaveViewer);
 
             if (type == typeof(LeaveBalance) ||
                 type == typeof(EmployeeDocument) ||

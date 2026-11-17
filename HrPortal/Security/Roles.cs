@@ -18,6 +18,13 @@
 
         public const string ComplianceOnly = ComplianceOfficer;
 
+        /// <summary>
+        /// Sees every leave application at the company, whatever its
+        /// status, and can download the forms, but decides nothing and
+        /// changes nothing.
+        /// </summary>
+        public const string LeaveViewer = "Leave Viewer";
+
         public const string AdminOnly = Administrator;
 
         public const string AdminOrHr =
@@ -26,6 +33,8 @@
         public const string HrOnly = HrOfficer;
 
         public const string HrOrMd = HrOfficer + "," + Md;
+
+        public const string LeaveRecords = HrOrMd + "," + LeaveViewer;
 
         public const string AnyManager =
             Administrator + "," + HrOfficer + "," + Md;

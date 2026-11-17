@@ -40,6 +40,7 @@
     var leadsTraining = !isHr && await Training.LeadsAnyTrainingAsync();
     var isMd = User.IsInRole("MD");
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
+    var seesLeave = User.IsInRole(HrPortal.Security.Roles.LeaveViewer);
 
     var capturesCourses = await CourseCapture.CanCaptureAsync(User);
 
@@ -233,7 +234,7 @@
         }
     }
 
-    @if (isAdmin || isHr || isMd)
+    @if (isAdmin || isHr || isMd || seesLeave)
     {
         <div class="nav-group">Administration</div>
 
@@ -266,7 +267,7 @@
             </a>
         }
 
-        @if (isHr || isMd)
+        @if (isHr || isMd || seesLeave)
         {
             <a class="nav-item @On("LeaveRequest")"
                asp-controller="LeaveRequest" asp-action="Index">
@@ -347,10 +348,13 @@
 
         }
 
-        <a class="nav-item @On("Reports")"
-           asp-controller="Reports" asp-action="Index">
-            <i class="fas fa-chart-column"></i> Reports &amp; Audit
-        </a>
+        @if (isAdmin || isHr || isMd)
+        {
+            <a class="nav-item @On("Reports")"
+               asp-controller="Reports" asp-action="Index">
+                <i class="fas fa-chart-column"></i> Reports &amp; Audit
+            </a>
+        }
 
         @if (isAdmin)
         {

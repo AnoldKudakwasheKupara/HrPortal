@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.HrOrMd)]
+    [Authorize(Roles = Roles.LeaveRecords)]
     public class LeaveRequestController : Controller
     {
         private const int PageSize = 10;
