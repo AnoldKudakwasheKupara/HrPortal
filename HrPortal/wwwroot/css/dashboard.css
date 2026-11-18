@@ -65,7 +65,7 @@
     margin-bottom: .6rem;
 }
 
-.dash-eyebrow i { font-size: .7rem; color: var(--primary); }
+.dash-eyebrow i { font-size: .7rem; color: var(--primary-ink); }
 
 .dash-masthead h1 {
     font-size: 1.75rem;
@@ -76,7 +76,7 @@
     margin: 0;
 }
 
-.dash-masthead h1 .dash-name { color: var(--primary); }
+.dash-masthead h1 .dash-name { color: var(--primary-ink); }
 
 .dash-lede {
     margin: .55rem 0 0;
@@ -432,7 +432,7 @@
     color: var(--d-ink);
 }
 
-.panel-header > i { color: var(--primary); font-size: .88rem; flex-shrink: 0; }
+.panel-header > i { color: var(--primary-ink); font-size: .88rem; flex-shrink: 0; }
 .panel-header > a,
 .panel-header > .panel-count { margin-left: auto; }
 
@@ -485,7 +485,7 @@
     align-items: center;
     justify-content: center;
     background: var(--primary-light);
-    color: var(--primary-dark);
+    color: var(--primary-dark-ink);
     font-size: .9rem;
 }
 

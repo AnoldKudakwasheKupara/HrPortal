@@ -2,6 +2,8 @@
     --primary-rgb: 16, 103, 93;
     --link-rgb: 1, 128, 128;
     --link-hover-rgb: 5, 100, 89;
+    --link-rgb-dark: 159, 205, 199;
+    --link-hover-rgb-dark: 191, 221, 218;
     --primary-deep: #043f38;
     --primary-soft: #e8f3f1;
     --primary-softer: #f1f8f7;
@@ -18,6 +20,8 @@
 
     --primary: #10675d;
     --primary-dark: #056459;
+    --primary-ink: var(--primary);
+    --primary-dark-ink: var(--primary-dark);
     --primary-light: #e2efed;
     --primary-glow: rgba(var(--primary-rgb),0.25);
 
@@ -144,7 +148,7 @@ textarea:focus-visible,
 }
 
 .data-card {
-    background: #fff;
+    background: var(--bg-card);
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
@@ -202,7 +206,7 @@ textarea:focus-visible,
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff;
+    background: var(--bg-card);
     border-radius: var(--radius-sm);
     color: var(--gray-600);
     text-decoration: none;
@@ -212,7 +216,7 @@ textarea:focus-visible,
 }
 .btn-back:hover {
     background: var(--gray-50);
-    color: var(--primary);
+    color: var(--primary-ink);
     transform: translateX(-2px);
 }
 
@@ -250,7 +254,7 @@ textarea:focus-visible,
     margin-bottom: 2rem;
 }
 .stat-card {
-    background: #fff;
+    background: var(--bg-card);
     border-radius: var(--radius-md);
     padding: 1.25rem;
     display: flex;
@@ -277,7 +281,7 @@ textarea:focus-visible,
 .stat-info p { margin: 0; color: var(--gray-500); font-size: 0.875rem; }
 
 .filters-card {
-    background: #fff;
+    background: var(--bg-card);
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
@@ -319,7 +323,7 @@ textarea:focus-visible,
     font-size: 0.875rem;
     transition: all 0.2s;
     font-family: inherit;
-    background: #fff;
+    background: var(--bg-card);
     cursor: pointer;
 }
 .filter-select:focus {
@@ -351,7 +355,7 @@ textarea:focus-visible,
     box-shadow: 0 0 0 3px rgba(var(--primary-rgb),0.1);
 }
 .btn-clear-filters {
-    background: #fff;
+    background: var(--bg-card);
     color: var(--gray-600);
     padding: 0.625rem 1rem;
     border-radius: 0.5rem;
@@ -379,7 +383,7 @@ textarea:focus-visible,
 .badge-green { background: #e6f5e9; color: var(--success); border: 1px solid #c6e0c9; }
 .badge-amber { background: #fff5e6; color: #b45309; border: 1px solid #ffe0b3; }
 .badge-red   { background: #fff5f5; color: var(--danger); border: 1px solid #fed7d7; }
-.badge-blue  { background: var(--primary-soft); color: var(--primary-dark); border: 1px solid var(--primary-edge); }
+.badge-blue  { background: var(--primary-soft); color: var(--primary-dark-ink); border: 1px solid var(--primary-edge); }
 .badge-gray  { background: var(--gray-100); color: var(--gray-500); border: 1px solid var(--gray-300); }
 
 .list-avatar {
@@ -399,7 +403,7 @@ textarea:focus-visible,
 .list-avatar-cell { display: flex; align-items: center; gap: 0.5rem; }
 .chip {
     display: inline-flex; align-items: center; gap: 0.35rem;
-    background: var(--primary-softer); color: var(--primary-dark); border: 1px solid var(--primary-edge);
+    background: var(--primary-softer); color: var(--primary-dark-ink); border: 1px solid var(--primary-edge);
     padding: 0.2rem 0.6rem; border-radius: 2rem; font-size: 0.72rem; font-weight: 600;
 }
 .chip-muted { color: var(--text-muted); font-size: 0.72rem; font-style: italic; }
@@ -458,10 +462,10 @@ textarea:focus-visible,
     --bs-btn-hover-bg: var(--primary); --bs-btn-hover-border-color: var(--primary);
     --bs-btn-active-bg: var(--primary); --bs-btn-active-border-color: var(--primary);
 }
-.text-primary { color: var(--primary) !important; }
+.text-primary { color: var(--primary-ink) !important; }
 .bg-primary { background-color: var(--primary) !important; }
 .border-primary { border-color: var(--primary) !important; }
-.link-primary { color: var(--primary) !important; }
+.link-primary { color: var(--primary-ink) !important; }
 .nav-pills { --bs-nav-pills-link-active-bg: var(--primary); }
 .pagination {
     --bs-pagination-color: var(--primary);

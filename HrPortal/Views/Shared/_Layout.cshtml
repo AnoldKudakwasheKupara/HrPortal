@@ -33,8 +33,10 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/page-icons.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme-dark.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HrPortal.styles.css" asp-append-version="true" />
     <partial name="_BrandStyle" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
 </head>
 <body>
 
@@ -104,6 +106,15 @@
                     var unread = await NotificationBadge.UnreadCountAsync();
 
                     <div class="topbar-right">
+
+                        <button type="button"
+                                id="themeToggle"
+                                class="topbar-bell theme-toggle"
+                                aria-label="Switch to dark theme"
+                                title="Switch to dark theme">
+                            <i class="fas fa-moon theme-icon-dark" aria-hidden="true"></i>
+                            <i class="fas fa-sun theme-icon-light" aria-hidden="true"></i>
+                        </button>
 
                         <a class="topbar-bell"
                            asp-controller="MyNotifications"

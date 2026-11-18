@@ -36,7 +36,7 @@
 
             ::selection {
                 background: var(--primary-surface);
-                color: var(--primary-dark);
+                color: var(--primary-dark-ink);
             }
 
             html { scroll-behavior: smooth; }
@@ -125,7 +125,7 @@
             }
 
                 .topbar-search:hover {
-                    background: white;
+                    background: var(--bg-card);
                     border-color: var(--gray-300);
                     color: var(--gray-700);
                     box-shadow: var(--shadow-sm);
@@ -138,7 +138,7 @@
                     border: 1px solid var(--gray-200);
                     border-radius: 0.3rem;
                     padding: 0.1rem 0.35rem;
-                    background: white;
+                    background: var(--bg-card);
                 }
 
             @media (max-width: 768px) {
@@ -164,7 +164,7 @@
             .cmdk {
                 width: 100%;
                 max-width: 560px;
-                background: white;
+                background: var(--bg-card);
                 border-radius: var(--radius-md);
                 box-shadow: var(--shadow-xl, 0 25px 50px -12px rgba(0,0,0,.25));
                 overflow: hidden;
@@ -251,7 +251,7 @@
                     color: var(--gray-800);
                 }
 
-                    .cmdk-item.selected i { color: var(--primary); }
+                    .cmdk-item.selected i { color: var(--primary-ink); }
 
             .cmdk-empty {
                 padding: 1.5rem;
@@ -439,7 +439,7 @@
 
             .mobile-toggle {
                 display: none;
-                background: white;
+                background: var(--bg-card);
                 border: 1px solid var(--border-light);
                 border-radius: var(--radius-sm);
                 padding: 8px 12px;
@@ -450,7 +450,7 @@
                 .mobile-toggle:hover {
                     background: var(--primary-surface);
                     border-color: var(--primary);
-                    color: var(--primary);
+                    color: var(--primary-ink);
                 }
 
             .user-profile {
@@ -471,7 +471,7 @@
             }
 
                 .profile-link:hover {
-                    background: white;
+                    background: var(--bg-card);
                     box-shadow: var(--shadow-sm);
                     transform: scale(1.02);
                     text-decoration: none;
@@ -505,7 +505,7 @@
 
             .user-role {
                 font-size: 0.65rem;
-                color: var(--primary);
+                color: var(--primary-ink);
                 font-weight: 600;
                 background: var(--primary-surface);
                 padding: 2px 10px;
@@ -698,7 +698,7 @@
     border: 0;
     border-top: 4px solid var(--brand-beige);
     border-radius: 14px;
-    background: #ffffff;
+    background: var(--bg-card);
     color: var(--brand-ink);
     box-shadow: 0 24px 60px rgba(var(--sidebar-rgb), 0.28);
     text-align: center;
@@ -717,7 +717,7 @@
     margin-bottom: 14px;
     border-radius: 50%;
     background: var(--primary-light);
-    color: var(--primary);
+    color: var(--primary-ink);
     font-size: 1.3rem;
 }
 
@@ -776,7 +776,7 @@
     text-align: center;
 }
 
-.sanctions-step.is-running .sanctions-step-icon { color: var(--primary); }
+.sanctions-step.is-running .sanctions-step-icon { color: var(--primary-ink); }
 .sanctions-step.is-done .sanctions-step-icon { color: #157a55; }
 .sanctions-step.is-warning .sanctions-step-icon { color: #b7791f; }
 .sanctions-step.is-failed .sanctions-step-icon { color: #c53030; }

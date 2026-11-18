@@ -295,6 +295,8 @@ namespace HrPortal.Services
             ["--primary-rgb"] = Rgb(Primary),
             ["--link-rgb"] = Rgb(Link),
             ["--link-hover-rgb"] = Rgb(Pick("--primary-dark", () => Mix(Primary, "#000000", 0.15))),
+            ["--link-rgb-dark"] = Rgb(Mix(Bright, "#ffffff", 0.55)),
+            ["--link-hover-rgb-dark"] = Rgb(Mix(Bright, "#ffffff", 0.7)),
             ["--primary-dark"] = Pick("--primary-dark", () => Mix(Primary, "#000000", 0.15)),
             ["--primary-deep"] = Pick("--primary-deep", () => Mix(Primary, "#000000", 0.4)),
             ["--primary-light"] = Pick("--primary-light", () => Mix(Primary, "#ffffff", 0.88)),
@@ -322,6 +324,9 @@ namespace HrPortal.Services
             ["--hero-to"] = Pick("--hero-to", () => Mix(Sidebar, "#000000", 0.08)),
             ["--hero-deep"] = Pick("--hero-deep", () => Mix(Sidebar, "#000000", 0.35))
         };
+
+        /// <summary>The lighter shade of the main colour, which the dark theme lightens further for links.</summary>
+        private string Bright => Pick("--primary-bright", () => Mix(Primary, "#ffffff", 0.15));
 
         /// <summary>Links, and the one accent on printed forms.</summary>
         public string Link => Pick("--brand-teal", () => Primary);
