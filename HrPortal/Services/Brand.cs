@@ -98,6 +98,15 @@ namespace HrPortal.Services
         /// </summary>
         public string? PortalUrl { get; set; }
 
+        /// <summary>
+        /// The mailbox this company's emails come from, when it is not
+        /// the portal's own: Brand__Mail__{key}__FromAddress, and, for
+        /// a mailbox in another Microsoft 365 organisation, its
+        /// TenantId, ClientId and ClientSecret. Null sends from the
+        /// Email settings.
+        /// </summary>
+        public BrandMailbox? Mailbox { get; set; }
+
         /// <summary>What the portal is called: the sidebar, page titles, emails.</summary>
         public string PortalName { get; set; } = "My Intellego";
 
@@ -251,8 +260,29 @@ namespace HrPortal.Services
             if (!string.IsNullOrWhiteSpace(url))
                 brand.PortalUrl = url.Trim().TrimEnd('/');
 
+            var mail = configuration.GetSection($"Brand:Mail:{brand.Key}").Get<BrandMailbox>();
+
+            if (!string.IsNullOrWhiteSpace(mail?.FromAddress))
+                brand.Mailbox = mail;
+
             return brand;
         }
+    }
+
+    /// <summary>
+    /// A company's own sending mailbox. Anything left empty is taken
+    /// from the Email settings, so a mailbox in the same Microsoft 365
+    /// organisation needs only its address.
+    /// </summary>
+    public sealed class BrandMailbox
+    {
+        public string? FromAddress { get; set; }
+
+        public string? TenantId { get; set; }
+
+        public string? ClientId { get; set; }
+
+        public string? ClientSecret { get; set; }
     }
 
     /// <summary>

@@ -167,6 +167,28 @@ way:
 Each service has its own disk, so a file uploaded on one portal does not
 open on the other.
 
+**Emails.** Every email is sent as the company the person works for (their
+home company): its name, logo, colours and links, whichever portal or job
+sent it. `Brand__Urls__mmc` and `Brand__Urls__intellego` tell each service
+where the other portal is, so links open the right one.
+
+Microsoft 365 shows the sending mailbox's own name, so MMC's emails need an
+MMC mailbox. MMC is in a separate Microsoft 365 organisation, so register an
+app there the same way as above (Exchange `Application Mail.Send`, scoped to
+the MMC mailbox only), and set these on **both** services, since `hrportal`
+sends the reminders and `mmcportal` the rest:
+
+| Variable | Value |
+| --- | --- |
+| `Brand__Mail__mmc__FromAddress` | the MMC sending mailbox, e.g. `no-reply@mmccapitalzim.com` |
+| `Brand__Mail__mmc__TenantId` | MMC's tenant ID |
+| `Brand__Mail__mmc__ClientId` | the app's client ID in MMC's tenant |
+| `Brand__Mail__mmc__ClientSecret` | its client secret |
+
+Until they are set, MMC's emails are branded MMC but go out from Intellego's
+mailbox, so they show Intellego's mailbox name as the sender. Give the MMC
+mailbox the display name the staff should see, such as "My MMC".
+
 **People.** Every employee has a home company and works for one or more
 companies, both set on the employee form. Somebody who works for both, such
 as the IT team, has one record, one sign-in and one leave balance, and sees

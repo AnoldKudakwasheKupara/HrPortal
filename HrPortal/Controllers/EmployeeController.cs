@@ -935,38 +935,58 @@ namespace HrPortal.Controllers
         /// The welcome email, carrying a link to choose a password.
         /// It is the same link Forgot password sends, so it lasts as
         /// long, and Forgot password is the way back if it runs out.
+        /// It comes from the company the person works for, whichever
+        /// portal they were added on.
         /// </summary>
         private async Task<bool> SendWelcomeAsync(
             Employee employee,
             ApplicationUser user)
         {
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var key = await _context.Companies
+                .AsNoTracking()
+                .Where(c => c.Id == employee.HomeCompanyId)
+                .Select(c => c.Key)
+                .FirstOrDefaultAsync();
 
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var before = Brand.Current;
 
-            var link = Url.Page(
-                "/Account/ResetPassword",
-                pageHandler: null,
-                values: new { area = "Identity", code })!;
+            Brand.Enter(Brand.ForKey(key) ?? before);
 
-            if (string.IsNullOrWhiteSpace(_emailOptions.LinkBase))
-                link = $"{Request.Scheme}://{Request.Host}{link}";
+            try
+            {
+                var code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            return await _email.SendNotificationAsync(
-                new OutboundNotification(
-                    employee.Id,
-                    user.Email!,
-                    $"{employee.FirstName} {employee.LastName}",
-                    employee.FirstName,
-                    $"Welcome to {Brand.Current.PortalName}",
-                    $"You can now sign in to {Brand.Current.PortalName}, the {Brand.Current.ShortName} " +
-                    $"people portal, as {user.Email}. Choose your " +
-                    "password using the link below, then sign in and the " +
-                    "Welcome page will take you through getting started. The " +
-                    "link works for 24 hours; if it runs out, use Forgot " +
-                    "password on the sign-in page for a new one.",
-                    link,
-                    EmailKind.Welcome));
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                var link = Url.Page(
+                    "/Account/ResetPassword",
+                    pageHandler: null,
+                    values: new { area = "Identity", code })!;
+
+                if (string.IsNullOrWhiteSpace(_emailOptions.LinkBase))
+                    link = $"{Request.Scheme}://{Request.Host}{link}";
+
+                return await _email.SendNotificationAsync(
+                    new OutboundNotification(
+                        employee.Id,
+                        user.Email!,
+                        $"{employee.FirstName} {employee.LastName}",
+                        employee.FirstName,
+                        $"Welcome to {Brand.Current.PortalName}",
+                        $"You can now sign in to {Brand.Current.PortalName}, the {Brand.Current.ShortName} " +
+                        $"people portal, as {user.Email}. Choose your " +
+                        "password using the link below, then sign in and the " +
+                        "Welcome page will take you through getting started. The " +
+                        "link works for 24 hours; if it runs out, use Forgot " +
+                        "password on the sign-in page for a new one.",
+                        link,
+                        EmailKind.Welcome,
+                        key));
+            }
+            finally
+            {
+                Brand.Enter(before);
+            }
         }
 
         public async Task<IActionResult> ResetPassword(int? id)

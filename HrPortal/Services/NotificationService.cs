@@ -120,7 +120,8 @@ namespace HrPortal.Services
                         emp.Id,
                         emp.Email,
                         emp.FirstName,
-                        Name = emp.FirstName + " " + emp.LastName
+                        Name = emp.FirstName + " " + emp.LastName,
+                        HomeKey = emp.HomeCompany.Key
                     })
                     .ToDictionaryAsync(emp => emp.Id);
 
@@ -139,7 +140,8 @@ namespace HrPortal.Services
                         item.Title,
                         item.Message,
                         item.Link,
-                        item.Kind));
+                        item.Kind,
+                        to.HomeKey));
                 }
 
                 if (outbound.Count == 0)

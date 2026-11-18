@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace HrPortal.Tests.Companies
 {
+    [Collection("Brand list")]
     public sealed class LeaveRouteTests : IDisposable
     {
         private const int AtIntellego = 1;

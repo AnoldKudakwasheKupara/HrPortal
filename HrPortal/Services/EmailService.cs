@@ -18,9 +18,14 @@ namespace HrPortal.Services
 
         private readonly SemaphoreSlim _tokenGate = new(1, 1);
 
-        private string? _graphToken;
+        private readonly Dictionary<string, (string Token, DateTimeOffset Expires)> _graphTokens = new();
 
-        private DateTimeOffset _graphTokenExpires;
+        /// <summary>
+        /// Who an email goes out as, and the Microsoft 365 app that may
+        /// send it: a company's own mailbox when it has one, otherwise
+        /// the portal's.
+        /// </summary>
+        private sealed record Sender(string Address, string? TenantId, string? ClientId, string? ClientSecret);
 
         public EmailService(
             IOptions<EmailOptions> options,
@@ -36,12 +41,53 @@ namespace HrPortal.Services
 
         public bool IsEnabled => _options.Enabled;
 
+        private Sender SenderFor(Brand brand)
+        {
+            var box = brand.Mailbox;
+
+            static string? Pick(string? own, string? shared) =>
+                string.IsNullOrWhiteSpace(own) ? shared : own;
+
+            return new Sender(
+                Pick(box?.FromAddress, _options.FromAddress) ?? string.Empty,
+                Pick(box?.TenantId, _options.TenantId),
+                Pick(box?.ClientId, _options.ClientId),
+                Pick(box?.ClientSecret, _options.ClientSecret));
+        }
+
+        /// <summary>
+        /// Sends one email, branded for the company it names, or for
+        /// the portal being used when it names none, so somebody who
+        /// works for MMC Capital hears from MMC Capital even when the
+        /// email starts on Intellego's portal.
+        /// </summary>
         public async Task<bool> SendNotificationAsync(
             OutboundNotification notification,
             CancellationToken cancellationToken = default)
         {
             if (!_options.Enabled)
                 return false;
+
+            var brand = Brand.ForKey(notification.BrandKey) ?? Brand.Current;
+            var before = Brand.Current;
+
+            Brand.Enter(brand);
+
+            try
+            {
+                return await SendAsBrandAsync(notification, SenderFor(brand), cancellationToken);
+            }
+            finally
+            {
+                Brand.Enter(before);
+            }
+        }
+
+        private async Task<bool> SendAsBrandAsync(
+            OutboundNotification notification,
+            Sender sender,
+            CancellationToken cancellationToken)
+        {
 
             if (string.IsNullOrWhiteSpace(notification.EmailAddress))
             {
@@ -52,7 +98,7 @@ namespace HrPortal.Services
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(_options.FromAddress))
+            if (string.IsNullOrWhiteSpace(sender.Address))
             {
                 _logger.LogWarning(
                     "Email is enabled but Email:FromAddress is not set, " +
@@ -62,9 +108,9 @@ namespace HrPortal.Services
             }
 
             if (_options.Delivery == EmailDelivery.Graph &&
-                (string.IsNullOrWhiteSpace(_options.TenantId) ||
-                 string.IsNullOrWhiteSpace(_options.ClientId) ||
-                 string.IsNullOrWhiteSpace(_options.ClientSecret)))
+                (string.IsNullOrWhiteSpace(sender.TenantId) ||
+                 string.IsNullOrWhiteSpace(sender.ClientId) ||
+                 string.IsNullOrWhiteSpace(sender.ClientSecret)))
             {
                 _logger.LogWarning(
                     "Email is set to go through Microsoft Graph but " +
@@ -76,7 +122,7 @@ namespace HrPortal.Services
 
             try
             {
-                var message = Build(notification);
+                var message = Build(notification, sender);
 
                 switch (_options.Delivery)
                 {
@@ -85,7 +131,7 @@ namespace HrPortal.Services
                         break;
 
                     case EmailDelivery.Graph:
-                        await SendOverGraphAsync(message, cancellationToken);
+                        await SendOverGraphAsync(message, sender, cancellationToken);
                         break;
 
                     default:
@@ -108,7 +154,7 @@ namespace HrPortal.Services
             }
         }
 
-        private MimeMessage Build(OutboundNotification notification)
+        private MimeMessage Build(OutboundNotification notification, Sender sender)
         {
             var logo = _brand.EmailMark;
 
@@ -120,7 +166,7 @@ namespace HrPortal.Services
             var message = new MimeMessage();
 
             message.From.Add(
-                new MailboxAddress(_options.SenderName, _options.FromAddress));
+                new MailboxAddress(_options.SenderName, sender.Address));
 
             message.To.Add(new MailboxAddress(
                 notification.DisplayName ?? string.Empty,
@@ -185,9 +231,10 @@ namespace HrPortal.Services
         /// </summary>
         private async Task SendOverGraphAsync(
             MimeMessage message,
+            Sender sender,
             CancellationToken cancellationToken)
         {
-            var token = await GraphTokenAsync(cancellationToken);
+            var token = await GraphTokenAsync(sender, cancellationToken);
 
             using var mime = new MemoryStream();
 
@@ -201,7 +248,7 @@ namespace HrPortal.Services
 
             var url =
                 $"{_options.GraphBase.TrimEnd('/')}/v1.0/users/" +
-                $"{Uri.EscapeDataString(_options.FromAddress)}/sendMail";
+                $"{Uri.EscapeDataString(sender.Address)}/sendMail";
 
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
@@ -221,45 +268,43 @@ namespace HrPortal.Services
 
                 throw new InvalidOperationException(
                     "Microsoft Graph did not accept the message from " +
-                    $"{_options.FromAddress} ({(int)response.StatusCode}): " +
+                    $"{sender.Address} ({(int)response.StatusCode}): " +
                     detail);
             }
         }
 
         /// <summary>
-        /// A token for Graph, signed in as the app. Kept until five
-        /// minutes before it runs out, so a morning of reminders
-        /// shares one sign-in rather than taking one each.
+        /// A token for Graph, signed in as the sending company's app.
+        /// Kept until five minutes before it runs out, so a morning of
+        /// reminders shares one sign-in per app rather than taking one
+        /// each.
         /// </summary>
         private async Task<string> GraphTokenAsync(
+            Sender sender,
             CancellationToken cancellationToken)
         {
-            if (_graphToken != null &&
-                DateTimeOffset.UtcNow < _graphTokenExpires)
-            {
-                return _graphToken;
-            }
+            var key = $"{sender.TenantId}|{sender.ClientId}";
 
             await _tokenGate.WaitAsync(cancellationToken);
 
             try
             {
-                if (_graphToken != null &&
-                    DateTimeOffset.UtcNow < _graphTokenExpires)
+                if (_graphTokens.TryGetValue(key, out var held) &&
+                    DateTimeOffset.UtcNow < held.Expires)
                 {
-                    return _graphToken;
+                    return held.Token;
                 }
 
                 var url =
                     $"{_options.GraphLoginBase.TrimEnd('/')}/" +
-                    $"{Uri.EscapeDataString(_options.TenantId!)}" +
+                    $"{Uri.EscapeDataString(sender.TenantId!)}" +
                     "/oauth2/v2.0/token";
 
                 var form = new FormUrlEncodedContent(
                     new Dictionary<string, string>
                     {
-                        ["client_id"] = _options.ClientId!,
-                        ["client_secret"] = _options.ClientSecret!,
+                        ["client_id"] = sender.ClientId!,
+                        ["client_secret"] = sender.ClientSecret!,
                         ["scope"] =
                             $"{_options.GraphBase.TrimEnd('/')}/.default",
                         ["grant_type"] = "client_credentials"
@@ -280,18 +325,18 @@ namespace HrPortal.Services
 
                 using var json = JsonDocument.Parse(body);
 
-                _graphToken = json.RootElement
+                var token = json.RootElement
                     .GetProperty("access_token")
-                    .GetString();
+                    .GetString()!;
 
                 var lifetime = json.RootElement
                     .GetProperty("expires_in")
                     .GetInt32();
 
-                _graphTokenExpires = DateTimeOffset.UtcNow
-                    .AddSeconds(Math.Max(60, lifetime - 300));
+                _graphTokens[key] = (token, DateTimeOffset.UtcNow
+                    .AddSeconds(Math.Max(60, lifetime - 300)));
 
-                return _graphToken!;
+                return token;
             }
             finally
             {

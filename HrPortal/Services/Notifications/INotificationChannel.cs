@@ -24,5 +24,6 @@ namespace HrPortal.Services.Notifications
         string Title,
         string Message,
         string? Link,
-        EmailKind Kind);
+        EmailKind Kind,
+        string? BrandKey = null);
 }
