@@ -38,7 +38,7 @@
     <partial name="_BrandStyle" />
     <script src="~/js/theme.js" asp-append-version="true"></script>
 </head>
-<body>
+<body data-upload-max="@HrPortal.Services.FileStorageService.MaxFileSizeBytes" data-upload-types="@string.Join(",", HrPortal.Services.FileStorageService.AllowedExtensions)">
 
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -223,6 +223,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/ux.js" asp-append-version="true"></script>
+    <script src="~/js/files.js" asp-append-version="true"></script>
     <script src="~/js/idle.js" asp-append-version="true"></script>
     <script src="~/js/filters.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

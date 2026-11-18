@@ -248,3 +248,7 @@ html[data-theme="dark"] .btn-outline-warning {
     --bs-btn-hover-bg: #f0b860;
     --bs-btn-hover-border-color: #f0b860;
 }
+
+html[data-theme="dark"] .drop-zone-error,
+html[data-theme="dark"] .drop-zone-remove:hover,
+html[data-theme="dark"] .drop-zone-remove:focus-visible { color: #f39191; }
