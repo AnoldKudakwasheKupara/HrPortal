@@ -85,6 +85,8 @@ html[data-theme="dark"] .is-blue { --tile-tint: #1a2638; --tile-ink: #8fb4ec; --
 html[data-theme="dark"] .is-green { --tile-ink: #5fd1a0; --tile-edge: #24543d; }
 html[data-theme="dark"] .is-amber { --tile-ink: #f0b860; --tile-edge: #5a4320; }
 html[data-theme="dark"] .is-red { --tile-ink: #f39191; --tile-edge: #5c2a2a; }
+html[data-theme="dark"] .is-violet { --tile-tint: #241e38; --tile-ink: #c9bcf8; --tile-edge: #3a2f5e; }
+html[data-theme="dark"] .is-gold { --tile-ink: color-mix(in srgb, var(--accent-gold) 50%, #ffffff); }
 
 html[data-theme="dark"] .badge-green { background: #16291f; color: #5fd1a0; border-color: #24543d; }
 html[data-theme="dark"] .badge-amber { background: #2e2414; color: #f0b860; border-color: #5a4320; }

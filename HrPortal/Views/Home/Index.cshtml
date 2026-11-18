@@ -34,15 +34,10 @@
         _ => "fa-circle-dot"
     };
 
-    // Headline figures: one tile each, the tone following meaning so a
-    // quiet day reads green and only what needs attention is amber or rose.
     var tiles = new List<(string Badge, string Icon, string Title, string Value,
                           string Note, string Cta, string Tone, string Ctrl, string Act)>();
 
-    // The "Jump to" mosaic: a hero, a dark tile and four tinted ones.
-    var jumps = new List<(string Badge, string Icon, string Title, string Desc,
-                          string? Figure, string? FigureLabel, string Cta,
-                          string Tone, string Ctrl, string Act)>();
+    var actions = new List<(string Icon, string Title, string Desc, string Tint, string Ctrl, string Act)>();
 
     string lede;
     string metaNote;
@@ -67,37 +62,29 @@
             "License", "Index"));
         tiles.Add(("Upkeep", "fa-screwdriver-wrench", "Maintenance", (a.MaintenanceOverdue + a.MaintenanceDueSoon).ToString("N0"),
             a.MaintenanceOverdue > 0 ? $"{a.MaintenanceOverdue:N0} overdue" : "due within 30 days", "See jobs",
-            a.MaintenanceOverdue > 0 ? "tone-rose" : a.MaintenanceDueSoon > 0 ? "tone-amber" : "tone-green",
+            a.MaintenanceOverdue > 0 ? "tone-rose" : a.MaintenanceDueSoon > 0 ? "tone-amber" : "tone-teal",
             "AssetMaintenance", "Index"));
         tiles.Add(("Helpdesk", "fa-headset", "IT activity", a.ActivitiesThisWeek.ToString("N0"),
-            a.ActivitiesOutstanding == 0 ? "nothing outstanding" : $"{a.ActivitiesOutstanding:N0} still open",
-            "Open the log", a.ActivitiesOutstanding > 0 ? "tone-amber" : "tone-teal", "ItActivity", "Index"));
+            a.ActivitiesOutstanding == 0 ? "logged this week" : $"{a.ActivitiesOutstanding:N0} still open",
+            "Open the log", a.ActivitiesOutstanding > 0 ? "tone-amber" : "tone-ink", "ItActivity", "Index"));
         var reportDue = Model.Mine?.WeeklyReportDue == true;
         tiles.Add(("Report", "fa-file-lines", "My weekly report", reportDue ? "Due" : "Open",
             reportDue ? "not submitted this week" : "write and submit yours", "Open",
-            reportDue ? "tone-gold" : "tone-green", "WeeklyReport", "Index"));
+            reportDue ? "tone-amber" : "tone-gold", "WeeklyReport", "Index"));
 
-        jumps.Add(("This week", "fa-headset", "IT activity log",
-            "Everything raised and resolved this week, and what is still open against a machine or a person.",
-            a.ActivitiesThisWeek.ToString("N0"), a.ActivitiesOutstanding == 0 ? "logged, nothing outstanding" : $"logged, {a.ActivitiesOutstanding:N0} outstanding",
-            "Log activity", "is-hero", "ItActivity", "Create"));
-        jumps.Add(("Estate", "fa-laptop", "Asset register", "Every machine the business holds, and who is holding it.",
-            a.Assets.ToString("N0"), "assets tracked", "Open", "tone-ink", "Asset", "Index"));
-        jumps.Add(("People", "fa-user-plus", "Add an employee", "Create the record and, if needed, a sign-in account.",
-            null, null, "New employee", "tone-teal", "Employee", "Create"));
-        jumps.Add(("Estate", "fa-box", "Register an asset", "Bring new hardware into the register.",
-            null, null, "New asset", "tone-green", "Asset", "Create"));
-        jumps.Add(("Report", "fa-file-lines", "My weekly report", "Write this week's report and submit it to your supervisor.",
-            null, null, "Open reports", "tone-gold", "WeeklyReport", "Index"));
-        jumps.Add(("Insight", "fa-chart-column", "Reports", "Assets, vendors, licences, activity and the audit trail.",
-            null, null, "See reports", "tone-violet", "Reports", "Index"));
+        actions.Add(("fa-headset", "Log IT activity", "Record a call, fix or request against a machine or a person.", "is-teal", "ItActivity", "Create"));
+        actions.Add(("fa-box", "Register an asset", "Bring new hardware into the register.", "is-blue", "Asset", "Create"));
+        actions.Add(("fa-screwdriver-wrench", "Log maintenance", "Record a service or repair, and when the next is due.", "is-green", "AssetMaintenance", "Create"));
+        actions.Add(("fa-certificate", "Add a licence", "Software or a subscription, and when it renews.", "is-violet", "License", "Create"));
+        actions.Add(("fa-user-shield", "Roles and access", "Who is HR, who approves, and at which company.", "is-gold", "Role", "Index"));
+        actions.Add(("fa-box-archive", "Backups", "Download a copy of the data and the files.", "is-teal", "Backup", "Index"));
     }
     else if (Model.Hr != null)
     {
         var h = Model.Hr;
         lede = "Here's where the people work stands today.";
         metaNote = $"{h.OnLeaveToday:N0} on leave today";
-        primary = ("Review leave", "LeaveApproval", "Index");
+        primary = ("Add employee", "Employee", "Create");
 
         tiles.Add(("Queue", "fa-inbox", "Awaiting review", h.AwaitingReview.ToString("N0"),
             h.AwaitingReview == 0 ? "nothing to review" : "waiting on HR", "Review",
@@ -114,35 +101,23 @@
             $"{h.EmployeesWithoutLogin:N0} without a login", "Open", "tone-teal", "Employee", "Index"));
         tiles.Add(("Learning", "fa-graduation-cap", "Overdue training", h.OverdueTrainingOrgWide.ToString("N0"),
             h.OverdueTrainingOrgWide == 0 ? "everyone is up to date" : "past the due date", "Review",
-            h.OverdueTrainingOrgWide > 0 ? "tone-rose" : "tone-green", "Reports", "Training"));
+            h.OverdueTrainingOrgWide > 0 ? "tone-rose" : "tone-ink", "Reports", "Training"));
         tiles.Add(("Done", "fa-calendar-check", "Approved this month", h.ApprovedThisMonth.ToString("N0"),
-            "leave requests completed", "Open", "tone-green", "Reports", "LeaveRequests"));
+            "leave requests completed", "Open", "tone-gold", "Reports", "LeaveRequests"));
 
-        jumps.Add(("Queue", "fa-inbox", "Leave to review",
-            Brand.Current.LeaveEndsWithHr
-                ? "Requests submitted by staff and cleared by their supervisor, waiting on your decision, which is final."
-                : "Requests submitted by staff and cleared by their supervisor, waiting on HR before they go to " + Brand.Current.TheDirectorShort + ".",
-            h.AwaitingReview.ToString("N0"), h.AwaitingReview == 1 ? "request waiting" : "requests waiting",
-            "Review leave", "is-hero", "LeaveApproval", "Index"));
-        jumps.Add(("People", "fa-id-card", "Employee records", "Every record, document and certification on file.",
-            h.ActiveEmployees.ToString("N0"), "active employees", "Open", "tone-ink", "Employee", "Index"));
-        jumps.Add(("People", "fa-user-plus", "Add an employee", "Create the record and a sign-in account.",
-            null, null, "New employee", "tone-teal", "Employee", "Create"));
-        jumps.Add(("Learning", "fa-clipboard-check", "Add a course", "Put a course in front of everyone at once.",
-            null, null, "New course", "tone-green", "TrainingCourse", "Create"));
-        jumps.Add(("Records", "fa-file-arrow-up", "File a document", "Attach a contract or letter to a record.",
-            null, null, "Upload", "tone-gold", "EmployeeDocument", "Create"));
-        jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what, and where each one stands.",
-            null, null, "Open", "tone-violet", "CourseApproval", "Index"));
+        actions.Add(("fa-file-import", "Upload leave balances", "Load starting balances from a spreadsheet.", "is-teal", "LeaveBalance", "Upload"));
+        actions.Add(("fa-clipboard-check", "Add a course", "Put a course in front of staff, with a due date.", "is-blue", "TrainingCourse", "Create"));
+        actions.Add(("fa-file-arrow-up", "File a document", "Attach a contract or letter to a record.", "is-green", "EmployeeDocument", "Create"));
+        actions.Add(("fa-user-graduate", "Course applications", "Who wants to study what, and where each one stands.", "is-violet", "CourseApproval", "Index"));
+        actions.Add(("fa-book", "Publish a policy", "Share a policy and see who has read it.", "is-gold", "Policy", "Create"));
+        actions.Add(("fa-calendar-xmark", "Public holidays", "The days leave does not count.", "is-teal", "PublicHoliday", "Index"));
     }
     else if (Model.Md != null)
     {
         var m = Model.Md;
         lede = "Here's what is waiting on your decision.";
         metaNote = $"{m.OnLeaveToday:N0} on leave today";
-        primary = Brand.Current.LeaveEndsWithHr
-            ? ("Loan applications", "LoanApproval", "Index")
-            : ("Final approval", "LeaveApproval", "FinalApproval");
+        primary = ("Loan applications", "LoanApproval", "Index");
 
         if (!Brand.Current.LeaveEndsWithHr)
         {
@@ -151,35 +126,17 @@
                 m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "FinalApproval"));
         }
         tiles.Add(("Done", "fa-calendar-check", "Approved", m.ApprovedThisMonth.ToString("N0"),
-            $"{m.DaysApprovedThisMonth:0.#} days this month", "See them", "tone-green", "LeaveRequest", "Index"));
+            $"{m.DaysApprovedThisMonth:0.#} days this month", "See them", "tone-ink", "LeaveRequest", "Index"));
         tiles.Add(("Done", "fa-ban", "Rejected", m.RejectedThisMonth.ToString("N0"),
             "this month", "See them", "tone-slate", "LeaveRequest", "Index"));
         tiles.Add(("Today", "fa-umbrella-beach", "On leave today", m.OnLeaveToday.ToString("N0"),
             "staff away right now", "Absence report", "tone-teal", "Reports", "Absence"));
         tiles.Add(("Progress", "fa-file-lines", "Weekly reports", m.WeeklyReportsSubmitted.ToString("N0"),
-            $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview",
-            m.WeeklyReportsSubmitted >= m.WeeklyReportStaff ? "tone-green" : "tone-violet", "WeeklyReport", "Overview"));
+            $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview", "tone-violet", "WeeklyReport", "Overview"));
 
-        if (!Brand.Current.LeaveEndsWithHr)
-        {
-            jumps.Add(("Decide", "fa-stamp", "Leave for final approval",
-                "Requests that have cleared the supervisor and HR and now wait on " + Brand.Current.TheDirector + ".",
-                m.AwaitingFinalApproval.ToString("N0"), m.AwaitingFinalApproval == 1 ? "request waiting" : "requests waiting",
-                "Open the queue", "is-hero", "LeaveApproval", "FinalApproval"));
-        }
-        jumps.Add(("Progress", "fa-table-columns", "Weekly progress", "What everybody worked on this week, who has submitted and who has not.",
-            m.WeeklyReportsSubmitted.ToString("N0"), $"of {m.WeeklyReportStaff:N0} submitted",
-            "Open the overview", "tone-violet", "WeeklyReport", "Overview"));
-        jumps.Add(("Finance", "fa-hand-holding-dollar", "Loan applications", "Staff loans to sanction, return or decline.",
-            null, null, "Open", Brand.Current.LeaveEndsWithHr ? "is-hero" : "tone-ink", "LoanApproval", "Index"));
-        jumps.Add(("Learning", "fa-user-graduate", "Course applications", "Who wants to study what.",
-            null, null, "Decide", "tone-teal", "CourseApproval", "Index"));
-        jumps.Add(("Insight", "fa-chart-column", "Reports", "Leave, absence and how the portal is used.",
-            null, null, "See reports", "tone-green", "Reports", "Index"));
-        jumps.Add(("Leave", "fa-list", "All leave requests", "Every request at every stage.",
-            null, null, "Open", "tone-gold", "LeaveRequest", "Index"));
-        jumps.Add(("People", "fa-address-book", "Staff directory", "Who is who, and how to reach them.",
-            null, null, "Open", "tone-violet", "Directory", "Index"));
+        actions.Add(("fa-user-graduate", "Course applications", "Who wants to study what, and where each one stands.", "is-teal", "CourseApproval", "Index"));
+        actions.Add(("fa-folder-open", "Company documents", "Forms, templates and shared files.", "is-blue", "Repository", "Index"));
+        actions.Add(("fa-address-book", "Staff directory", "Who is who, and how to reach them.", "is-violet", "Directory", "Index"));
     }
     else
     {
@@ -200,34 +157,23 @@
             $"days used in {DateTime.Today.Year}", "History", "tone-slate", "MyLeave", "Index"));
         tiles.Add(("Requests", "fa-hourglass-half", "In progress", me.RequestsInProgress.ToString("N0"),
             me.RequestsInProgress == 0 ? "no open requests" : "awaiting a decision", "See them",
-            me.RequestsInProgress > 0 ? "tone-amber" : "tone-slate", "MyLeave", "Index"));
+            me.RequestsInProgress > 0 ? "tone-amber" : "tone-ink", "MyLeave", "Index"));
         tiles.Add(("Learning", "fa-graduation-cap", "Training to do", me.OutstandingTraining.ToString("N0"),
             me.OverdueTraining > 0 ? $"{me.OverdueTraining:N0} overdue" : me.OutstandingTraining == 0 ? "all caught up" : "none overdue",
-            "Open", me.OverdueTraining > 0 ? "tone-rose" : me.OutstandingTraining == 0 ? "tone-green" : "tone-violet",
+            "Open", me.OverdueTraining > 0 ? "tone-rose" : "tone-violet",
             "MyTraining", "Index"));
         tiles.Add(("Estate", "fa-laptop", "My assets", me.MyAssets.ToString("N0"),
             me.MyAssets == 0 ? "nothing issued" : "issued to you", "See them", "tone-teal", "MyAssets", "Index"));
         tiles.Add(("Inbox", "fa-bell", "Notices", me.UnreadNotifications.ToString("N0"),
             me.UnreadNotifications == 0 ? "nothing new" : "unread", "Read",
-            me.UnreadNotifications > 0 ? "tone-gold" : "tone-slate", "MyNotifications", "Index"));
+            me.UnreadNotifications > 0 ? "tone-amber" : "tone-gold", "MyNotifications", "Index"));
 
-        jumps.Add(("Leave", "fa-calendar-plus", "Book time off",
-            Brand.Current.LeaveEndsWithHr
-                ? "Your request goes to your supervisor first where you have one, then to HR, who decide."
-                : "Your request goes to your supervisor first where you have one, then to HR, then to " + Brand.Current.TheDirector + ".",
-            me.HasBalances ? me.RemainingDays.ToString("0.#") : null, me.HasBalances ? "days available" : null,
-            "Request leave", "is-hero", "MyLeave", "Create"));
-        jumps.Add(("Learning", "fa-graduation-cap", "My training", "Courses assigned to you, with their materials and due dates.",
-            me.OutstandingTraining.ToString("N0"), me.OutstandingTraining == 1 ? "course to complete" : "courses to complete",
-            "Open", "tone-ink", "MyTraining", "Index"));
-        jumps.Add(("Records", "fa-id-badge", "My record", "Your details, documents and next of kin.",
-            null, null, "Open", "tone-teal", "MyProfile", "Index"));
-        jumps.Add(("Learning", "fa-user-graduate", "Apply for a course", "Ask to study a programme.",
-            null, null, "Apply", "tone-green", "MyCourses", "Create"));
-        jumps.Add(("Finance", "fa-hand-holding-dollar", "Apply for a loan", "Put in a staff loan application.",
-            null, null, "Apply", "tone-gold", "MyLoans", "Create"));
-        jumps.Add(("Company", "fa-book", "Policies", "Read and acknowledge company policies.",
-            null, null, "Open", "tone-violet", "Policy", "Index"));
+        actions.Add(("fa-id-badge", "My record", "Your details, documents and next of kin.", "is-teal", "MyProfile", "Index"));
+        actions.Add(("fa-user-graduate", "Apply for a course", "Ask to study a programme.", "is-blue", "MyCourses", "Create"));
+        actions.Add(("fa-hand-holding-dollar", "Apply for a loan", "Put in a staff loan application.", "is-green", "MyLoans", "Create"));
+        actions.Add(("fa-book", "Policies", "Read and acknowledge company policies.", "is-violet", "Policy", "Index"));
+        actions.Add(("fa-file-lines", "My weekly report", "Write this week's report and submit it.", "is-gold", "WeeklyReport", "Index"));
+        actions.Add(("fa-address-book", "Staff directory", "Who is who, and how to reach them.", "is-teal", "Directory", "Index"));
     }
 
     var hasAttention = Model.Focus.Any() || Model.Upcoming.Any();
@@ -360,6 +306,31 @@
                     </div>
                 }
             </section>
+
+            @if (Model.Admin != null)
+            {
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-sliders" aria-hidden="true"></i>
+                        <span>Setup</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="summary-grid">
+                            <div class="summary-item"><span class="summary-label">Departments</span><span class="summary-value">@Model.Admin.Departments</span></div>
+                            <div class="summary-item"><span class="summary-label">Sign-in accounts</span><span class="summary-value">@Model.Admin.SignInAccounts</span></div>
+                            <div class="summary-item"><span class="summary-label">Doc categories</span><span class="summary-value">@Model.Admin.DocumentCategories</span></div>
+                            <div class="summary-item"><span class="summary-label">Ageing machines</span><span class="summary-value">@Model.Admin.AssetsNeedingAttention</span></div>
+                            <div class="summary-item"><span class="summary-label">Former staff</span><span class="summary-value">@(Model.Admin.Employees - Model.Admin.ActiveEmployees)</span></div>
+                            <div class="summary-item">
+                                <span class="summary-label">Approvers</span>
+                                <span class="summary-value @(Model.Admin.HasHrOfficer && Model.Admin.HasMd ? "" : "text-danger")">
+                                    @((Model.Admin.HasHrOfficer ? 1 : 0) + (Model.Admin.HasMd ? 1 : 0)) / 2
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
 
             @if (Model.Hr != null || Model.Md != null)
             {
@@ -509,27 +480,6 @@
                         <div class="dash-empty"><span>No activity has been recorded yet.</span></div>
                     }
                 </section>
-
-                <section class="panel">
-                    <div class="panel-header">
-                        <i class="fas fa-sliders" aria-hidden="true"></i>
-                        <span>Setup</span>
-                    </div>
-                    <div class="panel-body">
-                        <div class="summary-grid">
-                            <div class="summary-item"><span class="summary-label">Departments</span><span class="summary-value">@Model.Admin.Departments</span></div>
-                            <div class="summary-item"><span class="summary-label">Sign-in accounts</span><span class="summary-value">@Model.Admin.SignInAccounts</span></div>
-                            <div class="summary-item"><span class="summary-label">Doc categories</span><span class="summary-value">@Model.Admin.DocumentCategories</span></div>
-                            <div class="summary-item"><span class="summary-label">Ageing machines</span><span class="summary-value">@Model.Admin.AssetsNeedingAttention</span></div>
-                            <div class="summary-item">
-                                <span class="summary-label">Approvers</span>
-                                <span class="summary-value @(Model.Admin.HasHrOfficer && Model.Admin.HasMd ? "" : "text-danger")">
-                                    @((Model.Admin.HasHrOfficer ? 1 : 0) + (Model.Admin.HasMd ? 1 : 0)) / 2
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             }
 
             @if (mine != null && (Model.Admin != null ? mine.TrainingToDo.Any() : showMine))
@@ -573,26 +523,19 @@
     </div>
 
     <div class="dash-section-head">
-        <h2>Jump to</h2>
+        <h2>Quick actions</h2>
         <span class="rule"></span>
     </div>
-    <div class="dash-bento">
-        @for (var i = 0; i < jumps.Count; i++)
+    <div class="quick-grid" data-count="@actions.Count">
+        @foreach (var x in actions)
         {
-            var j = jumps[i];
-            var span = i == 0 ? "is-hero span-2 tall-2" : j.Tone;
-            <a class="bento-card @span" asp-controller="@j.Ctrl" asp-action="@j.Act">
-                <span class="bento-badge"><i class="fas @j.Icon" aria-hidden="true"></i> @j.Badge</span>
-                <h3 class="bento-title">@j.Title</h3>
-                <p class="bento-desc">@j.Desc</p>
-                @if (j.Figure != null)
-                {
-                    <div class="bento-figure">
-                        <span class="bento-stat">@j.Figure</span>
-                        <span class="bento-stat-label">@j.FigureLabel</span>
-                    </div>
-                }
-                <span class="bento-cta">@j.Cta <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+            <a class="quick-card @x.Tint" asp-controller="@x.Ctrl" asp-action="@x.Act">
+                <span class="quick-icon"><i class="fas @x.Icon" aria-hidden="true"></i></span>
+                <span class="quick-text">
+                    <span class="quick-title">@x.Title</span>
+                    <span class="quick-desc">@x.Desc</span>
+                </span>
+                <i class="fas fa-chevron-right quick-chevron" aria-hidden="true"></i>
             </a>
         }
     </div>

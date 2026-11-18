@@ -2913,6 +2913,8 @@ a.strip-item:hover {
 .is-green { --tile-tint: var(--success-light); --tile-ink: #23845b; --tile-edge: #c6e0c9; }
 .is-amber { --tile-tint: var(--warning-light); --tile-ink: #b45309; --tile-edge: #ffe0b3; }
 .is-red   { --tile-tint: var(--danger-light); --tile-ink: #c02b2b; --tile-edge: #fed7d7; }
+.is-violet { --tile-tint: #f3effd; --tile-ink: #5a3bc0; --tile-edge: #ddd3f8; }
+.is-gold { --tile-tint: var(--accent-tint); --tile-ink: var(--accent-gold-dark); --tile-edge: var(--accent-tint-strong); }
 .is-gray  { --tile-tint: var(--gray-100); --tile-ink: var(--gray-500); --tile-edge: var(--gray-300); }
 
 .kpi-icon {
