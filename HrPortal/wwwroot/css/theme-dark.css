@@ -238,3 +238,13 @@ html[data-theme="dark"] .kpi.is-filled .kpi-icon { background: var(--bg-card); }
 
 html[data-theme="dark"] .eyebrow:not(.is-on-dark),
 html[data-theme="dark"] .todo-add-icon { color: color-mix(in srgb, var(--accent-gold) 50%, #ffffff); }
+
+html[data-theme="dark"] .btn-danger { background: #c53030; border-color: #c53030; }
+
+html[data-theme="dark"] .btn-outline-warning {
+    --bs-btn-color: #f0b860;
+    --bs-btn-border-color: #5a4320;
+    --bs-btn-hover-color: #111517;
+    --bs-btn-hover-bg: #f0b860;
+    --bs-btn-hover-border-color: #f0b860;
+}

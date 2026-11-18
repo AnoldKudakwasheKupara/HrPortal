@@ -380,7 +380,7 @@ textarea:focus-visible,
     font-weight: 600;
     white-space: nowrap;
 }
-.badge-green { background: #e6f5e9; color: var(--success); border: 1px solid #c6e0c9; }
+.badge-green { background: #e6f5e9; color: #1f7a55; border: 1px solid #c6e0c9; }
 .badge-amber { background: #fff5e6; color: #b45309; border: 1px solid #ffe0b3; }
 .badge-red   { background: #fff5f5; color: var(--danger); border: 1px solid #fed7d7; }
 .badge-blue  { background: var(--primary-soft); color: var(--primary-dark-ink); border: 1px solid var(--primary-edge); }

@@ -277,7 +277,18 @@ body {
 .btn-warning {
     background: var(--warning);
     border-color: var(--warning);
-    color: #fff;
+    color: #422006;
+}
+
+.btn-outline-warning {
+    --bs-btn-color: #b45309;
+    --bs-btn-border-color: #e9a64b;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #b45309;
+    --bs-btn-hover-border-color: #b45309;
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: #92400e;
+    --bs-btn-active-border-color: #92400e;
 }
 
 .badge {
