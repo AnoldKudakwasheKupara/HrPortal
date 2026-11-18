@@ -160,7 +160,14 @@ namespace HrPortal.ViewModels
 
         public int OnLeaveToday { get; set; }
 
+        /// <summary>Loans and courses at this company waiting on a director.</summary>
+        public int LoansAwaiting { get; set; }
+
+        public int CoursesAwaiting { get; set; }
+
         public List<LeaveRequest> ApprovalQueue { get; set; } = new();
+
+        public List<LoanApplication> LoanQueue { get; set; } = new();
 
         public List<LeaveRequest> StartingSoon { get; set; } = new();
     }

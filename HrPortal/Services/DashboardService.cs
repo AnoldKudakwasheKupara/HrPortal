@@ -271,9 +271,30 @@ namespace HrPortal.Services
 
                 RejectedThisMonth = await _context.LeaveRequests
                     .CountAsync(r =>
-                        r.Status == LeaveRequestStatus.Rejected &&
+                        (r.Status == LeaveRequestStatus.Rejected ||
+                         r.Status == LeaveRequestStatus.HRRejected ||
+                         r.Status == LeaveRequestStatus.SupervisorRejected) &&
                         r.CompletedAt != null &&
                         r.CompletedAt >= monthStart),
+
+                LoansAwaiting = await _context.LoanApplications
+                    .CountAsync(l =>
+                        (here == null || l.Employee.HomeCompanyId == here) &&
+                        l.Status == LoanApplicationStatus.Submitted),
+
+                CoursesAwaiting = await _context.CourseApplications
+                    .CountAsync(c =>
+                        (here == null || c.Employee.HomeCompanyId == here) &&
+                        c.Status == CourseApplicationStatus.HrApproved),
+
+                LoanQueue = await _context.LoanApplications
+                    .Include(l => l.Employee)
+                    .Where(l =>
+                        (here == null || l.Employee.HomeCompanyId == here) &&
+                        l.Status == LoanApplicationStatus.Submitted)
+                    .OrderBy(l => l.SubmittedAt ?? l.CreatedAt)
+                    .Take(ListLength)
+                    .ToListAsync(),
 
                 DaysApprovedThisMonth = await _context.LeaveRequests
                     .Where(r =>

@@ -94,6 +94,12 @@
             tiles.Add(("Pipeline", "fa-stamp", "With " + Brand.Current.TheDirectorShort, h.WithMd.ToString("N0"),
                 "cleared HR, awaiting sign-off", "See them", "tone-violet", "LeaveRequest", "Index"));
         }
+        else
+        {
+            tiles.Add(("Today", "fa-umbrella-beach", "On leave today", h.OnLeaveToday.ToString("N0"),
+                h.OnLeaveToday == 0 ? "everyone is in" : "staff away right now", "Absence report",
+                "tone-violet", "Reports", "Absence"));
+        }
         tiles.Add(("Follow-up", "fa-rotate-left", "Returned", h.ReturnedToEmployees.ToString("N0"),
             "sent back and not resubmitted", "See them", h.ReturnedToEmployees > 0 ? "tone-amber" : "tone-slate",
             "LeaveRequest", "Index"));
@@ -117,26 +123,38 @@
         var m = Model.Md;
         lede = "Here's what is waiting on your decision.";
         metaNote = $"{m.OnLeaveToday:N0} on leave today";
-        primary = ("Loan applications", "LoanApproval", "Index");
+        primary = ("All leave requests", "LeaveRequest", "Index");
 
         if (!Brand.Current.LeaveEndsWithHr)
         {
-            tiles.Add(("Decide", "fa-stamp", "To sanction", m.AwaitingFinalApproval.ToString("N0"),
-                m.AwaitingFinalApproval == 0 ? "nothing waiting" : "leave waiting on you", "Review",
-                m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-green", "LeaveApproval", "FinalApproval"));
+            tiles.Add(("Decide", "fa-stamp", "Leave to sanction", m.AwaitingFinalApproval.ToString("N0"),
+                m.AwaitingFinalApproval == 0 ? "nothing waiting" : "waiting on you", "Review",
+                m.AwaitingFinalApproval > 0 ? "tone-amber" : "tone-slate", "LeaveApproval", "FinalApproval"));
         }
-        tiles.Add(("Done", "fa-calendar-check", "Approved", m.ApprovedThisMonth.ToString("N0"),
-            $"{m.DaysApprovedThisMonth:0.#} days this month", "See them", "tone-ink", "LeaveRequest", "Index"));
-        tiles.Add(("Done", "fa-ban", "Rejected", m.RejectedThisMonth.ToString("N0"),
-            "this month", "See them", "tone-slate", "LeaveRequest", "Index"));
+        else
+        {
+            tiles.Add(("Done", "fa-ban", "Leave rejected", m.RejectedThisMonth.ToString("N0"),
+                "this month", "Leave report", "tone-slate", "Reports", "LeaveRequests"));
+        }
+        tiles.Add(("Decide", "fa-hand-holding-dollar", "Loans to decide", m.LoansAwaiting.ToString("N0"),
+            m.LoansAwaiting == 0 ? "nothing waiting" : "waiting on you", "Review",
+            m.LoansAwaiting > 0 ? "tone-amber" : "tone-violet", "LoanApproval", "Index"));
+        tiles.Add(("Decide", "fa-user-graduate", "Courses to decide", m.CoursesAwaiting.ToString("N0"),
+            m.CoursesAwaiting == 0 ? "nothing waiting" : "waiting on you", "Review",
+            m.CoursesAwaiting > 0 ? "tone-amber" : "tone-teal", "CourseApproval", "Index"));
+        tiles.Add(("Done", "fa-calendar-check", "Leave approved", m.ApprovedThisMonth.ToString("N0"),
+            $"{m.DaysApprovedThisMonth:0.#} days this month", "Leave report", "tone-ink", "Reports", "LeaveRequests"));
         tiles.Add(("Today", "fa-umbrella-beach", "On leave today", m.OnLeaveToday.ToString("N0"),
-            "staff away right now", "Absence report", "tone-teal", "Reports", "Absence"));
+            m.OnLeaveToday == 0 ? "everyone is in" : "staff away right now", "Absence report", "tone-gold", "Reports", "Absence"));
         tiles.Add(("Progress", "fa-file-lines", "Weekly reports", m.WeeklyReportsSubmitted.ToString("N0"),
-            $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview", "tone-violet", "WeeklyReport", "Overview"));
+            $"of {m.WeeklyReportStaff:N0} submitted this week", "Overview", "tone-green", "WeeklyReport", "Overview"));
 
-        actions.Add(("fa-user-graduate", "Course applications", "Who wants to study what, and where each one stands.", "is-teal", "CourseApproval", "Index"));
-        actions.Add(("fa-folder-open", "Company documents", "Forms, templates and shared files.", "is-blue", "Repository", "Index"));
-        actions.Add(("fa-address-book", "Staff directory", "Who is who, and how to reach them.", "is-violet", "Directory", "Index"));
+        actions.Add(("fa-folder-open", "Company documents", "Forms, templates and shared files.", "is-teal", "Repository", "Index"));
+        actions.Add(("fa-address-book", "Staff directory", "Who is who, and how to reach them.", "is-blue", "Directory", "Index"));
+        actions.Add(("fa-book", "Policies", "Company policies, and who has read them.", "is-green", "Policy", "Index"));
+        actions.Add(("fa-bell", "Notifications", "Everything the portal has told you.", "is-violet", "MyNotifications", "Index"));
+        actions.Add(("fa-id-badge", "My record", "Your details, documents and next of kin.", "is-gold", "MyProfile", "Index"));
+        actions.Add(("fa-circle-question", "Help and support", "How the portal works, and who to ask.", "is-teal", "Help", "Index"));
     }
     else
     {
@@ -153,8 +171,11 @@
                 (me.HeadlineLeaveType ?? "days available").ToLower(),
                 "My leave", "tone-green", "MyLeave", "Index"));
         }
-        tiles.Add(("Leave", "fa-umbrella-beach", "Leave taken", me.DaysTakenThisYear.ToString("0.#"),
-            $"days used in {DateTime.Today.Year}", "History", "tone-slate", "MyLeave", "Index"));
+        else
+        {
+            tiles.Add(("Leave", "fa-umbrella-beach", "Leave taken", me.DaysTakenThisYear.ToString("0.#"),
+                $"days used in {DateTime.Today.Year}", "History", "tone-green", "MyLeave", "Index"));
+        }
         tiles.Add(("Requests", "fa-hourglass-half", "In progress", me.RequestsInProgress.ToString("N0"),
             me.RequestsInProgress == 0 ? "no open requests" : "awaiting a decision", "See them",
             me.RequestsInProgress > 0 ? "tone-amber" : "tone-ink", "MyLeave", "Index"));
@@ -167,12 +188,15 @@
         tiles.Add(("Inbox", "fa-bell", "Notices", me.UnreadNotifications.ToString("N0"),
             me.UnreadNotifications == 0 ? "nothing new" : "unread", "Read",
             me.UnreadNotifications > 0 ? "tone-amber" : "tone-gold", "MyNotifications", "Index"));
+        tiles.Add(("Report", "fa-file-lines", "My weekly report", me.WeeklyReportDue ? "Due" : "Open",
+            me.WeeklyReportDue ? "not submitted this week" : "write and submit yours", "Open",
+            me.WeeklyReportDue ? "tone-amber" : "tone-slate", "WeeklyReport", "Index"));
 
         actions.Add(("fa-id-badge", "My record", "Your details, documents and next of kin.", "is-teal", "MyProfile", "Index"));
         actions.Add(("fa-user-graduate", "Apply for a course", "Ask to study a programme.", "is-blue", "MyCourses", "Create"));
         actions.Add(("fa-hand-holding-dollar", "Apply for a loan", "Put in a staff loan application.", "is-green", "MyLoans", "Create"));
         actions.Add(("fa-book", "Policies", "Read and acknowledge company policies.", "is-violet", "Policy", "Index"));
-        actions.Add(("fa-file-lines", "My weekly report", "Write this week's report and submit it.", "is-gold", "WeeklyReport", "Index"));
+        actions.Add(("fa-list-check", "My to-do list", "Your own tasks and reminders.", "is-gold", "Todo", "Index"));
         actions.Add(("fa-address-book", "Staff directory", "Who is who, and how to reach them.", "is-teal", "Directory", "Index"));
     }
 
@@ -183,7 +207,8 @@
     var queueAct = Model.Hr != null ? "Index" : "FinalApproval";
     var startingSoon = Model.Hr?.StartingSoon ?? Model.Md?.StartingSoon ?? new List<LeaveRequest>();
     var mine = Model.Mine;
-    var showMine = mine != null && (Model.ShowsOwnLeave || mine.TrainingToDo.Any());
+    var staffOnly = Model.Admin == null && Model.Hr == null && Model.Md == null;
+    var showLoanQueue = Model.Admin == null && Model.Hr == null && Model.Md != null && Brand.Current.LeaveEndsWithHr;
 
     var charts = Model.Trends.Where(t => t.Points.Count > 1 && t.Total > 0).ToList();
 }
@@ -209,7 +234,7 @@
                 </a>
             }
             <a class="dash-btn primary" asp-controller="@primary.Ctrl" asp-action="@primary.Act">
-                <i class="fas fa-plus" aria-hidden="true"></i> @primary.Title
+                <i class="fas @(primary.Act == "Create" ? "fa-plus" : "fa-arrow-right")" aria-hidden="true"></i> @primary.Title
             </a>
         </div>
     </div>
@@ -331,56 +356,18 @@
                     </div>
                 </section>
             }
-
-            @if (Model.Hr != null || Model.Md != null)
+            else if (Model.Hr != null || Model.Md != null)
             {
                 <section class="panel">
                     <div class="panel-header">
-                        <i class="fas @queueIcon" aria-hidden="true"></i>
-                        <span>@queueTitle</span>
-                        <a class="dash-btn" asp-controller="LeaveApproval" asp-action="@queueAct">
-                            <i class="fas fa-list" aria-hidden="true"></i> Open queue
+                        <i class="fas fa-plane-departure" aria-hidden="true"></i>
+                        <span>Leave starting soon</span>
+                        <a class="dash-btn" asp-controller="LeaveRequest" asp-action="Index">
+                            <i class="fas fa-list" aria-hidden="true"></i> All leave
                         </a>
                     </div>
-                    @if (queue.Any())
+                    @if (startingSoon.Any())
                     {
-                        <ul class="dash-list">
-                            @foreach (var request in queue)
-                            {
-                                <li>
-                                    <a class="dash-row" asp-controller="LeaveApproval" asp-action="Details" asp-route-id="@request.Id">
-                                        <span class="dash-avatar">@request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)</span>
-                                        <span class="dash-row-main">
-                                            <span class="dash-row-title">
-                                                @request.Employee.FirstName @request.Employee.LastName
-                                                <span class="dash-row-ref">@request.RequestNumber</span>
-                                            </span>
-                                            <span class="dash-row-meta">
-                                                @request.LeaveType.Name &middot;
-                                                @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM") &middot;
-                                                @request.NumberOfDays.ToString("0.##") days
-                                            </span>
-                                        </span>
-                                        <partial name="_LeaveStatusBadge" model="request.Status" />
-                                        <i class="fas fa-chevron-right dash-row-chevron" aria-hidden="true"></i>
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <div class="dash-empty"><span>Nothing is waiting in the queue.</span></div>
-                    }
-                </section>
-
-                @if (startingSoon.Any())
-                {
-                    <section class="panel">
-                        <div class="panel-header">
-                            <i class="fas fa-calendar" aria-hidden="true"></i>
-                            <span>Leave starting soon</span>
-                        </div>
                         <ul class="dash-list">
                             @foreach (var request in startingSoon)
                             {
@@ -396,48 +383,48 @@
                                 </li>
                             }
                         </ul>
-                    </section>
-                }
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><span>No approved leave starts in the next two weeks.</span></div>
+                    }
+                </section>
             }
-
-            @if (Model.Admin == null && showMine && mine != null)
+            else if (Model.ShowsOwnLeave && mine != null)
             {
-                @if (Model.ShowsOwnLeave)
-                {
-                    <section class="panel">
-                        <div class="panel-header">
-                            <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
-                            <span>My recent leave</span>
-                            <a class="dash-btn" asp-controller="MyLeave" asp-action="Index">
-                                <i class="fas fa-list" aria-hidden="true"></i> All requests
-                            </a>
-                        </div>
-                        @if (mine.RecentRequests.Any())
-                        {
-                            <ul class="dash-list">
-                                @foreach (var request in mine.RecentRequests)
-                                {
-                                    <li>
-                                        <a class="dash-row" asp-controller="MyLeave" asp-action="Details" asp-route-id="@request.Id">
-                                            <span class="dash-row-main">
-                                                <span class="dash-row-title">@request.LeaveType.Name</span>
-                                                <span class="dash-row-meta">
-                                                    @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM yyyy") &middot;
-                                                    @request.NumberOfDays.ToString("0.##") days
-                                                </span>
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-umbrella-beach" aria-hidden="true"></i>
+                        <span>My recent leave</span>
+                        <a class="dash-btn" asp-controller="MyLeave" asp-action="Index">
+                            <i class="fas fa-list" aria-hidden="true"></i> All requests
+                        </a>
+                    </div>
+                    @if (mine.RecentRequests.Any())
+                    {
+                        <ul class="dash-list">
+                            @foreach (var request in mine.RecentRequests)
+                            {
+                                <li>
+                                    <a class="dash-row" asp-controller="MyLeave" asp-action="Details" asp-route-id="@request.Id">
+                                        <span class="dash-row-main">
+                                            <span class="dash-row-title">@request.LeaveType.Name</span>
+                                            <span class="dash-row-meta">
+                                                @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM yyyy") &middot;
+                                                @request.NumberOfDays.ToString("0.##") days
                                             </span>
-                                            <partial name="_LeaveStatusBadge" model="request.Status" />
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                        else
-                        {
-                            <div class="dash-empty"><span>You have not requested any leave yet.</span></div>
-                        }
-                    </section>
-                }
+                                        </span>
+                                        <partial name="_LeaveStatusBadge" model="request.Status" />
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><span>You have not requested any leave yet.</span></div>
+                    }
+                </section>
             }
         </div>
 
@@ -481,8 +468,90 @@
                     }
                 </section>
             }
+            else if (showLoanQueue)
+            {
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas fa-hand-holding-dollar" aria-hidden="true"></i>
+                        <span>Loans to decide</span>
+                        <a class="dash-btn" asp-controller="LoanApproval" asp-action="Index">
+                            <i class="fas fa-list" aria-hidden="true"></i> Open queue
+                        </a>
+                    </div>
+                    @if (Model.Md!.LoanQueue.Any())
+                    {
+                        <ul class="dash-list">
+                            @foreach (var loan in Model.Md.LoanQueue)
+                            {
+                                <li>
+                                    <a class="dash-row" asp-controller="LoanApproval" asp-action="Details" asp-route-id="@loan.Id">
+                                        <span class="dash-avatar">@loan.Employee.FirstName.Substring(0, 1)@loan.Employee.LastName.Substring(0, 1)</span>
+                                        <span class="dash-row-main">
+                                            <span class="dash-row-title">
+                                                @loan.Employee.FirstName @loan.Employee.LastName
+                                                <span class="dash-row-ref">@loan.ApplicationNumber</span>
+                                            </span>
+                                            <span class="dash-row-meta">
+                                                @loan.Currency.ToString().ToUpperInvariant() @loan.AmountRequested.ToString("N2") &middot;
+                                                @loan.RepaymentMonths months
+                                            </span>
+                                        </span>
+                                        <i class="fas fa-chevron-right dash-row-chevron" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><span>No loan applications are waiting on you.</span></div>
+                    }
+                </section>
+            }
+            else if (Model.Hr != null || Model.Md != null)
+            {
+                <section class="panel">
+                    <div class="panel-header">
+                        <i class="fas @queueIcon" aria-hidden="true"></i>
+                        <span>@queueTitle</span>
+                        <a class="dash-btn" asp-controller="LeaveApproval" asp-action="@queueAct">
+                            <i class="fas fa-list" aria-hidden="true"></i> Open queue
+                        </a>
+                    </div>
+                    @if (queue.Any())
+                    {
+                        <ul class="dash-list">
+                            @foreach (var request in queue)
+                            {
+                                <li>
+                                    <a class="dash-row" asp-controller="LeaveApproval" asp-action="Details" asp-route-id="@request.Id">
+                                        <span class="dash-avatar">@request.Employee.FirstName.Substring(0, 1)@request.Employee.LastName.Substring(0, 1)</span>
+                                        <span class="dash-row-main">
+                                            <span class="dash-row-title">
+                                                @request.Employee.FirstName @request.Employee.LastName
+                                                <span class="dash-row-ref">@request.RequestNumber</span>
+                                            </span>
+                                            <span class="dash-row-meta">
+                                                @request.LeaveType.Name &middot;
+                                                @request.StartDate.ToString("d MMM") &ndash; @request.EndDate.ToString("d MMM") &middot;
+                                                @request.NumberOfDays.ToString("0.##") days
+                                            </span>
+                                        </span>
+                                        <partial name="_LeaveStatusBadge" model="request.Status" />
+                                        <i class="fas fa-chevron-right dash-row-chevron" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="dash-empty"><span>Nothing is waiting in the queue.</span></div>
+                    }
+                </section>
+            }
 
-            @if (mine != null && (Model.Admin != null ? mine.TrainingToDo.Any() : showMine))
+            @if (mine != null && (staffOnly || mine.TrainingToDo.Any()))
             {
                 <section class="panel">
                     <div class="panel-header">
