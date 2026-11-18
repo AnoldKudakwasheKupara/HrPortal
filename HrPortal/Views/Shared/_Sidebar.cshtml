@@ -144,14 +144,6 @@
         <i class="fas fa-file-contract"></i> Weekly Reports
     </a>
 
-    @if (HrPortal.Services.Brand.Current.ComplaintsRegister)
-    {
-        <a class="nav-item @On("Complaint")"
-           asp-controller="Complaint" asp-action="Index">
-            <i class="fas fa-comment-dots"></i> Complaints Register
-        </a>
-    }
-
     @if (capturesCourses)
     {
         <div class="nav-group">Courses</div>

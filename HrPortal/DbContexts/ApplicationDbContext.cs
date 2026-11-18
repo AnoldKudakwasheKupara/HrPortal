@@ -21,7 +21,6 @@ namespace HrPortal.DbContexts
         public DbSet<Company> Companies { get; set; }
         public DbSet<EmployeeCompany> EmployeeCompanies { get; set; }
         public DbSet<CompanyRole> CompanyRoles { get; set; }
-        public DbSet<Complaint> Complaints { get; set; }
 
         /// <summary>
         /// The company whose records queries show, or null for every
@@ -420,29 +419,6 @@ namespace HrPortal.DbContexts
 
             builder.Entity<TrainingMaterial>().HasQueryFilter(x =>
                 CompanyFilter == null || x.TrainingCourse.CompanyId == CompanyFilter);
-
-            builder.Entity<Complaint>(entity =>
-            {
-                entity.Property(c => c.ClientName).IsRequired().HasMaxLength(200);
-                entity.Property(c => c.ClientPhone).HasMaxLength(50);
-                entity.Property(c => c.ClientEmail).HasMaxLength(200);
-                entity.Property(c => c.Nature).HasMaxLength(4000);
-                entity.Property(c => c.StaffInvolved).HasMaxLength(300);
-                entity.Property(c => c.ActionTaken).HasMaxLength(4000);
-                entity.Property(c => c.Remarks).HasMaxLength(4000);
-                entity.Property(c => c.RecordedBy).HasMaxLength(200);
-
-                entity.Property(c => c.Status)
-                    .HasConversion<string>()
-                    .HasMaxLength(20);
-
-                entity.HasIndex(c => new { c.CompanyId, c.ReceivedOn });
-
-                entity.HasQueryFilter(c =>
-                    CompanyFilter == null || c.CompanyId == CompanyFilter);
-            });
-
-            OwnedByCompany<Complaint>(builder);
 
             OwnedByCompany<WeeklyReport>(builder);
 
