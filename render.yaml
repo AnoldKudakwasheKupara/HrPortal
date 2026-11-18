@@ -21,6 +21,60 @@ services:
       - key: SeedAdministrator__Password
         sync: false
 
+  - type: web
+    name: mmcportal
+    runtime: docker
+    region: frankfurt
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: commit
+    disk:
+      name: mmc-app-data
+      mountPath: /app/App_Data
+      sizeGB: 5
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hrportal-db
+          property: connectionString
+      - key: Brand__Key
+        value: mmc
+      - key: BackgroundJobs__Enabled
+        value: "false"
+      - key: Vault__Enabled
+        value: "false"
+      - key: Email__Enabled
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__Enabled
+      - key: Email__Delivery
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__Delivery
+      - key: Email__FromAddress
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__FromAddress
+      - key: Email__TenantId
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__TenantId
+      - key: Email__ClientId
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__ClientId
+      - key: Email__ClientSecret
+        fromService:
+          type: web
+          name: hrportal
+          envVarKey: Email__ClientSecret
+
 databases:
   - name: hrportal-db
     region: frankfurt

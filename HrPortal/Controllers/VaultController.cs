@@ -59,6 +59,12 @@ namespace HrPortal.Controllers
         {
             Response.Headers.CacheControl = "no-store";
 
+            if (!PortalSwitches.HasVault(HttpContext.RequestServices.GetRequiredService<IConfiguration>()))
+            {
+                context.Result = NotFound();
+                return;
+            }
+
             var action = context.ActionDescriptor.RouteValues["action"];
 
             if (action is nameof(Unlock) or nameof(Lock))

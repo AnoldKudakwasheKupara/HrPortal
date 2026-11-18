@@ -153,6 +153,20 @@ and set, for MMC Capital say:
 
 Running locally, `http://mmc.localhost:<port>` shows MMC.
 
+MMC Capital also has its own Render service, `mmcportal` in
+[`render.yaml`](render.yaml), on the same database. It sets `Brand__Key` to
+`mmc`, so every address it serves shows MMC. Its email settings are copied
+from `hrportal`. Two settings keep the copies from getting in each other's
+way:
+
+- `BackgroundJobs__Enabled=false`: only `hrportal` sends the daily reminders
+  and adds the monthly leave days.
+- `Vault__Enabled=false`: the vault key is on `hrportal`'s disk, so the
+  password vault is only on Intellego's portal.
+
+Each service has its own disk, so a file uploaded on one portal does not
+open on the other.
+
 **People.** Every employee has a home company and works for one or more
 companies, both set on the employee form. Somebody who works for both, such
 as the IT team, has one record, one sign-in and one leave balance, and sees

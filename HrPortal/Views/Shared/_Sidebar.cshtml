@@ -3,6 +3,7 @@
 @inject HrPortal.Services.TrainingAssignmentService Training
 @inject HrPortal.Services.CurrentUserService CurrentUser
 @inject HrPortal.Security.CourseCaptureAccess CourseCapture
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     var unread = await Notifications.UnreadCountAsync();
@@ -368,10 +369,13 @@
                 <i class="fas fa-box-archive"></i> Backups
             </a>
 
-            <a class="nav-item @On("Vault")"
-               asp-controller="Vault" asp-action="Index">
-                <i class="fas fa-key"></i> Password Vault
-            </a>
+            @if (HrPortal.Services.PortalSwitches.HasVault(Configuration))
+            {
+                <a class="nav-item @On("Vault")"
+                   asp-controller="Vault" asp-action="Index">
+                    <i class="fas fa-key"></i> Password Vault
+                </a>
+            }
 
             <a class="nav-item @On("Settings")"
                asp-controller="Settings" asp-action="Index">

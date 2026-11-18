@@ -171,7 +171,8 @@ builder.Services.AddScoped<HrPortal.Services.Sanctions.SanctionsService>();
 builder.Services.AddScoped<CourseCaptureAccess>();
 builder.Services.AddSingleton<HrPortal.Services.Sanctions.SanctionsReportPdfService>();
 builder.Services.AddMemoryCache();
-builder.Services.AddHostedService<DailyReminderWorker>();
+if (PortalSwitches.RunsBackgroundJobs(builder.Configuration))
+    builder.Services.AddHostedService<DailyReminderWorker>();
 builder.Services.AddScoped<SupervisorService>();
 builder.Services.AddScoped<CompanyService>();
 
