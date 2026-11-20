@@ -347,7 +347,19 @@ namespace HrPortal.Services.Sanctions
         /// </summary>
         private static List<List<string>> ReadXlsx(Stream file)
         {
-            using var zip = new ZipArchive(file, ZipArchiveMode.Read);
+            ZipArchive opened;
+
+            try
+            {
+                opened = new ZipArchive(file, ZipArchiveMode.Read);
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidDataException or NotSupportedException)
+            {
+                throw new InvalidDataException(
+                    "It is not an Excel workbook. Open it in Excel and save it as .xlsx, or save it as CSV.", ex);
+            }
+
+            using var zip = opened;
 
             XNamespace main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
             XNamespace rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";

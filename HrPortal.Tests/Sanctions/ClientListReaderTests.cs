@@ -8,6 +8,17 @@ namespace HrPortal.Tests.Sanctions
         private static ClientTable Csv(string text) =>
             ClientListReader.ReadTable(new MemoryStream(Encoding.UTF8.GetBytes(text)), "clients.csv");
 
+        [Theory]
+        [InlineData("not really excel")]
+        [InlineData("")]
+        public void A_file_named_xlsx_that_is_not_a_workbook_says_so(string content)
+        {
+            var problem = Assert.Throws<InvalidDataException>(() =>
+                ClientListReader.ReadTable(new MemoryStream(Encoding.UTF8.GetBytes(content)), "balances.xlsx"));
+
+            Assert.Contains("not an Excel workbook", problem.Message);
+        }
+
         [Fact]
         public void Common_headings_are_recognised()
         {
