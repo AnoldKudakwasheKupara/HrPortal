@@ -46,14 +46,20 @@ namespace HrPortal.Controllers
 
         /// <summary>
         /// Whether the person asking has any business with this
-        /// application: HR, the Managing Consultant, or the
-        /// applicant's own supervisor.
+        /// application: HR, the Managing Consultant, the applicant's
+        /// own supervisor, or a records viewer once it has been sent.
         /// </summary>
         private async Task<bool> HasStandingAsync(
             CourseApplication application)
         {
             if (User.IsInRole(Roles.HrOfficer) || User.IsInRole(Roles.Md))
                 return true;
+
+            if (User.IsInRole(Roles.RecordsViewer) &&
+                application.Status != CourseApplicationStatus.Draft)
+            {
+                return true;
+            }
 
             return await IsSupervisorOfAsync(application);
         }
@@ -322,6 +328,25 @@ namespace HrPortal.Controllers
             ViewBag.Queue = stage;
 
             var applications = await Queue(stage, null).ToListAsync();
+
+            return View(applications);
+        }
+
+        /// <summary>
+        /// Every application at the company that has been sent,
+        /// newest first, whoever it is waiting on. For looking at;
+        /// nothing here decides anything.
+        /// </summary>
+        [Authorize(Roles = Roles.RecordsViewer)]
+        public async Task<IActionResult> All()
+        {
+            var applications = await _context.CourseApplications
+                .AsNoTracking()
+                .Include(c => c.Employee)
+                    .ThenInclude(e => e.Department)
+                .Where(c => c.Status != CourseApplicationStatus.Draft)
+                .OrderByDescending(c => c.SubmittedAt ?? c.CreatedAt)
+                .ToListAsync();
 
             return View(applications);
         }

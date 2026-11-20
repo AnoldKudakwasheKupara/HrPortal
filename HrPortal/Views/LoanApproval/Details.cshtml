@@ -29,7 +29,7 @@
                 <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-outline-secondary" asp-action="@(asSupervisor ? "MyTeam" : "Index")">Back</a>
+            <a class="btn btn-outline-secondary" asp-action="@(asSupervisor ? "MyTeam" : User.IsInRole(HrPortal.Security.Roles.Md) || !User.IsInRole(HrPortal.Security.Roles.RecordsViewer) ? "Index" : "All")">Back</a>
 
         </div>
 

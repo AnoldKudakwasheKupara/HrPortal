@@ -202,6 +202,11 @@ the company's own portal and hold only there, so the HR Manager at MMC is an
 ordinary employee on Intellego's portal. Everybody who held a role before
 companies were added holds it at Intellego.
 
+Two roles only look. A Leave Viewer sees every leave application at the
+company. A Records Viewer sees every leave balance and every leave, loan and
+course application from the moment it is sent, whoever it is waiting on,
+under Records in the menu. Neither can approve, edit or delete anything.
+
 **What is separate.** Each portal shows its own staff, and their leave,
 balances, loans, course applications, documents, certifications, training
 and to-dos; its own policies, document folders, training courses, company

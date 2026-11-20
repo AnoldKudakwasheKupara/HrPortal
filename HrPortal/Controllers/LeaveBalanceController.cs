@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HrPortal.Controllers
 {
-    [Authorize(Roles = Roles.HrOnly)]
+    [Authorize(Roles = Roles.BalanceRecords)]
     public class LeaveBalanceController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -36,6 +36,8 @@ namespace HrPortal.Controllers
             _audit = audit;
         }
 
+        [Authorize(Roles = Roles.HrOnly)]
+
         public async Task<IActionResult> Upload()
         {
             await LoadRatedTypes();
@@ -51,6 +53,7 @@ namespace HrPortal.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(FileStorageService.MaxFileSizeBytes + 1024 * 1024)]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Upload(int leaveTypeId, IFormFile? file)
         {
             await LoadRatedTypes();
@@ -140,6 +143,7 @@ namespace HrPortal.Controllers
         /// no leave days, with what they have
         /// now where there is a balance already.
         /// </summary>
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Template(int? leaveTypeId)
         {
             var current = leaveTypeId == null
@@ -310,6 +314,8 @@ namespace HrPortal.Controllers
             return View(balance);
         }
 
+        [Authorize(Roles = Roles.HrOnly)]
+
         public async Task<IActionResult> Create()
         {
             await LoadLookups();
@@ -319,6 +325,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Create(
             LeaveBalanceCreateViewModel model)
         {
@@ -373,6 +380,8 @@ namespace HrPortal.Controllers
                 new { year = balance.Year });
         }
 
+        [Authorize(Roles = Roles.HrOnly)]
+
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -402,6 +411,7 @@ namespace HrPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> Edit(
             int id,
             LeaveBalanceEditViewModel model)
@@ -465,6 +475,8 @@ namespace HrPortal.Controllers
                 new { year = balance.Year });
         }
 
+        [Authorize(Roles = Roles.HrOnly)]
+
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -485,6 +497,7 @@ namespace HrPortal.Controllers
         [HttpPost]
         [ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = Roles.HrOnly)]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var balance = await _context.LeaveBalances

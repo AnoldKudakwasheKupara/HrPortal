@@ -34,14 +34,17 @@ namespace HrPortal.Security
         {
             var isHr = user.IsInRole(Roles.HrOfficer);
             var isMd = user.IsInRole(Roles.Md);
+            var viewsRecords = user.IsInRole(Roles.RecordsViewer);
 
             var type = typeof(T);
 
             if (type == typeof(LeaveRequest))
-                return isHr || isMd || user.IsInRole(Roles.LeaveViewer);
+                return isHr || isMd || viewsRecords || user.IsInRole(Roles.LeaveViewer);
 
-            if (type == typeof(LeaveBalance) ||
-                type == typeof(EmployeeDocument) ||
+            if (type == typeof(LeaveBalance))
+                return isHr || viewsRecords;
+
+            if (type == typeof(EmployeeDocument) ||
                 type == typeof(TrainingAssignment))
             {
                 return isHr;

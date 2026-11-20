@@ -1,0 +1,103 @@
+@using HrPortal.Entities
+@using HrPortal.Services
+@using HrPortal.ViewModels
+@model List<HrPortal.Entities.LoanApplication>
+
+@{
+    ViewData["Title"] = "All Loan Applications";
+
+    var show = Context.Request.Query["show"].ToString() == "open" ? "open" : "all";
+    var open = Model.Where(l => !LoanWorkflowService.IsFinal(l.Status)).ToList();
+    var shown = show == "open" ? open : Model;
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", Model.Count),
+        new("open", "In Progress", "fa-hourglass-half", "is-amber", open.Count)
+    };
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@ViewData["Title"]</h2>
+            <p>Every loan application sent at @Brand.Current.ShortName, newest first, whoever it is with. You can look and download forms; decisions stay with the approvers.</p>
+        </div>
+
+    </div>
+
+    <partial name="_ListTabs" model="new ListTabsModel(tabs, show)" />
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-hand-holding-dollar" aria-hidden="true"></i>
+            @(show == "open" ? "In Progress" : "Every Application")
+            <span class="tab-count">@shown.Count</span>
+        </h3>
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-mug-hot" aria-hidden="true"></i>
+                <p>Nothing here right now.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Applicant</th>
+                            <th class="num">Requested</th>
+                            <th>Repayment</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var application in paged.Items)
+                        {
+                            <tr>
+                                <td class="text-nowrap">
+                                    <div class="fw-semibold">@application.ApplicationNumber</div>
+                                    <div class="small text-muted">@((application.SubmittedAt ?? application.CreatedAt).ToLocalTime().ToString("d MMM yyyy"))</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@application.Employee.FirstName @application.Employee.LastName</div>
+                                    <div class="small text-muted">@(application.Employee.Department?.Name ?? "")</div>
+                                </td>
+                                <td class="num text-nowrap">@LoanCurrencies.Format(application.Currency, application.AmountRequested)</td>
+                                <td class="text-nowrap">@application.RepaymentMonths months</td>
+                                <td><partial name="_LoanStatusBadge" model="application.Status" /></td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@application.Id">
+                                            <i class="fas fa-eye" aria-hidden="true"></i> View
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "application", "applications")' />
+        }
+
+    </section>
+
+</div>

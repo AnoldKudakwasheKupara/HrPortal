@@ -1,0 +1,38 @@
+@using HrPortal.Entities
+@using HrPortal.Services
+@using HrPortal.ViewModels
+@model List<HrPortal.Entities.CourseApplication>
+
+@{
+    ViewData["Title"] = "All Course Applications";
+
+    var show = Context.Request.Query["show"].ToString() == "open" ? "open" : "all";
+    var open = Model.Where(c => !CourseApplicationWorkflowService.IsFinal(c.Status)).ToList();
+    var shown = show == "open" ? open : Model;
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", Model.Count),
+        new("open", "In Progress", "fa-hourglass-half", "is-amber", open.Count)
+    };
+
+    ViewData["ListTitle"] = show == "open" ? "In Progress" : "Every Application";
+    ViewData["ListDecided"] = true;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@ViewData["Title"]</h2>
+            <p>Every course application sent at @Brand.Current.ShortName, newest first, whoever it is with. You can look and download forms; decisions stay with the approvers.</p>
+        </div>
+
+    </div>
+
+    <partial name="_ListTabs" model="new ListTabsModel(tabs, show)" />
+
+    <partial name="_CourseApplicationTable" model="shown" />
+
+</div>

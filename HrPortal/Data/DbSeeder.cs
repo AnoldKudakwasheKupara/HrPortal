@@ -66,7 +66,8 @@ namespace HrPortal.Data
             "MD",
             "Employee",
             "Compliance Officer",
-            "Leave Viewer"
+            "Leave Viewer",
+            "Records Viewer"
         };
 
         public static async Task SeedAdministratorAsync(

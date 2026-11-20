@@ -50,14 +50,20 @@ namespace HrPortal.Controllers
 
         /// <summary>
         /// Whether the person asking has any business with this
-        /// application: the Managing Director, or the applicant's own
-        /// supervisor.
+        /// application: the Managing Director, the applicant's own
+        /// supervisor, or a records viewer once it has been sent.
         /// </summary>
         private async Task<bool> HasStandingAsync(
             LoanApplication application)
         {
             if (User.IsInRole(Roles.Md))
                 return true;
+
+            if (User.IsInRole(Roles.RecordsViewer) &&
+                application.Status != LoanApplicationStatus.Draft)
+            {
+                return true;
+            }
 
             return await IsSupervisorOfAsync(application);
         }
@@ -306,6 +312,25 @@ namespace HrPortal.Controllers
             TempData["Success"] = success;
 
             return RedirectToAction(nameof(MyTeam));
+        }
+
+        /// <summary>
+        /// Every application at the company that has been sent,
+        /// newest first, whoever it is waiting on. For looking at;
+        /// nothing here decides anything.
+        /// </summary>
+        [Authorize(Roles = Roles.RecordsViewer)]
+        public async Task<IActionResult> All()
+        {
+            var applications = await _context.LoanApplications
+                .AsNoTracking()
+                .Include(l => l.Employee)
+                    .ThenInclude(e => e.Department)
+                .Where(l => l.Status != LoanApplicationStatus.Draft)
+                .OrderByDescending(l => l.SubmittedAt ?? l.CreatedAt)
+                .ToListAsync();
+
+            return View(applications);
         }
 
         [Authorize(Roles = Roles.MdOnly)]

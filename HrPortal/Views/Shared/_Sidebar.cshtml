@@ -42,6 +42,7 @@
     var isMd = User.IsInRole("MD");
     var isCompliance = User.IsInRole(HrPortal.Security.Roles.ComplianceOfficer);
     var seesLeave = User.IsInRole(HrPortal.Security.Roles.LeaveViewer);
+    var seesRecords = User.IsInRole(HrPortal.Security.Roles.RecordsViewer);
 
     var capturesCourses = await CourseCapture.CanCaptureAsync(User);
 
@@ -205,14 +206,14 @@
             </a>
         }
 
-        <a class="nav-item @OnExcept("CourseApproval", "MyTeam")"
+        <a class="nav-item @OnExcept("CourseApproval", "MyTeam", "All")"
            asp-controller="CourseApproval" asp-action="Index">
             <i class="fas fa-user-graduate"></i> Course Applications
         </a>
 
         @if (isMd)
         {
-            <a class="nav-item @OnExcept("LoanApproval", "MyTeam")"
+            <a class="nav-item @OnExcept("LoanApproval", "MyTeam", "All")"
                asp-controller="LoanApproval" asp-action="Index">
                 <i class="fas fa-hand-holding-dollar"></i> Loan Sanction
             </a>
@@ -225,6 +226,37 @@
                 <i class="fas fa-hand-holding-dollar"></i> Sanctioned Loans
             </a>
         }
+    }
+
+    @if (seesRecords)
+    {
+        <div class="nav-group">Records</div>
+
+        @if (!isHr && !isMd && !seesLeave)
+        {
+            <a class="nav-item @On("LeaveRequest")"
+               asp-controller="LeaveRequest" asp-action="Index">
+                <i class="fas fa-calendar-days"></i> Leave Requests
+            </a>
+        }
+
+        @if (!isHr)
+        {
+            <a class="nav-item @On("LeaveBalance")"
+               asp-controller="LeaveBalance" asp-action="Index">
+                <i class="fas fa-scale-balanced"></i> Leave Balances
+            </a>
+        }
+
+        <a class="nav-item @OnAction("LoanApproval", "All")"
+           asp-controller="LoanApproval" asp-action="All">
+            <i class="fas fa-hand-holding-dollar"></i> All Loan Applications
+        </a>
+
+        <a class="nav-item @OnAction("CourseApproval", "All")"
+           asp-controller="CourseApproval" asp-action="All">
+            <i class="fas fa-user-graduate"></i> All Course Applications
+        </a>
     }
 
     @if (isAdmin || isHr || isMd || seesLeave)

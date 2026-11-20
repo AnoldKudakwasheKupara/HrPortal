@@ -33,7 +33,7 @@
                 <i class="fas fa-download" aria-hidden="true"></i> Application form (PDF)
             </a>
 
-            <a class="btn btn-outline-secondary" asp-action="@(supervisorTurn ? "MyTeam" : "Index")">Back</a>
+            <a class="btn btn-outline-secondary" asp-action="@(supervisorTurn ? "MyTeam" : isHr || isMd || !User.IsInRole(Roles.RecordsViewer) ? "Index" : "All")">Back</a>
 
         </div>
 

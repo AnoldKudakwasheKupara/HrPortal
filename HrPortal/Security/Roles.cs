@@ -25,6 +25,13 @@
         /// </summary>
         public const string LeaveViewer = "Leave Viewer";
 
+        /// <summary>
+        /// Sees every leave balance and every leave, loan and course
+        /// application at the company from the moment it is sent,
+        /// whoever it is waiting on, but decides and changes nothing.
+        /// </summary>
+        public const string RecordsViewer = "Records Viewer";
+
         public const string AdminOnly = Administrator;
 
         public const string AdminOrHr =
@@ -34,7 +41,9 @@
 
         public const string HrOrMd = HrOfficer + "," + Md;
 
-        public const string LeaveRecords = HrOrMd + "," + LeaveViewer;
+        public const string LeaveRecords = HrOrMd + "," + LeaveViewer + "," + RecordsViewer;
+
+        public const string BalanceRecords = HrOfficer + "," + RecordsViewer;
 
         public const string AnyManager =
             Administrator + "," + HrOfficer + "," + Md;

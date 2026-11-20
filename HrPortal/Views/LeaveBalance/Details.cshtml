@@ -108,9 +108,12 @@
 
                 <div class="d-grid gap-2">
 
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
-                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
-                    </a>
+                    @if (User.IsInRole(HrPortal.Security.Roles.HrOfficer))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-gold">
+                            <i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit
+                        </a>
+                    }
 
                     <partial name="_DownloadPdf" model="@Model.Id" />
 
