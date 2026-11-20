@@ -103,6 +103,17 @@ namespace HrPortal.Services
 
                 var matches = Find(employees, table.Cell(row, number), table.Cell(row, email), table.Cell(row, name));
 
+                var givenName = table.Cell(row, name);
+
+                if (matches.Count == 1 && table.Cell(row, number) != null &&
+                    givenName != null && !NameFits(givenName, matches[0].Name))
+                {
+                    result.Problems.Add(
+                        $"Row {rowNumber}: employee number {table.Cell(row, number)} is {matches[0].Name}, " +
+                        $"not \"{givenName}\". Check the number.");
+                    continue;
+                }
+
                 if (matches.Count != 1)
                 {
                     var who = table.Cell(row, number) ?? table.Cell(row, email) ?? table.Cell(row, name) ?? "nobody given";
@@ -141,9 +152,26 @@ namespace HrPortal.Services
         {
             if (number != null)
             {
-                return employees
+                var numbered = employees
                     .Where(e => string.Equals(e.Number.Trim(), number, StringComparison.OrdinalIgnoreCase))
                     .ToList();
+
+                if (name != null && numbered.Any(e => NameFits(name, e.Name)))
+                    return numbered.Where(e => NameFits(name, e.Name)).ToList();
+
+                var unpadded = employees
+                    .Where(e => SameIgnoringZeros(e.Number, number))
+                    .ToList();
+
+                if (name != null)
+                {
+                    var named = unpadded.Where(e => NameFits(name, e.Name)).ToList();
+
+                    if (named.Count > 0)
+                        return named;
+                }
+
+                return numbered.Count > 0 ? numbered : unpadded;
             }
 
             if (email != null)
@@ -186,6 +214,27 @@ namespace HrPortal.Services
 
             return words.Length > 0;
         }
+
+        /// <summary>
+        /// Whether an employee number is the same once leading zeros are
+        /// ignored, as Excel drops them: 9 for 009, E9 for E009.
+        /// </summary>
+        private static bool SameIgnoringZeros(string held, string given)
+        {
+            static string Unpadded(string number) =>
+                Regex.Replace(number.Trim().ToUpperInvariant(), @"(?<![0-9])0+(?=[0-9])", string.Empty);
+
+            return Unpadded(held) == Unpadded(given);
+        }
+
+        /// <summary>
+        /// Whether the name in the file is this person: the same words in
+        /// any order, or one name a shorter or fuller form of the other.
+        /// </summary>
+        private static bool NameFits(string given, string fullName) =>
+            NameKey(given) == NameKey(fullName) ||
+            FitsPartOf(given, fullName) ||
+            FitsPartOf(fullName, given);
 
         private static string NameKey(string name) =>
             string.Join(' ', SanctionsListParser.Normalise(name).Split(' ').OrderBy(w => w, StringComparer.Ordinal));

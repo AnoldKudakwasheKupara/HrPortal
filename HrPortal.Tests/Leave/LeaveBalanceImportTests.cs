@@ -103,6 +103,62 @@ namespace HrPortal.Tests.Leave
             Assert.Empty(Parse("Name,Days\nNyandoro Rudo,4\n").PartMatches);
         }
 
+        private static readonly LeaveBalanceEmployee[] Numbered =
+        {
+            new(1, "1", "Anold Kupara", null),
+            new(2, "001", "Tendai Makwasha", null),
+            new(3, "009", "Edward Mapokotere", null)
+        };
+
+        private static LeaveBalanceImportResult ParseNumbered(string csv) =>
+            LeaveBalanceImport.Parse(
+                ClientListReader.ReadTable(new MemoryStream(Encoding.UTF8.GetBytes(csv)), "b.csv"),
+                Numbered);
+
+        [Fact]
+        public void A_number_that_lost_its_leading_zeros_still_finds_the_person()
+        {
+            var result = ParseNumbered("Employee Number,Balance\n9,36\n");
+
+            Assert.Equal(3, Assert.Single(result.Rows).EmployeeId);
+            Assert.Empty(result.Problems);
+        }
+
+        [Fact]
+        public void A_number_that_lost_its_zeros_goes_to_the_person_the_name_says()
+        {
+            var result = ParseNumbered("Employee Number,Employee Name,Balance\n1,Tendai Makwasha,18.67\n1,Anold Kupara,1.83\n");
+
+            Assert.Equal(new[] { 2, 1 }, result.Rows.Select(r => r.EmployeeId));
+            Assert.Empty(result.Problems);
+        }
+
+        [Fact]
+        public void A_number_that_belongs_to_someone_else_is_not_used()
+        {
+            var result = ParseNumbered("Employee Number,Employee Name,Balance\n009,Tendai Makwasha,18.67\n");
+
+            Assert.Empty(result.Rows);
+            Assert.Contains("009 is Edward Mapokotere", Assert.Single(result.Problems));
+        }
+
+        [Fact]
+        public void Without_a_name_a_number_matching_two_people_is_not_guessed()
+        {
+            var result = ParseNumbered("Employee Number,Balance\n01,5\n");
+
+            Assert.Empty(result.Rows);
+            Assert.Contains("more than one employee", Assert.Single(result.Problems));
+        }
+
+        [Fact]
+        public void A_name_written_more_fully_than_on_the_portal_still_fits()
+        {
+            var result = ParseNumbered("Employee Number,Employee Name,Balance\n009,Edward T Mapokotere,36\n");
+
+            Assert.Equal(3, Assert.Single(result.Rows).EmployeeId);
+        }
+
         [Fact]
         public void A_file_without_the_right_columns_says_so()
         {
