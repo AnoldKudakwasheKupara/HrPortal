@@ -73,7 +73,63 @@
                     string.Join(", ", AllowedExtensions) + ".";
             }
 
+            if (!LooksLike(file, extension))
+            {
+                return
+                    $"{Path.GetFileName(file.FileName)} does not look like a {extension.TrimStart('.').ToUpperInvariant()} " +
+                    "file. Save it again from the program that made it and upload that copy.";
+            }
+
             return null;
+        }
+
+        private static readonly byte[] ZipStart = { 0x50, 0x4B, 0x03, 0x04 };
+
+        private static readonly byte[] OldOfficeStart = { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
+
+        private static readonly byte[] PngStart = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+        private static readonly byte[] JpegStart = { 0xFF, 0xD8, 0xFF };
+
+        /// <summary>
+        /// Whether the first bytes of the file match its extension, so a
+        /// program or a page renamed to .pdf or .docx is not kept and
+        /// handed back to whoever downloads it.
+        /// </summary>
+        private static bool LooksLike(IFormFile file, string extension)
+        {
+            var head = new byte[1024];
+            int read;
+
+            using (var stream = file.OpenReadStream())
+            {
+                read = 0;
+                int got;
+
+                while (read < head.Length && (got = stream.Read(head, read, head.Length - read)) > 0)
+                    read += got;
+            }
+
+            var start = head.AsSpan(0, read);
+
+            return extension switch
+            {
+                ".pdf" => start.IndexOf("%PDF-"u8) >= 0,
+                ".docx" or ".xlsx" or ".pptx" => start.StartsWith(ZipStart),
+                ".doc" or ".xls" or ".ppt" => start.StartsWith(OldOfficeStart) || start.StartsWith(ZipStart) || IsText(start),
+                ".png" => start.StartsWith(PngStart),
+                ".jpg" or ".jpeg" => start.StartsWith(JpegStart),
+                ".txt" or ".csv" => IsText(start),
+                _ => false
+            };
+        }
+
+        private static bool IsText(ReadOnlySpan<byte> start)
+        {
+            if (start.StartsWith(new byte[] { 0xFF, 0xFE }) || start.StartsWith(new byte[] { 0xFE, 0xFF }))
+                return true;
+
+            return start.IndexOf((byte)0) < 0 && !start.StartsWith("MZ"u8);
         }
 
         public async Task<(string FileName, string FilePath)> SaveAsync(
