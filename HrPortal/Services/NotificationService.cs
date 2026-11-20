@@ -41,8 +41,13 @@ namespace HrPortal.Services
             string title,
             string message,
             string? link = null,
-            EmailKind? email = null)
+            EmailKind? email = null,
+            int? companyId = null)
         {
+            var company = link == null
+                ? null
+                : companyId ?? (_context.CompanyFilter > 0 ? _context.CompanyFilter : null);
+
             _context.Notifications.Add(
                 new Notification
                 {
@@ -50,12 +55,13 @@ namespace HrPortal.Services
                     Title = title,
                     Message = message,
                     Link = link,
+                    CompanyId = company,
                     IsRead = false,
                     CreatedAt = DateTime.UtcNow
                 });
 
             if (email is EmailKind kind)
-                _pending.Add(new PendingEmail(employeeId, title, message, link, kind));
+                _pending.Add(new PendingEmail(employeeId, title, message, link, kind, company));
         }
 
         /// <summary>
@@ -75,8 +81,13 @@ namespace HrPortal.Services
         {
             var approvers = await _approvers.EmployeeIdsForAsync(role, requesterId);
 
+            var home = await _context.Employees
+                .Where(e => e.Id == requesterId)
+                .Select(e => (int?)e.HomeCompanyId)
+                .FirstOrDefaultAsync();
+
             foreach (var employeeId in approvers)
-                Notify(employeeId, title, message, link, email);
+                Notify(employeeId, title, message, link, email, home);
         }
 
         private void OnSavedChanges(object? sender, SavedChangesEventArgs e)
@@ -125,6 +136,14 @@ namespace HrPortal.Services
                     })
                     .ToDictionaryAsync(emp => emp.Id);
 
+                var companyKeys = await context.Companies
+                    .AsNoTracking()
+                    .ToDictionaryAsync(c => c.Id, c => c.Key);
+
+                var mainBase = scope.ServiceProvider
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>()
+                    .Value.PortalBaseUrl;
+
                 var outbound = new List<OutboundNotification>();
 
                 foreach (var item in batch)
@@ -139,7 +158,10 @@ namespace HrPortal.Services
                         to.FirstName,
                         item.Title,
                         item.Message,
-                        item.Link,
+                        PortalLinks.For(
+                            item.CompanyId is int c && companyKeys.TryGetValue(c, out var key) ? key : null,
+                            item.Link,
+                            mainBase),
                         item.Kind,
                         to.HomeKey));
                 }
@@ -190,6 +212,7 @@ namespace HrPortal.Services
             string Title,
             string Message,
             string? Link,
-            EmailKind Kind);
+            EmailKind Kind,
+            int? CompanyId);
     }
 }

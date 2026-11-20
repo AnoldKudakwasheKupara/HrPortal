@@ -12,13 +12,16 @@ namespace HrPortal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly CurrentUserService _currentUser;
+        private readonly EmailOptions _email;
 
         public MyNotificationsController(
             ApplicationDbContext context,
-            CurrentUserService currentUser)
+            CurrentUserService currentUser,
+            Microsoft.Extensions.Options.IOptions<EmailOptions> email)
         {
             _context = context;
             _currentUser = currentUser;
+            _email = email.Value;
         }
 
         public async Task<IActionResult> Index(string? show, int page = 1)
@@ -79,6 +82,19 @@ namespace HrPortal.Controllers
             if (!string.IsNullOrWhiteSpace(notification.Link) &&
                 Url.IsLocalUrl(notification.Link))
             {
+                if (notification.CompanyId is int company && company != _context.CompanyFilter)
+                {
+                    var key = await _context.Companies
+                        .Where(c => c.Id == company)
+                        .Select(c => c.Key)
+                        .FirstOrDefaultAsync();
+
+                    var there = PortalLinks.For(key, notification.Link, _email.PortalBaseUrl);
+
+                    if (there != null && there != notification.Link)
+                        return Redirect(there);
+                }
+
                 return Redirect(notification.Link);
             }
 

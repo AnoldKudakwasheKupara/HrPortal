@@ -14,6 +14,14 @@ namespace HrPortal.Entities
 
         public string? Link { get; set; }
 
+        /// <summary>
+        /// The company whose portal the link belongs to: the one that
+        /// decides the request it is about. Opening it on the other
+        /// company's portal goes across, since that portal cannot show
+        /// the request. Null for a link that works on either.
+        /// </summary>
+        public int? CompanyId { get; set; }
+
         public bool IsRead { get; set; }
 
         public DateTime CreatedAt { get; set; }
