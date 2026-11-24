@@ -202,6 +202,15 @@ the company's own portal and hold only there, so the HR Manager at MMC is an
 ordinary employee on Intellego's portal. Everybody who held a role before
 companies were added holds it at Intellego.
 
+**Provider forms.** Staff fill in and sign the Nyaradzo funeral cover and
+Minerva pension forms under My Forms. HR at the company that employs them
+checks each one, adds the employer's part and downloads it. The portal lays
+the answers over the provider's own PDF in `HrPortal/ProviderForms`, so the
+provider gets their form back unaltered. Where each answer goes is measured in
+`ProviderFormLayout`; a new edition of a form needs measuring again. Answers
+and signatures are in the database, so they are in the backup and the same on
+both portals.
+
 Two roles only look. A Leave Viewer sees every leave application at the
 company. A Records Viewer sees every leave balance and every leave, loan and
 course application from the moment it is sent, whoever it is waiting on,

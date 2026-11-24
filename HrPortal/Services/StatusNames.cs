@@ -56,6 +56,17 @@ namespace HrPortal.Services
                 _ => new(status.ToString(), Quiet)
             };
 
+        public static StatusBadge Of(ProviderFormStatus status) =>
+            status switch
+            {
+                ProviderFormStatus.Draft => new("Draft", Quiet),
+                ProviderFormStatus.Submitted => new("With HR", Waiting),
+                ProviderFormStatus.Returned => new("Sent back", Back),
+                ProviderFormStatus.Completed => new("Ready to send", Waiting),
+                ProviderFormStatus.Sent => new("Sent to the provider", Done),
+                _ => new(status.ToString(), Quiet)
+            };
+
         public static StatusBadge Of(LoanApplicationStatus status) =>
             status switch
             {

@@ -189,6 +189,7 @@ builder.Services.AddScoped<OperationsReportService>();
 builder.Services.AddScoped<ReportsOverviewService>();
 builder.Services.AddScoped<LeaveWorkflowService>();
 builder.Services.AddScoped<LoanWorkflowService>();
+builder.Services.AddScoped<HrPortal.Services.ProviderForms.ProviderFormService>();
 builder.Services.AddScoped<CourseApplicationWorkflowService>();
 builder.Services.AddScoped<RecordScope>();
 builder.Services.AddScoped<WeeklyReportBuilder>();
@@ -211,6 +212,7 @@ builder.Services.AddSingleton<ListDocumentPdfService>();
 builder.Services.AddSingleton<NextOfKinPdfService>();
 builder.Services.AddScoped<LeaveApplicationPdfService>();
 builder.Services.AddSingleton<LoanApplicationPdfService>();
+builder.Services.AddSingleton<HrPortal.Services.ProviderForms.ProviderFormPdfService>();
 builder.Services.AddSingleton<CourseApplicationPdfService>();
 
 builder.Services.Configure<WeeklyReportBranding>(

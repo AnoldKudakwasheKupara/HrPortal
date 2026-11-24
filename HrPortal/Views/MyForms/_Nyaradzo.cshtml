@@ -1,0 +1,235 @@
+@using HrPortal.Entities
+@using HrPortal.Services.ProviderForms
+@model HrPortal.ViewModels.ProviderFormEditViewModel
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Plan</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label asp-for="Member.Plan" class="form-label">Join or move to</label>
+                <select asp-for="Member.Plan" class="form-select">
+                    <option value="">No change of plan</option>
+                    @foreach (var plan in ProviderFormRules.Plans)
+                    {
+                        <option value="@plan">@plan</option>
+                    }
+                </select>
+                <div class="form-text">Executive already includes the tent, chairs, toilets and water bowser.</div>
+            </div>
+
+            <div class="col-sm-6 col-md-2">
+                <label asp-for="Member.Breadwinner" class="form-label">Breadwinner</label>
+                <select asp-for="Member.Breadwinner" class="form-select">
+                    <option value="">None</option>
+                    @foreach (var level in ProviderFormRules.Levels)
+                    {
+                        <option value="@level">Breadwinner @level</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-md-2">
+                <label asp-for="Member.BreadwinnerChange" class="form-label">Add or remove</label>
+                <select asp-for="Member.BreadwinnerChange" class="form-select">
+                    <option value="">-</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-md-2">
+                <label asp-for="Member.SahwiraLite" class="form-label">Sahwira Lite</label>
+                <select asp-for="Member.SahwiraLite" class="form-select">
+                    <option value="">None</option>
+                    @foreach (var level in ProviderFormRules.Levels)
+                    {
+                        <option value="@level">Sahwira Lite @level</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-md-2">
+                <label asp-for="Member.SahwiraLiteChange" class="form-label">Add or remove</label>
+                <select asp-for="Member.SahwiraLiteChange" class="form-select">
+                    <option value="">-</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.ToiletsFamily" class="form-label">Portable toilets, immediate family</label>
+                <select asp-for="Member.ToiletsFamily" class="form-select">
+                    <option value="">No change</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.TentFamily" class="form-label">Tent and chairs, immediate family</label>
+                <select asp-for="Member.TentFamily" class="form-select">
+                    <option value="">No change</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.ToiletsAll" class="form-label">Portable toilets, all dependants</label>
+                <select asp-for="Member.ToiletsAll" class="form-select">
+                    <option value="">No change</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.TentAll" class="form-label">Tent and chairs, all dependants</label>
+                <select asp-for="Member.TentAll" class="form-select">
+                    <option value="">No change</option>
+                    <option value="Add">Add</option>
+                    <option value="Remove">Remove</option>
+                </select>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Breadwinner beneficiary</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiarySurname" class="form-label">Surname</label>
+                <input asp-for="Member.BeneficiarySurname" class="form-control" maxlength="100" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiaryFirstNames" class="form-label">First names</label>
+                <input asp-for="Member.BeneficiaryFirstNames" class="form-control" maxlength="100" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiaryNationalId" class="form-label">National ID number</label>
+                <input asp-for="Member.BeneficiaryNationalId" class="form-control" maxlength="50" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiaryRelationship" class="form-label">Relationship</label>
+                <input asp-for="Member.BeneficiaryRelationship" class="form-control" maxlength="50" />
+            </div>
+
+            <div class="col-sm-6">
+                <label asp-for="Member.BeneficiaryAddress" class="form-label">Postal address</label>
+                <input asp-for="Member.BeneficiaryAddress" class="form-control" maxlength="150" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiaryEmail" class="form-label">Email address</label>
+                <input asp-for="Member.BeneficiaryEmail" class="form-control" maxlength="150" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label asp-for="Member.BeneficiaryPhone" class="form-label">Phone number</label>
+                <input asp-for="Member.BeneficiaryPhone" class="form-control" maxlength="50" />
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3" data-rows>
+
+    <div class="card-header">Family and other dependants to be covered</div>
+
+    <div class="card-body">
+
+        <p class="text-muted small">
+            List only the people this form is about. The form has room for @ProviderFormRules.MaxDependants.
+        </p>
+
+        @for (var i = 0; i < ProviderFormRules.MaxDependants; i++)
+        {
+            <fieldset class="person-row" data-row>
+
+                <legend class="visually-hidden">Dependant @(i + 1)</legend>
+
+                <div class="row g-2">
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].Surname" class="form-label">Surname</label>
+                        <input asp-for="Member.Dependants[i].Surname" class="form-control" maxlength="100" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].FirstNames" class="form-label">First names</label>
+                        <input asp-for="Member.Dependants[i].FirstNames" class="form-control" maxlength="100" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].Sex" class="form-label">Male or female</label>
+                        <select asp-for="Member.Dependants[i].Sex" class="form-select">
+                            <option value="Unspecified">Choose</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].DateOfBirth" class="form-label">Date of birth</label>
+                        <input asp-for="Member.Dependants[i].DateOfBirth" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].IdNumber" class="form-label">ID number</label>
+                        <input asp-for="Member.Dependants[i].IdNumber" class="form-control" maxlength="50" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].Relationship" class="form-label">Relationship</label>
+                        <input asp-for="Member.Dependants[i].Relationship" class="form-control" maxlength="50" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Dependants[i].Change" class="form-label">What to do</label>
+                        <select asp-for="Member.Dependants[i].Change" class="form-select">
+                            <option value="">Choose</option>
+                            <option value="Add">Add</option>
+                            <option value="Remove">Remove</option>
+                            <option value="Update">Update</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger" data-clear-row hidden>
+                            <i class="fas fa-trash" aria-hidden="true"></i> Take off the list
+                        </button>
+                    </div>
+
+                </div>
+
+            </fieldset>
+        }
+
+        <button type="button" class="btn btn-outline-primary" data-add-row hidden>
+            <i class="fas fa-plus" aria-hidden="true"></i> Add another person
+        </button>
+
+    </div>
+
+</div>

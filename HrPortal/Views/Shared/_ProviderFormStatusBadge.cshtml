@@ -1,0 +1,9 @@
+@using HrPortal.Entities
+@using HrPortal.Services
+@model ProviderFormStatus
+
+@{
+    var badge = StatusNames.Of(Model);
+}
+
+<span class="@badge.Css">@badge.Label</span>

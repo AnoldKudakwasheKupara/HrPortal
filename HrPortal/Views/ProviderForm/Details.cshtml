@@ -1,0 +1,257 @@
+@using HrPortal.Entities
+@using HrPortal.Services.ProviderForms
+@model HrPortal.ViewModels.ProviderFormReviewViewModel
+
+@{
+    var form = Model.Form;
+
+    ViewData["Title"] = ProviderFormRules.Title(form.Kind);
+
+    var withHr = ProviderFormRules.WithHr(form.Status);
+    var provider = ProviderFormRules.Provider(form.Kind);
+    var who = form.Employee.FirstName + " " + form.Employee.LastName;
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@ProviderFormRules.Title(form.Kind)</h2>
+            <p>@form.Reference, @who, @(form.Employee.Department?.Name ?? "--")</p>
+        </div>
+
+        <div class="head-actions">
+            <partial name="_ProviderFormStatusBadge" model="form.Status" />
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@form.Id" asp-route-download="true">
+                <i class="fas fa-download" aria-hidden="true"></i> Download
+            </a>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-file-pdf" aria-hidden="true"></i> The Form
+                </h3>
+
+                <iframe class="form-preview" title="The filled form" src="@Url.Action("Form", new { id = form.Id })#navpanes=0&amp;view=FitH"></iframe>
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-5">
+
+            @if (form.Status == ProviderFormStatus.Completed)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i> Send to @provider
+                    </h3>
+
+                    <p class="text-muted">
+                        Download it and send it to the provider yourself, then record it here. Nothing on it can be
+                        changed after that.
+                    </p>
+
+                    <form asp-action="Sent" asp-route-id="@form.Id" method="post" class="d-grid"
+                          onsubmit="return confirm('Record @form.Reference as sent? It cannot be changed afterwards.');">
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fas fa-circle-check" aria-hidden="true"></i> I have sent it
+                        </button>
+                    </form>
+
+                </section>
+            }
+
+            @if (withHr)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-building" aria-hidden="true"></i> Employer's Part
+                    </h3>
+
+                    <form asp-action="Complete" asp-route-id="@form.Id" method="post" autocomplete="off">
+
+                        <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+
+                        <div class="row g-3 mb-3">
+
+                            @if (form.Kind == ProviderFormKind.Nyaradzo)
+                            {
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.EffectiveDate" class="form-label">Effective date</label>
+                                    <input asp-for="Employer.EffectiveDate" type="date" class="form-control" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.CoverDate" class="form-label">Cover starts <span class="text-muted">(if different)</span></label>
+                                    <input asp-for="Employer.CoverDate" type="date" class="form-control" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.PolicyNumber" class="form-label">Policy number <span class="text-muted">(if there is one)</span></label>
+                                    <input asp-for="Employer.PolicyNumber" class="form-control" maxlength="50" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.Premium" class="form-label">Premium payable <span class="text-muted">(if known)</span></label>
+                                    <input asp-for="Employer.Premium" class="form-control" maxlength="50" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-12">
+                                    <label asp-for="Employer.FundName" class="form-label">Name of fund</label>
+                                    <input asp-for="Employer.FundName" class="form-control" maxlength="150" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.EmployeeNumber" class="form-label">Employee number</label>
+                                    <input asp-for="Employer.EmployeeNumber" class="form-control" maxlength="50" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.DateJoined" class="form-label">Date joined company</label>
+                                    <input asp-for="Employer.DateJoined" type="date" class="form-control" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.ContributionMonth" class="form-label">Contributions start in</label>
+                                    <input asp-for="Employer.ContributionMonth" class="form-control" maxlength="50" placeholder="For example, January 2027" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.AnnualSalary" class="form-label">Annual pensionable salary ($)</label>
+                                    <input asp-for="Employer.AnnualSalary" type="number" step="0.01" min="0" class="form-control" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.NotCountingFrom" class="form-label">Period not counting, from</label>
+                                    <input asp-for="Employer.NotCountingFrom" type="date" class="form-control" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.NotCountingTo" class="form-label">To</label>
+                                    <input asp-for="Employer.NotCountingTo" type="date" class="form-control" />
+                                </div>
+
+                                <div class="col-12">
+                                    <label asp-for="Employer.EmployerName" class="form-label">Employer</label>
+                                    <input asp-for="Employer.EmployerName" class="form-control" maxlength="150" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.Branch" class="form-label">Branch</label>
+                                    <input asp-for="Employer.Branch" class="form-control" maxlength="80" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.CompanyNumber" class="form-label">Company number</label>
+                                    <input asp-for="Employer.CompanyNumber" class="form-control" maxlength="50" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.SignatoryName" class="form-label">Signing for the employer</label>
+                                    <input asp-for="Employer.SignatoryName" class="form-control" maxlength="100" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label asp-for="Employer.Designation" class="form-label">Designation</label>
+                                    <input asp-for="Employer.Designation" class="form-control" maxlength="100" />
+                                </div>
+                            }
+
+                        </div>
+
+                        @if (form.Kind == ProviderFormKind.Minerva)
+                        {
+                            <p class="small text-muted">Signing confirms that the details are correct and you have verified them.</p>
+
+                            <partial name="_SignaturePad" model='new HrPortal.ViewModels.SignaturePad("signature", form.EmployerSignature == null ? "Signature for the employer" : "Sign again only to replace the signature already there", form.EmployerSignature == null)' />
+                        }
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                                @(form.CompletedAt == null ? "Checked and complete" : "Save the changes")
+                            </button>
+                        </div>
+
+                    </form>
+
+                </section>
+
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-rotate-left" aria-hidden="true"></i> Send Back
+                    </h3>
+
+                    <form asp-action="Return" asp-route-id="@form.Id" method="post">
+
+                        <label for="comment" class="form-label">What needs to change</label>
+                        <textarea id="comment" name="comment" class="form-control mb-2" rows="2" maxlength="500" required></textarea>
+                        <p class="small text-muted">The signatures are taken off, so it has to be signed again.</p>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-warning">
+                                <i class="fas fa-rotate-left" aria-hidden="true"></i> Send back to @form.Employee.FirstName
+                            </button>
+                        </div>
+
+                    </form>
+
+                </section>
+            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Where It Is
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Signed</dt>
+                    <dd>@(form.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm") ?? "Not yet")</dd>
+                    <dt>Completed</dt>
+                    <dd>@(form.CompletedAt?.ToLocalTime().ToString("d MMM yyyy HH:mm") ?? "Not yet")</dd>
+                    @if (form.CompletedByEmployee != null)
+                    {
+                        <dt>Completed by</dt>
+                        <dd>@form.CompletedByEmployee.FirstName @form.CompletedByEmployee.LastName</dd>
+                    }
+                    <dt>Sent to the provider</dt>
+                    <dd>@(form.SentAt?.ToLocalTime().ToString("d MMM yyyy HH:mm") ?? "Not yet")</dd>
+                </dl>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/provider-forms.js" asp-append-version="true"></script>
+}

@@ -4165,3 +4165,39 @@ a.strip-item:hover {
     .file-toast { animation: none; transition: none; }
     .drop-zone-bar { transition: none; }
 }
+
+.form-preview {
+    width: 100%;
+    height: min(80vh, 900px);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.sign-pad {
+    margin-bottom: 1rem;
+}
+
+.sign-canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 600 / 180;
+    border: 2px dashed #8a94a3;
+    border-radius: 8px;
+    background: #fff;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.sign-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.person-row {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}

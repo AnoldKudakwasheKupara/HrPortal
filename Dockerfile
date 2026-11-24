@@ -11,7 +11,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      tzdata ca-certificates curl \
+      tzdata ca-certificates curl zlib1g \
  && install -d /usr/share/postgresql-common/pgdg \
  && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
       https://www.postgresql.org/media/keys/ACCC4CF8.asc \

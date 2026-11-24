@@ -33,6 +33,10 @@ namespace HrPortal.Services
         public const string TrainingAssigned = "Training Assigned";
         public const string TrainingCompleted = "Training Completed";
         public const string DocumentUploaded = "Document Uploaded";
+        public const string ProviderFormSubmitted = "Provider Form Submitted";
+        public const string ProviderFormCompleted = "Provider Form Completed";
+        public const string ProviderFormReturned = "Provider Form Returned";
+        public const string ProviderFormSent = "Provider Form Sent";
         public const string PersonalDetailsViewed = "Personal Details Viewed";
         public const string BackupDownloaded = "Backup Downloaded";
         public const string VaultOpened = "Vault Opened";

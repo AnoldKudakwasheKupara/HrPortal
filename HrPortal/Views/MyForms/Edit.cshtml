@@ -1,0 +1,126 @@
+@using HrPortal.Entities
+@using HrPortal.Services.ProviderForms
+@model HrPortal.ViewModels.ProviderFormEditViewModel
+
+@{
+    ViewData["Title"] = ProviderFormRules.Title(Model.Kind);
+}
+
+<div class="container">
+
+    <div class="page-head-simple">
+
+        <h2>@ProviderFormRules.Title(Model.Kind)</h2>
+
+        <p class="text-muted">
+            @Model.Reference. What the portal already knows is filled in for you; put right anything that is wrong
+            or missing. You can save and come back. Nothing goes to HR until you sign it.
+        </p>
+
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReturnComment))
+    {
+        <div class="alert alert-warning"><strong>HR asked for a change:</strong> @Model.ReturnComment</div>
+    }
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" autocomplete="off">
+
+        <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-header">Your details</div>
+
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <div class="col-sm-6">
+                        <label asp-for="Member.Surname" class="form-label">Surname</label>
+                        <input asp-for="Member.Surname" class="form-control" maxlength="150" />
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label asp-for="Member.FirstNames" class="form-label">First names</label>
+                        <input asp-for="Member.FirstNames" class="form-control" maxlength="150" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.DateOfBirth" class="form-label">Date of birth</label>
+                        <input asp-for="Member.DateOfBirth" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.Sex" class="form-label">Male or female</label>
+                        <select asp-for="Member.Sex" class="form-select">
+                            <option value="Unspecified">Choose</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.MaritalStatus" class="form-label">Marital status</label>
+                        <select asp-for="Member.MaritalStatus" class="form-select">
+                            <option value="Unspecified">Choose</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <label asp-for="Member.NationalId" class="form-label">National ID number</label>
+                        <input asp-for="Member.NationalId" class="form-control" maxlength="50" />
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label asp-for="Member.Phone" class="form-label">Phone number</label>
+                        <input asp-for="Member.Phone" class="form-control" maxlength="50" />
+                    </div>
+
+                    @if (Model.Kind == ProviderFormKind.Nyaradzo)
+                    {
+                        <div class="col-sm-6">
+                            <label asp-for="Member.Email" class="form-label">Email address</label>
+                            <input asp-for="Member.Email" class="form-control" maxlength="150" />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label asp-for="Member.OtherId" class="form-label">Driver's licence or passport <span class="text-muted">(optional)</span></label>
+                            <input asp-for="Member.OtherId" class="form-control" maxlength="50" />
+                        </div>
+                    }
+
+                    <div class="col-12">
+                        <label asp-for="Member.Address" class="form-label">@(Model.Kind == ProviderFormKind.Minerva ? "Residential address" : "Postal address")</label>
+                        <input asp-for="Member.Address" class="form-control" maxlength="150" />
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <partial name="@(Model.Kind == ProviderFormKind.Minerva ? "_Minerva" : "_Nyaradzo")" model="Model" />
+
+        <div class="mb-4">
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save and check
+            </button>
+
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/provider-forms.js" asp-append-version="true"></script>
+}

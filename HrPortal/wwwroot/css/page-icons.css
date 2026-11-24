@@ -123,6 +123,13 @@
     content: "\f501";
 }
 
+[data-section="MyForms"] .page-head::before,
+[data-section="MyForms"] .page-head-simple::before,
+[data-section="ProviderForm"] .page-head::before,
+[data-section="ProviderForm"] .page-head-simple::before {
+    content: "\f573";
+}
+
 [data-section="MyLeave"] .page-head::before,
 [data-section="MyLeave"] .page-head-simple::before {
     content: "\f073";

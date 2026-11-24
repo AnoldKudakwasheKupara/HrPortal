@@ -1,0 +1,166 @@
+@using HrPortal.Entities
+@using HrPortal.Services.ProviderForms
+@model ProviderForm
+
+@{
+    ViewData["Title"] = ProviderFormRules.Title(Model.Kind);
+
+    var withMe = ProviderFormRules.WithEmployee(Model.Status);
+    var problems = ViewBag.Problems as List<string> ?? new List<string>();
+    var provider = ProviderFormRules.Provider(Model.Kind);
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+
+        <div>
+            <h2>@ProviderFormRules.Title(Model.Kind)</h2>
+            <p>@Model.Reference</p>
+        </div>
+
+        <div class="head-actions">
+            <partial name="_ProviderFormStatusBadge" model="Model.Status" />
+            <a class="btn btn-outline-secondary" asp-action="Form" asp-route-id="@Model.Id" asp-route-download="true">
+                <i class="fas fa-download" aria-hidden="true"></i> Download
+            </a>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+        </div>
+
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (Model.Status == ProviderFormStatus.Returned && !string.IsNullOrWhiteSpace(Model.ReturnComment))
+    {
+        <div class="alert alert-warning"><strong>HR asked for a change:</strong> @Model.ReturnComment</div>
+    }
+
+    <div class="row g-3">
+
+        <div class="col-lg-7">
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-file-pdf" aria-hidden="true"></i> The Form
+                </h3>
+
+                <iframe class="form-preview" title="The filled form" src="@Url.Action("Form", new { id = Model.Id })#navpanes=0&amp;view=FitH"></iframe>
+
+            </section>
+
+        </div>
+
+        <div class="col-lg-5">
+
+            @if (withMe && problems.Count > 0)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-list-check" aria-hidden="true"></i> Still to Do
+                        <span class="tab-count">@problems.Count</span>
+                    </h3>
+
+                    <ul class="mb-3">
+                        @foreach (var problem in problems)
+                        {
+                            <li>@problem</li>
+                        }
+                    </ul>
+
+                    <a class="btn btn-gold" asp-action="Edit" asp-route-id="@Model.Id">
+                        <i class="fas fa-pen-to-square" aria-hidden="true"></i> Carry on filling it in
+                    </a>
+
+                </section>
+            }
+            else if (withMe)
+            {
+                <section class="panel-card mb-3">
+
+                    <h3 class="panel-head">
+                        <i class="fas fa-signature" aria-hidden="true"></i> Sign and Send
+                    </h3>
+
+                    <p>
+                        @(Model.Kind == ProviderFormKind.Minerva
+                            ? "I accept membership in terms of the Rules of the Fund, and name the people on the nomination page as a guide to the trustees, as the form says."
+                            : "I declare to the best of my knowledge that the particulars given on the form are true and correct, and that only those registered on it get covered.")
+                    </p>
+
+                    <form asp-action="Send" asp-route-id="@Model.Id" method="post">
+
+                        <partial name="_SignaturePad" model='new HrPortal.ViewModels.SignaturePad("signature", "Your signature", true)' />
+
+                        @if (Model.Kind == ProviderFormKind.Minerva)
+                        {
+                            <partial name="_SignaturePad" model='new HrPortal.ViewModels.SignaturePad("witness", "Signature of your witness, who signs here themselves", true)' />
+                        }
+
+                        <div class="d-grid gap-2">
+
+                            <button type="submit" class="btn btn-gold">
+                                <i class="fas fa-paper-plane" aria-hidden="true"></i> Sign and send to HR
+                            </button>
+
+                            <a class="btn btn-outline-success" asp-action="Edit" asp-route-id="@Model.Id">
+                                <i class="fas fa-pen-to-square" aria-hidden="true"></i> Change something first
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </section>
+            }
+
+            <section class="panel-card mb-3">
+
+                <h3 class="panel-head">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i> Where It Is
+                </h3>
+
+                <dl class="info-list">
+                    <dt>Provider</dt>
+                    <dd>@provider</dd>
+                    <dt>Started</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</dd>
+                    <dt>Signed</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Checked by HR</dt>
+                    <dd>@(Model.CompletedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                    <dt>Sent to the provider</dt>
+                    <dd>@(Model.SentAt?.ToLocalTime().ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+
+                @if (Model.Status == ProviderFormStatus.Draft)
+                {
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-grid mt-3"
+                          onsubmit="return confirm('Delete @Model.Reference?');">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash" aria-hidden="true"></i> Delete this draft
+                        </button>
+                    </form>
+                }
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/provider-forms.js" asp-append-version="true"></script>
+}

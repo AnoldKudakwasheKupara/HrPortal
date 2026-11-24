@@ -1,0 +1,136 @@
+@using HrPortal.Entities
+@using HrPortal.Services.ProviderForms
+@using HrPortal.ViewModels
+@model List<ProviderForm>
+
+@{
+    ViewData["Title"] = "Provider Forms";
+
+    var shows = new Dictionary<string, List<ProviderForm>>
+    {
+        ["all"] = Model,
+        ["check"] = Model.Where(f => f.Status == ProviderFormStatus.Submitted).ToList(),
+        ["ready"] = Model.Where(f => f.Status == ProviderFormStatus.Completed).ToList(),
+        ["back"] = Model.Where(f => f.Status == ProviderFormStatus.Returned).ToList(),
+        ["sent"] = Model.Where(f => f.Status == ProviderFormStatus.Sent).ToList()
+    };
+
+    var asked = Context.Request.Query["show"].ToString();
+    var show = shows.ContainsKey(asked) ? asked : "all";
+    var search = PagedList.SearchFrom(Context.Request);
+
+    var shown = shows[show]
+        .Where(f => PagedList.Matches(search, f.Employee.FirstName + " " + f.Employee.LastName, f.Reference, ProviderFormRules.Title(f.Kind)))
+        .ToList();
+
+    var paged = PagedList.Of(shown, PagedList.PageFrom(Context.Request));
+
+    var tabs = new List<ListTab>
+    {
+        new("all", "All", "fa-list-ul", "is-teal", shows["all"].Count),
+        new("check", "To Check", "fa-inbox", "is-blue", shows["check"].Count),
+        new("ready", "Ready to Send", "fa-paper-plane", "is-amber", shows["ready"].Count),
+        new("back", "Sent Back", "fa-rotate-left", "is-amber", shows["back"].Count),
+        new("sent", "Sent", "fa-circle-check", "is-green", shows["sent"].Count)
+    };
+}
+
+<div class="container-fluid">
+
+    <div class="page-head">
+        <div>
+            <h2>Provider Forms</h2>
+            <p>
+                The funeral cover and pension forms staff employed by @Brand.Current.ShortName have signed. Check each one,
+                fill in the employer's part, download it and send it to the provider.
+            </p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <section class="panel-card mb-4">
+
+        <h3 class="panel-head">
+            <i class="fas fa-file-signature" aria-hidden="true"></i> Forms
+        </h3>
+
+        <partial name="_ListToolbar" model='new ListToolbarModel(new ListTabsModel(tabs, show), search, "Search employee or reference...")' />
+
+        @if (!shown.Any())
+        {
+            <div class="list-empty mb-0">
+                <i class="fas fa-mug-hot" aria-hidden="true"></i>
+                <p>Nothing here right now.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Form</th>
+                            <th>Employee</th>
+                            <th>Signed</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var form in paged.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@ProviderFormRules.Title(form.Kind)</div>
+                                    <div class="small text-muted">@form.Reference</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@form.Employee.FirstName @form.Employee.LastName</div>
+                                    <div class="small text-muted">@(form.Employee.Department?.Name ?? "")</div>
+                                </td>
+                                <td class="text-nowrap">@(form.SubmittedAt?.ToLocalTime().ToString("d MMM yyyy") ?? "-")</td>
+                                <td><partial name="_ProviderFormStatusBadge" model="form.Status" /></td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        @if (form.Status == ProviderFormStatus.Submitted)
+                                        {
+                                            <a class="btn btn-sm btn-gold text-nowrap" asp-action="Details" asp-route-id="@form.Id">
+                                                <i class="fas fa-list-check" aria-hidden="true"></i> Check
+                                            </a>
+                                        }
+                                        else if (form.Status != ProviderFormStatus.Returned)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary text-nowrap" asp-action="Details" asp-route-id="@form.Id">
+                                                <i class="fas fa-eye" aria-hidden="true"></i> View
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <partial name="_NumberedPager" model='PagerSummary.From(paged, "form", "forms")' />
+        }
+
+    </section>
+
+</div>

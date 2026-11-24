@@ -1,0 +1,148 @@
+@using HrPortal.Services.ProviderForms
+@model HrPortal.ViewModels.ProviderFormEditViewModel
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Spouse</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-sm-8">
+                <label asp-for="Member.SpouseName" class="form-label">Full names of spouse <span class="text-muted">(if you have one)</span></label>
+                <input asp-for="Member.SpouseName" class="form-control" maxlength="120" />
+            </div>
+
+            <div class="col-sm-4">
+                <label asp-for="Member.SpouseDateOfBirth" class="form-label">Date of birth</label>
+                <input asp-for="Member.SpouseDateOfBirth" type="date" class="form-control" />
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3" data-rows>
+
+    <div class="card-header">Children</div>
+
+    <div class="card-body">
+
+        <p class="text-muted small">The form has room for @ProviderFormRules.MaxChildren.</p>
+
+        @for (var i = 0; i < ProviderFormRules.MaxChildren; i++)
+        {
+            <fieldset class="person-row" data-row>
+
+                <legend class="visually-hidden">Child @(i + 1)</legend>
+
+                <div class="row g-2">
+
+                    <div class="col-sm-6">
+                        <label asp-for="Member.Children[i].Name" class="form-label">Full names</label>
+                        <input asp-for="Member.Children[i].Name" class="form-control" maxlength="120" />
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label asp-for="Member.Children[i].DateOfBirth" class="form-label">Date of birth</label>
+                        <input asp-for="Member.Children[i].DateOfBirth" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-sm-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger" data-clear-row hidden>
+                            <i class="fas fa-trash" aria-hidden="true"></i> Take off the list
+                        </button>
+                    </div>
+
+                </div>
+
+            </fieldset>
+        }
+
+        <button type="button" class="btn btn-outline-primary" data-add-row hidden>
+            <i class="fas fa-plus" aria-hidden="true"></i> Add another child
+        </button>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3" data-rows>
+
+    <div class="card-header">Nomination</div>
+
+    <div class="card-body">
+
+        <p class="text-muted small">
+            Where you have dependants you must name one or more of them. If you have none, you may name any person.
+            The form has room for @ProviderFormRules.MaxNominees.
+        </p>
+
+        @for (var i = 0; i < ProviderFormRules.MaxNominees; i++)
+        {
+            <fieldset class="person-row" data-row>
+
+                <legend class="visually-hidden">Nominee @(i + 1)</legend>
+
+                <div class="row g-2">
+
+                    <div class="col-sm-6">
+                        <label asp-for="Member.Nominees[i].Name" class="form-label">Full names</label>
+                        <input asp-for="Member.Nominees[i].Name" class="form-control" maxlength="120" />
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label asp-for="Member.Nominees[i].Relationship" class="form-label">Relationship</label>
+                        <input asp-for="Member.Nominees[i].Relationship" class="form-control" maxlength="50" />
+                    </div>
+
+                    <div class="col-sm-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger" data-clear-row hidden>
+                            <i class="fas fa-trash" aria-hidden="true"></i> Take off the list
+                        </button>
+                    </div>
+
+                </div>
+
+            </fieldset>
+        }
+
+        <button type="button" class="btn btn-outline-primary" data-add-row hidden>
+            <i class="fas fa-plus" aria-hidden="true"></i> Add another nominee
+        </button>
+
+    </div>
+
+</div>
+
+<div class="card shadow-sm mb-3">
+
+    <div class="card-header">Will and signing</div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-sm-6">
+                <label asp-for="Member.WillHolder" class="form-label">Your will is lodged with <span class="text-muted">(if you have one)</span></label>
+                <input asp-for="Member.WillHolder" class="form-control" maxlength="150" />
+            </div>
+
+            <div class="col-sm-6">
+                <label asp-for="Member.WillAddress" class="form-label">Their address</label>
+                <input asp-for="Member.WillAddress" class="form-control" maxlength="150" />
+            </div>
+
+            <div class="col-sm-6">
+                <label asp-for="Member.SignedAt" class="form-label">Place where you are signing</label>
+                <input asp-for="Member.SignedAt" class="form-control" maxlength="80" placeholder="For example, Harare" />
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

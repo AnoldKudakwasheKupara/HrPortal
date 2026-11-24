@@ -43,6 +43,11 @@ namespace HrPortal.Services
                 "loan approval action(s)");
 
             Add(
+                await _context.ProviderForms
+                    .CountAsync(f => f.EmployeeId == employeeId),
+                "provider form(s)");
+
+            Add(
                 await _context.CourseApplications
                     .CountAsync(c => c.EmployeeId == employeeId),
                 "course application(s)");

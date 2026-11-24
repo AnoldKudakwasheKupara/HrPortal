@@ -2,7 +2,10 @@ using HrPortal.Entities;
 using HrPortal.Data;
 using HrPortal.Services;
 using Microsoft.AspNetCore.Identity;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace HrPortal.DbContexts
@@ -118,6 +121,24 @@ namespace HrPortal.DbContexts
             }
         }
 
+        /// <summary>Keeps a set of answers together in one column.</summary>
+        private static void AsJson<T>(PropertyBuilder<T> property)
+            where T : class, new()
+        {
+            property
+                .IsRequired()
+                .HasConversion(
+                    value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                    text => JsonSerializer.Deserialize<T>(text, (JsonSerializerOptions?)null) ?? new T(),
+                    new ValueComparer<T>(
+                        (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null) ==
+                                  JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
+                        value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null).GetHashCode(),
+                        value => JsonSerializer.Deserialize<T>(
+                            JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                            (JsonSerializerOptions?)null) ?? new T()));
+        }
+
         private static void OwnedByCompany<T>(ModelBuilder builder)
             where T : class, ICompanyOwned
         {
@@ -175,6 +196,7 @@ namespace HrPortal.DbContexts
         public DbSet<PublicHoliday> PublicHolidays { get; set; }
 
         public DbSet<LoanApplication> LoanApplications { get; set; }
+        public DbSet<ProviderForm> ProviderForms { get; set; }
         public DbSet<LoanApplicationAttachment> LoanApplicationAttachments { get; set; }
         public DbSet<LoanApplicationHistory> LoanApplicationHistories { get; set; }
 
@@ -342,6 +364,10 @@ namespace HrPortal.DbContexts
                 EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
 
             builder.Entity<CourseApplication>().HasQueryFilter(x =>
+                CompanyFilter == null ||
+                EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
+
+            builder.Entity<ProviderForm>().HasQueryFilter(x =>
                 CompanyFilter == null ||
                 EmployeeCompanies.Any(m => m.EmployeeId == x.EmployeeId && m.CompanyId == CompanyFilter));
 
@@ -1241,6 +1267,43 @@ namespace HrPortal.DbContexts
                 entity.HasIndex(l => new { l.EmployeeId, l.Status });
 
                 entity.Ignore(l => l.MonthlyInstalment);
+            });
+
+            builder.Entity<ProviderForm>(entity =>
+            {
+                entity.HasKey(f => f.Id);
+
+                entity.Property(f => f.Reference)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(f => f.Kind)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                entity.Property(f => f.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                AsJson(entity.Property(f => f.Member));
+                AsJson(entity.Property(f => f.Employer));
+
+                entity.Property(f => f.ReturnComment)
+                    .HasMaxLength(500);
+
+                entity.HasOne(f => f.Employee)
+                    .WithMany()
+                    .HasForeignKey(f => f.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(f => f.CompletedByEmployee)
+                    .WithMany()
+                    .HasForeignKey(f => f.CompletedByEmployeeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(f => f.Reference).IsUnique();
+                entity.HasIndex(f => new { f.EmployeeId, f.Status });
+                entity.HasIndex(f => f.Status);
             });
 
             builder.Entity<LoanApplicationAttachment>(entity =>

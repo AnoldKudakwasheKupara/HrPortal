@@ -1577,6 +1577,82 @@ namespace HrPortal.Migrations
                     b.ToTable("PrivacyNoticeAcknowledgements");
                 });
 
+            modelBuilder.Entity("HrPortal.Entities.ProviderForm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("CompletedByEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Employer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("EmployerSignature")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Member")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ReturnComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<byte[]>("Signature")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<byte[]>("WitnessSignature")
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedByEmployeeId");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EmployeeId", "Status");
+
+                    b.ToTable("ProviderForms");
+                });
+
             modelBuilder.Entity("HrPortal.Entities.PublicHoliday", b =>
                 {
                     b.Property<int>("Id")
@@ -3317,6 +3393,24 @@ namespace HrPortal.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HrPortal.Entities.ProviderForm", b =>
+                {
+                    b.HasOne("HrPortal.Entities.Employee", "CompletedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("CompletedByEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HrPortal.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CompletedByEmployee");
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("HrPortal.Entities.RepositoryDocument", b =>
