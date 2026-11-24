@@ -2483,6 +2483,19 @@ a.strip-item:hover {
     white-space: nowrap;
 }
 
+.topbar-left {
+    min-width: 0;
+}
+
+.topbar-left .crumb-here {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-right {
+    flex-shrink: 0;
+}
+
 .topbar-right {
     display: flex;
     align-items: center;
