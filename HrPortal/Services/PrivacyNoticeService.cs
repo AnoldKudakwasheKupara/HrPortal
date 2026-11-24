@@ -21,9 +21,9 @@ namespace HrPortal.Services
     /// </summary>
     public class PrivacyNoticeService
     {
-        public const string Version = "2026-10-29";
+        public const string Version = "2026-11-24";
 
-        public static readonly DateTime VersionDate = new(2026, 10, 29);
+        public static readonly DateTime VersionDate = new(2026, 11, 24);
 
         private readonly ApplicationDbContext _context;
 
